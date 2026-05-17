@@ -1,933 +1,835 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tool Settings — Cautie Mockup</title>
+  <title>Cautie — Study Tool Setup</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f0f11;
-      color: #e8e8ec;
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f2f2f2;
+      color: #1a1a1a;
+      min-height: 100vh;
     }
 
-    /* ── Sidebar ── */
-    .sidebar {
-      width: 220px;
-      background: #18181c;
-      border-right: 1px solid #2a2a30;
-      padding: 20px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex-shrink: 0;
-      overflow-y: auto;
+    .page { display: none; min-height: 100vh; flex-direction: column; }
+    .page.active { display: flex; }
+
+    /* topbar */
+    .topbar {
+      background: white; border-bottom: 1px solid #e4e4e4;
+      padding: 0 32px; height: 52px;
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
     }
-    .sidebar-logo { font-size: 15px; font-weight: 700; color: #ff9500; padding: 4px 10px 12px; }
-    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; padding: 10px 10px 4px; }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 10px; border-radius: 8px; font-size: 13px; color: #777;
+    .topbar-logo { font-size: 15px; font-weight: 800; color: #1a1a1a; margin-right: 12px; }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #999; }
+    .breadcrumb .crumb-active { color: #1a1a1a; font-weight: 600; }
+    .breadcrumb .sep { color: #ddd; }
+    .step-indicator { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0e0; }
+    .step-dot.done { background: #7c6ba8; }
+    .step-dot.active { background: #1a1a1a; }
+    .step-label { font-size: 11px; color: #999; margin-left: 4px; }
+
+    /* ── STAGE 1 ── */
+    .s1-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .s1-card {
+      background: white; border: 1px solid #e2e2e2; border-radius: 12px;
+      padding: 32px; width: 100%; max-width: 680px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05);
+    }
+    .s1-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .s1-sub { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+    .upload-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .upload-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border: 1px solid #ddd; border-radius: 8px;
+      background: white; color: #444; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .upload-btn:hover { background: #f7f7f7; border-color: #bbb; }
+    .upload-btn svg { width: 14px; height: 14px; flex-shrink: 0; stroke-width: 1.8; }
+
+    .s1-textarea {
+      width: 100%; height: 160px; padding: 12px 14px;
+      border: 1px solid #ddd; border-radius: 8px;
+      font-size: 13px; font-family: inherit; color: #1a1a1a;
+      resize: vertical; outline: none; line-height: 1.6;
+      transition: border-color 0.15s;
+    }
+    .s1-textarea:focus { border-color: #7c6ba8; box-shadow: 0 0 0 3px rgba(124,107,168,0.1); }
+    .s1-textarea::placeholder { color: #c0c0c0; }
+    .s1-hint { font-size: 11px; color: #bbb; margin-top: 6px; margin-bottom: 20px; }
+
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 10px; }
+    .tool-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .tool-chip {
+      padding: 7px 14px; border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #f5f5f5; color: #777; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .tool-chip:hover { background: #eee; color: #444; }
+    .tool-chip.selected { background: white; border-color: #7c6ba8; color: #1a1a1a; font-weight: 600; }
+
+    .s1-footer { display: flex; justify-content: flex-end; border-top: 1px solid #f0f0f0; padding-top: 20px; }
+    .btn-primary {
+      padding: 10px 22px; background: #1a1a1a; color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
       cursor: pointer; transition: background 0.15s;
     }
-    .nav-item:hover { background: #232328; color: #e8e8ec; }
-    .nav-item.active { background: #232328; color: #fff; font-weight: 600; }
+    .btn-primary:hover { background: #333; }
 
-    /* ── Main ── */
-    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-    /* Tool tabs */
-    .tool-tabs {
-      display: flex; gap: 0; border-bottom: 1px solid #2a2a30;
-      background: #18181c; padding: 0 24px; flex-shrink: 0;
+    /* ── STAGE 2 ── */
+    .scenario-bar {
+      background: white; border-bottom: 1px solid #e4e4e4;
+      padding: 0 24px; display: flex; align-items: center;
+      flex-shrink: 0; height: 44px;
     }
-    .tool-tab {
-      padding: 14px 18px; font-size: 13px; font-weight: 600; color: #555;
-      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    .scenario-label { font-size: 11px; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 16px; white-space: nowrap; }
+    .scenario-btn {
+      padding: 0 14px; height: 44px; font-size: 12px; font-weight: 500;
+      color: #888; border: none; background: transparent; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: all 0.15s; white-space: nowrap;
     }
-    .tool-tab:hover { color: #aaa; }
-    .tool-tab.active { color: #fff; border-bottom-color: #ff9500; }
+    .scenario-btn:hover { color: #555; }
+    .scenario-btn.active { color: #1a1a1a; border-bottom-color: #7c6ba8; font-weight: 600; }
 
-    /* Content area */
-    .content { flex: 1; overflow-y: auto; display: flex; }
+    .s2-body { flex: 1; display: flex; overflow: hidden; }
+    .s2-layout { flex: 1; display: flex; overflow: hidden; }
 
-    /* Panel layout */
-    .panel-left {
-      width: 260px; flex-shrink: 0; border-right: 1px solid #2a2a30;
-      padding: 20px 16px; overflow-y: auto;
-    }
-    .panel-right { flex: 1; padding: 24px 28px; overflow-y: auto; }
-
-    /* Mode list */
-    .panel-label {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #555; margin-bottom: 10px;
-    }
-    .mode-card {
-      background: #1a1a1f; border: 2px solid #2a2a30; border-radius: 10px;
-      padding: 12px 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s;
-    }
-    .mode-card:hover { border-color: rgba(255,149,0,0.4); background: #1e1e24; }
-    .mode-card.active { border-color: #ff9500; background: rgba(255,149,0,0.06); }
-    .mode-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
-    .mode-card p { font-size: 11px; color: #666; }
-    .mode-card .mode-badge {
-      display: inline-block; font-size: 9px; font-weight: 700;
-      padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
-      background: rgba(255,149,0,0.15); color: #ff9500;
+    /* Left panel */
+    .s2-left {
+      width: 260px; flex-shrink: 0; background: white;
+      border-right: 1px solid #e4e4e4; display: flex;
+      flex-direction: column; overflow-y: auto;
     }
 
-    /* Settings panel */
-    .settings-header { margin-bottom: 20px; }
-    .settings-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .settings-header p { font-size: 12px; color: #666; }
+    /* AI classification card */
+    .ai-class-card { padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
+    .ai-class-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; margin-bottom: 10px; }
+    .class-rows { display: flex; flex-direction: column; gap: 1px; }
+    .class-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+    .class-key { font-size: 11px; color: #888; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .class-val {
+      font-size: 10px; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace;
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .class-val.y { background: #f0fdf4; color: #16a34a; }
+    .class-val.n { background: #f5f5f5; color: #bbb; }
 
-    .settings-group { margin-bottom: 24px; }
-    .settings-group-label {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.08em; color: #555; margin-bottom: 12px;
-      padding-bottom: 6px; border-bottom: 1px solid #1e1e24;
+    /* Tool list */
+    .tool-list { padding: 10px; flex: 1; }
+    .tool-list-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; padding: 4px 6px 10px; }
+    .tool-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; border-radius: 8px;
+      cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
     }
+    .tool-row:hover { background: #f8f8f8; }
+    .tool-row.active { background: #f3f1ff; }
+    .tool-row-icon {
+      width: 30px; height: 30px; border-radius: 6px; border: 1px solid #e8e8e8;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; background: white; font-size: 10px; font-weight: 700; color: #aaa;
+    }
+    .tool-row.active .tool-row-icon { border-color: #c4b8f5; background: #f3f1ff; color: #7c6ba8; }
+    .tool-row-info { flex: 1; min-width: 0; }
+    .tool-row-name { font-size: 12px; font-weight: 600; color: #555; }
+    .tool-row.active .tool-row-name { color: #5b4ca8; }
+    .tool-row-desc { font-size: 10px; color: #bbb; margin-top: 1px; }
 
-    .setting-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 9px 0; gap: 12px;
-    }
-    .setting-row + .setting-row { border-top: 1px solid #181820; }
-    .setting-info { flex: 1; }
-    .setting-info .label { font-size: 13px; font-weight: 500; }
-    .setting-info .desc { font-size: 11px; color: #555; margin-top: 2px; }
+    /* Right panel */
+    .s2-right { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+    .s2-right::-webkit-scrollbar, .s2-left::-webkit-scrollbar { width: 5px; }
+    .s2-right::-webkit-scrollbar-thumb, .s2-left::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 3px; }
 
-    /* Toggle */
-    .toggle {
-      width: 36px; height: 20px; border-radius: 999px; border: none;
-      cursor: pointer; flex-shrink: 0; position: relative; transition: background 0.2s;
-    }
-    .toggle.on { background: #ff9500; }
-    .toggle.off { background: #2a2a30; }
-    .toggle::after {
-      content: ''; position: absolute; top: 2px; width: 16px; height: 16px;
-      border-radius: 50%; background: white; transition: left 0.2s;
-    }
-    .toggle.on::after { left: 18px; }
-    .toggle.off::after { left: 2px; }
+    .settings-card { background: white; border: 1px solid #e4e4e4; border-radius: 10px; padding: 18px; }
+    .settings-card-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .settings-card-sub { font-size: 11px; color: #aaa; margin-bottom: 16px; line-height: 1.5; }
 
-    /* Segment control */
-    .segment {
-      display: flex; border: 1px solid #2a2a30; border-radius: 7px;
-      overflow: hidden; flex-shrink: 0;
-    }
-    .seg-btn {
-      padding: 5px 11px; font-size: 11px; font-weight: 600; color: #666;
-      cursor: pointer; transition: all 0.15s; background: transparent; border: none;
-    }
-    .seg-btn + .seg-btn { border-left: 1px solid #2a2a30; }
-    .seg-btn.active { background: #ff9500; color: #000; }
-    .seg-btn:hover:not(.active) { background: #232328; color: #ccc; }
+    .setting-group { margin-bottom: 16px; }
+    .setting-group:last-child { margin-bottom: 0; }
+    .setting-group-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #bbb; margin-bottom: 8px; display: block; }
 
-    /* Radio group */
-    .radio-group { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-    .radio-opt {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 10px; border-radius: 7px; cursor: pointer;
-      border: 1px solid transparent; transition: all 0.15s;
+    .pills { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill {
+      padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 6px;
+      background: #f4f4f4; color: #777; font-size: 11px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
-    .radio-opt:hover { background: #1a1a1f; }
-    .radio-opt.selected { border-color: rgba(255,149,0,0.4); background: rgba(255,149,0,0.05); }
-    .radio-circle {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #3a3a42; flex-shrink: 0; position: relative;
-    }
-    .radio-opt.selected .radio-circle { border-color: #ff9500; }
-    .radio-opt.selected .radio-circle::after {
-      content: ''; position: absolute; inset: 2px; border-radius: 50%; background: #ff9500;
-    }
-    .radio-opt .label { font-size: 12px; font-weight: 500; }
-    .radio-opt .sub { font-size: 10px; color: #555; }
+    .pill:hover { background: #ebebeb; color: #444; }
+    .pill.selected { background: white; border-color: #bbb; color: #1a1a1a; font-weight: 600; }
 
-    /* Checkbox */
-    .check-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; cursor: pointer; }
-    .checkbox {
-      width: 16px; height: 16px; border-radius: 4px; border: 2px solid #3a3a42;
-      flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s; cursor: pointer;
-    }
-    .checkbox.checked { background: #ff9500; border-color: #ff9500; }
-    .checkbox.checked::after { content: '✓'; font-size: 10px; color: #000; font-weight: 700; }
-    .check-info .label { font-size: 12px; font-weight: 500; }
-    .check-info .sub { font-size: 11px; color: #555; margin-top: 2px; }
+    .divider { height: 1px; background: #f2f2f2; margin: 4px 0 14px; }
 
-    /* Slider */
-    .slider-row { display: flex; align-items: center; gap: 10px; }
-    .slider-row input[type=range] {
-      flex: 1; accent-color: #ff9500; height: 4px; cursor: pointer;
+    .num-input {
+      width: 80px; padding: 6px 10px; border: 1px solid #e0e0e0;
+      border-radius: 6px; font-size: 12px; font-weight: 600;
+      text-align: center; outline: none; background: white; font-family: inherit;
     }
-    .slider-val { font-size: 12px; font-weight: 600; color: #ff9500; width: 36px; text-align: right; }
+    .num-input:focus { border-color: #7c6ba8; }
 
-    /* Philosophy box */
-    .philosophy-box {
-      background: #141417; border: 1px solid #2a2a30; border-radius: 10px;
-      padding: 14px 16px; margin-bottom: 24px;
+    .text-input {
+      padding: 7px 10px; border: 1px solid #e0e0e0; border-radius: 6px;
+      font-size: 12px; outline: none; background: white; font-family: inherit; color: #1a1a1a;
     }
-    .philosophy-box h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; margin-bottom: 10px; }
-    .phi-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 12px; }
-    .phi-row.good { color: #10b981; }
-    .phi-row.bad { color: #ef4444; }
+    .text-input:focus { border-color: #7c6ba8; }
+    .input-row { display: flex; align-items: center; gap: 8px; }
+    .input-sep { font-size: 11px; color: #aaa; }
 
-    /* Start button */
-    .start-btn {
-      display: block; width: 100%; padding: 12px; text-align: center;
-      background: #ff9500; color: #000; font-size: 14px; font-weight: 700;
-      border-radius: 10px; border: none; cursor: pointer; margin-top: 24px;
-      transition: background 0.15s;
+    /* Unavailable state */
+    .unavailable-notice {
+      padding: 28px 20px; text-align: center;
+      background: white; border: 1px solid #e4e4e4; border-radius: 10px;
     }
-    .start-btn:hover { background: #e08700; }
+    .unavailable-notice p { font-size: 12px; color: #aaa; line-height: 1.6; }
+    .unavailable-notice strong { color: #888; }
 
-    .screen { display: none; width: 100%; }
-    .screen.active { display: flex; }
+    .generate-btn {
+      width: 100%; padding: 11px; background: #5a7a4a; color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: background 0.15s;
+    }
+    .generate-btn:hover { background: #4a6a3a; }
+    .generate-btn svg { width: 14px; height: 14px; }
+
+    .scenario-panel { display: none; }
+    .scenario-panel.active { display: contents; }
+    .tool-panel { display: none; flex-direction: column; gap: 16px; }
+    .tool-panel.active { display: flex; }
   </style>
 </head>
 <body>
 
-<!-- Sidebar -->
-<nav class="sidebar">
-  <div class="sidebar-logo">cautie</div>
-  <div class="nav-section">Main</div>
-  <div class="nav-item"><span>🏠</span> Dashboard</div>
-  <div class="nav-item"><span>📚</span> Subjects</div>
-  <div class="nav-item"><span>📊</span> Grades</div>
-  <div class="nav-item"><span>📅</span> Agenda</div>
-  <div class="nav-section">Tools</div>
-  <div class="nav-item active" id="nav-fc" onclick="switchTool(0)"><span>🃏</span> Flashcards</div>
-  <div class="nav-item" id="nav-qz" onclick="switchTool(1)"><span>🧠</span> Quiz</div>
-  <div class="nav-item" id="nav-nt" onclick="switchTool(2)"><span>📝</span> Notes</div>
-  <div class="nav-item" id="nav-mm" onclick="switchTool(3)"><span>🕸️</span> Mindmap</div>
-  <div class="nav-item" id="nav-tl" onclick="switchTool(4)"><span>⏳</span> Timeline</div>
-</nav>
-
-<div class="main">
-  <!-- Tool tabs -->
-  <div class="tool-tabs">
-    <div class="tool-tab active" id="tab-0" onclick="switchTool(0)">🃏 Flashcards</div>
-    <div class="tool-tab" id="tab-1" onclick="switchTool(1)">🧠 Quiz</div>
-    <div class="tool-tab" id="tab-2" onclick="switchTool(2)">📝 Notes</div>
-    <div class="tool-tab" id="tab-3" onclick="switchTool(3)">🕸️ Mindmap</div>
-    <div class="tool-tab" id="tab-4" onclick="switchTool(4)">⏳ Timeline</div>
+<!-- ═══════════ STAGE 1 ═══════════ -->
+<div id="page-1" class="page active">
+  <div class="topbar">
+    <span class="topbar-logo">cautie</span>
+    <div class="breadcrumb">
+      <span>Study Tool</span><span class="sep">›</span><span class="crumb-active">Add material</span>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active"></div><div class="step-dot"></div>
+      <span class="step-label">Step 1 of 2</span>
+    </div>
   </div>
 
-  <div class="content">
+  <div class="s1-body">
+    <div class="s1-card">
+      <h2>Add your study material</h2>
+      <p class="s1-sub">Paste text, upload a file, or add a link. Cautie reads the content and builds the right settings for you.</p>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- FLASHCARDS                                  -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="screen active" id="screen-0">
-      <!-- Left: modes -->
-      <div class="panel-left">
-        <div class="panel-label">Study Mode</div>
-
-        <div class="mode-card active" onclick="selectMode(this,'fc','lm')">
-          <div class="mode-badge">DEFAULT</div>
-          <h4>📖 Learn Mode</h4>
-          <p>Show card → flip → mark right or wrong. Study until 100% mastered.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'fc','sd')">
-          <h4>⚡ Speed Drill</h4>
-          <p>Rapid flipping, timed challenge. Build speed.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'fc','tm')">
-          <h4>🧪 Test Yourself</h4>
-          <p>Exam simulation — multiple choice, write answers.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'fc','mg')">
-          <h4>🎮 Matching Game</h4>
-          <p>Pair terms with definitions in grid layout.</p>
-        </div>
-
-        <div class="philosophy-box" style="margin-top:16px;">
-          <h4>Cautie Philosophy</h4>
-          <div class="phi-row good">✓ Study set is closed — no intervals</div>
-          <div class="phi-row good">✓ 100% mastery before done</div>
-          <div class="phi-row good">✓ Session ends when all correct</div>
-          <div class="phi-row bad">✗ No Anki-style spaced repetition</div>
-          <div class="phi-row bad">✗ Cards don't come back weeks later</div>
-        </div>
+      <div class="upload-row">
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Mic
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Import from...
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link
+        </button>
       </div>
 
-      <!-- Right: settings per mode -->
-      <div class="panel-right">
+      <textarea class="s1-textarea" placeholder="Paste your notes, slides, article, or any text here…"></textarea>
+      <p class="s1-hint">PDF, DOCX, PPTX, TXT, PNG, JPG, YouTube URL, web link, or plain text</p>
 
-        <!-- Learn Mode settings -->
-        <div id="fc-lm" class="fc-settings">
-          <div class="settings-header">
-            <h2>📖 Learn Mode Settings</h2>
-            <p>Flip cards and mark correct / incorrect. Study until you've got them all.</p>
-          </div>
+      <div class="section-label">What do you want to create?</div>
+      <div class="tool-chips">
+        <div class="tool-chip selected" onclick="this.classList.toggle('selected')">Flashcards</div>
+        <div class="tool-chip selected" onclick="this.classList.toggle('selected')">Quiz</div>
+        <div class="tool-chip" onclick="this.classList.toggle('selected')">Notes</div>
+        <div class="tool-chip" onclick="this.classList.toggle('selected')">Mindmap</div>
+        <div class="tool-chip" onclick="this.classList.toggle('selected')">Timeline</div>
+      </div>
 
-          <div class="settings-group">
-            <div class="settings-group-label">Card Display</div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Show answer delay</div>
-                <div class="desc">Wait before showing flip option</div>
-              </div>
-              <div class="segment">
-                <div class="seg-btn active">0s</div>
-                <div class="seg-btn">2s</div>
-                <div class="seg-btn">5s</div>
-              </div>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Show hints</div>
-                <div class="desc">First letter or partial answer</div>
-              </div>
-              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Show progress bar</div>
-                <div class="desc">Cards remaining / total</div>
-              </div>
-              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Card Order</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Shuffle cards</div></div>
-              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Hard cards first</div>
-                <div class="desc">Cards you got wrong show earlier</div>
-              </div>
-              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Audio</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Correct / wrong sounds</div></div>
-              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Volume</div></div>
-              <div class="slider-row" style="width:150px;">
-                <input type="range" min="0" max="100" value="70" oninput="this.nextElementSibling.textContent=this.value+'%'" />
-                <div class="slider-val">70%</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Learning →</button>
-        </div>
-
-        <!-- Speed Drill settings -->
-        <div id="fc-sd" class="fc-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>⚡ Speed Drill Settings</h2>
-            <p>Rapid-fire flashcards. Build speed and automaticity.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Time Challenge</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Mode</div></div>
-              <div class="segment">
-                <div class="seg-btn active">Unlimited</div>
-                <div class="seg-btn">Timed</div>
-              </div>
-            </div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Duration (if timed)</div>
-              </div>
-              <div class="segment">
-                <div class="seg-btn">2min</div>
-                <div class="seg-btn active">5min</div>
-                <div class="seg-btn">10min</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Scoring</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Show streak counter</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Combo multiplier (2x, 3x…)</div></div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Difficulty Ramp</div>
-            <div class="setting-row">
-              <div class="setting-info">
-                <div class="label">Get harder after N correct</div>
-              </div>
-              <div class="segment">
-                <div class="seg-btn">3</div>
-                <div class="seg-btn active">5</div>
-                <div class="seg-btn">10</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Drilling →</button>
-        </div>
-
-        <!-- Test Mode settings -->
-        <div id="fc-tm" class="fc-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>🧪 Test Yourself Settings</h2>
-            <p>Simulate an exam. No peeking — self-grade at the end.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Question Types</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Multiple choice</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox"></div>
-              <div class="check-info"><div class="label">Write answer</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Matching pairs</div></div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Timing</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Per card limit</div></div>
-              <div class="segment">
-                <div class="seg-btn active">None</div>
-                <div class="seg-btn">30s</div>
-                <div class="seg-btn">60s</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Feedback</div>
-            <div class="radio-group">
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">No feedback — self-grade at end</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Show after each card</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Show at end only</div></div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Test →</button>
-        </div>
-
-        <!-- Matching Game settings -->
-        <div id="fc-mg" class="fc-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>🎮 Matching Game Settings</h2>
-            <p>Drag terms to their definitions. Race the clock.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Layout</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Display</div></div>
-              <div class="segment">
-                <div class="seg-btn active">Columns</div>
-                <div class="seg-btn">Grid</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Time Limit</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Timer</div></div>
-              <div class="segment">
-                <div class="seg-btn active">Unlimited</div>
-                <div class="seg-btn">3min</div>
-                <div class="seg-btn">5min</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Feedback</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Sound effects</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Combo counter</div></div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Matching →</button>
-        </div>
-
+      <div class="s1-footer">
+        <button class="btn-primary" onclick="goToStage2()">Analyze &amp; Continue →</button>
       </div>
     </div>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- QUIZ                                        -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="screen" id="screen-1">
-      <div class="panel-left">
-        <div class="panel-label">Quiz Mode</div>
-
-        <div class="mode-card active" onclick="selectMode(this,'qz','lm')">
-          <div class="mode-badge">ADAPTIVE</div>
-          <h4>📈 Learn Mode</h4>
-          <p>Questions get harder as you master easier ones. Continuous flow.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'qz','tm')">
-          <h4>📋 Test Mode</h4>
-          <p>Fixed difficulty. Simulate a real test.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'qz','cm')">
-          <h4>⚡ Challenge Mode</h4>
-          <p>Timed, high-stakes. Points + streaks.</p>
-        </div>
-        <div class="mode-card" onclick="selectMode(this,'qz','rm')">
-          <h4>🔁 Review Mode</h4>
-          <p>Only questions you got wrong. Fix weak spots.</p>
-        </div>
-
-        <div class="philosophy-box" style="margin-top:16px;">
-          <h4>Cautie Philosophy</h4>
-          <div class="phi-row good">✓ Continuous flow — no preset count</div>
-          <div class="phi-row good">✓ Harder questions as you master easy</div>
-          <div class="phi-row good">✓ Same topic, more questions</div>
-          <div class="phi-row bad">✗ No "how many questions" upfront</div>
-          <div class="phi-row bad">✗ Not repeating identical questions</div>
-        </div>
-      </div>
-
-      <div class="panel-right">
-        <div id="qz-lm" class="qz-settings">
-          <div class="settings-header">
-            <h2>📈 Learn Mode Settings</h2>
-            <p>Adaptive difficulty. System adjusts in real-time based on your performance.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Starting Difficulty</div>
-            <div class="radio-group">
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Easy — warm up first</div></div>
-              </div>
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Medium — balanced start</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Hard — jump straight in</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Question Flow</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info">
-                <div class="label">Continuous (no breaks)</div>
-                <div class="sub">Keep going until you decide to stop</div>
-              </div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox"></div>
-              <div class="check-info">
-                <div class="label">Breathing room pause</div>
-                <div class="sub">Optional pause offered after every 5 questions</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Feedback</div>
-            <div class="radio-group">
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Explanation after each question</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Just right / wrong (fast)</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Explanations at end only</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Mastery Definition</div>
-            <div class="radio-group">
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div>
-                  <div class="label">3 correct in a row at hardest level</div>
-                  <div class="sub">Recommended</div>
-                </div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">80% accuracy overall</div></div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Learning →</button>
-        </div>
-
-        <div id="qz-tm" class="qz-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>📋 Test Mode Settings</h2>
-            <p>Fixed difficulty level. Like a real exam — no adaptive changes.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Difficulty</div>
-            <div class="segment" style="width:fit-content;">
-              <div class="seg-btn">Easy</div>
-              <div class="seg-btn active">Medium</div>
-              <div class="seg-btn">Hard</div>
-              <div class="seg-btn">Mixed</div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Question Types</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">Multiple choice</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info"><div class="label">True / False</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox"></div>
-              <div class="check-info"><div class="label">Write answer</div></div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox"></div>
-              <div class="check-info"><div class="label">Drag & drop</div></div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Timing</div>
-            <div class="setting-row">
-              <div class="setting-info"><div class="label">Per question</div></div>
-              <div class="segment">
-                <div class="seg-btn active">None</div>
-                <div class="seg-btn">30s</div>
-                <div class="seg-btn">60s</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Feedback</div>
-            <div class="radio-group">
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">No feedback — self-grade at end</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Show after each question</div></div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Test →</button>
-        </div>
-
-        <div id="qz-cm" class="qz-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>⚡ Challenge Mode Settings</h2>
-            <p>Timed, high-pressure. Points, streaks, and multipliers.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Time Limit</div>
-            <div class="radio-group">
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">5 minutes</div></div>
-              </div>
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">10 minutes</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">15 minutes</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Scoring</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info">
-                <div class="label">Time bonus</div>
-                <div class="sub">Faster answers = more points</div>
-              </div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info">
-                <div class="label">Streak multiplier</div>
-                <div class="sub">2x after 3 correct in a row</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Challenge →</button>
-        </div>
-
-        <div id="qz-rm" class="qz-settings" style="display:none;">
-          <div class="settings-header">
-            <h2>🔁 Review Mode Settings</h2>
-            <p>Only questions you got wrong. Target your weak spots.</p>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">What to Review</div>
-            <div class="radio-group">
-              <div class="radio-opt selected" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Questions I got wrong</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">Difficult questions</div></div>
-              </div>
-              <div class="radio-opt" onclick="selectRadio(this)">
-                <div class="radio-circle"></div>
-                <div><div class="label">All questions</div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-group">
-            <div class="settings-group-label">Feedback</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info">
-                <div class="label">Show explanation</div>
-                <div class="sub">Why this answer is correct</div>
-              </div>
-            </div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
-              <div class="checkbox checked"></div>
-              <div class="check-info">
-                <div class="label">Show why I was wrong</div>
-              </div>
-            </div>
-          </div>
-
-          <button class="start-btn">Start Reviewing →</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- NOTES                                       -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="screen" id="screen-2">
-      <div class="panel-left">
-        <div class="panel-label">Notes Mode</div>
-        <div class="mode-card active" onclick="selectMode(this,'nt','st')"><div class="mode-badge">DEFAULT</div><h4>📁 Structured Notes</h4><p>Course → Week → Lecture. Organized folders.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'nt','cn')"><h4>📐 Cornell Notes</h4><p>Split: Notes | Questions | Summary</p></div>
-        <div class="mode-card" onclick="selectMode(this,'nt','ol')"><h4>📋 Outline Mode</h4><p>Nested bullets, collapsible sections.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'nt','fw')"><h4>✏️ Free Writing</h4><p>Just a blank page. No structure.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'nt','md')"><h4>⌨️ Markdown</h4><p>Raw markdown, keyboard-focused.</p></div>
-      </div>
-      <div class="panel-right">
-        <div id="nt-st" class="nt-settings">
-          <div class="settings-header"><h2>📁 Structured Notes Settings</h2><p>Hierarchical folders: Course → Week → Lecture</p></div>
-          <div class="settings-group">
-            <div class="settings-group-label">Display</div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Font size</div></div><div class="segment"><div class="seg-btn">Sm</div><div class="seg-btn active">Md</div><div class="seg-btn">Lg</div></div></div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Line spacing</div></div><div class="segment"><div class="seg-btn">Tight</div><div class="seg-btn active">Normal</div><div class="seg-btn">Spacious</div></div></div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Font</div></div><div class="segment"><div class="seg-btn active">Sans</div><div class="seg-btn">Serif</div><div class="seg-btn">Mono</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Editor</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show markdown preview</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Typewriter mode</div><div class="sub">Keep cursor vertically centered</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Focus mode</div><div class="sub">Dim everything except current paragraph</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Auto-save & Sync</div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Auto-save</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Cloud sync</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Offline access</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
-          </div>
-          <button class="start-btn">Open Notes →</button>
-        </div>
-        <div id="nt-cn" class="nt-settings" style="display:none;"><div class="settings-header"><h2>📐 Cornell Notes Settings</h2><p>Classic Cornell format: left column for questions, right for notes, bottom for summary.</p></div><button class="start-btn">Open Cornell Notes →</button></div>
-        <div id="nt-ol" class="nt-settings" style="display:none;"><div class="settings-header"><h2>📋 Outline Mode Settings</h2><p>Nested collapsible bullets. Great for dense textbooks.</p></div><button class="start-btn">Open Outline →</button></div>
-        <div id="nt-fw" class="nt-settings" style="display:none;"><div class="settings-header"><h2>✏️ Free Writing Settings</h2><p>Just a blank canvas. No templates, no structure.</p></div><button class="start-btn">Start Writing →</button></div>
-        <div id="nt-md" class="nt-settings" style="display:none;"><div class="settings-header"><h2>⌨️ Markdown Settings</h2><p>Raw markdown with live preview. Keyboard-centric.</p></div><button class="start-btn">Open Markdown Editor →</button></div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- MINDMAP                                     -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="screen" id="screen-3">
-      <div class="panel-left">
-        <div class="panel-label">Layout Type</div>
-        <div class="mode-card active" onclick="selectMode(this,'mm','rd')"><div class="mode-badge">CLASSIC</div><h4>🕸️ Radial / Center-Out</h4><p>Center concept radiates outward. Best for brainstorming.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'mm','fb')"><h4>🐟 Fishbone / Cause-Effect</h4><p>Left = causes, right = effects. Best for problem-solving.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'mm','tl')"><h4>📅 Timeline Layout</h4><p>Chronological left-to-right. Best for history.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'mm','og')"><h4>🏢 Org Chart / Hierarchy</h4><p>Top-down structure. Best for taxonomy.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'mm','fl')"><h4>🔀 Flowchart</h4><p>Boxes + decisions. Best for processes.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'mm','cm')"><h4>💡 Concept Map</h4><p>Free-form connections. Best for complex relationships.</p></div>
-      </div>
-      <div class="panel-right">
-        <div id="mm-rd" class="mm-settings">
-          <div class="settings-header"><h2>🕸️ Radial Mindmap Settings</h2><p>Central concept with branches radiating outward.</p></div>
-          <div class="settings-group">
-            <div class="settings-group-label">Node Styling</div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Node shape</div></div><div class="segment"><div class="seg-btn active">Circle</div><div class="seg-btn">Box</div><div class="seg-btn">Oval</div></div></div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Color by</div></div><div class="segment"><div class="seg-btn active">Category</div><div class="seg-btn">Depth</div><div class="seg-btn">Manual</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Connections</div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Curve style</div></div><div class="segment"><div class="seg-btn">Straight</div><div class="seg-btn active">Curved</div><div class="seg-btn">Angular</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show relationship labels</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Export</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PNG image</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PDF</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">SVG (editable)</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Interactive HTML</div></div></div>
-          </div>
-          <button class="start-btn">Create Mindmap →</button>
-        </div>
-        <div id="mm-fb" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🐟 Fishbone Settings</h2></div><button class="start-btn">Create Fishbone →</button></div>
-        <div id="mm-tl" class="mm-settings" style="display:none;"><div class="settings-header"><h2>📅 Timeline Layout Settings</h2></div><button class="start-btn">Create Timeline Map →</button></div>
-        <div id="mm-og" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🏢 Org Chart Settings</h2></div><button class="start-btn">Create Org Chart →</button></div>
-        <div id="mm-fl" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🔀 Flowchart Settings</h2></div><button class="start-btn">Create Flowchart →</button></div>
-        <div id="mm-cm" class="mm-settings" style="display:none;"><div class="settings-header"><h2>💡 Concept Map Settings</h2></div><button class="start-btn">Create Concept Map →</button></div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- TIMELINE                                    -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div class="screen" id="screen-4">
-      <div class="panel-left">
-        <div class="panel-label">Time Scale</div>
-        <div class="mode-card" onclick="selectMode(this,'tl','ml')"><h4>🌍 Millennia</h4><p>1000+ year spans. Geological, ancient history.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'tl','ct')"><h4>📜 Centuries</h4><p>100-year spans. Historical periods.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'tl','dc')"><h4>📰 Decades</h4><p>10-year spans. Recent history.</p></div>
-        <div class="mode-card active" onclick="selectMode(this,'tl','yr')"><div class="mode-badge">DEFAULT</div><h4>📆 Years</h4><p>Year-by-year. Detailed timelines.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'tl','mw')"><h4>🗓️ Months / Weeks</h4><p>Project planning, event calendars.</p></div>
-        <div class="mode-card" onclick="selectMode(this,'tl','dy')"><h4>📋 Days</h4><p>Daily tracking, logs.</p></div>
-      </div>
-      <div class="panel-right">
-        <div id="tl-yr" class="tl-settings">
-          <div class="settings-header"><h2>📆 Timeline Settings (Years)</h2><p>Year-level granularity with layers and filtering.</p></div>
-          <div class="settings-group">
-            <div class="settings-group-label">Event Display</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show date labels</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show descriptions</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Color code by category</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Layers (Perspectives)</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Multiple layers</div><div class="sub">e.g. Union / Confederate / Civilian view</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Connections</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Draw cause-effect lines</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Label connections</div><div class="sub">"triggers", "leads to", "caused by"</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Layout</div>
-            <div class="setting-row"><div class="setting-info"><div class="label">Direction</div></div><div class="segment"><div class="seg-btn active">Horizontal</div><div class="seg-btn">Vertical</div><div class="seg-btn">List</div></div></div>
-          </div>
-          <div class="settings-group">
-            <div class="settings-group-label">Export</div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PNG image</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PDF (printable)</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Interactive HTML</div></div></div>
-            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PowerPoint slide</div></div></div>
-          </div>
-          <button class="start-btn">Create Timeline →</button>
-        </div>
-        <div id="tl-ml" class="tl-settings" style="display:none;"><div class="settings-header"><h2>🌍 Millennia Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
-        <div id="tl-ct" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📜 Centuries Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
-        <div id="tl-dc" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📰 Decades Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
-        <div id="tl-mw" class="tl-settings" style="display:none;"><div class="settings-header"><h2>🗓️ Month / Week Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
-        <div id="tl-dy" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📋 Daily Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
-      </div>
-    </div>
-
   </div>
 </div>
 
+
+<!-- ═══════════ STAGE 2 ═══════════ -->
+<div id="page-2" class="page">
+  <div class="topbar">
+    <span class="topbar-logo">cautie</span>
+    <div class="breadcrumb">
+      <span>Study Tool</span><span class="sep">›</span><span>Add material</span><span class="sep">›</span><span class="crumb-active">Settings</span>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot done"></div><div class="step-dot active"></div>
+      <span class="step-label">Step 2 of 2</span>
+    </div>
+  </div>
+
+  <div class="scenario-bar">
+    <span class="scenario-label">Demo:</span>
+    <button class="scenario-btn active"  onclick="setScenario('hist_dates',this)">History + dates</button>
+    <button class="scenario-btn"         onclick="setScenario('hist_nodates',this)">History, no dates</button>
+    <button class="scenario-btn"         onclick="setScenario('science',this)">Biology</button>
+    <button class="scenario-btn"         onclick="setScenario('language',this)">Language</button>
+    <button class="scenario-btn"         onclick="setScenario('code',this)">Programming</button>
+    <button class="scenario-btn"         onclick="setScenario('literature',this)">Literature</button>
+  </div>
+
+  <div class="s2-body"><div class="s2-layout">
+
+    <!-- LEFT -->
+    <div class="s2-left">
+
+      <!-- AI classification output -->
+      <div class="ai-class-card">
+        <div class="ai-class-title">AI classification</div>
+        <div class="class-rows" id="class-rows"></div>
+      </div>
+
+      <div class="tool-list">
+        <div class="tool-list-label">Tool</div>
+        <div class="tool-row active" id="trow-fc" onclick="setTool('fc')">
+          <div class="tool-row-icon">FC</div>
+          <div class="tool-row-info"><div class="tool-row-name">Flashcards</div><div class="tool-row-desc">Terms &amp; definitions</div></div>
+        </div>
+        <div class="tool-row" id="trow-qz" onclick="setTool('qz')">
+          <div class="tool-row-icon">QZ</div>
+          <div class="tool-row-info"><div class="tool-row-name">Quiz</div><div class="tool-row-desc">Adaptive questions</div></div>
+        </div>
+        <div class="tool-row" id="trow-tl" onclick="setTool('tl')">
+          <div class="tool-row-icon">TL</div>
+          <div class="tool-row-info"><div class="tool-row-name">Timeline</div><div class="tool-row-desc">Chronological view</div></div>
+        </div>
+        <div class="tool-row" id="trow-nt" onclick="setTool('nt')">
+          <div class="tool-row-icon">NT</div>
+          <div class="tool-row-info"><div class="tool-row-name">Notes</div><div class="tool-row-desc">Structured summary</div></div>
+        </div>
+        <div class="tool-row" id="trow-mm" onclick="setTool('mm')">
+          <div class="tool-row-icon">MM</div>
+          <div class="tool-row-info"><div class="tool-row-name">Mindmap</div><div class="tool-row-desc">Concept connections</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="s2-right">
+
+      <!-- FLASHCARDS -->
+      <div class="tool-panel active" id="panel-fc">
+
+        <div class="scenario-panel active" id="fc-hist_dates">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Term → Definition</span>
+                <span class="pill selected" onclick="togglePill(this)">Date → Event</span>
+                <span class="pill selected" onclick="togglePill(this)">Person → Role</span>
+                <span class="pill" onclick="togglePill(this)">Cause → Effect</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Study Mode</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Learn Mode</span>
+                <span class="pill" onclick="togglePill(this)">Matching Game</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Reveal</span>
+              <div class="pills">
+                <span class="pill" onclick="togglePill(this)">Click to reveal</span>
+                <span class="pill selected" onclick="togglePill(this)">Instant reveal</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Filter</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">All cards</span>
+                <span class="pill" onclick="togglePill(this)">Hard cards first</span>
+                <span class="pill" onclick="togglePill(this)">Dates only</span>
+                <span class="pill" onclick="togglePill(this)">People only</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+
+        <div class="scenario-panel" id="fc-hist_nodates">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Term → Definition</span>
+                <span class="pill selected" onclick="togglePill(this)">Person → Role</span>
+                <span class="pill" onclick="togglePill(this)">Cause → Effect</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Study Mode</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Learn Mode</span>
+                <span class="pill" onclick="togglePill(this)">Matching Game</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Reveal</span>
+              <div class="pills">
+                <span class="pill" onclick="togglePill(this)">Click to reveal</span>
+                <span class="pill selected" onclick="togglePill(this)">Instant reveal</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+
+        <div class="scenario-panel" id="fc-science">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Term → Definition</span>
+                <span class="pill selected" onclick="togglePill(this)">Structure → Function</span>
+                <span class="pill selected" onclick="togglePill(this)">Process → Steps</span>
+                <span class="pill" onclick="togglePill(this)">Species → Classification</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Diagram Cards</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Label the diagram</span>
+                <span class="pill" onclick="togglePill(this)">Text only</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Study Mode</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Learn Mode</span>
+                <span class="pill" onclick="togglePill(this)">Matching Game</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+
+        <div class="scenario-panel" id="fc-language">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Word → Translation</span>
+                <span class="pill selected" onclick="togglePill(this)">Sentence → Fill-in-blank</span>
+                <span class="pill" onclick="togglePill(this)">Word → Example sentence</span>
+                <span class="pill" onclick="togglePill(this)">Conjugation table</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Audio</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Read word aloud</span>
+                <span class="pill" onclick="togglePill(this)">Off</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+
+        <div class="scenario-panel" id="fc-code">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Concept → Syntax</span>
+                <span class="pill selected" onclick="togglePill(this)">Function → What it does</span>
+                <span class="pill selected" onclick="togglePill(this)">Code → Output</span>
+                <span class="pill" onclick="togglePill(this)">Error → Fix</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Study Mode</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Learn Mode</span>
+                <span class="pill" onclick="togglePill(this)">Matching Game</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+
+        <div class="scenario-panel" id="fc-literature">
+          <div class="settings-card">
+            <div class="settings-card-title">Flashcards</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Card Format</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Character → Traits / Role</span>
+                <span class="pill selected" onclick="togglePill(this)">Quote → Speaker</span>
+                <span class="pill" onclick="togglePill(this)">Symbol → Meaning</span>
+                <span class="pill" onclick="togglePill(this)">Event → Chapter</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Study Mode</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Learn Mode</span>
+                <span class="pill" onclick="togglePill(this)">Matching Game</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Flashcards</button>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div class="tool-panel" id="panel-qz">
+
+        <div class="scenario-panel active" id="qz-hist_dates">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill selected" onclick="togglePill(this)">True / False</span>
+                <span class="pill selected" onclick="togglePill(this)">Chronological Ordering</span>
+                <span class="pill selected" onclick="togglePill(this)">Match Person → Event</span>
+                <span class="pill selected" onclick="togglePill(this)">Timeline Question</span>
+                <span class="pill" onclick="togglePill(this)">Short Answer</span>
+                <span class="pill" onclick="togglePill(this)">Fill in the blank</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Difficulty</span>
+              <div class="pills">
+                <span class="pill" onclick="togglePill(this)">Easy</span>
+                <span class="pill selected" onclick="togglePill(this)">Medium</span>
+                <span class="pill" onclick="togglePill(this)">Hard</span>
+                <span class="pill" onclick="togglePill(this)">Adaptive</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Answer Reveal</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Immediate</span>
+                <span class="pill" onclick="togglePill(this)">At end</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Questions</span>
+              <input type="number" class="num-input" value="15" />
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+
+        <div class="scenario-panel" id="qz-hist_nodates">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill selected" onclick="togglePill(this)">True / False</span>
+                <span class="pill selected" onclick="togglePill(this)">Match Person → Event</span>
+                <span class="pill" onclick="togglePill(this)">Short Answer</span>
+                <span class="pill" onclick="togglePill(this)">Fill in the blank</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Difficulty</span>
+              <div class="pills">
+                <span class="pill" onclick="togglePill(this)">Easy</span>
+                <span class="pill selected" onclick="togglePill(this)">Medium</span>
+                <span class="pill" onclick="togglePill(this)">Hard</span>
+                <span class="pill" onclick="togglePill(this)">Adaptive</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Questions</span>
+              <input type="number" class="num-input" value="15" />
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+
+        <div class="scenario-panel" id="qz-science">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill selected" onclick="togglePill(this)">Label the Diagram</span>
+                <span class="pill selected" onclick="togglePill(this)">Order the Process</span>
+                <span class="pill" onclick="togglePill(this)">Classify the Species</span>
+                <span class="pill" onclick="togglePill(this)">True / False</span>
+                <span class="pill" onclick="togglePill(this)">Short Answer</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group">
+              <span class="setting-group-label">Difficulty</span>
+              <div class="pills">
+                <span class="pill" onclick="togglePill(this)">Easy</span><span class="pill selected" onclick="togglePill(this)">Medium</span><span class="pill" onclick="togglePill(this)">Hard</span><span class="pill" onclick="togglePill(this)">Adaptive</span>
+              </div>
+            </div>
+            <div class="setting-group"><span class="setting-group-label">Questions</span><input type="number" class="num-input" value="15" /></div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+
+        <div class="scenario-panel" id="qz-language">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Translate the sentence</span>
+                <span class="pill selected" onclick="togglePill(this)">Fill in the blank</span>
+                <span class="pill selected" onclick="togglePill(this)">Correct the grammar</span>
+                <span class="pill" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill" onclick="togglePill(this)">Match word → meaning</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group"><span class="setting-group-label">Questions</span><input type="number" class="num-input" value="20" /></div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+
+        <div class="scenario-panel" id="qz-code">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill selected" onclick="togglePill(this)">What is the output?</span>
+                <span class="pill selected" onclick="togglePill(this)">Spot the bug</span>
+                <span class="pill selected" onclick="togglePill(this)">Complete the function</span>
+                <span class="pill" onclick="togglePill(this)">Explain this code</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group"><span class="setting-group-label">Questions</span><input type="number" class="num-input" value="15" /></div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+
+        <div class="scenario-panel" id="qz-literature">
+          <div class="settings-card">
+            <div class="settings-card-title">Quiz</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Question Types</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Multiple Choice</span>
+                <span class="pill selected" onclick="togglePill(this)">Who said this quote?</span>
+                <span class="pill selected" onclick="togglePill(this)">Match theme → chapter</span>
+                <span class="pill selected" onclick="togglePill(this)">Plot ordering</span>
+                <span class="pill" onclick="togglePill(this)">Character motivation</span>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="setting-group"><span class="setting-group-label">Questions</span><input type="number" class="num-input" value="15" /></div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Quiz</button>
+        </div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="tool-panel" id="panel-tl">
+
+        <div class="scenario-panel active" id="tl-hist_dates">
+          <div class="settings-card">
+            <div class="settings-card-title">Timeline</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Time Range</span>
+              <div class="input-row">
+                <input type="text" class="text-input" style="width:100px;" value="1789" />
+                <span class="input-sep">to</span>
+                <input type="text" class="text-input" style="width:100px;" value="1815" />
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Display</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Events &amp; Milestones</span>
+                <span class="pill" onclick="togglePill(this)">Events only</span>
+                <span class="pill" onclick="togglePill(this)">Milestones only</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Visual</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Color by category</span>
+                <span class="pill selected" onclick="togglePill(this)">Historical periods</span>
+                <span class="pill" onclick="togglePill(this)">Cause-effect lines</span>
+                <span class="pill" onclick="togglePill(this)">Include images</span>
+              </div>
+            </div>
+            <div class="setting-group">
+              <span class="setting-group-label">Direction</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Horizontal</span>
+                <span class="pill" onclick="togglePill(this)">Vertical</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Create Timeline</button>
+        </div>
+
+        <!-- timeline: n — no settings, just unavailable -->
+        <div class="scenario-panel" id="tl-hist_nodates">
+          <div class="unavailable-notice"><p><strong>Not available.</strong><br>No specific dates or years detected in your material.</p></div>
+        </div>
+        <div class="scenario-panel" id="tl-science">
+          <div class="unavailable-notice"><p><strong>Not available.</strong><br>No chronological structure detected in this biology material.</p></div>
+        </div>
+        <div class="scenario-panel" id="tl-language">
+          <div class="unavailable-notice"><p><strong>Not available.</strong><br>Vocabulary and grammar content has no chronological structure.</p></div>
+        </div>
+        <div class="scenario-panel" id="tl-code">
+          <div class="settings-card">
+            <div class="settings-card-title">Timeline — Algorithm steps</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Type</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Algorithm steps</span>
+                <span class="pill" onclick="togglePill(this)">Version history</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Create Timeline</button>
+        </div>
+        <div class="scenario-panel" id="tl-literature">
+          <div class="settings-card">
+            <div class="settings-card-title">Timeline — Plot</div>
+            <div class="setting-group">
+              <span class="setting-group-label">Plot elements</span>
+              <div class="pills">
+                <span class="pill selected" onclick="togglePill(this)">Key events</span>
+                <span class="pill selected" onclick="togglePill(this)">Character arcs</span>
+                <span class="pill" onclick="togglePill(this)">Chapter markers</span>
+              </div>
+            </div>
+          </div>
+          <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Create Timeline</button>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="tool-panel" id="panel-nt">
+        <div class="settings-card">
+          <div class="settings-card-title">Notes</div>
+          <div class="setting-group"><span class="setting-group-label">Format</span><div class="pills"><span class="pill selected" onclick="togglePill(this)">Structured</span><span class="pill" onclick="togglePill(this)">Cornell</span><span class="pill" onclick="togglePill(this)">Outline</span><span class="pill" onclick="togglePill(this)">Free</span><span class="pill" onclick="togglePill(this)">Markdown</span></div></div>
+          <div class="setting-group"><span class="setting-group-label">Include</span><div class="pills"><span class="pill selected" onclick="togglePill(this)">Summary</span><span class="pill selected" onclick="togglePill(this)">Key points</span><span class="pill" onclick="togglePill(this)">Study questions</span><span class="pill" onclick="togglePill(this)">Mindmap preview</span></div></div>
+          <div class="setting-group"><span class="setting-group-label">Length</span><div class="pills"><span class="pill" onclick="togglePill(this)">Short</span><span class="pill selected" onclick="togglePill(this)">Medium</span><span class="pill" onclick="togglePill(this)">Detailed</span></div></div>
+        </div>
+        <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Generate Notes</button>
+      </div>
+
+      <!-- MINDMAP -->
+      <div class="tool-panel" id="panel-mm">
+        <div class="settings-card">
+          <div class="settings-card-title">Mindmap</div>
+          <div class="setting-group"><span class="setting-group-label">Layout</span><div class="pills"><span class="pill selected" onclick="togglePill(this)">Radial</span><span class="pill" onclick="togglePill(this)">Fishbone</span><span class="pill" onclick="togglePill(this)">Org Chart</span><span class="pill" onclick="togglePill(this)">Flowchart</span><span class="pill" onclick="togglePill(this)">Concept Map</span></div></div>
+          <div class="setting-group"><span class="setting-group-label">Visual</span><div class="pills"><span class="pill selected" onclick="togglePill(this)">Size by importance</span><span class="pill selected" onclick="togglePill(this)">Color by category</span><span class="pill" onclick="togglePill(this)">Node icons</span><span class="pill" onclick="togglePill(this)">Animation</span></div></div>
+        </div>
+        <button class="generate-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Create Mindmap</button>
+      </div>
+
+    </div>
+  </div></div>
+</div>
+
 <script>
-  const toolNames = ['fc','qz','nt','mm','tl'];
+  // AI classification output per scenario
+  // This is what the AI would return after reading the content
+  const classifications = {
+    hist_dates:   { timeline: 'y', dates: 'y', people: 'y', processes: 'n', diagrams: 'n', vocabulary: 'n', code: 'n', quotes: 'n', sequential_plot: 'n' },
+    hist_nodates: { timeline: 'n', dates: 'n', people: 'y', processes: 'n', diagrams: 'n', vocabulary: 'n', code: 'n', quotes: 'n', sequential_plot: 'n' },
+    science:      { timeline: 'n', dates: 'n', people: 'n', processes: 'y', diagrams: 'y', vocabulary: 'y', code: 'n', quotes: 'n', sequential_plot: 'n' },
+    language:     { timeline: 'n', dates: 'n', people: 'n', processes: 'n', diagrams: 'n', vocabulary: 'y', code: 'n', quotes: 'n', sequential_plot: 'n' },
+    code:         { timeline: 'y', dates: 'n', people: 'n', processes: 'y', diagrams: 'n', vocabulary: 'n', code: 'y', quotes: 'n', sequential_plot: 'n' },
+    literature:   { timeline: 'y', dates: 'n', people: 'y', processes: 'n', diagrams: 'n', vocabulary: 'n', code: 'n', quotes: 'y', sequential_plot: 'y' },
+  };
 
-  function switchTool(idx) {
-    document.querySelectorAll('.tool-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
-    document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===idx));
-    document.querySelectorAll('.nav-item').forEach((n,i) => {
-      if (i >= 2) n.classList.toggle('active', i-2 === idx);
-    });
+  let currentScenario = 'hist_dates';
+  let currentTool     = 'fc';
+
+  function goToStage2() {
+    document.getElementById('page-1').classList.remove('active');
+    document.getElementById('page-2').classList.add('active');
   }
 
-  function selectMode(card, tool, modeId) {
-    card.closest('.panel-left').querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-    card.classList.add('active');
-
-    document.querySelectorAll(`.${tool}-settings`).forEach(s => s.style.display = 'none');
-    const target = document.getElementById(`${tool}-${modeId}`);
-    if (target) target.style.display = 'block';
+  function setScenario(name, btn) {
+    currentScenario = name;
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderClassification();
+    refreshPanels();
   }
 
-  function selectRadio(opt) {
-    opt.closest('.radio-group').querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
-    opt.classList.add('selected');
+  function renderClassification() {
+    const cls = classifications[currentScenario];
+    const labels = {
+      timeline: 'timeline', dates: 'dates', people: 'people',
+      processes: 'processes', diagrams: 'diagrams', vocabulary: 'vocabulary',
+      code: 'code', quotes: 'quotes', sequential_plot: 'sequential_plot',
+    };
+    document.getElementById('class-rows').innerHTML = Object.entries(cls)
+      .map(([k, v]) => `
+        <div class="class-row">
+          <span class="class-key">${labels[k]}</span>
+          <span class="class-val ${v}">${v}</span>
+        </div>`)
+      .join('');
   }
+
+  function setTool(tool) {
+    currentTool = tool;
+    document.querySelectorAll('.tool-row').forEach(r => r.classList.remove('active'));
+    document.getElementById('trow-' + tool).classList.add('active');
+    refreshPanels();
+  }
+
+  function refreshPanels() {
+    document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('panel-' + currentTool);
+    if (!panel) return;
+    panel.classList.add('active');
+    panel.querySelectorAll('.scenario-panel').forEach(s => s.classList.remove('active'));
+    const target = panel.querySelector('#' + currentTool + '-' + currentScenario);
+    if (target) target.classList.add('active');
+    else { const fb = panel.querySelector('.scenario-panel'); if (fb) fb.classList.add('active'); }
+  }
+
+  function togglePill(el) { el.classList.toggle('selected'); }
+
+  renderClassification();
 </script>
 </body>
 </html>
