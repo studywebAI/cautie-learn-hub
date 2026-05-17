@@ -598,12 +598,15 @@
     font-size: 18px !important;
     line-height: 1.3889;
   }
-  .font-bold,
-  .font-semibold,
   .font-medium,
   .font-normal,
   .font-headline {
     font-weight: 400 !important;
+  }
+
+  .font-semibold,
+  .font-bold {
+    font-weight: 600 !important;
   }
   b,
   strong {

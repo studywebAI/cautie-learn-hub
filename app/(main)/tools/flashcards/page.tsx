@@ -755,7 +755,7 @@ function FlashcardsPageContent() {
             <div className="flex gap-5 mb-6 h-72">
               {/* Textarea */}
               <div className="flex-1 flex flex-col">
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">Your content</label>
+                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Your content</div>
                 <textarea
                   value={sourceText}
                   onChange={(e) => setSourceText(e.target.value)}
@@ -767,7 +767,7 @@ function FlashcardsPageContent() {
 
               {/* Added sources */}
               <div className="w-60 flex flex-col border-l border-border pl-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
                 <div className="flex-1 overflow-y-auto flex flex-col gap-2">
                   <div className="text-center text-muted-foreground text-xs py-12 flex flex-col items-center justify-center">
                     <svg className="w-6 h-6 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9-4 9 4" /></svg>

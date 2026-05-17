@@ -425,13 +425,13 @@ function QuizPageContent() {
   const sidebar = (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <p className="text-xs font-medium text-muted-foreground">Title</p>
+        <p className="text-xs font-semibold text-muted-foreground">Title</p>
         <Input value={title} onChange={(event) => setTitle(event.target.value)} className="h-9 surface-panel text-sm" disabled={loading} />
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">Mode</p>
+          <p className="text-xs font-semibold text-muted-foreground">Mode</p>
         </div>
         <div className="flex flex-wrap gap-2 pt-1">
           {[
@@ -476,7 +476,7 @@ function QuizPageContent() {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">Answer reveal</p>
+          <p className="text-xs font-semibold text-muted-foreground">Answer reveal</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {['immediate', 'end'].map((entry) => (
@@ -488,7 +488,7 @@ function QuizPageContent() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs font-medium text-muted-foreground">Question types</p>
+        <p className="text-xs font-semibold text-muted-foreground">Question types</p>
         <div className="flex flex-wrap gap-2">
           {QUIZ_TYPES.filter((entry) => isQuizTypeAvailable(entry.value, contentClass)).map((entry) => (
             <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
@@ -500,7 +500,7 @@ function QuizPageContent() {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">Knowledge</p>
+          <p className="text-xs font-semibold text-muted-foreground">Knowledge</p>
         </div>
         <Slider value={[knowledgeScore]} onValueChange={([value]) => setKnowledgeScore(value)} min={0} max={100} step={1} disabled={loading} />
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -511,7 +511,7 @@ function QuizPageContent() {
 
       <div className="space-y-2 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium text-muted-foreground">Questions</p>
+          <p className="text-xs font-semibold text-muted-foreground">Questions</p>
           <span className="text-xs font-mono">{mode === 'adaptive' ? 12 : questionCount}</span>
         </div>
         <Slider
@@ -525,7 +525,7 @@ function QuizPageContent() {
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs font-medium text-muted-foreground">Focus on</p>
+        <p className="text-xs font-semibold text-muted-foreground">Focus on</p>
         <div className="flex flex-wrap gap-2">
           {[
             { value: 'accuracy', label: 'Accuracy' },
@@ -744,7 +744,7 @@ function QuizPageContent() {
             <div className="flex gap-4 mb-5 h-56">
               {/* Textarea */}
               <div className="flex-1 flex flex-col">
-                <label className="text-xs font-semibold uppercase tracking-wider text-foreground mb-2 block">Your content</label>
+                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Your content</div>
                 <textarea
                   value={sourceText}
                   onChange={(e) => setSourceText(e.target.value)}
@@ -756,7 +756,7 @@ function QuizPageContent() {
 
               {/* Added sources */}
               <div className="w-48 flex flex-col border-l border-border pl-3">
-                <div className="text-xs font-semibold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
+                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
                 <div className="flex-1 overflow-y-auto flex flex-col gap-2">
                   <div className="text-center text-muted-foreground text-xs py-12 flex flex-col items-center justify-center">
                     <svg className="w-6 h-6 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9-4 9 4" /></svg>
