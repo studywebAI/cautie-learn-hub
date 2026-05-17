@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grades Tab — Cautie Mockup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f11;
+      color: #e8e8ec;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #18181c;
+      border-right: 1px solid #2a2a30;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .sidebar-logo { font-size: 15px; font-weight: 700; color: #ff9500; padding: 4px 10px 16px; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; padding: 8px 10px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px; font-size: 13px; color: #777;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .nav-item:hover { background: #232328; color: #e8e8ec; }
+    .nav-item.active { background: #232328; color: #fff; font-weight: 600; }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; padding: 32px 40px; }
+    .max-w { max-width: 820px; margin: 0 auto; }
+
+    /* Screen tabs */
+    .screen-tabs {
+      display: flex; gap: 0; margin-bottom: 28px;
+      border-bottom: 1px solid #2a2a30;
+    }
+    .screen-tab {
+      padding: 7px 16px 11px; font-size: 12px; font-weight: 600; color: #555;
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .screen-tab.active { color: #ff9500; border-bottom-color: #ff9500; }
+    .screen-tab:hover { color: #aaa; }
+
+    /* Page header */
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: #666; margin-bottom: 24px; }
+
+    /* Step indicator bar */
+    .step-bar { display: flex; gap: 8px; margin-bottom: 28px; }
+    .step-seg { flex: 1; }
+    .step-seg .bar { height: 3px; border-radius: 999px; }
+    .step-seg .bar.done { background: rgba(16,185,129,0.6); }
+    .step-seg .bar.active { background: #ff9500; }
+    .step-seg .bar.pending { background: #2a2a30; }
+    .step-seg .lbl { font-size: 10px; margin-top: 5px; font-weight: 600; }
+    .step-seg .lbl.done { color: #10b981; }
+    .step-seg .lbl.active { color: #ff9500; }
+    .step-seg .lbl.pending { color: #444; }
+
+    /* Card */
+    .card {
+      background: #1e1e23;
+      border: 1px solid #2a2a30;
+      border-radius: 14px;
+      padding: 24px;
+    }
+    .card-sm {
+      background: #1e1e23;
+      border: 1px solid #2a2a30;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      font-size: 12px; font-weight: 600; color: #aaa;
+      margin-bottom: 8px; display: block;
+    }
+    .form-label .req { color: #ef4444; margin-left: 3px; }
+    .form-input {
+      width: 100%;
+      background: #141417;
+      border: 1px solid #2a2a30;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      color: #e8e8ec;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: #ff9500; }
+    .form-input::placeholder { color: #3a3a44; }
+    select.form-input { cursor: pointer; }
+    textarea.form-input { resize: none; font-family: inherit; }
+
+    /* Weight stepper */
+    .stepper { display: flex; align-items: center; gap: 0; width: fit-content; }
+    .step-btn {
+      width: 36px; height: 36px;
+      background: #141417; border: 1px solid #2a2a30;
+      color: #aaa; font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s; user-select: none;
+    }
+    .step-btn:first-child { border-radius: 8px 0 0 8px; }
+    .step-btn:last-child { border-radius: 0 8px 8px 0; border-left: none; }
+    .step-btn:hover { background: #252529; color: #fff; }
+    .step-val {
+      width: 52px; height: 36px;
+      background: #141417; border: 1px solid #2a2a30; border-left: none; border-right: none;
+      text-align: center; font-size: 14px; font-weight: 700; color: #fff;
+      outline: none;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; transition: all 0.15s;
+    }
+    .btn-primary { background: #ff9500; color: #000; }
+    .btn-primary:hover { background: #e08700; }
+    .btn-primary:disabled { background: #3a3a42; color: #666; cursor: default; }
+    .btn-secondary { background: transparent; border: 1px solid #2a2a30; color: #aaa; }
+    .btn-secondary:hover { background: #232328; color: #fff; }
+    .btn-ghost { background: transparent; border: none; color: #666; }
+    .btn-ghost:hover { color: #aaa; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    .wizard-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 24px; padding-top: 16px; border-top: 1px solid #2a2a30;
+    }
+
+    /* Class selector rows */
+    .class-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border: 2px solid #2a2a30; border-radius: 10px;
+      cursor: pointer; margin-bottom: 8px; transition: all 0.15s;
+    }
+    .class-row:hover { border-color: rgba(255,149,0,0.35); }
+    .class-row.selected { border-color: #ff9500; background: rgba(255,149,0,0.05); }
+    .class-row h4 { font-size: 13px; font-weight: 600; }
+    .class-row p { font-size: 11px; color: #666; margin-top: 2px; }
+
+    /* Subject pills */
+    .subject-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .subject-pill {
+      padding: 7px 14px; border-radius: 999px; border: 2px solid #2a2a30;
+      font-size: 12px; font-weight: 600; color: #777; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .subject-pill:hover { border-color: rgba(255,149,0,0.4); color: #ccc; }
+    .subject-pill.selected { border-color: #ff9500; background: rgba(255,149,0,0.08); color: #ff9500; }
+
+    /* Grade cards */
+    .grade-card {
+      background: #1e1e23; border: 1px solid #2a2a30; border-radius: 12px;
+      padding: 14px 16px; cursor: pointer; transition: all 0.15s;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .grade-card:hover { background: #252529; border-color: #3a3a42; }
+    .grade-card-content { flex: 1; min-width: 0; }
+    .grade-card h3 { font-size: 13px; font-weight: 600; }
+    .grade-card p { font-size: 11px; color: #666; margin-top: 2px; }
+    .badge {
+      font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    }
+    .badge-orange { background: rgba(255,149,0,0.15); color: #ff9500; }
+    .badge-green  { background: rgba(16,185,129,0.15); color: #10b981; }
+    .badge-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+
+    /* ── Grading table ── */
+    .search-bar {
+      display: flex; align-items: center; gap: 8px;
+      background: #141417; border: 1px solid #2a2a30; border-radius: 9px;
+      padding: 8px 12px; font-size: 13px; color: #555; margin-bottom: 12px;
+    }
+    .filter-row { display: flex; gap: 6px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-pill {
+      font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
+      border: 1px solid #2a2a30; cursor: pointer; color: #666; transition: all 0.15s;
+    }
+    .filter-pill.active { background: #ff9500; border-color: #ff9500; color: #000; }
+    .filter-pill:hover:not(.active) { border-color: #3a3a42; color: #ccc; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-size: 10px; font-weight: 700; color: #555; text-transform: uppercase;
+      letter-spacing: 0.06em; padding: 8px 10px; text-align: left;
+      border-bottom: 1px solid #2a2a30;
+    }
+    tbody tr { border-bottom: 1px solid #1a1a20; cursor: pointer; }
+    tbody tr:hover { background: #222228; }
+    tbody td { padding: 10px; font-size: 13px; }
+
+    .grade-input {
+      width: 58px; text-align: center; background: #141417;
+      border: 1px solid #2a2a30; border-radius: 7px; padding: 5px 6px;
+      font-size: 13px; font-weight: 700; color: #e8e8ec; outline: none;
+    }
+    .grade-input:focus { border-color: #ff9500; }
+    .grade-input::placeholder { color: #333; font-weight: 400; }
+
+    /* ── Expanded student row ── */
+    .expanded-row { background: #141417; }
+    .expanded-content {
+      padding: 16px 14px 16px 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .exp-section h5 {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #555; margin-bottom: 10px;
+    }
+    .prev-grade-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 5px 0; font-size: 12px; border-bottom: 1px solid #1e1e24;
+    }
+    .prev-grade-row:last-child { border-bottom: none; }
+    .prev-grade-row .g-title { color: #999; }
+    .prev-grade-row .g-val { font-weight: 700; }
+    .g-good { color: #10b981; }
+    .g-ok   { color: #ff9500; }
+    .g-bad  { color: #ef4444; }
+
+    .avg-box {
+      background: #1a1a20; border-radius: 10px; padding: 12px 14px;
+    }
+    .avg-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .avg-row .lbl { color: #666; }
+    .avg-row .val { font-weight: 700; }
+    .avg-row .val.live { color: #ff9500; }
+    .avg-row .val.prev { color: #aaa; }
+
+    .progress-bar { width: 100%; height: 5px; background: #2a2a30; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+    .progress-fill { height: 100%; border-radius: 999px; }
+
+    /* Summary */
+    .summary-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+      background: #141417; border-radius: 12px; padding: 14px; margin-top: 16px;
+    }
+    .stat-lbl { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .stat-val { font-size: 20px; font-weight: 700; }
+
+    /* Detail screen */
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+    .detail-stat-box {
+      background: #1e1e23; border: 1px solid #2a2a30; border-radius: 12px; padding: 16px;
+    }
+    .detail-stat-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; margin-bottom: 6px; }
+    .detail-stat-box .big { font-size: 28px; font-weight: 700; }
+    .detail-stat-box .sub { font-size: 11px; color: #666; margin-top: 4px; }
+
+    .dist-row { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #666; margin-bottom: 5px; }
+    .dist-row .g { width: 24px; font-weight: 700; color: #aaa; }
+    .dist-bg { flex: 1; height: 5px; background: #2a2a30; border-radius: 999px; overflow: hidden; }
+    .dist-fill { height: 100%; background: #ff9500; border-radius: 999px; }
+    .dist-row .n { width: 16px; text-align: right; font-weight: 600; color: #ccc; }
+
+    /* Student list in detail */
+    .student-grade-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid #1a1a20; font-size: 13px;
+    }
+    .student-grade-row:last-child { border-bottom: none; }
+    .student-grade-row .name { color: #ccc; }
+    .student-grade-row .gval { font-weight: 700; }
+
+    /* Existing grades extra info */
+    .eg-row {
+      display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap;
+    }
+    .eg-chip {
+      font-size: 10px; padding: 2px 8px; border-radius: 5px;
+      background: #1a1a20; color: #777; border: 1px solid #2a2a30;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">cautie</div>
+  <div class="nav-item">🏠 Dashboard</div>
+  <div class="nav-item">📚 Subjects</div>
+  <div class="nav-item active">📊 Grades</div>
+  <div class="nav-item">📅 Agenda</div>
+  <div class="nav-section">Tools</div>
+  <div class="nav-item">🗂️ Study Set</div>
+  <div class="nav-item">🧠 Quiz</div>
+  <div class="nav-item">🃏 Flashcards</div>
+  <div class="nav-item">📝 Notes</div>
+</nav>
+
+<div class="main">
+<div class="max-w">
+
+  <!-- Screen tabs -->
+  <div class="screen-tabs">
+    <div class="screen-tab active" onclick="go(0)">① Landing</div>
+    <div class="screen-tab" onclick="go(1)">② Step 1 — Titel & info</div>
+    <div class="screen-tab" onclick="go(2)">③ Step 2 — Klas & Vak</div>
+    <div class="screen-tab" onclick="go(3)">④ Grading Interface</div>
+    <div class="screen-tab" onclick="go(4)">⑤ Grade Detail</div>
+    <div class="screen-tab" onclick="go(5)">⑥ Existing Grades</div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 0 · LANDING                   -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen active" id="s0">
+    <div class="page-title">Grades</div>
+    <div class="page-sub">Welcome back 👋</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">
+      <div class="card" style="cursor:pointer;text-align:center;" onclick="go(1)">
+        <div style="font-size:30px;margin-bottom:10px;">➕</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">New Grade</div>
+        <div style="font-size:12px;color:#666;">Create a new grade set</div>
+      </div>
+      <div class="card" style="cursor:pointer;text-align:center;" onclick="go(5)">
+        <div style="font-size:30px;margin-bottom:10px;">📋</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Existing Grades</div>
+        <div style="font-size:12px;color:#666;">View & manage grades</div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#555;margin-bottom:10px;">Recent Grades</div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <h3>Biology Test 1</h3>
+        <p>May 15 · Chemistry · <span style="color:#aaa;font-weight:600;">5 pts</span></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="badge badge-orange">Kwartaal 1</span>
+        <span style="font-size:12px;font-weight:700;color:#777;">[8/25]</span>
+      </div>
+    </div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <h3>Math Quiz</h3>
+        <p>May 12 · Class 3A · <span style="color:#aaa;font-weight:600;">3 pts</span></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="badge badge-green">Completed</span>
+        <span style="font-size:12px;font-weight:700;color:#777;">[22/22]</span>
+      </div>
+    </div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <h3>Essay Writing</h3>
+        <p>May 8 · English · <span style="color:#aaa;font-weight:600;">8 pts</span></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="badge badge-blue">In Progress</span>
+        <span style="font-size:12px;font-weight:700;color:#777;">[15/30]</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 1 · STEP 1 — Titel & info     -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="s1">
+    <button class="btn btn-ghost btn-sm" onclick="go(0)" style="margin-bottom:12px;">← Back</button>
+    <div class="page-title" style="margin-bottom:4px;">New Grade Set</div>
+    <div class="page-sub">Step 1 of 2</div>
+
+    <div class="step-bar">
+      <div class="step-seg"><div class="bar active"></div><div class="lbl active">Titel & info</div></div>
+      <div class="step-seg"><div class="bar pending"></div><div class="lbl pending">Klas & Vak</div></div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:13px;color:#666;margin-bottom:20px;">Geef de cijferlijst een naam en eventuele beschrijving.</div>
+
+      <div class="form-group">
+        <label class="form-label">Grade Titel <span class="req">*</span></label>
+        <input class="form-input" type="text" placeholder="bijv. Biologie Toets 1" value="Biologie Toets 1" />
+      </div>
+
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Beschrijving <span style="color:#444;font-weight:400;">(optioneel)</span></label>
+        <textarea class="form-input" rows="3" placeholder="Voeg instructies of opmerkingen toe voor jezelf…"></textarea>
+      </div>
+
+      <div class="wizard-footer">
+        <span style="font-size:12px;color:#555;">Stap 1 van 2</span>
+        <button class="btn btn-primary" onclick="go(2)">Volgende →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 2 · STEP 2 — Klas & Vak       -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="s2">
+    <button class="btn btn-ghost btn-sm" onclick="go(1)" style="margin-bottom:12px;">← Back</button>
+    <div class="page-title" style="margin-bottom:4px;">New Grade Set</div>
+    <div class="page-sub">Step 2 of 2</div>
+
+    <div class="step-bar">
+      <div class="step-seg"><div class="bar done"></div><div class="lbl done">✓ Titel & info</div></div>
+      <div class="step-seg"><div class="bar active"></div><div class="lbl active">Klas & Vak</div></div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:13px;color:#666;margin-bottom:20px;">Kies voor welke klas en welk vak deze cijferlijst is, en stel het gewicht in.</div>
+
+      <!-- Class -->
+      <div class="form-group">
+        <label class="form-label">Klas <span class="req">*</span></label>
+        <div class="class-row selected" onclick="selectClass(this)">
+          <div><h4>Klas 3A</h4><p>25 studenten</p></div>
+          <span style="color:#ff9500;font-size:14px;">✓</span>
+        </div>
+        <div class="class-row" onclick="selectClass(this)">
+          <div><h4>Klas 2B</h4><p>22 studenten</p></div>
+          <span style="color:#444;font-size:14px;">›</span>
+        </div>
+        <div class="class-row" onclick="selectClass(this)">
+          <div><h4>Klas 1C</h4><p>18 studenten</p></div>
+          <span style="color:#444;font-size:14px;">›</span>
+        </div>
+        <div class="class-row" onclick="selectClass(this)">
+          <div><h4>Klas 4D</h4><p>30 studenten</p></div>
+          <span style="color:#444;font-size:14px;">›</span>
+        </div>
+      </div>
+
+      <!-- Subject (Cautie subjects of the teacher - loaded per class) -->
+      <div class="form-group">
+        <label class="form-label">Vak <span style="color:#444;font-weight:400;">(optioneel)</span></label>
+        <div class="subject-pills" id="subjectPills">
+          <div class="subject-pill selected" onclick="selectPill(this)">Biologie</div>
+          <div class="subject-pill" onclick="selectPill(this)">Scheikunde</div>
+        </div>
+      </div>
+
+      <!-- Weight -->
+      <div class="form-group">
+        <label class="form-label">Gewicht / Punten <span class="req">*</span></label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="stepper">
+            <div class="step-btn" onclick="changeWeight(-0.5)">−</div>
+            <input class="step-val" id="weightVal" type="number" value="5" min="0.1" max="10" step="0.5" />
+            <div class="step-btn" onclick="changeWeight(0.5)">+</div>
+          </div>
+          <span style="font-size:11px;color:#555;">max 10</span>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn btn-secondary" onclick="go(1)">← Terug</button>
+        <button class="btn btn-primary" onclick="go(3)">Starten met beoordelen →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 3 · GRADING INTERFACE         -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="s3">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <button class="btn btn-ghost btn-sm" onclick="go(2)">← Back</button>
+      <button class="btn btn-primary btn-sm">Opslaan & sluiten</button>
+    </div>
+
+    <div class="page-title" style="font-size:18px;margin-bottom:2px;">Biologie Toets 1</div>
+    <div class="page-sub">Klas 3A · Biologie · 5 pts</div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="search-bar">🔍 Zoek studenten…</div>
+
+      <div class="filter-row">
+        <div class="filter-pill active">Alle (25)</div>
+        <div class="filter-pill">Niet beoordeeld (15)</div>
+        <div class="filter-pill">Beoordeeld (10)</div>
+        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+          <span style="font-size:11px;color:#555;">Sorteer:</span>
+          <select class="form-input" style="width:auto;padding:5px 10px;font-size:12px;">
+            <option>Naam ↑</option>
+            <option>Cijfer ↑</option>
+          </select>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th style="text-align:center;">Cijfer</th>
+            <th style="text-align:center;">Vorig gemiddelde</th>
+            <th style="text-align:center;width:40px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Normal row -->
+          <tr onclick="toggleExpand('alice')">
+            <td>Alice Johnson</td>
+            <td style="text-align:center;"><input class="grade-input" type="number" value="7.5" oninput="liveAvg(this,'alice')" /></td>
+            <td style="text-align:center;font-size:12px;color:#10b981;font-weight:600;">7.2</td>
+            <td style="text-align:center;font-size:12px;color:#555;">▾</td>
+          </tr>
+          <!-- Expanded row -->
+          <tr class="expanded-row" id="exp-alice">
+            <td colspan="4" style="padding:0;">
+              <div class="expanded-content">
+                <div class="exp-section">
+                  <h5>Vorige cijfers — Biologie</h5>
+                  <div class="prev-grade-row"><span class="g-title">Biologie Toets 1 (okt)</span><span class="g-val g-good">7.5</span></div>
+                  <div class="prev-grade-row"><span class="g-title">Quiz Celbiologie</span><span class="g-val g-ok">6.8</span></div>
+                  <div class="prev-grade-row"><span class="g-title">Practicum verslag</span><span class="g-val g-good">7.3</span></div>
+                </div>
+                <div class="exp-section">
+                  <h5>Gemiddelde (live)</h5>
+                  <div class="avg-box">
+                    <div class="avg-row"><span class="lbl">Vorig gemiddelde</span><span class="val prev">7.2</span></div>
+                    <div class="avg-row"><span class="lbl">Huidig ingevoerd</span><span class="val" id="cur-alice">7.5</span></div>
+                    <div style="height:1px;background:#2a2a30;margin:8px 0;"></div>
+                    <div class="avg-row"><span class="lbl" style="font-weight:700;color:#ccc;">Nieuw gemiddelde</span><span class="val live" id="avg-alice">7.3</span></div>
+                    <div class="progress-bar" style="margin-top:8px;">
+                      <div class="progress-fill" style="width:73%;background:#10b981;"></div>
+                    </div>
+                    <div style="font-size:10px;color:#555;margin-top:4px;">73% — Goed</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Bob — not graded -->
+          <tr onclick="toggleExpand('bob')">
+            <td>Bob Smith</td>
+            <td style="text-align:center;"><input class="grade-input" type="number" placeholder="—" oninput="liveAvg(this,'bob')" /></td>
+            <td style="text-align:center;font-size:12px;color:#ef4444;font-weight:600;">5.4</td>
+            <td style="text-align:center;font-size:12px;color:#555;">▾</td>
+          </tr>
+          <tr class="expanded-row" id="exp-bob" style="display:none;">
+            <td colspan="4" style="padding:0;">
+              <div class="expanded-content">
+                <div class="exp-section">
+                  <h5>Vorige cijfers — Biologie</h5>
+                  <div class="prev-grade-row"><span class="g-title">Biologie Toets 1 (okt)</span><span class="g-val g-bad">5.0</span></div>
+                  <div class="prev-grade-row"><span class="g-title">Quiz Celbiologie</span><span class="g-val g-bad">5.8</span></div>
+                </div>
+                <div class="exp-section">
+                  <h5>Gemiddelde (live)</h5>
+                  <div class="avg-box">
+                    <div class="avg-row"><span class="lbl">Vorig gemiddelde</span><span class="val prev">5.4</span></div>
+                    <div class="avg-row"><span class="lbl">Huidig ingevoerd</span><span class="val" id="cur-bob">—</span></div>
+                    <div style="height:1px;background:#2a2a30;margin:8px 0;"></div>
+                    <div class="avg-row"><span class="lbl" style="font-weight:700;color:#ccc;">Nieuw gemiddelde</span><span class="val live" id="avg-bob">5.4</span></div>
+                    <div class="progress-bar" style="margin-top:8px;">
+                      <div class="progress-fill" style="width:54%;background:#ef4444;"></div>
+                    </div>
+                    <div style="font-size:10px;color:#555;margin-top:4px;">54% — Onvoldoende</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr onclick="toggleExpand('carol')">
+            <td>Carol Davis</td>
+            <td style="text-align:center;"><input class="grade-input" type="number" value="8.0" /></td>
+            <td style="text-align:center;font-size:12px;color:#10b981;font-weight:600;">7.8</td>
+            <td style="text-align:center;font-size:12px;color:#555;">▾</td>
+          </tr>
+          <tr class="expanded-row" id="exp-carol" style="display:none;">
+            <td colspan="4" style="padding:0;">
+              <div class="expanded-content">
+                <div class="exp-section">
+                  <h5>Vorige cijfers — Biologie</h5>
+                  <div class="prev-grade-row"><span class="g-title">Biologie Toets 1 (okt)</span><span class="g-val g-good">8.0</span></div>
+                  <div class="prev-grade-row"><span class="g-title">Quiz Celbiologie</span><span class="g-val g-good">7.5</span></div>
+                </div>
+                <div class="exp-section">
+                  <h5>Gemiddelde (live)</h5>
+                  <div class="avg-box">
+                    <div class="avg-row"><span class="lbl">Vorig gemiddelde</span><span class="val prev">7.8</span></div>
+                    <div class="avg-row"><span class="lbl">Huidig ingevoerd</span><span class="val" id="cur-carol">8.0</span></div>
+                    <div style="height:1px;background:#2a2a30;margin:8px 0;"></div>
+                    <div class="avg-row"><span class="lbl" style="font-weight:700;color:#ccc;">Nieuw gemiddelde</span><span class="val live" id="avg-carol">7.9</span></div>
+                    <div class="progress-bar" style="margin-top:8px;">
+                      <div class="progress-fill" style="width:79%;background:#10b981;"></div>
+                    </div>
+                    <div style="font-size:10px;color:#555;margin-top:4px;">79% — Goed</div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <tr onclick="toggleExpand('david')">
+            <td>David Wilson</td>
+            <td style="text-align:center;"><input class="grade-input" type="number" value="6.5" /></td>
+            <td style="text-align:center;font-size:12px;color:#ff9500;font-weight:600;">6.8</td>
+            <td style="text-align:center;font-size:12px;color:#555;">▾</td>
+          </tr>
+          <tr class="expanded-row" id="exp-david" style="display:none;"><td colspan="4"><div style="padding:12px;color:#555;font-size:12px;">Klik op de rij om te verbergen.</div></td></tr>
+
+          <tr>
+            <td>Emma Martinez</td>
+            <td style="text-align:center;"><input class="grade-input" type="number" placeholder="—" /></td>
+            <td style="text-align:center;font-size:12px;color:#ff9500;font-weight:600;">6.1</td>
+            <td style="text-align:center;font-size:12px;color:#555;">▾</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Summary -->
+      <div class="summary-grid">
+        <div>
+          <div class="stat-lbl">Beoordeeld</div>
+          <div class="stat-val">10 <span style="font-size:13px;color:#555;">/ 25</span></div>
+        </div>
+        <div>
+          <div class="stat-lbl">Gemiddelde</div>
+          <div class="stat-val" style="color:#ff9500;">7.1</div>
+        </div>
+        <div>
+          <div class="stat-lbl">Voortgang</div>
+          <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:40%;background:#ff9500;"></div></div>
+          <div style="font-size:11px;color:#555;margin-top:4px;">40%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 4 · GRADE DETAIL              -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="s4">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <button class="btn btn-ghost btn-sm" onclick="go(0)">← Back</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm">✏️ Bewerken</button>
+        <button class="btn btn-secondary btn-sm" style="color:#ef4444;">🗑️</button>
+      </div>
+    </div>
+
+    <div class="page-title" style="font-size:20px;margin-bottom:2px;">Biologie Toets 1</div>
+    <div class="page-sub">Klas 3A · Biologie · 5 pts · Aangemaakt 15 mei 2026</div>
+
+    <!-- Status strip -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <span class="badge badge-blue">In Progress</span>
+      <span style="font-size:12px;color:#666;">Laatst bijgewerkt: 15 mei</span>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="detail-grid" style="margin-top:0;">
+      <div class="detail-stat-box">
+        <div class="lbl">Beoordeeld</div>
+        <div class="big">8<span style="font-size:16px;color:#555;">/25</span></div>
+        <div class="progress-bar" style="margin-top:10px;height:6px;"><div class="progress-fill" style="width:32%;background:#ff9500;"></div></div>
+        <div class="sub">32% voltooid</div>
+      </div>
+      <div class="detail-stat-box">
+        <div class="lbl">Klasgemiddelde</div>
+        <div class="big" style="color:#ff9500;">7.1</div>
+        <div class="sub">Hoogste: 8.5 · Laagste: 5.0</div>
+      </div>
+      <div class="detail-stat-box">
+        <div class="lbl">Onvoldoende (&lt; 5.5)</div>
+        <div class="big" style="color:#ef4444;">2</div>
+        <div class="sub">van 8 beoordeelde studenten</div>
+      </div>
+      <div class="detail-stat-box">
+        <div class="lbl">Vak gemiddelde (alle toetsen)</div>
+        <div class="big" style="color:#10b981;">6.9</div>
+        <div class="sub">Gemiddelde over alle Biologie sets</div>
+      </div>
+    </div>
+
+    <!-- Distribution + student list side by side -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+      <div class="card-sm">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;margin-bottom:12px;">Verdeling</div>
+        <div class="dist-row"><span class="g">10</span><div class="dist-bg"><div class="dist-fill" style="width:0%"></div></div><span class="n">0</span></div>
+        <div class="dist-row"><span class="g">9</span><div class="dist-bg"><div class="dist-fill" style="width:0%"></div></div><span class="n">0</span></div>
+        <div class="dist-row"><span class="g">8</span><div class="dist-bg"><div class="dist-fill" style="width:25%"></div></div><span class="n">2</span></div>
+        <div class="dist-row"><span class="g">7</span><div class="dist-bg"><div class="dist-fill" style="width:50%"></div></div><span class="n">4</span></div>
+        <div class="dist-row"><span class="g">6</span><div class="dist-bg"><div class="dist-fill" style="width:12%"></div></div><span class="n">1</span></div>
+        <div class="dist-row"><span class="g">5</span><div class="dist-bg"><div class="dist-fill" style="width:12%"></div></div><span class="n">1</span></div>
+        <div class="dist-row"><span class="g">&lt;5</span><div class="dist-bg"><div class="dist-fill" style="width:0%"></div></div><span class="n">0</span></div>
+        <div style="font-size:10px;color:#555;margin-top:10px;">17 studenten nog niet beoordeeld</div>
+      </div>
+
+      <div class="card-sm">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;margin-bottom:12px;">Studenten (beoordeeld)</div>
+        <div class="student-grade-row"><span class="name">Alice Johnson</span><span class="gval g-good">7.5</span></div>
+        <div class="student-grade-row"><span class="name">Carol Davis</span><span class="gval g-good">8.0</span></div>
+        <div class="student-grade-row"><span class="name">David Wilson</span><span class="gval g-ok">6.5</span></div>
+        <div class="student-grade-row"><span class="name">Frank Brown</span><span class="gval g-good">8.5</span></div>
+        <div class="student-grade-row"><span class="name">Grace Lee</span><span class="gval g-bad">5.0</span></div>
+        <div class="student-grade-row"><span class="name">Iris Johnson</span><span class="gval g-good">7.0</span></div>
+        <div class="student-grade-row"><span class="name">Jack Miller</span><span class="gval g-ok">6.5</span></div>
+        <div class="student-grade-row" style="border:none;"><span class="name">Lara King</span><span class="gval g-bad">5.2</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="go(3)">Doorgaan met beoordelen →</button>
+      <button class="btn btn-secondary">📤 Importeren</button>
+      <button class="btn btn-secondary">📥 Exporteren</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SCREEN 5 · EXISTING GRADES           -->
+  <!-- ══════════════════════════════════════ -->
+  <div class="screen" id="s5">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div class="page-title" style="font-size:20px;margin-bottom:2px;">Bestaande cijfers</div>
+        <div style="font-size:13px;color:#666;">8 cijferlijsten</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="go(1)">+ Nieuw</button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row" style="margin-bottom:16px;">
+      <div class="filter-pill active">Alles</div>
+      <div class="filter-pill">In uitvoering</div>
+      <div class="filter-pill">Voltooid</div>
+      <div style="width:1px;height:20px;background:#2a2a30;margin:0 4px;"></div>
+      <!-- Teacher filter (relevant for school admins or co-teachers) -->
+      <select class="form-input" style="width:auto;padding:5px 12px;font-size:12px;height:32px;">
+        <option>Alle docenten</option>
+        <option>Mevr. Janssen</option>
+        <option>Dhr. De Vries</option>
+      </select>
+      <!-- Class filter -->
+      <select class="form-input" style="width:auto;padding:5px 12px;font-size:12px;height:32px;">
+        <option>Alle klassen</option>
+        <option>Klas 3A</option>
+        <option>Klas 2B</option>
+        <option>Klas 1C</option>
+      </select>
+      <div style="margin-left:auto;">
+        <select class="form-input" style="width:auto;padding:5px 12px;font-size:12px;height:32px;">
+          <option>Nieuwste eerst</option>
+          <option>Oudste eerst</option>
+          <option>Op gemiddelde</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Grade cards -->
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <h3>Biologie Toets 1</h3>
+          <span class="badge badge-blue">In Progress</span>
+        </div>
+        <p>Klas 3A · Biologie · 5 pts</p>
+        <div class="eg-row">
+          <span class="eg-chip">👩‍🏫 Mevr. Janssen</span>
+          <span class="eg-chip">📅 15 mei 2026</span>
+          <span class="eg-chip">8/25 beoordeeld</span>
+          <span class="eg-chip">∅ 7.1</span>
+        </div>
+        <div class="progress-bar" style="margin-top:8px;height:3px;"><div class="progress-fill" style="width:32%;background:#ff9500;"></div></div>
+      </div>
+      <div style="font-size:20px;">📊</div>
+    </div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <h3>Wiskunde Quiz</h3>
+          <span class="badge badge-green">Voltooid</span>
+        </div>
+        <p>Klas 2B · Wiskunde · 3 pts</p>
+        <div class="eg-row">
+          <span class="eg-chip">👨‍🏫 Dhr. De Vries</span>
+          <span class="eg-chip">📅 12 mei 2026</span>
+          <span class="eg-chip">22/22 beoordeeld</span>
+          <span class="eg-chip">∅ 6.8</span>
+        </div>
+        <div class="progress-bar" style="margin-top:8px;height:3px;"><div class="progress-fill" style="width:100%;background:#10b981;"></div></div>
+      </div>
+      <div style="font-size:20px;">✅</div>
+    </div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <h3>Essay Schrijven</h3>
+          <span class="badge badge-blue">In Progress</span>
+        </div>
+        <p>Klas 4D · Engels · 8 pts</p>
+        <div class="eg-row">
+          <span class="eg-chip">👩‍🏫 Mevr. Janssen</span>
+          <span class="eg-chip">📅 8 mei 2026</span>
+          <span class="eg-chip">15/30 beoordeeld</span>
+          <span class="eg-chip">∅ 7.3</span>
+        </div>
+        <div class="progress-bar" style="margin-top:8px;height:3px;"><div class="progress-fill" style="width:50%;background:#ff9500;"></div></div>
+      </div>
+      <div style="font-size:20px;">📊</div>
+    </div>
+
+    <div class="grade-card" onclick="go(4)">
+      <div class="grade-card-content">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <h3>Natuurkunde Midterm</h3>
+          <span class="badge badge-green">Voltooid</span>
+        </div>
+        <p>Klas 1C · Natuurkunde · 10 pts</p>
+        <div class="eg-row">
+          <span class="eg-chip">👨‍🏫 Dhr. De Vries</span>
+          <span class="eg-chip">📅 1 mei 2026</span>
+          <span class="eg-chip">18/18 beoordeeld</span>
+          <span class="eg-chip">∅ 7.6</span>
+        </div>
+        <div class="progress-bar" style="margin-top:8px;height:3px;"><div class="progress-fill" style="width:100%;background:#10b981;"></div></div>
+      </div>
+      <div style="font-size:20px;">✅</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+  function go(idx) {
+    document.querySelectorAll('.screen-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+    document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===idx));
+  }
+
+  function selectClass(el) {
+    el.closest('.form-group').querySelectorAll('.class-row').forEach(r => {
+      r.classList.remove('selected');
+      r.querySelector('span').textContent = '›';
+      r.querySelector('span').style.color = '#444';
+    });
+    el.classList.add('selected');
+    el.querySelector('span').textContent = '✓';
+    el.querySelector('span').style.color = '#ff9500';
+  }
+
+  function selectPill(el) {
+    el.closest('.subject-pills').querySelectorAll('.subject-pill').forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function changeWeight(delta) {
+    const inp = document.getElementById('weightVal');
+    let v = parseFloat(inp.value) + delta;
+    v = Math.max(0.1, Math.min(10, Math.round(v * 10) / 10));
+    inp.value = v;
+  }
+
+  const openRows = new Set(['alice']); // alice open by default
+
+  function toggleExpand(id) {
+    const row = document.getElementById('exp-' + id);
+    if (!row) return;
+    if (openRows.has(id)) {
+      row.style.display = 'none';
+      openRows.delete(id);
+    } else {
+      row.style.display = 'table-row';
+      openRows.add(id);
+    }
+  }
+
+  function liveAvg(inp, id) {
+    const cur = parseFloat(inp.value);
+    const curEl = document.getElementById('cur-' + id);
+    const avgEl = document.getElementById('avg-' + id);
+    if (!curEl || !avgEl) return;
+
+    const prevAvgs = { alice: 7.2, bob: 5.4, carol: 7.8 };
+    const prev = prevAvgs[id] || 0;
+
+    if (isNaN(cur)) {
+      curEl.textContent = '—';
+      avgEl.textContent = prev.toFixed(1);
+    } else {
+      curEl.textContent = cur.toFixed(1);
+      const newAvg = (prev + cur) / 2;
+      avgEl.textContent = newAvg.toFixed(1);
+    }
+  }
+</script>
+</body>
+</html>

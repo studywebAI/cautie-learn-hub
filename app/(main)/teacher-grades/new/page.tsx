@@ -6,18 +6,17 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Check } from 'lucide-react';
-import StepOneClassSelector from './step-1-select-class';
-import StepTwoSettings from './step-2-configure-settings';
+import StepOneNameInfo from './step-1-select-class';
+import StepTwoClassAndSubject from './step-2-configure-settings';
 import StepThreeGrading from './step-3-grading-interface';
 
 type GradeSetData = {
+  title: string;
+  description: string;
   classId: string;
   className: string;
-  title: string;
   subjectId: string | null;
   weight: number;
-  frequency: 'once' | 'weekly' | 'biweekly' | 'monthly';
-  description: string;
 };
 
 type Step = 1 | 2 | 3;
@@ -30,14 +29,13 @@ export default function NewGradesWizard() {
   const [step, setStep] = useState<Step>(1);
   const [gradeData, setGradeData] = useState<Partial<GradeSetData>>({
     weight: 5,
-    frequency: 'once',
     description: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
   const stepLabels = {
-    1: isDutch ? 'Klass selecteren' : 'Select Class',
-    2: isDutch ? 'Instellingen' : 'Configure Settings',
+    1: isDutch ? 'Titel & Beschrijving' : 'Title & Description',
+    2: isDutch ? 'Klas, Vak & Gewicht' : 'Class, Subject & Weight',
     3: isDutch ? 'Beoordelen' : 'Grading Interface',
   };
 
@@ -57,7 +55,7 @@ export default function NewGradesWizard() {
   };
 
   const handleSaveGrades = async () => {
-    if (!gradeData.classId) return;
+    if (!gradeData.classId || !gradeData.title) return;
 
     setIsSaving(true);
     try {
@@ -69,7 +67,6 @@ export default function NewGradesWizard() {
           title: gradeData.title,
           subject_id: gradeData.subjectId || null,
           weight: gradeData.weight,
-          frequency: gradeData.frequency,
           description: gradeData.description,
           category: 'test',
           status: 'in_progress',
@@ -136,14 +133,14 @@ export default function NewGradesWizard() {
       {/* Content */}
       <Card className="surface-panel border border-border p-6">
         {step === 1 && (
-          <StepOneClassSelector
+          <StepOneNameInfo
             onNext={handleNext}
-            selectedClass={gradeData.classId}
+            data={gradeData}
           />
         )}
 
         {step === 2 && (
-          <StepTwoSettings
+          <StepTwoClassAndSubject
             onBack={handleBack}
             onNext={handleNext}
             data={gradeData}

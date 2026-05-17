@@ -11,12 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Check } from 'lucide-react';
+import { Search, Check, ChevronDown, ChevronRight } from 'lucide-react';
 
 type Student = {
   id: string;
   full_name: string;
   email?: string;
+};
+
+type PreviousGrade = {
+  title: string;
+  grade: number;
+  date: string;
 };
 
 type StepThreeProps = {
@@ -36,6 +42,8 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
   const [sort, setSort] = useState('name');
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState<Record<string, number | null>>({});
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
+  const [previousGrades, setPreviousGrades] = useState<Record<string, PreviousGrade[]>>({});
 
   useEffect(() => {
     if (!data.classId) return;
@@ -58,6 +66,28 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
 
     loadStudents();
   }, [data.classId]);
+
+  // Load previous grades when student is expanded
+  const loadPreviousGrades = async (studentId: string) => {
+    if (previousGrades[studentId]) return; // Already loaded
+
+    try {
+      const res = await fetch(
+        `/api/classes/${data.classId}/students/${studentId}/grades${data.subjectId ? `?subjectId=${data.subjectId}` : ''}`
+      );
+      if (!res.ok) {
+        setPreviousGrades(prev => ({ ...prev, [studentId]: [] }));
+        return;
+      }
+      const responseData = await res.json();
+      setPreviousGrades(prev => ({
+        ...prev,
+        [studentId]: responseData.grades || []
+      }));
+    } catch {
+      setPreviousGrades(prev => ({ ...prev, [studentId]: [] }));
+    }
+  };
 
   const filteredStudents = useMemo(() => {
     let result = [...students];
@@ -95,7 +125,34 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
     return gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length;
   }, [grades]);
 
+  const getPreviousAverage = (studentId: string) => {
+    const prev = previousGrades[studentId] || [];
+    if (prev.length === 0) return null;
+    const sum = prev.reduce((acc, g) => acc + g.grade, 0);
+    return sum / prev.length;
+  };
+
+  const getLiveAverage = (studentId: string) => {
+    const prev = previousGrades[studentId] || [];
+    const currentGrade = grades[studentId];
+    if (currentGrade === null || currentGrade === undefined) {
+      return getPreviousAverage(studentId);
+    }
+    const allGrades = [...prev.map(g => g.grade), currentGrade];
+    if (allGrades.length === 0) return null;
+    return allGrades.reduce((a, b) => a + b, 0) / allGrades.length;
+  };
+
   const progressPct = students.length > 0 ? Math.round((gradedCount / students.length) * 100) : 0;
+
+  const handleExpandStudent = (studentId: string) => {
+    if (expandedStudent === studentId) {
+      setExpandedStudent(null);
+    } else {
+      setExpandedStudent(studentId);
+      loadPreviousGrades(studentId);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -108,7 +165,6 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
         <p className="font-semibold">{data.title}</p>
         <p className="text-xs text-muted-foreground">
           {isDutch ? 'Klas' : 'Class'}: {data.className} • {isDutch ? 'Gewicht' : 'Weight'}: {data.weight} pts
-          {data.frequency && ` • ${data.frequency}`}
         </p>
       </div>
 
@@ -160,45 +216,105 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
         </div>
       </div>
 
-      {/* Grading table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left p-2 font-semibold text-xs text-muted-foreground">
-                {isDutch ? 'Studenten' : 'Student Name'}
-              </th>
-              <th className="text-center p-2 font-semibold text-xs text-muted-foreground w-20">
-                {isDutch ? 'Cijfer' : 'Grade'}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map(student => (
-              <tr key={student.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                <td className="p-2 text-sm">{student.full_name}</td>
-                <td className="p-2 text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    value={grades[student.id] ?? ''}
-                    onChange={(e) => {
-                      const value = e.target.value ? parseFloat(e.target.value) : null;
-                      setGrades(prev => ({
-                        ...prev,
-                        [student.id]: value,
-                      }));
-                    }}
-                    placeholder="-"
-                    className="w-full text-center h-8"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Grading table - expandable rows */}
+      <div className="space-y-1 border border-border rounded-lg divide-y divide-border overflow-hidden">
+        {filteredStudents.length === 0 ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            {isDutch ? 'Geen studenten gevonden' : 'No students found'}
+          </div>
+        ) : (
+          filteredStudents.map(student => {
+            const isExpanded = expandedStudent === student.id;
+            const prevAvg = getPreviousAverage(student.id);
+            const liveAvg = getLiveAverage(student.id);
+            const currentGrade = grades[student.id];
+
+            return (
+              <div key={student.id} className="hover:bg-muted/30 transition-colors">
+                {/* Main row */}
+                <button
+                  onClick={() => handleExpandStudent(student.id)}
+                  className="w-full p-3 flex items-center justify-between text-left"
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                    <span className="text-sm font-medium">{student.full_name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.5"
+                      value={currentGrade ?? ''}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        const value = e.target.value ? parseFloat(e.target.value) : null;
+                        setGrades(prev => ({
+                          ...prev,
+                          [student.id]: value,
+                        }));
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="-"
+                      className="w-16 text-center h-8 text-xs"
+                    />
+                  </div>
+                </button>
+
+                {/* Expanded row */}
+                {isExpanded && (
+                  <div className="bg-muted/30 px-3 py-3 space-y-3 text-xs border-t border-border/50">
+                    {/* Previous grades */}
+                    {previousGrades[student.id]?.length ? (
+                      <div className="space-y-1">
+                        <p className="font-semibold text-muted-foreground">
+                          {isDutch ? 'Eerdere Cijfers' : 'Previous Grades'}:
+                        </p>
+                        {previousGrades[student.id].map((pg, idx) => (
+                          <div key={idx} className="flex justify-between text-muted-foreground">
+                            <span>{pg.title}</span>
+                            <span className="font-medium">{pg.grade.toFixed(1)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">
+                        {isDutch ? 'Geen eerdere cijfers' : 'No previous grades'}
+                      </p>
+                    )}
+
+                    {/* Averages */}
+                    <div className="border-t border-border/50 pt-2 space-y-1">
+                      {prevAvg !== null && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {isDutch ? 'Vorig Gemiddelde' : 'Previous Average'}:
+                          </span>
+                          <span className="font-semibold">{prevAvg.toFixed(1)}</span>
+                        </div>
+                      )}
+                      {liveAvg !== null && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            {isDutch ? 'Nieuw Gemiddelde' : 'New Average'}:
+                          </span>
+                          <span className="font-semibold text-[var(--accent-brand)]">
+                            {liveAvg.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Summary */}

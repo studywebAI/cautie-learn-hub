@@ -590,34 +590,55 @@ Add new menu item in `app/layout.tsx`:
 
 ## IMPLEMENTATION ORDER
 
-1. ✅ Create page structure (main, step 1-3 pages)
-2. ✅ Build UI components (cards, tables, forms)
-3. ✅ Connect to existing API endpoints
-4. ✅ Add grade entry & auto-save logic
-5. ✅ Add search, filter, sort functionality
-6. ✅ Add import/export features
-7. ✅ Add stats & progress tracking
-8. ✅ Style for dark mode compatibility
-9. ✅ Test on mobile/tablet/desktop
-10. ✅ Deploy & monitor
+1. ✅ Create page structure (main, step 1-3 pages) — DONE (May 15)
+2. ✅ Build UI components (cards, tables, forms) — DONE (May 15)
+3. ✅ Connect to existing API endpoints — DONE (May 15)
+4. ✅ Add grade entry & auto-save logic — DONE (May 15)
+5. ✅ Add search, filter, sort functionality — DONE (May 15)
+6. 🔜 Import/export (CSV) — placeholder buttons added, logic pending
+7. ✅ Add stats & progress tracking — DONE (May 15)
+8. ✅ Style for dark mode compatibility — DONE (surface-panel, theme-aware classes)
+9. 🔜 Test on mobile/tablet/desktop — pending
+10. 🔜 Deploy & monitor — pending
+
+---
+
+## FILES CREATED (May 15)
+
+### Pages
+- `app/(main)/teacher-grades/page.tsx` — Landing page (New Grade + Existing Grades + Recent Grades)
+- `app/(main)/teacher-grades/new/page.tsx` — Multi-step wizard shell (step 1→2→3)
+- `app/(main)/teacher-grades/new/step-1-select-class.tsx` — Class picker
+- `app/(main)/teacher-grades/new/step-2-configure-settings.tsx` — Title, subject, weight, frequency, description
+- `app/(main)/teacher-grades/new/step-3-grading-interface.tsx` — Enter grades during creation
+- `app/(main)/teacher-grades/[gradeId]/page.tsx` — Grade details + stats + distribution
+- `app/(main)/teacher-grades/[gradeId]/grading/page.tsx` — Full grading interface for existing grades
+
+### API Endpoints
+- `app/api/classes/[classId]/students/route.ts` — GET students in a class (new)
+- `app/api/classes/[classId]/grades/[gradeSetId]/students/[studentId]/route.ts` — POST/GET individual grade (new)
 
 ---
 
 ## TESTING CHECKLIST
 
-- [ ] Can create new grade set (all steps work)
-- [ ] Can view existing grades
-- [ ] Can enter grades and they save
-- [ ] Search/filter works correctly
-- [ ] Stats calculate correctly
-- [ ] Export to CSV works
-- [ ] Import from CSV works
-- [ ] Responsive on mobile/tablet
-- [ ] Dark mode styling correct
-- [ ] No console errors
+- [ ] Can create new grade set (all 3 wizard steps complete)
+- [ ] Step 1: Shows correct classes
+- [ ] Step 2: Loads subjects per class, validates required fields
+- [ ] Step 3: Shows students, grade inputs work
+- [ ] Grade saves to database via POST
+- [x] Can view existing grades on landing page
+- [ ] Can open grade detail page with stats
+- [ ] Can continue grading from detail page
+- [ ] Search/filter works in grading table
+- [ ] Sort works (by name, by grade)
+- [ ] Progress bar updates as grades are entered
+- [ ] Statistics (avg, distribution) calculate correctly
+- [x] Dark mode styling correct
+- [ ] Import CSV — pending
+- [ ] Export CSV — pending
 - [ ] Fast load times (< 2s)
-- [ ] Keyboard navigation works
-- [ ] Screen reader friendly
+- [ ] No console errors
 
 ---
 

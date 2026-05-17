@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool Settings — Cautie Mockup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f11;
+      color: #e8e8ec;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #18181c;
+      border-right: 1px solid #2a2a30;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar-logo { font-size: 15px; font-weight: 700; color: #ff9500; padding: 4px 10px 12px; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #444; padding: 10px 10px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px; font-size: 13px; color: #777;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .nav-item:hover { background: #232328; color: #e8e8ec; }
+    .nav-item.active { background: #232328; color: #fff; font-weight: 600; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Tool tabs */
+    .tool-tabs {
+      display: flex; gap: 0; border-bottom: 1px solid #2a2a30;
+      background: #18181c; padding: 0 24px; flex-shrink: 0;
+    }
+    .tool-tab {
+      padding: 14px 18px; font-size: 13px; font-weight: 600; color: #555;
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .tool-tab:hover { color: #aaa; }
+    .tool-tab.active { color: #fff; border-bottom-color: #ff9500; }
+
+    /* Content area */
+    .content { flex: 1; overflow-y: auto; display: flex; }
+
+    /* Panel layout */
+    .panel-left {
+      width: 260px; flex-shrink: 0; border-right: 1px solid #2a2a30;
+      padding: 20px 16px; overflow-y: auto;
+    }
+    .panel-right { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+    /* Mode list */
+    .panel-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #555; margin-bottom: 10px;
+    }
+    .mode-card {
+      background: #1a1a1f; border: 2px solid #2a2a30; border-radius: 10px;
+      padding: 12px 14px; cursor: pointer; margin-bottom: 8px; transition: all 0.15s;
+    }
+    .mode-card:hover { border-color: rgba(255,149,0,0.4); background: #1e1e24; }
+    .mode-card.active { border-color: #ff9500; background: rgba(255,149,0,0.06); }
+    .mode-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+    .mode-card p { font-size: 11px; color: #666; }
+    .mode-card .mode-badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 4px; margin-bottom: 6px;
+      background: rgba(255,149,0,0.15); color: #ff9500;
+    }
+
+    /* Settings panel */
+    .settings-header { margin-bottom: 20px; }
+    .settings-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .settings-header p { font-size: 12px; color: #666; }
+
+    .settings-group { margin-bottom: 24px; }
+    .settings-group-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #555; margin-bottom: 12px;
+      padding-bottom: 6px; border-bottom: 1px solid #1e1e24;
+    }
+
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 0; gap: 12px;
+    }
+    .setting-row + .setting-row { border-top: 1px solid #181820; }
+    .setting-info { flex: 1; }
+    .setting-info .label { font-size: 13px; font-weight: 500; }
+    .setting-info .desc { font-size: 11px; color: #555; margin-top: 2px; }
+
+    /* Toggle */
+    .toggle {
+      width: 36px; height: 20px; border-radius: 999px; border: none;
+      cursor: pointer; flex-shrink: 0; position: relative; transition: background 0.2s;
+    }
+    .toggle.on { background: #ff9500; }
+    .toggle.off { background: #2a2a30; }
+    .toggle::after {
+      content: ''; position: absolute; top: 2px; width: 16px; height: 16px;
+      border-radius: 50%; background: white; transition: left 0.2s;
+    }
+    .toggle.on::after { left: 18px; }
+    .toggle.off::after { left: 2px; }
+
+    /* Segment control */
+    .segment {
+      display: flex; border: 1px solid #2a2a30; border-radius: 7px;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .seg-btn {
+      padding: 5px 11px; font-size: 11px; font-weight: 600; color: #666;
+      cursor: pointer; transition: all 0.15s; background: transparent; border: none;
+    }
+    .seg-btn + .seg-btn { border-left: 1px solid #2a2a30; }
+    .seg-btn.active { background: #ff9500; color: #000; }
+    .seg-btn:hover:not(.active) { background: #232328; color: #ccc; }
+
+    /* Radio group */
+    .radio-group { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .radio-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; border-radius: 7px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.15s;
+    }
+    .radio-opt:hover { background: #1a1a1f; }
+    .radio-opt.selected { border-color: rgba(255,149,0,0.4); background: rgba(255,149,0,0.05); }
+    .radio-circle {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #3a3a42; flex-shrink: 0; position: relative;
+    }
+    .radio-opt.selected .radio-circle { border-color: #ff9500; }
+    .radio-opt.selected .radio-circle::after {
+      content: ''; position: absolute; inset: 2px; border-radius: 50%; background: #ff9500;
+    }
+    .radio-opt .label { font-size: 12px; font-weight: 500; }
+    .radio-opt .sub { font-size: 10px; color: #555; }
+
+    /* Checkbox */
+    .check-row { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; cursor: pointer; }
+    .checkbox {
+      width: 16px; height: 16px; border-radius: 4px; border: 2px solid #3a3a42;
+      flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; cursor: pointer;
+    }
+    .checkbox.checked { background: #ff9500; border-color: #ff9500; }
+    .checkbox.checked::after { content: '✓'; font-size: 10px; color: #000; font-weight: 700; }
+    .check-info .label { font-size: 12px; font-weight: 500; }
+    .check-info .sub { font-size: 11px; color: #555; margin-top: 2px; }
+
+    /* Slider */
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type=range] {
+      flex: 1; accent-color: #ff9500; height: 4px; cursor: pointer;
+    }
+    .slider-val { font-size: 12px; font-weight: 600; color: #ff9500; width: 36px; text-align: right; }
+
+    /* Philosophy box */
+    .philosophy-box {
+      background: #141417; border: 1px solid #2a2a30; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 24px;
+    }
+    .philosophy-box h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; margin-bottom: 10px; }
+    .phi-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+    .phi-row.good { color: #10b981; }
+    .phi-row.bad { color: #ef4444; }
+
+    /* Start button */
+    .start-btn {
+      display: block; width: 100%; padding: 12px; text-align: center;
+      background: #ff9500; color: #000; font-size: 14px; font-weight: 700;
+      border-radius: 10px; border: none; cursor: pointer; margin-top: 24px;
+      transition: background 0.15s;
+    }
+    .start-btn:hover { background: #e08700; }
+
+    .screen { display: none; width: 100%; }
+    .screen.active { display: flex; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-logo">cautie</div>
+  <div class="nav-section">Main</div>
+  <div class="nav-item"><span>🏠</span> Dashboard</div>
+  <div class="nav-item"><span>📚</span> Subjects</div>
+  <div class="nav-item"><span>📊</span> Grades</div>
+  <div class="nav-item"><span>📅</span> Agenda</div>
+  <div class="nav-section">Tools</div>
+  <div class="nav-item active" id="nav-fc" onclick="switchTool(0)"><span>🃏</span> Flashcards</div>
+  <div class="nav-item" id="nav-qz" onclick="switchTool(1)"><span>🧠</span> Quiz</div>
+  <div class="nav-item" id="nav-nt" onclick="switchTool(2)"><span>📝</span> Notes</div>
+  <div class="nav-item" id="nav-mm" onclick="switchTool(3)"><span>🕸️</span> Mindmap</div>
+  <div class="nav-item" id="nav-tl" onclick="switchTool(4)"><span>⏳</span> Timeline</div>
+</nav>
+
+<div class="main">
+  <!-- Tool tabs -->
+  <div class="tool-tabs">
+    <div class="tool-tab active" id="tab-0" onclick="switchTool(0)">🃏 Flashcards</div>
+    <div class="tool-tab" id="tab-1" onclick="switchTool(1)">🧠 Quiz</div>
+    <div class="tool-tab" id="tab-2" onclick="switchTool(2)">📝 Notes</div>
+    <div class="tool-tab" id="tab-3" onclick="switchTool(3)">🕸️ Mindmap</div>
+    <div class="tool-tab" id="tab-4" onclick="switchTool(4)">⏳ Timeline</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FLASHCARDS                                  -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="screen active" id="screen-0">
+      <!-- Left: modes -->
+      <div class="panel-left">
+        <div class="panel-label">Study Mode</div>
+
+        <div class="mode-card active" onclick="selectMode(this,'fc','lm')">
+          <div class="mode-badge">DEFAULT</div>
+          <h4>📖 Learn Mode</h4>
+          <p>Show card → flip → mark right or wrong. Study until 100% mastered.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'fc','sd')">
+          <h4>⚡ Speed Drill</h4>
+          <p>Rapid flipping, timed challenge. Build speed.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'fc','tm')">
+          <h4>🧪 Test Yourself</h4>
+          <p>Exam simulation — multiple choice, write answers.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'fc','mg')">
+          <h4>🎮 Matching Game</h4>
+          <p>Pair terms with definitions in grid layout.</p>
+        </div>
+
+        <div class="philosophy-box" style="margin-top:16px;">
+          <h4>Cautie Philosophy</h4>
+          <div class="phi-row good">✓ Study set is closed — no intervals</div>
+          <div class="phi-row good">✓ 100% mastery before done</div>
+          <div class="phi-row good">✓ Session ends when all correct</div>
+          <div class="phi-row bad">✗ No Anki-style spaced repetition</div>
+          <div class="phi-row bad">✗ Cards don't come back weeks later</div>
+        </div>
+      </div>
+
+      <!-- Right: settings per mode -->
+      <div class="panel-right">
+
+        <!-- Learn Mode settings -->
+        <div id="fc-lm" class="fc-settings">
+          <div class="settings-header">
+            <h2>📖 Learn Mode Settings</h2>
+            <p>Flip cards and mark correct / incorrect. Study until you've got them all.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Card Display</div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Show answer delay</div>
+                <div class="desc">Wait before showing flip option</div>
+              </div>
+              <div class="segment">
+                <div class="seg-btn active">0s</div>
+                <div class="seg-btn">2s</div>
+                <div class="seg-btn">5s</div>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Show hints</div>
+                <div class="desc">First letter or partial answer</div>
+              </div>
+              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Show progress bar</div>
+                <div class="desc">Cards remaining / total</div>
+              </div>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Card Order</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Shuffle cards</div></div>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Hard cards first</div>
+                <div class="desc">Cards you got wrong show earlier</div>
+              </div>
+              <button class="toggle off" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Audio</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Correct / wrong sounds</div></div>
+              <button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Volume</div></div>
+              <div class="slider-row" style="width:150px;">
+                <input type="range" min="0" max="100" value="70" oninput="this.nextElementSibling.textContent=this.value+'%'" />
+                <div class="slider-val">70%</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Learning →</button>
+        </div>
+
+        <!-- Speed Drill settings -->
+        <div id="fc-sd" class="fc-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>⚡ Speed Drill Settings</h2>
+            <p>Rapid-fire flashcards. Build speed and automaticity.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Time Challenge</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Mode</div></div>
+              <div class="segment">
+                <div class="seg-btn active">Unlimited</div>
+                <div class="seg-btn">Timed</div>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Duration (if timed)</div>
+              </div>
+              <div class="segment">
+                <div class="seg-btn">2min</div>
+                <div class="seg-btn active">5min</div>
+                <div class="seg-btn">10min</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Scoring</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Show streak counter</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Combo multiplier (2x, 3x…)</div></div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Difficulty Ramp</div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="label">Get harder after N correct</div>
+              </div>
+              <div class="segment">
+                <div class="seg-btn">3</div>
+                <div class="seg-btn active">5</div>
+                <div class="seg-btn">10</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Drilling →</button>
+        </div>
+
+        <!-- Test Mode settings -->
+        <div id="fc-tm" class="fc-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>🧪 Test Yourself Settings</h2>
+            <p>Simulate an exam. No peeking — self-grade at the end.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Question Types</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Multiple choice</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox"></div>
+              <div class="check-info"><div class="label">Write answer</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Matching pairs</div></div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Timing</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Per card limit</div></div>
+              <div class="segment">
+                <div class="seg-btn active">None</div>
+                <div class="seg-btn">30s</div>
+                <div class="seg-btn">60s</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Feedback</div>
+            <div class="radio-group">
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">No feedback — self-grade at end</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Show after each card</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Show at end only</div></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Test →</button>
+        </div>
+
+        <!-- Matching Game settings -->
+        <div id="fc-mg" class="fc-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>🎮 Matching Game Settings</h2>
+            <p>Drag terms to their definitions. Race the clock.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Layout</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Display</div></div>
+              <div class="segment">
+                <div class="seg-btn active">Columns</div>
+                <div class="seg-btn">Grid</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Time Limit</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Timer</div></div>
+              <div class="segment">
+                <div class="seg-btn active">Unlimited</div>
+                <div class="seg-btn">3min</div>
+                <div class="seg-btn">5min</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Feedback</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Sound effects</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Combo counter</div></div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Matching →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- QUIZ                                        -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="screen" id="screen-1">
+      <div class="panel-left">
+        <div class="panel-label">Quiz Mode</div>
+
+        <div class="mode-card active" onclick="selectMode(this,'qz','lm')">
+          <div class="mode-badge">ADAPTIVE</div>
+          <h4>📈 Learn Mode</h4>
+          <p>Questions get harder as you master easier ones. Continuous flow.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'qz','tm')">
+          <h4>📋 Test Mode</h4>
+          <p>Fixed difficulty. Simulate a real test.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'qz','cm')">
+          <h4>⚡ Challenge Mode</h4>
+          <p>Timed, high-stakes. Points + streaks.</p>
+        </div>
+        <div class="mode-card" onclick="selectMode(this,'qz','rm')">
+          <h4>🔁 Review Mode</h4>
+          <p>Only questions you got wrong. Fix weak spots.</p>
+        </div>
+
+        <div class="philosophy-box" style="margin-top:16px;">
+          <h4>Cautie Philosophy</h4>
+          <div class="phi-row good">✓ Continuous flow — no preset count</div>
+          <div class="phi-row good">✓ Harder questions as you master easy</div>
+          <div class="phi-row good">✓ Same topic, more questions</div>
+          <div class="phi-row bad">✗ No "how many questions" upfront</div>
+          <div class="phi-row bad">✗ Not repeating identical questions</div>
+        </div>
+      </div>
+
+      <div class="panel-right">
+        <div id="qz-lm" class="qz-settings">
+          <div class="settings-header">
+            <h2>📈 Learn Mode Settings</h2>
+            <p>Adaptive difficulty. System adjusts in real-time based on your performance.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Starting Difficulty</div>
+            <div class="radio-group">
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Easy — warm up first</div></div>
+              </div>
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Medium — balanced start</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Hard — jump straight in</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Question Flow</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info">
+                <div class="label">Continuous (no breaks)</div>
+                <div class="sub">Keep going until you decide to stop</div>
+              </div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox"></div>
+              <div class="check-info">
+                <div class="label">Breathing room pause</div>
+                <div class="sub">Optional pause offered after every 5 questions</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Feedback</div>
+            <div class="radio-group">
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Explanation after each question</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Just right / wrong (fast)</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Explanations at end only</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Mastery Definition</div>
+            <div class="radio-group">
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div>
+                  <div class="label">3 correct in a row at hardest level</div>
+                  <div class="sub">Recommended</div>
+                </div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">80% accuracy overall</div></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Learning →</button>
+        </div>
+
+        <div id="qz-tm" class="qz-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>📋 Test Mode Settings</h2>
+            <p>Fixed difficulty level. Like a real exam — no adaptive changes.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Difficulty</div>
+            <div class="segment" style="width:fit-content;">
+              <div class="seg-btn">Easy</div>
+              <div class="seg-btn active">Medium</div>
+              <div class="seg-btn">Hard</div>
+              <div class="seg-btn">Mixed</div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Question Types</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">Multiple choice</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info"><div class="label">True / False</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox"></div>
+              <div class="check-info"><div class="label">Write answer</div></div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox"></div>
+              <div class="check-info"><div class="label">Drag & drop</div></div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Timing</div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="label">Per question</div></div>
+              <div class="segment">
+                <div class="seg-btn active">None</div>
+                <div class="seg-btn">30s</div>
+                <div class="seg-btn">60s</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Feedback</div>
+            <div class="radio-group">
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">No feedback — self-grade at end</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Show after each question</div></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Test →</button>
+        </div>
+
+        <div id="qz-cm" class="qz-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>⚡ Challenge Mode Settings</h2>
+            <p>Timed, high-pressure. Points, streaks, and multipliers.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Time Limit</div>
+            <div class="radio-group">
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">5 minutes</div></div>
+              </div>
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">10 minutes</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">15 minutes</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Scoring</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info">
+                <div class="label">Time bonus</div>
+                <div class="sub">Faster answers = more points</div>
+              </div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info">
+                <div class="label">Streak multiplier</div>
+                <div class="sub">2x after 3 correct in a row</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Challenge →</button>
+        </div>
+
+        <div id="qz-rm" class="qz-settings" style="display:none;">
+          <div class="settings-header">
+            <h2>🔁 Review Mode Settings</h2>
+            <p>Only questions you got wrong. Target your weak spots.</p>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">What to Review</div>
+            <div class="radio-group">
+              <div class="radio-opt selected" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Questions I got wrong</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">Difficult questions</div></div>
+              </div>
+              <div class="radio-opt" onclick="selectRadio(this)">
+                <div class="radio-circle"></div>
+                <div><div class="label">All questions</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <div class="settings-group-label">Feedback</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info">
+                <div class="label">Show explanation</div>
+                <div class="sub">Why this answer is correct</div>
+              </div>
+            </div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')">
+              <div class="checkbox checked"></div>
+              <div class="check-info">
+                <div class="label">Show why I was wrong</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="start-btn">Start Reviewing →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- NOTES                                       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="screen" id="screen-2">
+      <div class="panel-left">
+        <div class="panel-label">Notes Mode</div>
+        <div class="mode-card active" onclick="selectMode(this,'nt','st')"><div class="mode-badge">DEFAULT</div><h4>📁 Structured Notes</h4><p>Course → Week → Lecture. Organized folders.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'nt','cn')"><h4>📐 Cornell Notes</h4><p>Split: Notes | Questions | Summary</p></div>
+        <div class="mode-card" onclick="selectMode(this,'nt','ol')"><h4>📋 Outline Mode</h4><p>Nested bullets, collapsible sections.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'nt','fw')"><h4>✏️ Free Writing</h4><p>Just a blank page. No structure.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'nt','md')"><h4>⌨️ Markdown</h4><p>Raw markdown, keyboard-focused.</p></div>
+      </div>
+      <div class="panel-right">
+        <div id="nt-st" class="nt-settings">
+          <div class="settings-header"><h2>📁 Structured Notes Settings</h2><p>Hierarchical folders: Course → Week → Lecture</p></div>
+          <div class="settings-group">
+            <div class="settings-group-label">Display</div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Font size</div></div><div class="segment"><div class="seg-btn">Sm</div><div class="seg-btn active">Md</div><div class="seg-btn">Lg</div></div></div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Line spacing</div></div><div class="segment"><div class="seg-btn">Tight</div><div class="seg-btn active">Normal</div><div class="seg-btn">Spacious</div></div></div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Font</div></div><div class="segment"><div class="seg-btn active">Sans</div><div class="seg-btn">Serif</div><div class="seg-btn">Mono</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Editor</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show markdown preview</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Typewriter mode</div><div class="sub">Keep cursor vertically centered</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Focus mode</div><div class="sub">Dim everything except current paragraph</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Auto-save & Sync</div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Auto-save</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Cloud sync</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Offline access</div></div><button class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></button></div>
+          </div>
+          <button class="start-btn">Open Notes →</button>
+        </div>
+        <div id="nt-cn" class="nt-settings" style="display:none;"><div class="settings-header"><h2>📐 Cornell Notes Settings</h2><p>Classic Cornell format: left column for questions, right for notes, bottom for summary.</p></div><button class="start-btn">Open Cornell Notes →</button></div>
+        <div id="nt-ol" class="nt-settings" style="display:none;"><div class="settings-header"><h2>📋 Outline Mode Settings</h2><p>Nested collapsible bullets. Great for dense textbooks.</p></div><button class="start-btn">Open Outline →</button></div>
+        <div id="nt-fw" class="nt-settings" style="display:none;"><div class="settings-header"><h2>✏️ Free Writing Settings</h2><p>Just a blank canvas. No templates, no structure.</p></div><button class="start-btn">Start Writing →</button></div>
+        <div id="nt-md" class="nt-settings" style="display:none;"><div class="settings-header"><h2>⌨️ Markdown Settings</h2><p>Raw markdown with live preview. Keyboard-centric.</p></div><button class="start-btn">Open Markdown Editor →</button></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MINDMAP                                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="screen" id="screen-3">
+      <div class="panel-left">
+        <div class="panel-label">Layout Type</div>
+        <div class="mode-card active" onclick="selectMode(this,'mm','rd')"><div class="mode-badge">CLASSIC</div><h4>🕸️ Radial / Center-Out</h4><p>Center concept radiates outward. Best for brainstorming.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'mm','fb')"><h4>🐟 Fishbone / Cause-Effect</h4><p>Left = causes, right = effects. Best for problem-solving.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'mm','tl')"><h4>📅 Timeline Layout</h4><p>Chronological left-to-right. Best for history.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'mm','og')"><h4>🏢 Org Chart / Hierarchy</h4><p>Top-down structure. Best for taxonomy.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'mm','fl')"><h4>🔀 Flowchart</h4><p>Boxes + decisions. Best for processes.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'mm','cm')"><h4>💡 Concept Map</h4><p>Free-form connections. Best for complex relationships.</p></div>
+      </div>
+      <div class="panel-right">
+        <div id="mm-rd" class="mm-settings">
+          <div class="settings-header"><h2>🕸️ Radial Mindmap Settings</h2><p>Central concept with branches radiating outward.</p></div>
+          <div class="settings-group">
+            <div class="settings-group-label">Node Styling</div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Node shape</div></div><div class="segment"><div class="seg-btn active">Circle</div><div class="seg-btn">Box</div><div class="seg-btn">Oval</div></div></div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Color by</div></div><div class="segment"><div class="seg-btn active">Category</div><div class="seg-btn">Depth</div><div class="seg-btn">Manual</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Connections</div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Curve style</div></div><div class="segment"><div class="seg-btn">Straight</div><div class="seg-btn active">Curved</div><div class="seg-btn">Angular</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show relationship labels</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Export</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PNG image</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PDF</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">SVG (editable)</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Interactive HTML</div></div></div>
+          </div>
+          <button class="start-btn">Create Mindmap →</button>
+        </div>
+        <div id="mm-fb" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🐟 Fishbone Settings</h2></div><button class="start-btn">Create Fishbone →</button></div>
+        <div id="mm-tl" class="mm-settings" style="display:none;"><div class="settings-header"><h2>📅 Timeline Layout Settings</h2></div><button class="start-btn">Create Timeline Map →</button></div>
+        <div id="mm-og" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🏢 Org Chart Settings</h2></div><button class="start-btn">Create Org Chart →</button></div>
+        <div id="mm-fl" class="mm-settings" style="display:none;"><div class="settings-header"><h2>🔀 Flowchart Settings</h2></div><button class="start-btn">Create Flowchart →</button></div>
+        <div id="mm-cm" class="mm-settings" style="display:none;"><div class="settings-header"><h2>💡 Concept Map Settings</h2></div><button class="start-btn">Create Concept Map →</button></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TIMELINE                                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="screen" id="screen-4">
+      <div class="panel-left">
+        <div class="panel-label">Time Scale</div>
+        <div class="mode-card" onclick="selectMode(this,'tl','ml')"><h4>🌍 Millennia</h4><p>1000+ year spans. Geological, ancient history.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'tl','ct')"><h4>📜 Centuries</h4><p>100-year spans. Historical periods.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'tl','dc')"><h4>📰 Decades</h4><p>10-year spans. Recent history.</p></div>
+        <div class="mode-card active" onclick="selectMode(this,'tl','yr')"><div class="mode-badge">DEFAULT</div><h4>📆 Years</h4><p>Year-by-year. Detailed timelines.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'tl','mw')"><h4>🗓️ Months / Weeks</h4><p>Project planning, event calendars.</p></div>
+        <div class="mode-card" onclick="selectMode(this,'tl','dy')"><h4>📋 Days</h4><p>Daily tracking, logs.</p></div>
+      </div>
+      <div class="panel-right">
+        <div id="tl-yr" class="tl-settings">
+          <div class="settings-header"><h2>📆 Timeline Settings (Years)</h2><p>Year-level granularity with layers and filtering.</p></div>
+          <div class="settings-group">
+            <div class="settings-group-label">Event Display</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show date labels</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Show descriptions</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Color code by category</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Layers (Perspectives)</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Multiple layers</div><div class="sub">e.g. Union / Confederate / Civilian view</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Connections</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Draw cause-effect lines</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox"></div><div class="check-info"><div class="label">Label connections</div><div class="sub">"triggers", "leads to", "caused by"</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Layout</div>
+            <div class="setting-row"><div class="setting-info"><div class="label">Direction</div></div><div class="segment"><div class="seg-btn active">Horizontal</div><div class="seg-btn">Vertical</div><div class="seg-btn">List</div></div></div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-label">Export</div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PNG image</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PDF (printable)</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">Interactive HTML</div></div></div>
+            <div class="check-row" onclick="this.querySelector('.checkbox').classList.toggle('checked')"><div class="checkbox checked"></div><div class="check-info"><div class="label">PowerPoint slide</div></div></div>
+          </div>
+          <button class="start-btn">Create Timeline →</button>
+        </div>
+        <div id="tl-ml" class="tl-settings" style="display:none;"><div class="settings-header"><h2>🌍 Millennia Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
+        <div id="tl-ct" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📜 Centuries Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
+        <div id="tl-dc" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📰 Decades Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
+        <div id="tl-mw" class="tl-settings" style="display:none;"><div class="settings-header"><h2>🗓️ Month / Week Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
+        <div id="tl-dy" class="tl-settings" style="display:none;"><div class="settings-header"><h2>📋 Daily Settings</h2></div><button class="start-btn">Create Timeline →</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const toolNames = ['fc','qz','nt','mm','tl'];
+
+  function switchTool(idx) {
+    document.querySelectorAll('.tool-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+    document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===idx));
+    document.querySelectorAll('.nav-item').forEach((n,i) => {
+      if (i >= 2) n.classList.toggle('active', i-2 === idx);
+    });
+  }
+
+  function selectMode(card, tool, modeId) {
+    card.closest('.panel-left').querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+
+    document.querySelectorAll(`.${tool}-settings`).forEach(s => s.style.display = 'none');
+    const target = document.getElementById(`${tool}-${modeId}`);
+    if (target) target.style.display = 'block';
+  }
+
+  function selectRadio(opt) {
+    opt.closest('.radio-group').querySelectorAll('.radio-opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+  }
+</script>
+</body>
+</html>

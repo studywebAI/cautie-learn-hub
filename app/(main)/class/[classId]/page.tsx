@@ -18,9 +18,6 @@ const InviteTab = dynamic(
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
 );
-const GradesTab = dynamic(
-  () => import('@/components/class/grades-tab-redesigned').then((m) => m.GradesTabRedesigned)
-);
 const LogsTab = dynamic(
   () => import('@/components/class/logs-tab-redesigned').then((m) => m.LogsTabRedesigned),
   { ssr: false }
@@ -174,9 +171,6 @@ export default function ClassDetailsPage() {
         case 'analytics':
           url = `/api/classes/${classId}/analytics`;
           break;
-        case 'grades':
-          url = `/api/classes/${classId}/grades`;
-          break;
         case 'logs':
           url = `/api/classes/${classId}/audit-logs?limit=100&offset=0`;
           break;
@@ -209,11 +203,6 @@ export default function ClassDetailsPage() {
           },
         });
         return data;
-      }
-      if (tabName === 'grades') {
-        const fallback = { grade_sets: [] };
-        tabDataCache[cacheKey] = { data: fallback, timestamp: Date.now() };
-        setCachedTabData((prev: any) => ({ ...prev, [tabName]: fallback }));
       }
       void logClassTabEvent({
         classId,
@@ -263,7 +252,6 @@ export default function ClassDetailsPage() {
     const warmTabs = async () => {
       await Promise.allSettled([
         loadTabData('group'),
-        loadTabData('grades'),
         loadTabData('schedule'),
         loadTabData('analytics'),
         loadTabData('logs'),
@@ -327,8 +315,6 @@ export default function ClassDetailsPage() {
         );
       case 'share':
         return <ShareTab classId={classId} />;
-      case 'grades':
-        return <GradesTab classId={classId} />;
       case 'schedule':
         return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
       case 'analytics':
