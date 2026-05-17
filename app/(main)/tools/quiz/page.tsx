@@ -13,6 +13,8 @@ import { SourceInput } from '@/components/tools/source-input';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz } from '@/lib/types';
+import { classifyContent, isQuizTypeAvailable } from '@/lib/tools/content-classifier';
+import type { ContentClassification } from '@/lib/tools/content-classifier';
 
 const QuizTaker = dynamic(() => import('@/components/tools/quiz-taker').then((module) => module.QuizTaker), { ssr: false });
 
@@ -38,8 +40,8 @@ const QUIZ_PAGE_SESSION_KEY = 'tools.quiz.page.session.v1';
 
 function pill(active: boolean) {
   return active
-    ? 'px-3 py-1.5 text-xs rounded-[16px] border border-[#bcbcbc] bg-[#e2e2e2] text-[#222]'
-    : 'px-3 py-1.5 text-xs rounded-[16px] border border-[#d0d0d0] bg-white text-[#333] hover:border-[var(--accent-brand)]';
+    ? 'px-3 py-1.5 text-xs rounded-[16px] border border-[#c8c8c8] bg-white text-[#111] shadow-sm'
+    : 'px-3 py-1.5 text-xs rounded-[16px] border border-transparent bg-[#ebebeb] text-[#555] hover:bg-[#e2e2e2] transition-colors';
 }
 
 function decodePresetCode(value: string) {
@@ -82,8 +84,34 @@ function QuizPageContent() {
   const [importCode, setImportCode] = useState('');
   const [showPresetOverlay, setShowPresetOverlay] = useState(false);
 
+  // Content classification — drives which question types are shown
+  const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
+  const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
+
+  // Classify source text after user stops typing (800 ms debounce)
+  useEffect(() => {
+    if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
+    classifyTimerRef.current = setTimeout(() => {
+      const result = classifyContent(sourceText);
+      setContentClass(result);
+    }, 800);
+    return () => {
+      if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
+    };
+  }, [sourceText]);
+
+  // When classification changes, drop any question types that are no longer applicable
+  useEffect(() => {
+    if (!contentClass) return;
+    setQuestionTypes((prev) => {
+      const next = prev.filter((t) => isQuizTypeAvailable(t, contentClass));
+      return next.length > 0 ? next : ['multiple-choice'];
+    });
+  }, [contentClass]);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(QUIZ_SETTINGS_STORAGE_KEY);
@@ -402,7 +430,7 @@ function QuizPageContent() {
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-[#666]">Question types</p>
         <div className="flex flex-wrap gap-2">
-          {QUIZ_TYPES.map((entry) => (
+          {QUIZ_TYPES.filter((entry) => isQuizTypeAvailable(entry.value, contentClass)).map((entry) => (
             <button key={entry.value} type="button" className={pill(questionTypes.includes(entry.value))} onClick={() => toggleQuestionType(entry.value)}>
               {entry.label}
             </button>

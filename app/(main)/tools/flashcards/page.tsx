@@ -27,6 +27,8 @@ import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-s
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
 import { extractShareableClasses } from '@/lib/classes/shareable-classes';
 import { postClassShareItem } from '@/lib/class-share/client';
+import { classifyContent } from '@/lib/tools/content-classifier';
+import type { ContentClassification } from '@/lib/tools/content-classifier';
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
@@ -76,11 +78,35 @@ function FlashcardsPageContent() {
   const [autoFlipDelayMs, setAutoFlipDelayMs] = useState(0);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
+  const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
   const launchHandledRef = useRef(false);
+  const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
   const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const advancedHydratedRef = useRef(false);
+
+  // Classify source text after user stops typing (800 ms debounce)
+  useEffect(() => {
+    if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
+    classifyTimerRef.current = setTimeout(() => {
+      setContentClass(classifyContent(sourceText));
+    }, 800);
+    return () => {
+      if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
+    };
+  }, [sourceText]);
+
+  // Auto-suggest Term first for vocabulary content (only on first classification)
+  const vocabSuggestedRef = useRef(false);
+  useEffect(() => {
+    if (!contentClass || vocabSuggestedRef.current) return;
+    if (contentClass.vocabulary === 'y') {
+      vocabSuggestedRef.current = true;
+      setCardStartSide('term');
+    }
+  }, [contentClass]);
+
   const modeOptions = React.useMemo(
     () =>
       t.flashcards.studyModeOptions
@@ -426,6 +452,26 @@ function FlashcardsPageContent() {
           disabled={isLoading}
         />
       </div>
+
+      {contentClass && (
+        <div className="flex flex-wrap gap-1.5">
+          {contentClass.vocabulary === 'y' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Vocabulary</span>
+          )}
+          {contentClass.code === 'y' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Code</span>
+          )}
+          {contentClass.processes === 'y' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Processes</span>
+          )}
+          {contentClass.people === 'y' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">People</span>
+          )}
+          {contentClass.dates === 'y' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Dates</span>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
         <div className="flex items-center justify-between">

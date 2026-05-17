@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cautie — 2-Stage Tool Flow Mockups</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .mockup-container {
+      max-width: 1400px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+    }
+
+    .section-title {
+      grid-column: 1 / -1;
+      font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #1a1a1a;
+    }
+
+    .mockup {
+      background: white; border-radius: 12px; overflow: hidden;
+      border: 1px solid #e4e4e4; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      display: flex; flex-direction: column; height: 700px;
+    }
+
+    .mockup-label {
+      padding: 12px 16px; background: #f5f5f5; border-bottom: 1px solid #e4e4e4;
+      font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .mockup-content {
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+    }
+
+    /* ─── STATE 1: INPUT ─── */
+    .s1-body {
+      padding: 32px 24px; flex: 1; display: flex; flex-direction: column; justify-content: flex-start;
+    }
+
+    .s1-header { margin-bottom: 24px; }
+    .s1-header h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #1a1a1a; }
+    .s1-header p { font-size: 12px; color: #888; line-height: 1.5; }
+
+    .upload-buttons {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+    }
+
+    .upload-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: 1px solid #d0d0d0; border-radius: 8px;
+      background: white; color: #555; font-size: 11px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+
+    .upload-btn:hover {
+      background: #f8f8f8; border-color: #bbb; color: #333;
+    }
+
+    .upload-btn svg { width: 13px; height: 13px; stroke-width: 1.8; flex-shrink: 0; }
+
+    .textarea-wrapper { margin-bottom: 16px; }
+    .textarea-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 8px; display: block; }
+
+    .textarea {
+      width: 100%; height: 120px; padding: 12px 14px;
+      border: 1px solid #d0d0d0; border-radius: 8px;
+      font-size: 12px; font-family: inherit; color: #1a1a1a;
+      resize: none; outline: none; line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    .textarea:focus { border-color: #7c6ba8; box-shadow: 0 0 0 3px rgba(124,107,168,0.1); }
+
+    .tool-section { margin-bottom: 20px; }
+    .tool-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; margin-bottom: 10px; }
+
+    .tool-pills {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    .pill-btn {
+      padding: 7px 14px; border: 1px solid #e0e0e0; border-radius: 8px;
+      background: #f5f5f5; color: #777; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+
+    .pill-btn:hover { background: #eee; color: #555; }
+    .pill-btn.selected { background: white; border-color: #7c6ba8; color: #7c6ba8; font-weight: 600; }
+
+    .s1-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid #f0f0f0; }
+    .btn-continue {
+      width: 100%; padding: 11px; background: #7c6ba8; color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+
+    .btn-continue:hover { background: #6b5a95; }
+
+    /* ─── STATE 2: SETTINGS ─── */
+    .s2-header {
+      padding: 16px 24px; border-bottom: 1px solid #f0f0f0; background: #fafafa;
+    }
+
+    .s2-header h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .s2-header p { font-size: 11px; color: #999; }
+
+    .ai-classification {
+      padding: 16px 24px; border-bottom: 1px solid #f0f0f0; background: white;
+    }
+
+    .ai-class-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #aaa; margin-bottom: 10px; }
+
+    .class-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+
+    .class-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 10px; background: #f8f8f8; border-radius: 6px; font-size: 11px;
+    }
+
+    .class-key { color: #888; font-family: monospace; }
+    .class-val {
+      font-weight: 700; font-family: monospace;
+      padding: 2px 6px; border-radius: 4px; font-size: 10px;
+    }
+
+    .class-val.y { background: #dcf5e3; color: #16a34a; }
+    .class-val.n { background: #f0f0f0; color: #999; }
+
+    .s2-settings {
+      flex: 1; overflow-y: auto; padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 18px;
+    }
+
+    .setting-group { }
+    .setting-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #aaa; margin-bottom: 10px; display: block; }
+
+    .setting-pills {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+
+    .setting-pill {
+      padding: 6px 12px; border: 1px solid #e0e0e0; border-radius: 6px;
+      background: #f5f5f5; color: #777; font-size: 11px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+
+    .setting-pill:hover { background: #ebebeb; color: #555; }
+    .setting-pill.selected { background: white; border-color: #bbb; color: #1a1a1a; font-weight: 600; }
+
+    .slider-wrapper { }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: #aaa; margin-top: 6px; }
+
+    .input-wrapper { display: flex; align-items: center; gap: 8px; }
+    .num-input {
+      width: 60px; padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 6px;
+      font-size: 12px; font-weight: 600; text-align: center; outline: none; background: white;
+    }
+
+    .num-input:focus { border-color: #7c6ba8; }
+
+    .divider { height: 1px; background: #f0f0f0; }
+
+    .s2-footer {
+      padding: 16px 24px; border-top: 1px solid #f0f0f0; background: #fafafa;
+    }
+
+    .btn-generate {
+      width: 100%; padding: 11px; background: #5a7a4a; color: white;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 8px; transition: background 0.15s;
+    }
+
+    .btn-generate:hover { background: #4a6a3a; }
+    .btn-generate svg { width: 14px; height: 14px; }
+
+    .unavailable {
+      padding: 40px 24px; text-align: center; display: flex; align-items: center; justify-content: center; flex: 1;
+    }
+
+    .unavailable p { font-size: 12px; color: #aaa; line-height: 1.6; }
+    .unavailable strong { color: #888; }
+
+    /* Scrollbar styling */
+    .s2-settings::-webkit-scrollbar { width: 4px; }
+    .s2-settings::-webkit-scrollbar-track { background: transparent; }
+    .s2-settings::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 2px; }
+    .s2-settings::-webkit-scrollbar-thumb:hover { background: #bbb; }
+
+    .slider {
+      width: 100%; height: 4px; border-radius: 2px; background: #e0e0e0; outline: none;
+      -webkit-appearance: none; appearance: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%; background: #7c6ba8; cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%; background: #7c6ba8; cursor: pointer; border: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="mockup-container">
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STATE 1: INPUT — 3 Variants -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+
+  <div class="section-title">STATE 1: INPUT MATERIAL (3 variants)</div>
+
+  <!-- S1 Variant 1: Text Input Focus -->
+  <div class="mockup">
+    <div class="mockup-label">Variant 1: Text Paste</div>
+    <div class="mockup-content">
+      <div class="s1-body">
+        <div class="s1-header">
+          <h3>Add your study material</h3>
+          <p>Paste notes, slides, or any text. Cautie will analyze and customize settings for you.</p>
+        </div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">Quick input</span>
+          <div class="upload-buttons">
+            <button class="upload-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Upload
+            </button>
+            <button class="upload-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>Link
+            </button>
+            <button class="upload-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/></svg>Mic
+            </button>
+          </div>
+        </div>
+
+        <div class="textarea-wrapper">
+          <label class="textarea-label">Your content</label>
+          <textarea class="textarea" placeholder="Paste notes, article text, slide content, or any study material here..."></textarea>
+        </div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">What to create</span>
+          <div class="tool-pills">
+            <button class="pill-btn selected">Flashcards</button>
+            <button class="pill-btn selected">Quiz</button>
+            <button class="pill-btn">Notes</button>
+            <button class="pill-btn">Mindmap</button>
+            <button class="pill-btn">Timeline</button>
+          </div>
+        </div>
+
+        <div class="s1-footer">
+          <button class="btn-continue">Analyze & Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S1 Variant 2: File/Photo Upload -->
+  <div class="mockup">
+    <div class="mockup-label">Variant 2: File Upload</div>
+    <div class="mockup-content">
+      <div class="s1-body">
+        <div class="s1-header">
+          <h3>Upload study material</h3>
+          <p>Drop a file, screenshot, or photo. We'll extract and analyze the content.</p>
+        </div>
+
+        <div class="upload-buttons" style="margin-bottom: 24px;">
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
+          </button>
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/></svg>Upload
+          </button>
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>PDF/Doc
+          </button>
+        </div>
+
+        <div style="
+          border: 2px dashed #d0d0d0; border-radius: 10px; padding: 32px 20px;
+          text-align: center; background: #f9f9f9; margin-bottom: 20px;
+        ">
+          <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
+          <p style="font-size: 12px; color: #666; margin-bottom: 6px;"><strong>Drop files here</strong></p>
+          <p style="font-size: 11px; color: #aaa;">or click to browse (PDF, DOCX, PNG, JPG)</p>
+        </div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">Create</span>
+          <div class="tool-pills">
+            <button class="pill-btn selected">Flashcards</button>
+            <button class="pill-btn">Quiz</button>
+            <button class="pill-btn selected">Notes</button>
+          </div>
+        </div>
+
+        <div class="s1-footer">
+          <button class="btn-continue">Analyze & Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S1 Variant 3: Multi-source -->
+  <div class="mockup">
+    <div class="mockup-label">Variant 3: Mixed Input</div>
+    <div class="mockup-content">
+      <div class="s1-body">
+        <div class="s1-header">
+          <h3>Combine your materials</h3>
+          <p>Mix text, files, and links. Everything gets analyzed together.</p>
+        </div>
+
+        <div class="upload-buttons" style="margin-bottom: 16px;">
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/></svg>Mic
+          </button>
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>Link
+          </button>
+          <button class="upload-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>Upload
+          </button>
+        </div>
+
+        <div class="textarea-wrapper">
+          <label class="textarea-label">Paste or type</label>
+          <textarea class="textarea" placeholder="Add any text here..."></textarea>
+        </div>
+
+        <div style="
+          background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;
+          padding: 12px; margin-bottom: 16px; font-size: 11px;
+        ">
+          <strong style="color: #666;">Added sources:</strong>
+          <div style="color: #999; margin-top: 6px; line-height: 1.6;">
+            • Lecture notes (text) · 1200 words<br>
+            • Slides PDF · 45 pages<br>
+            • Wikipedia link · 15 min read
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">Generate</span>
+          <div class="tool-pills">
+            <button class="pill-btn selected">Quiz</button>
+            <button class="pill-btn selected">Flashcards</button>
+            <button class="pill-btn selected">Mindmap</button>
+            <button class="pill-btn">Timeline</button>
+          </div>
+        </div>
+
+        <div class="s1-footer">
+          <button class="btn-continue">Analyze & Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STATE 2: SETTINGS — Quiz Examples (5 scenarios) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+
+  <div class="section-title">STATE 2: SETTINGS — QUIZ (5 content types)</div>
+
+  <!-- Quiz: History with dates -->
+  <div class="mockup">
+    <div class="mockup-label">Quiz: History + Dates</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Quiz Settings</h3>
+        <p>AI detected timeline & historical events. Options tailored below.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">dates</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">people</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Question Types</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Multiple Choice</span>
+            <span class="setting-pill selected">True/False</span>
+            <span class="setting-pill selected">Chronological Order</span>
+            <span class="setting-pill selected">Timeline Question</span>
+            <span class="setting-pill">Short Answer</span>
+            <span class="setting-pill">Fill Blank</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Classic</span>
+            <span class="setting-pill">Assisted</span>
+            <span class="setting-pill">Adaptive</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Answer Reveal</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Immediate</span>
+            <span class="setting-pill">At End</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Knowledge Level</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Nothing</span><span>Almost everything</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Questions</span>
+          <div class="input-wrapper">
+            <input type="number" class="num-input" value="15" />
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz: Science/Biology -->
+  <div class="mockup">
+    <div class="mockup-label">Quiz: Biology/Science</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Quiz Settings</h3>
+        <p>Processes & diagrams detected. Specialized question types available.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">quotes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Question Types</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Multiple Choice</span>
+            <span class="setting-pill selected">Label Diagram</span>
+            <span class="setting-pill selected">Order Process</span>
+            <span class="setting-pill selected">Matching</span>
+            <span class="setting-pill">True/False</span>
+            <span class="setting-pill">Short Answer</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Classic</span>
+            <span class="setting-pill">Assisted</span>
+            <span class="setting-pill">Adaptive</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Include Visuals</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Yes</span>
+            <span class="setting-pill">Text Only</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Knowledge Level</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Nothing</span><span>Almost everything</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Questions</span>
+          <div class="input-wrapper">
+            <input type="number" class="num-input" value="12" />
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz: Programming -->
+  <div class="mockup">
+    <div class="mockup-label">Quiz: Programming/Code</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Quiz Settings</h3>
+        <p>Code detected. Specialized programming questions available.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">sequential_plot</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Question Types</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Multiple Choice</span>
+            <span class="setting-pill selected">What is the output?</span>
+            <span class="setting-pill selected">Spot the bug</span>
+            <span class="setting-pill selected">Complete code</span>
+            <span class="setting-pill">Explain</span>
+            <span class="setting-pill">True/False</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Assisted</span>
+            <span class="setting-pill">Classic</span>
+            <span class="setting-pill">Adaptive</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Answer Reveal</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">At End</span>
+            <span class="setting-pill">Immediate</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Knowledge Level</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="0" max="100" value="65" />
+            <div class="slider-labels"><span>Nothing</span><span>Almost everything</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Questions</span>
+          <div class="input-wrapper">
+            <input type="number" class="num-input" value="10" />
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz: Language/Vocabulary -->
+  <div class="mockup">
+    <div class="mockup-label">Quiz: Language/Vocabulary</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Quiz Settings</h3>
+        <p>Vocabulary content. Grammar & translation questions enabled.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">quotes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Question Types</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Translate sentence</span>
+            <span class="setting-pill selected">Fill in blank</span>
+            <span class="setting-pill selected">Correct grammar</span>
+            <span class="setting-pill">Multiple Choice</span>
+            <span class="setting-pill">Match word</span>
+            <span class="setting-pill">Listen & spell</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Assisted</span>
+            <span class="setting-pill">Classic</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Audio Pronunciation</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">On</span>
+            <span class="setting-pill">Off</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Knowledge Level</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="0" max="100" value="40" />
+            <div class="slider-labels"><span>Beginner</span><span>Fluent</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Questions</span>
+          <div class="input-wrapper">
+            <input type="number" class="num-input" value="20" />
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz: Timeline NOT available -->
+  <div class="mockup">
+    <div class="mockup-label">Quiz: No Timeline (unavailable)</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Quiz Settings</h3>
+        <p>General vocabulary content. Standard question types only.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">dates</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">sequential_plot</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Question Types</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Multiple Choice</span>
+            <span class="setting-pill selected">True/False</span>
+            <span class="setting-pill selected">Fill Blank</span>
+            <span class="setting-pill">Matching</span>
+            <span class="setting-pill">Short Answer</span>
+          </div>
+          <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 11px; color: #999;">
+            ⚠️ Timeline question type not available (no chronological structure detected)
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Classic</span>
+            <span class="setting-pill">Assisted</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Knowledge Level</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Nothing</span><span>Almost everything</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Questions</span>
+          <div class="input-wrapper">
+            <input type="number" class="num-input" value="15" />
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Quiz
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- STATE 2: SETTINGS — Flashcards Examples (4 scenarios) -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+
+  <div class="section-title">STATE 2: SETTINGS — FLASHCARDS (4 content types)</div>
+
+  <!-- Flashcards: History -->
+  <div class="mockup">
+    <div class="mockup-label">Flashcards: History + Dates</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Flashcard Settings</h3>
+        <p>Historical content with dates & people. Format options tailored.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">people</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">dates</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">quotes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Card Format</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Term → Definition</span>
+            <span class="setting-pill selected">Date → Event</span>
+            <span class="setting-pill selected">Person → Role</span>
+            <span class="setting-pill">Cause → Effect</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Study Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Learn Mode</span>
+            <span class="setting-pill">Matching Game</span>
+            <span class="setting-pill">Speed Round</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Card Reveal</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Click to reveal</span>
+            <span class="setting-pill">Instant flip</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Cards to Generate</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="5" max="50" value="20" />
+            <div class="slider-labels"><span>5</span><span>50</span></div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Include Visuals</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Historical images</span>
+            <span class="setting-pill">Maps & diagrams</span>
+            <span class="setting-pill">Text only</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Flashcards
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flashcards: Science -->
+  <div class="mockup">
+    <div class="mockup-label">Flashcards: Biology/Science</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Flashcard Settings</h3>
+        <p>Science content with diagrams & processes. Structure cards enabled.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">people</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">quotes</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Card Format</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Term → Definition</span>
+            <span class="setting-pill selected">Structure → Function</span>
+            <span class="setting-pill selected">Process → Steps</span>
+            <span class="setting-pill">Species → Classification</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Diagram Cards</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Label the diagram</span>
+            <span class="setting-pill">Text only</span>
+            <span class="setting-pill">Anatomy labels</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Study Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Learn Mode</span>
+            <span class="setting-pill">Matching Game</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Cards to Generate</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="5" max="50" value="25" />
+            <div class="slider-labels"><span>5</span><span>50</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Flashcards
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flashcards: Language -->
+  <div class="mockup">
+    <div class="mockup-label">Flashcards: Language/Vocabulary</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Flashcard Settings</h3>
+        <p>Language content. Translation & pronunciation options enabled.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">quotes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Card Format</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Word → Translation</span>
+            <span class="setting-pill selected">Sentence → Fill blank</span>
+            <span class="setting-pill">Word → Example</span>
+            <span class="setting-pill">Conjugation table</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Audio</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Pronounce word</span>
+            <span class="setting-pill selected">Hear sentence</span>
+            <span class="setting-pill">Silent</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Study Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Learn Mode</span>
+            <span class="setting-pill">Matching Game</span>
+            <span class="setting-pill">Spelling</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Cards to Generate</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="10" max="60" value="30" />
+            <div class="slider-labels"><span>10</span><span>60</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Flashcards
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flashcards: Code -->
+  <div class="mockup">
+    <div class="mockup-label">Flashcards: Programming/Code</div>
+    <div class="mockup-content">
+      <div class="s2-header">
+        <h3>Flashcard Settings</h3>
+        <p>Code content. Syntax & logic cards available.</p>
+      </div>
+
+      <div class="ai-classification">
+        <span class="ai-class-label">Content Analysis</span>
+        <div class="class-grid">
+          <div class="class-item">
+            <span class="class-key">code</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">processes</span>
+            <span class="class-val y">y</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">vocabulary</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">diagrams</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">timeline</span>
+            <span class="class-val n">n</span>
+          </div>
+          <div class="class-item">
+            <span class="class-key">sequential_plot</span>
+            <span class="class-val n">n</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-settings">
+        <div class="setting-group">
+          <span class="setting-label">Card Format</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Concept → Syntax</span>
+            <span class="setting-pill selected">Function → What it does</span>
+            <span class="setting-pill selected">Code → Output</span>
+            <span class="setting-pill">Error → Fix</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="setting-group">
+          <span class="setting-label">Study Mode</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">Learn Mode</span>
+            <span class="setting-pill">Matching Game</span>
+            <span class="setting-pill">Code review</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Code Syntax Highlighting</span>
+          <div class="setting-pills">
+            <span class="setting-pill selected">On</span>
+            <span class="setting-pill">Off</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="setting-label">Cards to Generate</span>
+          <div class="slider-wrapper">
+            <input type="range" class="slider" min="5" max="40" value="15" />
+            <div class="slider-labels"><span>5</span><span>40</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="s2-footer">
+        <button class="btn-generate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Generate Flashcards
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
