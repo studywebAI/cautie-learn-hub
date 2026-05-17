@@ -62,6 +62,7 @@ function FlashcardsPageContent() {
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
+  const [state1Completed, setState1Completed] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
   const [cardStartSide, setCardStartSide] = useState<'term' | 'explanation'>('term');
   const [flashcardCount, setFlashcardCount] = useState(10);
@@ -634,7 +635,8 @@ function FlashcardsPageContent() {
   );
 
   // Determine if we're in State 1 (input) or State 2 (settings)
-  const inState1 = !sourceText.trim();
+  const inState1 = !state1Completed && sourceText.trim().length === 0;
+  const inState2 = state1Completed && !generatedCards;
 
   if (inState1) {
     // STATE 1: INPUT MATERIAL
@@ -787,6 +789,7 @@ function FlashcardsPageContent() {
               </button>
               <button
                 disabled={!sourceText.trim()}
+                onClick={() => setState1Completed(true)}
                 className="px-5 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Continue →
@@ -799,7 +802,57 @@ function FlashcardsPageContent() {
     );
   }
 
-  // STATE 2: SETTINGS (existing sidebar + generation)
+  // STATE 2: SETTINGS (new clean layout)
+  if (inState2) {
+    return (
+      <div className="flex h-full w-full flex-col bg-background">
+        {/* Topbar */}
+        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
+          <span className="text-sm font-bold text-foreground">cautie</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>Tools</span>
+            <span className="text-border">›</span>
+            <span className="font-semibold text-foreground">Flashcards</span>
+          </div>
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-foreground"></div>
+            <div className="w-2 h-2 rounded-full bg-border"></div>
+            <span className="text-xs text-muted-foreground ml-1">Step 2 of 2</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
+          <div className="bg-card rounded-lg border border-border w-full max-w-2xl shadow-sm">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-border bg-muted/30">
+              <h2 className="text-base font-bold text-foreground mb-1">Flashcard Settings</h2>
+              <p className="text-xs text-muted-foreground">Configure your flashcards based on the content you added.</p>
+            </div>
+
+            {/* Settings */}
+            <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{maxHeight: 'calc(100% - 180px)'}}>
+              {sidebar}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border bg-muted/30">
+              <button
+                onClick={() => void runFlashcardGeneration(sourceText)}
+                disabled={isLoading || !sourceText.trim()}
+                className="w-full px-4 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+                {isLoading ? 'Generating...' : 'Generate Flashcards'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FALLBACK: Old sidebar layout
   return (
     <>
     <WorkbenchShell

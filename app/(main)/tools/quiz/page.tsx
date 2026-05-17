@@ -71,6 +71,7 @@ function QuizPageContent() {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [state1Completed, setState1Completed] = useState(false);
 
   const [mode, setMode] = useState<QuizMode>('classic');
   const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback>('end');
@@ -351,6 +352,7 @@ function QuizPageContent() {
 
   const handleRestart = useCallback(() => {
     setQuiz(null);
+    setState1Completed(false);
     try {
       const raw = sessionStorage.getItem(QUIZ_PAGE_SESSION_KEY);
       if (!raw) return;
@@ -623,7 +625,11 @@ function QuizPageContent() {
   }
 
   // Determine if we're in State 1 (input) or State 2 (settings)
-  const inState1 = !sourceText.trim();
+  // State 1: show until user clicks Continue
+  // State 2: show after Continue is clicked (settings view)
+  // Quiz taker: show when quiz is generated
+  const inState1 = !state1Completed;
+  const inState2 = state1Completed && !quiz;
 
   if (inState1) {
     // STATE 1: INPUT MATERIAL
@@ -776,6 +782,7 @@ function QuizPageContent() {
               </button>
               <button
                 disabled={!sourceText.trim()}
+                onClick={() => setState1Completed(true)}
                 className="px-4 py-2 bg-[var(--accent-brand)] text-white rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 Continue →
@@ -788,7 +795,57 @@ function QuizPageContent() {
     );
   }
 
-  // STATE 2: SETTINGS (existing sidebar + generation)
+  // STATE 2: SETTINGS (new clean layout - not sidebar)
+  if (inState2) {
+    return (
+      <div className="flex h-full w-full flex-col bg-background">
+        {/* Topbar */}
+        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
+          <span className="text-sm font-bold text-foreground">cautie</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>Tools</span>
+            <span className="text-border">›</span>
+            <span className="font-semibold text-foreground">Quiz</span>
+          </div>
+          <div className="ml-auto flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-foreground"></div>
+            <div className="w-2 h-2 rounded-full bg-border"></div>
+            <span className="text-xs text-muted-foreground ml-1">Step 2 of 2</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
+          <div className="bg-card rounded-lg border border-border w-full max-w-2xl shadow-sm">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-border bg-muted/30">
+              <h2 className="text-base font-bold text-foreground mb-1">Quiz Settings</h2>
+              <p className="text-xs text-muted-foreground">Configure your quiz based on the content you added.</p>
+            </div>
+
+            {/* Settings */}
+            <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{maxHeight: 'calc(100% - 180px)'}}>
+              {sidebar}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-border bg-muted/30">
+              <button
+                onClick={() => void handleGenerate(sourceText)}
+                disabled={loading || !sourceText.trim()}
+                className="w-full px-4 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
+                {loading ? 'Generating...' : 'Generate Quiz'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FALLBACK: Old sidebar layout (keep for now)
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4 text-[var(--accent-brand)]" />}>
       <div className="flex h-full w-full flex-col justify-end pl-3 pr-2">
