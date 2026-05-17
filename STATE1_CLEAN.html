@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>State 1: Input Material — Clean Design</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f8f8; color: #1a1a1a; min-height: 100vh;
+    }
+
+    .container {
+      display: flex; flex-direction: column; height: 100vh;
+    }
+
+    /* ─── TOPBAR ─── */
+    .topbar {
+      height: 52px; border-bottom: 1px solid #e4e4e4; background: white;
+      padding: 0 32px; display: flex; align-items: center; gap: 12px;
+      font-size: 12px; color: #999; flex-shrink: 0;
+    }
+
+    .logo { font-size: 13px; font-weight: 800; color: #1a1a1a; margin-right: 16px; }
+
+    .breadcrumb { display: flex; align-items: center; gap: 6px; }
+    .breadcrumb-sep { color: #ddd; }
+    .breadcrumb-active { color: #1a1a1a; font-weight: 600; }
+
+    .step-indicator { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0e0; }
+    .step-dot.active { background: #1a1a1a; }
+    .step-label { font-size: 11px; color: #999; margin-left: 4px; }
+
+    /* ─── CONTENT ─── */
+    .content {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 40px 20px; overflow-y: auto;
+    }
+
+    .card {
+      background: white; border-radius: 12px; border: 1px solid #e4e4e4;
+      padding: 40px; width: 100%; max-width: 800px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .header { margin-bottom: 28px; }
+
+    .header h2 {
+      font-size: 22px; font-weight: 700; margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 13px; color: #888; line-height: 1.6;
+    }
+
+    /* ─── TOP BUTTONS ─── */
+    .buttons-top {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+    }
+
+    .upload-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: 1px solid #d8d8d8; border-radius: 8px;
+      background: white; color: #555; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s;
+    }
+
+    .upload-btn:hover {
+      background: #f5f5f5; border-color: #aaa; color: #333;
+    }
+
+    .upload-btn svg {
+      width: 14px; height: 14px; stroke-width: 1.5;
+    }
+
+    /* ─── TEXTAREA + SOURCES ─── */
+    .textarea-wrapper {
+      display: flex; gap: 20px; margin-bottom: 24px; min-height: 300px;
+    }
+
+    .textarea-left {
+      flex: 1; display: flex; flex-direction: column;
+    }
+
+    .textarea-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #aaa; margin-bottom: 8px;
+    }
+
+    .textarea {
+      flex: 1; width: 100%; padding: 12px 14px;
+      border: 1px solid #d8d8d8; border-radius: 8px;
+      font-size: 13px; font-family: inherit; color: #1a1a1a;
+      resize: none; outline: none; line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    .textarea:focus {
+      border-color: #5a7a4a; box-shadow: 0 0 0 3px rgba(90,122,74,0.1);
+    }
+
+    .textarea-hint {
+      font-size: 11px; color: #bbb; margin-top: 6px;
+    }
+
+    /* ─── ADDED SOURCES ─── */
+    .sources-box {
+      width: 240px; display: flex; flex-direction: column;
+      border-left: 1px solid #f0f0f0; padding-left: 16px;
+    }
+
+    .sources-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #aaa; margin-bottom: 12px;
+    }
+
+    .sources-list {
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .source-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px; background: #f9f9f9; border-radius: 8px;
+      border: 1px solid #f0f0f0; font-size: 11px;
+    }
+
+    .source-icon {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid #e0e0e0;
+      display: flex; align-items: center; justify-content: center;
+      background: white; flex-shrink: 0; font-size: 9px; color: #999;
+      font-weight: 600;
+    }
+
+    .source-content {
+      flex: 1; min-width: 0;
+    }
+
+    .source-name {
+      font-weight: 600; color: #333; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .source-meta {
+      font-size: 10px; color: #aaa; margin-top: 2px;
+    }
+
+    .source-remove {
+      width: 16px; height: 16px; border: none; background: transparent;
+      color: #ccc; cursor: pointer; font-size: 14px; flex-shrink: 0;
+      transition: color 0.15s; padding: 0;
+    }
+
+    .source-remove:hover { color: #999; }
+
+    .empty-state {
+      color: #ccc; text-align: center; padding: 80px 20px;
+      font-size: 12px;
+    }
+
+    /* ─── FOOTER ─── */
+    .footer {
+      display: flex; gap: 12px; justify-content: flex-end;
+      border-top: 1px solid #f0f0f0; padding-top: 20px;
+    }
+
+    .btn-secondary {
+      padding: 10px 20px; background: white; border: 1px solid #d8d8d8;
+      border-radius: 8px; font-size: 12px; font-weight: 600; color: #555;
+      cursor: pointer; transition: all 0.15s;
+    }
+
+    .btn-secondary:hover { background: #f5f5f5; border-color: #aaa; }
+
+    .btn-primary {
+      padding: 10px 20px; background: #5a7a4a; color: white;
+      border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+
+    .btn-primary:hover { background: #4a6a3a; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ─── TOPBAR ─── -->
+  <div class="topbar">
+    <span class="logo">cautie</span>
+    <div class="breadcrumb">
+      <span>Tools</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-active">Quiz</span>
+    </div>
+    <div class="step-indicator">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <span class="step-label">Step 1 of 2</span>
+    </div>
+  </div>
+
+  <!-- ─── CONTENT ─── -->
+  <div class="content">
+    <div class="card">
+
+      <div class="header">
+        <h2>Create a Quiz</h2>
+        <p>Paste text, upload files, or add a link. We'll analyze the content and tailor the quiz settings for you.</p>
+      </div>
+
+      <!-- Top buttons: Upload, Photo, Mic, Import from, Link -->
+      <div class="buttons-top">
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Mic
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 13v6"/><path d="M9 16h6"/></svg>Import from
+        </button>
+        <button class="upload-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link
+        </button>
+      </div>
+
+      <!-- Textarea + Added sources side-by-side -->
+      <div class="textarea-wrapper">
+
+        <!-- Left: Textarea -->
+        <div class="textarea-left">
+          <label class="textarea-label">Your content</label>
+          <textarea class="textarea" placeholder="Paste text, article content, notes, or anything you want to create a quiz from..."></textarea>
+          <span class="textarea-hint">Supports: text, PDF, DOCX, images, YouTube links, web URLs</span>
+        </div>
+
+        <!-- Right: Added sources -->
+        <div class="sources-box">
+          <div class="sources-title">Added (4)</div>
+          <div class="sources-list">
+            <div class="source-item">
+              <div class="source-icon">📝</div>
+              <div class="source-content">
+                <div class="source-name">Lecture notes</div>
+                <div class="source-meta">Text • 1.2k</div>
+              </div>
+              <button class="source-remove">✕</button>
+            </div>
+
+            <div class="source-item">
+              <div class="source-icon">PDF</div>
+              <div class="source-content">
+                <div class="source-name">Slides.pdf</div>
+                <div class="source-meta">45 pages</div>
+              </div>
+              <button class="source-remove">✕</button>
+            </div>
+
+            <div class="source-item">
+              <div class="source-icon">🔗</div>
+              <div class="source-content">
+                <div class="source-name">Wiki article</div>
+                <div class="source-meta">Web • 5 min</div>
+              </div>
+              <button class="source-remove">✕</button>
+            </div>
+
+            <div class="source-item">
+              <div class="source-icon">IMG</div>
+              <div class="source-content">
+                <div class="source-name">Whiteboard</div>
+                <div class="source-meta">Photo</div>
+              </div>
+              <button class="source-remove">✕</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer buttons -->
+      <div class="footer">
+        <button class="btn-secondary">Clear</button>
+        <button class="btn-primary">Continue →</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
