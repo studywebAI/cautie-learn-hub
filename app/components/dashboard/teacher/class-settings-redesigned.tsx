@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { Copy, Check } from 'lucide-react';
+import { InviteTab } from '@/components/class/invite-tab';
 
 type ClassData = {
   id: string;
@@ -21,7 +21,7 @@ type Teacher = {
   role: 'owner' | 'teacher';
 };
 
-const SECTIONS = ['classinfo', 'access', 'features', 'appearance'] as const;
+const SECTIONS = ['classinfo', 'access', 'features', 'invite'] as const;
 type Section = (typeof SECTIONS)[number];
 
 export function ClassSettingsRedesigned({
@@ -44,7 +44,6 @@ export function ClassSettingsRedesigned({
 
   const [editName, setEditName] = useState(className);
   const [editDesc, setEditDesc] = useState('');
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const [studentChatEnabled, setStudentChatEnabled] = useState(true);
   const [teacherChatEnabled, setTeacherChatEnabled] = useState(true);
@@ -95,12 +94,6 @@ export function ClassSettingsRedesigned({
     }
   }
 
-  function copyToClipboard(text: string, code: string) {
-    navigator.clipboard.writeText(text);
-    setCopiedCode(code);
-    setTimeout(() => setCopiedCode(null), 2000);
-  }
-
   async function saveChatSettings() {
     setSaving(true);
     try {
@@ -138,7 +131,7 @@ export function ClassSettingsRedesigned({
               classinfo: { en: 'Class Info', nl: 'Klasinfo' },
               access: { en: 'Access', nl: 'Toegang' },
               features: { en: 'Features', nl: 'Functies' },
-              appearance: { en: 'Appearance', nl: 'Uiterlijk' },
+              invite: { en: 'Invite', nl: 'Uitnodigen' },
             };
             const label = labels[section];
 
@@ -168,13 +161,13 @@ export function ClassSettingsRedesigned({
             {activeSection === 'classinfo' && (isDutch ? 'Klasinformatie' : 'Class Information')}
             {activeSection === 'access' && (isDutch ? 'Toegang & Leden' : 'Access & Members')}
             {activeSection === 'features' && (isDutch ? 'Functies' : 'Features')}
-            {activeSection === 'appearance' && (isDutch ? 'Uiterlijk' : 'Appearance')}
+            {activeSection === 'invite' && (isDutch ? 'Uitnodigen' : 'Invite')}
           </h2>
           <p className="text-[12px] text-muted-foreground mt-1">
             {activeSection === 'classinfo' && (isDutch ? 'Basisgegevens over uw klas' : 'Basic information about your class')}
             {activeSection === 'access' && (isDutch ? 'Beheer docenten en student access' : 'Manage teachers and student access')}
             {activeSection === 'features' && (isDutch ? 'Schakel tabs en functies in/uit' : 'Enable or disable features')}
-            {activeSection === 'appearance' && (isDutch ? 'Aanpassingsopties voor het thema' : 'Theme customization')}
+            {activeSection === 'invite' && (isDutch ? 'Nodig studenten en docenten uit' : 'Invite students and teachers')}
           </p>
         </div>
 
@@ -206,46 +199,6 @@ export function ClassSettingsRedesigned({
                 />
               </SettingField>
 
-              <SettingField
-                label={isDutch ? 'Deelcode student' : 'Student Join Code'}
-                description={isDutch ? 'Students gebruiken dit om in te schrijven' : 'Students use this to join'}
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={classData?.join_code || ''}
-                    readOnly
-                    className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-muted text-foreground"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(classData?.join_code || '', 'student')}
-                    className="px-3 py-2 text-[12px] font-500 border border-border rounded-md bg-white hover:bg-muted transition-colors dark:bg-[hsl(var(--surface-2))]"
-                  >
-                    {copiedCode === 'student' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </button>
-                </div>
-              </SettingField>
-
-              <SettingField
-                label={isDutch ? 'Deelcode docent' : 'Teacher Join Code'}
-                description={isDutch ? 'Andere docenten kunnen met dit code deelnemen' : 'Other teachers can join with this code'}
-              >
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={classData?.teacher_join_code || ''}
-                    readOnly
-                    className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-muted text-foreground"
-                  />
-                  <button
-                    onClick={() => copyToClipboard(classData?.teacher_join_code || '', 'teacher')}
-                    className="px-3 py-2 text-[12px] font-500 border border-border rounded-md bg-white hover:bg-muted transition-colors dark:bg-[hsl(var(--surface-2))]"
-                  >
-                    {copiedCode === 'teacher' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </button>
-                </div>
-              </SettingField>
-
               {!isArchived && (
                 <SettingField
                   label={isDutch ? 'Klas archiveren' : 'Archive Class'}
@@ -267,18 +220,9 @@ export function ClassSettingsRedesigned({
                   {isDutch ? 'Docenten in deze klas' : 'Teachers in this class'}
                 </h3>
                 <div className="border border-border rounded-md divide-y divide-border">
-                  {teachers.map((teacher, idx) => (
-                    <div key={teacher.id} className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <p className="text-[13px] font-500 text-foreground">{teacher.name}</p>
-                        <p className="text-[11px] text-muted-foreground capitalize">{teacher.role}</p>
-                      </div>
-                      {teacher.role !== 'owner' && (
-                        <select className="text-[12px] border border-border rounded-md px-2 py-1 bg-background">
-                          <option>Teacher</option>
-                          <option>Owner</option>
-                        </select>
-                      )}
+                  {teachers.map((teacher) => (
+                    <div key={teacher.id} className="flex items-center px-4 py-3">
+                      <p className="text-[13px] font-500 text-foreground">{teacher.name}</p>
                     </div>
                   ))}
                 </div>
@@ -351,30 +295,14 @@ export function ClassSettingsRedesigned({
             </div>
           )}
 
-          {/* Appearance Section */}
-          {activeSection === 'appearance' && (
-            <div className="space-y-4">
-              <SettingField
-                label={isDutch ? 'Thema' : 'Theme'}
-                description=""
-              >
-                <select className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background">
-                  <option>{isDutch ? 'Automatisch (OS-instelling)' : 'Auto (OS setting)'}</option>
-                  <option>{isDutch ? 'Licht' : 'Light'}</option>
-                  <option>{isDutch ? 'Donker' : 'Dark'}</option>
-                </select>
-              </SettingField>
-
-              <SettingField
-                label={isDutch ? 'Kleurenschema' : 'Color Scheme'}
-                description=""
-              >
-                <select className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background">
-                  <option>{isDutch ? 'Standaard (Sage Groen)' : 'Default (Sage Green)'}</option>
-                  <option>{isDutch ? 'Erfenis (Blauw)' : 'Legacy (Blue)'}</option>
-                  <option>{isDutch ? 'Zand (Warm tan)' : 'Sand (Warm tan)'}</option>
-                </select>
-              </SettingField>
+          {/* Invite Section */}
+          {activeSection === 'invite' && (
+            <div className="-mx-6 -my-5">
+              <InviteTab
+                classId={classId}
+                joinCode={classData?.join_code || ''}
+                teacherJoinCode={classData?.teacher_join_code || ''}
+              />
             </div>
           )}
         </div>

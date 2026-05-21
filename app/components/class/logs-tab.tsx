@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 
@@ -175,6 +175,7 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [logs, setLogs] = useState<AuditLog[]>(cachedData?.logs || []);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(!cachedData && !parentLoading);
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
@@ -574,18 +575,37 @@ export function LogsTab({ classId, cachedData = null, parentLoading = false }: L
                       </div>
                     )}
 
-                    <div className="space-y-1">
-                      {group.logs.map((log) => {
-                        const diffLines = getDiffSummary(log, isDutch);
-                        return (
-                          <div key={log.id} className="rounded-md surface-interactive px-2 py-1.5">
-                            <p className="text-xs font-medium">{formatActionLabel(log, isDutch)}</p>
-                            {diffLines.map((line) => (
-                              <p key={line} className="text-[11px] text-muted-foreground">{line}</p>
-                            ))}
-                          </div>
-                        );
-                      })}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedGroups(prev => {
+                          const next = new Set(prev);
+                          if (next.has(group.id)) next.delete(group.id);
+                          else next.add(group.id);
+                          return next;
+                        })}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedGroups.has(group.id) ? 'rotate-180' : ''}`} />
+                        {expandedGroups.has(group.id)
+                          ? (isDutch ? 'Details verbergen' : 'Hide details')
+                          : (isDutch ? 'Details tonen' : 'Show details')}
+                      </button>
+                      {expandedGroups.has(group.id) && (
+                        <div className="mt-1.5 space-y-1">
+                          {group.logs.map((log) => {
+                            const diffLines = getDiffSummary(log, isDutch);
+                            return (
+                              <div key={log.id} className="rounded-md surface-interactive px-2 py-1.5">
+                                <p className="text-xs font-medium">{formatActionLabel(log, isDutch)}</p>
+                                {diffLines.map((line) => (
+                                  <p key={line} className="text-[11px] text-muted-foreground">{line}</p>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -54,6 +54,9 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
   const [savingSettings, setSavingSettings] = useState(false);
   const [composerMode, setComposerMode] = useState<'text' | 'photo' | 'file' | 'link'>('text');
   const [attachmentLabel, setAttachmentLabel] = useState('');
+  const [attachmentUrl, setAttachmentUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [attachmentMimeType, setAttachmentMimeType] = useState('');
   const [attachmentSizeBytes, setAttachmentSizeBytes] = useState<number>(0);
@@ -181,6 +184,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                   file_name: attachmentLabel || null,
                   mime_type: attachmentMimeType || null,
                   size_bytes: attachmentSizeBytes || 0,
+                  href: composerMode === 'photo' && attachmentUrl ? attachmentUrl : undefined,
                 },
               }
             : null;
@@ -199,6 +203,8 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
       if (!res.ok) throw new Error(data?.error || 'Failed to send message');
       setMessage('');
       setAttachmentLabel('');
+      setAttachmentUrl('');
+      setSelectedFile(null);
       setLinkUrl('');
       setAttachmentMimeType('');
       setAttachmentSizeBytes(0);
@@ -253,13 +259,30 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
 
   const visiblePosts = useMemo(() => posts, [posts]);
 
-  const onPickFile = (event: React.ChangeEvent<HTMLInputElement>, mode: 'photo' | 'file') => {
+  const onPickFile = async (event: React.ChangeEvent<HTMLInputElement>, mode: 'photo' | 'file') => {
     const file = event.target.files?.[0];
     if (!file) return;
     setComposerMode(mode);
     setAttachmentLabel(file.name);
     setAttachmentMimeType(file.type || '');
     setAttachmentSizeBytes(file.size || 0);
+    setSelectedFile(file);
+    setAttachmentUrl('');
+
+    if (mode === 'photo') {
+      setUploadingAttachment(true);
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        form.append('type', 'image');
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data?.url) setAttachmentUrl(data.url);
+      } catch {
+      } finally {
+        setUploadingAttachment(false);
+      }
+    }
   };
 
   const replyTarget = replyToId ? posts.find((p) => p.id === replyToId) || null : null;
@@ -324,11 +347,18 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                   Replying to: {posts.find((p) => p.id === post.replyToId)?.text?.slice(0, 80) || 'message'}
                 </div>
               ) : null}
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p>
-              {post.attachmentLabel ? (
+              {post.text ? <p className="whitespace-pre-wrap text-sm leading-relaxed">{post.text}</p> : null}
+              {post.sourceType === 'photo' && post.sourceHref ? (
+                <img
+                  src={post.sourceHref}
+                  alt={post.attachmentLabel || 'image'}
+                  className="mt-1.5 max-h-56 w-auto max-w-full rounded-lg object-cover"
+                  loading="lazy"
+                />
+              ) : post.attachmentLabel ? (
                 <p className={`mt-1 text-xs ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground/85' : 'text-muted-foreground'}`}>Attachment: {post.attachmentLabel}</p>
               ) : null}
-              {post.sourceHref ? (
+              {post.sourceType === 'link' && post.sourceHref ? (
                 <a className={`mt-1 inline-flex text-xs underline ${post.authorId && post.authorId === viewerUserId ? 'text-primary-foreground' : 'text-foreground/80'}`} href={post.sourceHref} target="_blank" rel="noreferrer">
                   Open link
                 </a>
@@ -362,7 +392,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
           ) : null}
           <div className="relative z-10 mb-2 flex flex-wrap items-center gap-1.5">
             <label className="inline-flex">
-              <input type="file" accept="image/*" className="hidden" onChange={(event) => onPickFile(event, 'photo')} />
+              <input type="file" accept="image/*" className="hidden" onChange={(event) => void onPickFile(event, 'photo')} />
               <Button
                 type="button"
                 size="sm"
@@ -374,7 +404,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
               </Button>
             </label>
             <label className="inline-flex">
-              <input type="file" className="hidden" onChange={(event) => onPickFile(event, 'file')} />
+              <input type="file" className="hidden" onChange={(event) => void onPickFile(event, 'file')} />
               <Button
                 type="button"
                 size="sm"
@@ -420,9 +450,12 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
           ) : null}
           {(composerMode === 'photo' || composerMode === 'file') && attachmentLabel ? (
             <div className="mb-2 flex items-center justify-between gap-2 rounded-md surface-interactive px-2 py-1 text-xs text-muted-foreground">
-              <span className="truncate">
-                {attachmentLabel}
-                {attachmentSizeBytes > 0 ? ` (${Math.ceil(attachmentSizeBytes / 1024)} KB)` : ''}
+              <span className="flex items-center gap-2 truncate">
+                {composerMode === 'photo' && attachmentUrl && (
+                  <img src={attachmentUrl} alt="" className="h-8 w-8 rounded object-cover shrink-0" />
+                )}
+                {uploadingAttachment ? 'Uploading...' : attachmentLabel}
+                {!uploadingAttachment && attachmentSizeBytes > 0 ? ` (${Math.ceil(attachmentSizeBytes / 1024)} KB)` : ''}
               </span>
               <Button
                 type="button"
@@ -431,6 +464,8 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
                 className="h-6 px-2 text-[11px]"
                 onClick={() => {
                   setAttachmentLabel('');
+                  setAttachmentUrl('');
+                  setSelectedFile(null);
                   setAttachmentMimeType('');
                   setAttachmentSizeBytes(0);
                   if (!linkUrl.trim()) setComposerMode('text');
@@ -460,7 +495,7 @@ export function ShareTab({ classId, isTeacher }: { classId: string; isTeacher: b
               size="sm"
               className="w-[112px] rounded-2xl border-transparent bg-[var(--accent-brand)] text-xs text-white hover:brightness-95"
               onClick={() => void sendMessage()}
-              disabled={isSubmitting || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
+              disabled={isSubmitting || uploadingAttachment || (!message.trim() && !attachmentLabel && !linkUrl.trim())}
             >
               <Send className="mr-1.5 h-3.5 w-3.5" />
               {isSubmitting ? 'Sending...' : 'Send'}

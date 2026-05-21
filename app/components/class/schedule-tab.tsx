@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useContext } from 'react';
-import { Plus, Pencil, Trash2, CopyPlus } from 'lucide-react';
+import { Plus, Pencil, Trash2, CopyPlus, MapPin } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,6 +96,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
     title: '',
     start_time: '08:30',
     end_time: '09:20',
+    notes: '',
   });
 
   /* ── Load ── */
@@ -191,11 +192,12 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           title: newSlot.title.trim(),
           start_time: newSlot.start_time,
           end_time: newSlot.end_time,
+          notes: newSlot.notes.trim() || null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add slot');
-      setNewSlot(prev => ({ ...prev, title: '' }));
+      setNewSlot(prev => ({ ...prev, title: '', notes: '' }));
       setShowAddForm(false);
       await loadSchedule();
       toast({ title: isDutch ? 'Roosterblok toegevoegd' : 'Schedule slot added' });
@@ -470,7 +472,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               <p className="mb-3 text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
                 {isDutch ? 'Nieuw roosterblok' : 'New schedule slot'}
               </p>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
                 <div className="space-y-1">
                   <Label className="text-[11px]">{isDutch ? 'Dag' : 'Day'}</Label>
                   <Select value={newSlot.day_of_week} onValueChange={v => setNewSlot(p => ({ ...p, day_of_week: v }))}>
@@ -519,6 +521,15 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                     className="h-8 text-[12px]"
                     placeholder={isDutch ? 'Wiskunde' : 'Mathematics'}
                     onKeyDown={e => { if (e.key === 'Enter') void createSlot(); }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px]">{isDutch ? 'Locatie' : 'Location'}</Label>
+                  <Input
+                    value={newSlot.notes}
+                    onChange={e => setNewSlot(p => ({ ...p, notes: e.target.value }))}
+                    className="h-8 text-[12px]"
+                    placeholder={isDutch ? 'Lokaal 102' : 'Room 102'}
                   />
                 </div>
               </div>
@@ -606,7 +617,10 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                                   {slot.title}
                                 </div>
                                 {slot.notes && (
-                                  <div className="mt-0.5 text-[10px] text-[#aaa]">{slot.notes}</div>
+                                  <div className="mt-0.5 flex items-center gap-0.5 text-[10px] text-[#aaa]">
+                                    <MapPin className="h-2.5 w-2.5 shrink-0" />
+                                    {slot.notes}
+                                  </div>
                                 )}
 
                                 {/* Edit controls — only in edit mode, not via click (click opens dialog) */}
@@ -685,7 +699,10 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                             {slot.title}
                           </div>
                           {slot.notes && (
-                            <div className="mt-0.5 text-[11px] text-[#aaa]">{slot.notes}</div>
+                            <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#aaa]">
+                              <MapPin className="h-3 w-3 shrink-0" />
+                              {slot.notes}
+                            </div>
                           )}
                         </div>
                         <div className="text-right">
@@ -754,7 +771,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
               <Input value={editDraft.title} onChange={e => setEditDraft(p => ({ ...p, title: e.target.value }))} className="h-9" />
             </div>
             <div className="space-y-1 md:col-span-2">
-              <Label>{isDutch ? 'Notities (optioneel)' : 'Notes (optional)'}</Label>
+              <Label>{isDutch ? 'Locatie (optioneel)' : 'Location (optional)'}</Label>
               <Input value={editDraft.notes} onChange={e => setEditDraft(p => ({ ...p, notes: e.target.value }))} className="h-9" placeholder={isDutch ? 'Lokaal 102' : 'Room 102'} />
             </div>
           </div>
