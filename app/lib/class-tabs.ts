@@ -1,5 +1,4 @@
 export const TEACHER_CLASS_TAB_IDS = [
-  'invite',
   'group',
   'share',
   'analytics',

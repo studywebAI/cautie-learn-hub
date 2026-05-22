@@ -4,21 +4,16 @@ import { useState, useEffect, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { InviteTab } from '@/components/class/invite-tab';
 
 type ClassData = {
   id: string;
   name: string;
   description?: string;
-  join_code?: string;
-  teacher_join_code?: string;
-  is_archived?: boolean;
 };
 
 type Teacher = {
   id: string;
   name: string;
-  role: 'owner' | 'teacher';
 };
 
 const SECTIONS = ['classinfo', 'access', 'features', 'invite'] as const;
@@ -57,6 +52,12 @@ export function ClassSettingsRedesigned({
     logs: true,
   });
 
+  // Invite section state
+  const [studentEmails, setStudentEmails] = useState<string[]>(['']);
+  const [teacherEmails, setTeacherEmails] = useState<string[]>(['']);
+  const [sendingInvite, setSendingInvite] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+
   useEffect(() => {
     void loadSettings();
   }, [classId]);
@@ -79,7 +80,8 @@ export function ClassSettingsRedesigned({
 
       if (groupRes.status === 'fulfilled' && groupRes.value.ok) {
         const data = await groupRes.value.json();
-        setTeachers(data.teachers || []);
+        const rawTeachers = data.teachers || [];
+        setTeachers(rawTeachers.map((t: any) => ({ id: t.id, name: t.name || t.full_name || t.email || t.id })));
       }
 
       if (shareRes.status === 'fulfilled' && shareRes.value.ok) {
@@ -110,6 +112,39 @@ export function ClassSettingsRedesigned({
     } catch (e) {
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendInvites() {
+    const validStudents = studentEmails.map(e => e.trim()).filter(e => e.includes('@'));
+    const validTeachers = teacherEmails.map(e => e.trim()).filter(e => e.includes('@'));
+    if (!validStudents.length && !validTeachers.length) {
+      setInviteStatus({ ok: false, msg: isDutch ? 'Voer minstens één e-mailadres in.' : 'Enter at least one email address.' });
+      return;
+    }
+    setSendingInvite(true);
+    setInviteStatus(null);
+    try {
+      const res = await fetch(`/api/classes/${classId}/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentEmails: validStudents,
+          teacherEmails: validTeachers,
+        }),
+      });
+      if (res.ok) {
+        setStudentEmails(['']);
+        setTeacherEmails(['']);
+        setInviteStatus({ ok: true, msg: isDutch ? 'Uitnodigingen verzonden!' : 'Invitations sent!' });
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setInviteStatus({ ok: false, msg: d.error || (isDutch ? 'Mislukt.' : 'Failed.') });
+      }
+    } catch {
+      setInviteStatus({ ok: false, msg: isDutch ? 'Fout bij verzenden.' : 'Error sending invites.' });
+    } finally {
+      setSendingInvite(false);
     }
   }
 
@@ -167,7 +202,7 @@ export function ClassSettingsRedesigned({
             {activeSection === 'classinfo' && (isDutch ? 'Basisgegevens over uw klas' : 'Basic information about your class')}
             {activeSection === 'access' && (isDutch ? 'Beheer docenten en student access' : 'Manage teachers and student access')}
             {activeSection === 'features' && (isDutch ? 'Schakel tabs en functies in/uit' : 'Enable or disable features')}
-            {activeSection === 'invite' && (isDutch ? 'Nodig studenten en docenten uit' : 'Invite students and teachers')}
+            {activeSection === 'invite' && (isDutch ? 'Nodig studenten en docenten uit via e-mail' : 'Invite students and teachers by email')}
           </p>
         </div>
 
@@ -220,15 +255,16 @@ export function ClassSettingsRedesigned({
                   {isDutch ? 'Docenten in deze klas' : 'Teachers in this class'}
                 </h3>
                 <div className="border border-border rounded-md divide-y divide-border">
-                  {teachers.map((teacher) => (
+                  {teachers.length === 0 ? (
+                    <div className="px-4 py-3 text-[12px] text-muted-foreground">
+                      {isDutch ? 'Geen docenten gevonden.' : 'No teachers found.'}
+                    </div>
+                  ) : teachers.map((teacher) => (
                     <div key={teacher.id} className="flex items-center px-4 py-3">
                       <p className="text-[13px] font-500 text-foreground">{teacher.name}</p>
                     </div>
                   ))}
                 </div>
-                <button className="mt-3 px-3 py-2 text-[12px] font-500 bg-[#7f8962] text-white rounded-md hover:bg-[#6f7851] transition-colors">
-                  + {isDutch ? 'Docent toevoegen' : 'Add Teacher'}
-                </button>
               </div>
 
               <div>
@@ -295,14 +331,109 @@ export function ClassSettingsRedesigned({
             </div>
           )}
 
-          {/* Invite Section */}
+          {/* Invite Section — email only, no join codes */}
           {activeSection === 'invite' && (
-            <div className="-mx-6 -my-5">
-              <InviteTab
-                classId={classId}
-                joinCode={classData?.join_code || ''}
-                teacherJoinCode={classData?.teacher_join_code || ''}
-              />
+            <div className="space-y-6">
+              {/* Student invites */}
+              <div>
+                <h3 className="text-[13px] font-600 text-foreground mb-1">
+                  {isDutch ? 'Studenten uitnodigen' : 'Invite students'}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mb-3">
+                  {isDutch ? 'Voer e-mailadressen in om uitnodigingen te sturen.' : 'Enter email addresses to send invitations.'}
+                </p>
+                <div className="space-y-2">
+                  {studentEmails.map((email, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => {
+                          const next = [...studentEmails];
+                          next[idx] = e.target.value;
+                          setStudentEmails(next);
+                        }}
+                        placeholder={isDutch ? 'student@school.nl' : 'student@school.com'}
+                        className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                      />
+                      {studentEmails.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setStudentEmails(prev => prev.filter((_, i) => i !== idx))}
+                          className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setStudentEmails(prev => [...prev, ''])}
+                    className="text-[12px] text-[#7f8962] hover:underline"
+                  >
+                    + {isDutch ? 'e-mailadres toevoegen' : 'add email'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Teacher invites */}
+              <div>
+                <h3 className="text-[13px] font-600 text-foreground mb-1">
+                  {isDutch ? 'Docenten uitnodigen' : 'Invite teachers'}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mb-3">
+                  {isDutch ? 'Uitgenodigde docenten hebben dezelfde rechten.' : 'Invited teachers have equal access.'}
+                </p>
+                <div className="space-y-2">
+                  {teacherEmails.map((email, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={e => {
+                          const next = [...teacherEmails];
+                          next[idx] = e.target.value;
+                          setTeacherEmails(next);
+                        }}
+                        placeholder={isDutch ? 'collega@school.nl' : 'colleague@school.com'}
+                        className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                      />
+                      {teacherEmails.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setTeacherEmails(prev => prev.filter((_, i) => i !== idx))}
+                          className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setTeacherEmails(prev => [...prev, ''])}
+                    className="text-[12px] text-[#7f8962] hover:underline"
+                  >
+                    + {isDutch ? 'docent toevoegen' : 'add teacher'}
+                  </button>
+                </div>
+              </div>
+
+              {inviteStatus && (
+                <p className={cn('text-[12px]', inviteStatus.ok ? 'text-[#7f8962]' : 'text-red-600')}>
+                  {inviteStatus.msg}
+                </p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void sendInvites()}
+                disabled={sendingInvite}
+                className="rounded-md bg-[#7f8962] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#6f7851] disabled:opacity-50 transition-colors"
+              >
+                {sendingInvite ? '…' : (isDutch ? 'Uitnodigingen sturen' : 'Send invitations')}
+              </button>
             </div>
           )}
         </div>

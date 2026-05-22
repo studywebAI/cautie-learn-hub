@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreVertical, User, Crown, Trash2 } from 'lucide-react';
+import { MoreVertical, User, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,15 +30,13 @@ type TeacherListProps = {
   classId: string;
   currentUserId: string;
   isLoading: boolean;
-  classOwnerId: string;
+  classOwnerId?: string;
 };
 
-export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }: TeacherListProps) {
+export function TeacherList({ classId, currentUserId, isLoading }: TeacherListProps) {
     const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [loadingTeachers, setLoadingTeachers] = useState(true);
     const { toast } = useToast();
-    
-    const isOwner = classOwnerId === currentUserId;
 
     useEffect(() => {
         fetchTeachers();
@@ -140,12 +138,8 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                                 <div>
                                      <div className="flex items-center gap-2">
                                         <p className="font-medium">{teacher.profile?.full_name || (teacher.profile?.email ? teacher.profile.email.split('@')[0] : 'Unknown Teacher')}</p>
-                                         {teacher.role === 'owner' && (
-                                             <Crown className="h-4 w-4 text-yellow-500" />
-                                         )}
                                      </div>
                                      <p className="text-xs text-muted-foreground">{teacher.profile?.email || 'No email'}</p>
-                                     <p className="text-xs text-muted-foreground capitalize">{teacher.role}</p>
                                  </div>
                              </div>
                             {(teacher.user_id !== currentUserId) && (
@@ -160,15 +154,13 @@ export function TeacherList({ classId, currentUserId, isLoading, classOwnerId }:
                                          <DropdownMenuItem onClick={() => editDisplayName(teacher.user_id, teacher.profile?.full_name)}>
                                              Edit name
                                          </DropdownMenuItem>
-                                         {isOwner && teacher.role !== 'owner' && (
-                                         <DropdownMenuItem 
+                                         <DropdownMenuItem
                                              className="text-destructive"
                                              onClick={() => removeTeacher(teacher.user_id)}
                                          >
                                              <Trash2 className="mr-2 h-4 w-4" />
                                              Remove from class
                                          </DropdownMenuItem>
-                                         )}
                                      </DropdownMenuContent>
                                  </DropdownMenu>
                              )}

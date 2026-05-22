@@ -86,7 +86,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
     end_time: '09:20',
     day_of_week: '1',
     period_index: '1',
-    notes: '',
+    location: '',
   });
 
   // Add form
@@ -96,6 +96,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
     title: '',
     start_time: '08:30',
     end_time: '09:20',
+    location: '',
   });
 
   /* ── Load ── */
@@ -191,11 +192,12 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
           title: newSlot.title.trim(),
           start_time: newSlot.start_time,
           end_time: newSlot.end_time,
+          notes: newSlot.location || null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to add slot');
-      setNewSlot(prev => ({ ...prev, title: '' }));
+      setNewSlot(prev => ({ ...prev, title: '', location: '' }));
       setShowAddForm(false);
       await loadSchedule();
       toast({ title: isDutch ? 'Roosterblok toegevoegd' : 'Schedule slot added' });
@@ -262,7 +264,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
       end_time: slot.end_time,
       day_of_week: String(slot.day_of_week),
       period_index: String(slot.period_index),
-      notes: slot.notes || '',
+      location: slot.notes || '',
     });
   };
 
@@ -289,7 +291,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
           end_time: editDraft.end_time,
           day_of_week: Number(editDraft.day_of_week),
           period_index: Number(editDraft.period_index),
-          notes: editDraft.notes || null,
+          notes: editDraft.location || null,
         }),
       });
       const data = await res.json();
@@ -518,9 +520,18 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                     onChange={e => setNewSlot(p => ({ ...p, title: e.target.value }))}
                     className="h-8 text-[12px]"
                     placeholder={isDutch ? 'Wiskunde' : 'Mathematics'}
-                    onKeyDown={e => { if (e.key === 'Enter') void createSlot(); }}
                   />
                 </div>
+              </div>
+              <div className="mt-2 space-y-1">
+                <Label className="text-[11px]">{isDutch ? 'Locatie / Lokaal (optioneel)' : 'Location / Room (optional)'}</Label>
+                <Input
+                  value={newSlot.location}
+                  onChange={e => setNewSlot(p => ({ ...p, location: e.target.value }))}
+                  className="h-8 text-[12px]"
+                  placeholder={isDutch ? 'Lokaal 102' : 'Room 102'}
+                  onKeyDown={e => { if (e.key === 'Enter') void createSlot(); }}
+                />
               </div>
               <div className="mt-3 flex gap-2">
                 <button
@@ -606,7 +617,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                                   {slot.title}
                                 </div>
                                 {slot.notes && (
-                                  <div className="mt-0.5 text-[10px] text-[#aaa]">{slot.notes}</div>
+                                  <div className="mt-0.5 text-[10px] text-[#aaa]">📍 {slot.notes}</div>
                                 )}
 
                                 {/* Edit controls — only in edit mode, not via click (click opens dialog) */}
@@ -675,20 +686,21 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                           'grid items-center gap-3 rounded-[6px] border-b border-[#f0f0f0] p-[11px_10px] last:border-b-0 dark:border-border',
                           isCurrent ? 'bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.1)]' : ''
                         )}
-                        style={{ gridTemplateColumns: '60px 1fr 60px' }}
+                        style={{ gridTemplateColumns: '64px 1fr auto' }}
                       >
                         <div className="text-[12px] font-semibold text-[#7f8962]">
                           {fmt24(slot.start_time)}
+                          <div className="text-[10px] font-normal text-[#aaa]">{fmt24(slot.end_time)}</div>
                         </div>
-                        <div>
-                          <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground truncate">
                             {slot.title}
                           </div>
                           {slot.notes && (
-                            <div className="mt-0.5 text-[11px] text-[#aaa]">{slot.notes}</div>
+                            <div className="shrink-0 text-[11px] text-[#aaa]">· 📍 {slot.notes}</div>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-2">
                           {isCurrent && (
                             <span className="rounded-full bg-[#edf1e5] px-2 py-0.5 text-[10px] font-semibold text-[#7f8962]">
                               {isDutch ? 'Nu' : 'Now'}
@@ -754,8 +766,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <Input value={editDraft.title} onChange={e => setEditDraft(p => ({ ...p, title: e.target.value }))} className="h-9" />
             </div>
             <div className="space-y-1 md:col-span-2">
-              <Label>{isDutch ? 'Notities (optioneel)' : 'Notes (optional)'}</Label>
-              <Input value={editDraft.notes} onChange={e => setEditDraft(p => ({ ...p, notes: e.target.value }))} className="h-9" placeholder={isDutch ? 'Lokaal 102' : 'Room 102'} />
+              <Label>{isDutch ? 'Locatie / Lokaal (optioneel)' : 'Location / Room (optional)'}</Label>
+              <Input value={editDraft.location} onChange={e => setEditDraft(p => ({ ...p, location: e.target.value }))} className="h-9" placeholder={isDutch ? 'Lokaal 102' : 'Room 102'} />
             </div>
           </div>
           <DialogFooter>

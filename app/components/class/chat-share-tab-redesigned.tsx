@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { ImagePlus, X } from 'lucide-react';
 
 type Reaction = { emoji: string; count: number; reactedByMe: boolean };
 
@@ -13,6 +14,7 @@ type Message = {
   authorName: string;
   isTeacher: boolean;
   content: string;
+  imageDataUrl?: string;
   createdAt: string;
   channel: 'all' | 'teachers';
   reactions: Reaction[];
@@ -21,6 +23,7 @@ type Message = {
 type Channel = 'all' | 'teachers';
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '🙌', '✅', '❓'];
+const MAX_IMAGE_BYTES = 2_000_000; // 2 MB
 
 function formatTime(iso: string): string {
   try {
@@ -44,6 +47,7 @@ function mapRow(row: any): Message {
     authorName: String(row?.authorName || row?.authorEmail || 'User'),
     isTeacher: false,
     content: String(row?.text || ''),
+    imageDataUrl: row?.imageDataUrl ? String(row.imageDataUrl) : undefined,
     createdAt: String(row?.createdAt || ''),
     channel: row?.audience === 'teacher' ? 'teachers' : 'all',
     reactions: [],
@@ -63,9 +67,11 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [text, setText] = useState('');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [showEmojis, setShowEmojis] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const currentUserId = session?.user?.id || '';
 
   useEffect(() => { void loadMessages(); }, [classId, channel]);
@@ -89,17 +95,34 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
     }
   }
 
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(isDutch ? 'Afbeelding is te groot (max 2 MB).' : 'Image is too large (max 2 MB).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be re-selected
+    e.target.value = '';
+  }
+
   async function sendMessage() {
     const content = text.trim();
-    if (!content || sending) return;
+    if (!content && !imagePreview || sending) return;
     setSending(true);
+    const sentText = content;
+    const sentImage = imagePreview;
     setText('');
+    setImagePreview(null);
     try {
       const audience = channel === 'all' ? 'all' : 'teacher';
       const res = await fetch(`/api/classes/${classId}/share`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: content, audience }),
+        body: JSON.stringify({ text: sentText, audience, imageDataUrl: sentImage || undefined }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -133,10 +156,9 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
     ? (isDutch ? 'Iedereen' : 'All')
     : (isDutch ? 'Docenten' : 'Teachers');
 
-  const memberCount = messages.length > 0 ? undefined : undefined; // no member count from messages API
+  const canSend = !!(text.trim() || imagePreview) && !sending;
 
   return (
-    /* Outer shell — flat white box matching mockup */
     <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
       {/* Topbar */}
       <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
@@ -150,9 +172,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
 
         {/* ── Channel sidebar ── */}
         <div className="flex flex-col gap-0.5 overflow-y-auto border-r border-[#ebebeb] p-3 dark:border-border">
-          <div
-            className="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[.5px] text-[#bbb]"
-          >
+          <div className="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[.5px] text-[#bbb]">
             {isDutch ? 'Kanalen' : 'Channels'}
           </div>
 
@@ -167,7 +187,6 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                 : 'hover:bg-[#f5f5f5] dark:hover:bg-[hsl(var(--interactive-hover))]'
             )}
           >
-            {/* Channel icon */}
             <span
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] text-[12px] font-bold"
               style={{ background: '#e5eef8', color: '#3a7fc1' }}
@@ -175,12 +194,8 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               A
             </span>
             {isDutch ? 'Iedereen' : 'All'}
-            {/* Unread dot placeholder — shown when there are messages */}
             {messages.length > 0 && channel !== 'all' && (
-              <span
-                className="ml-auto h-[7px] w-[7px] flex-shrink-0 rounded-full"
-                style={{ background: '#7f8962' }}
-              />
+              <span className="ml-auto h-[7px] w-[7px] flex-shrink-0 rounded-full" style={{ background: '#7f8962' }} />
             )}
           </button>
 
@@ -253,13 +268,28 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                         <strong className="font-semibold text-[#444] dark:text-foreground/70">
                           {isOwn ? (isDutch ? 'Jij' : 'You') : msg.authorName}
                         </strong>
-                        {'  '}
+                        {'  '}
                         {formatTime(msg.createdAt)}
                       </div>
+
+                      {/* Inline image */}
+                      {msg.imageDataUrl && (
+                        <div className="mb-2 overflow-hidden rounded-[8px]">
+                          <img
+                            src={msg.imageDataUrl}
+                            alt=""
+                            className="max-h-48 w-auto max-w-full object-contain"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+
                       {/* Message text */}
-                      <div className="text-[13px] leading-[1.45] text-[#1a1a1a] dark:text-foreground">
-                        {msg.content}
-                      </div>
+                      {msg.content && (
+                        <div className="text-[13px] leading-[1.45] text-[#1a1a1a] dark:text-foreground">
+                          {msg.content}
+                        </div>
+                      )}
 
                       {/* Reactions */}
                       {msg.reactions.length > 0 && (
@@ -317,6 +347,25 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
           {/* ── Composer ── */}
           <div className="border-t border-[#ebebeb] p-[10px_14px] dark:border-border">
             <div className="overflow-hidden rounded-[8px] border border-[#e0e0e0] dark:border-border">
+
+              {/* Image preview */}
+              {imagePreview && (
+                <div className="relative border-b border-[#ebebeb] p-2 dark:border-border">
+                  <img
+                    src={imagePreview}
+                    alt=""
+                    className="max-h-28 max-w-full rounded-[6px] object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImagePreview(null)}
+                    className="absolute right-3 top-3 rounded-full bg-black/50 p-0.5 text-white hover:bg-black/70"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
               {/* Text input area */}
               <textarea
                 ref={textRef}
@@ -334,12 +383,30 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                 rows={2}
                 className="w-full resize-none bg-[#fafafa] px-3 pt-2 text-[13px] text-[#1a1a1a] outline-none placeholder:text-[#aaa] dark:bg-[hsl(var(--surface-2))] dark:text-foreground"
               />
+
               {/* Toolbar */}
-              <div className="flex items-center justify-end gap-2 border-t border-[#ebebeb] bg-[#f7f7f7] px-3 py-2 dark:border-border dark:bg-[hsl(var(--surface-2))]">
+              <div className="flex items-center justify-between gap-2 border-t border-[#ebebeb] bg-[#f7f7f7] px-3 py-2 dark:border-border dark:bg-[hsl(var(--surface-2))]">
+                {/* Image upload button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title={isDutch ? 'Afbeelding toevoegen' : 'Attach image'}
+                  className="rounded-[6px] p-1.5 text-[#aaa] transition-colors hover:bg-[#ebebeb] hover:text-[#555] dark:hover:bg-[hsl(var(--interactive-hover))]"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/gif,image/webp"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+
                 {/* Send button */}
                 <button
                   type="button"
-                  disabled={!text.trim() || sending}
+                  disabled={!canSend}
                   onClick={() => void sendMessage()}
                   className="rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:bg-[#6f7851] disabled:opacity-50"
                 >
