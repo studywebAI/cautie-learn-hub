@@ -3,6 +3,19 @@
  * Use these to validate and sanitize all incoming request data
  */
 
+// Re-export schemas and helpers that live in the validation/ sub-directory
+// so that `@/lib/validation` resolves correctly (this file shadows the directory).
+export {
+  createBlockSchema,
+  createClassSubjectSchema,
+  bulkClassesSchema,
+  createNotificationSchema,
+  notificationPreferencesSchema,
+  markNotificationReadSchema,
+  createPersonalTaskSchema,
+} from './validation/schemas';
+export { validateBody } from './validation/validate';
+
 import { z } from 'zod';
 
 // ============================================
