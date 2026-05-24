@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useContext } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Plus, TrendingUp } from 'lucide-react';
+import { Plus, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
@@ -140,9 +140,9 @@ export default function TeacherGradesLanding() {
     <div className="page-content max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="page-title">{isDutch ? '📊 Cijfers' : '📊 Grades'}</h1>
+        <h1 className="page-title">{isDutch ? 'Cijfers' : 'Grades'}</h1>
         <p className="page-subtitle mt-0.5">
-          {isDutch ? 'Welkom terug' : 'Welcome back'} 👋
+          {isDutch ? 'Welkom terug' : 'Welcome back'}
         </p>
       </div>
 
@@ -150,7 +150,7 @@ export default function TeacherGradesLanding() {
       <div className="grid grid-cols-2 gap-4 md:gap-6">
         <Link href="/teacher-grades/new">
           <Card className="p-6 hover:shadow-lg transition-all cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <div className="text-4xl mb-3">➕</div>
+            <Plus className="h-8 w-8 mb-3 text-[var(--accent-brand)]" />
             <h3 className="font-semibold text-sm">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</h3>
             <p className="text-[12px] text-muted-foreground mt-1">
               {isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}
@@ -160,7 +160,7 @@ export default function TeacherGradesLanding() {
 
         <Link href="/teacher-grades?view=all">
           <Card className="p-6 hover:shadow-lg transition-all cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <div className="text-4xl mb-3">📋</div>
+            <CheckSquare className="h-8 w-8 mb-3 text-[var(--accent-brand)]" />
             <h3 className="font-semibold text-sm">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</h3>
             <p className="text-[12px] text-muted-foreground mt-1">
               {isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}

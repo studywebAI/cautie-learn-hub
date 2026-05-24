@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Grading Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 40px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+        .mockup {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .mockup h2 {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* Landing page */
+        .landing-mockup {
+            max-width: 100%;
+        }
+
+        .landing-header {
+            margin-bottom: 30px;
+        }
+
+        .landing-header h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .landing-header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        .action-card {
+            padding: 20px;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-card:hover {
+            border-color: #7f8962;
+            background: #fafafa;
+        }
+
+        .action-card-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8962;
+        }
+
+        .action-card-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .action-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #1a1a1a;
+        }
+
+        .action-card p {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.4;
+        }
+
+        /* Grading interface */
+        .grade-header {
+            margin-bottom: 24px;
+        }
+
+        .grade-header h2 {
+            font-size: 20px;
+            margin-bottom: 2px;
+            color: #1a1a1a;
+            border: none;
+            padding: 0;
+        }
+
+        .grade-header p {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .grade-meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* Table */
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #fafafa;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #1a1a1a;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .student-cell {
+            font-weight: 500;
+            min-width: 140px;
+        }
+
+        .prev-grades {
+            min-width: 180px;
+            cursor: pointer;
+            user-select: none;
+            color: #7f8962;
+            text-decoration: none;
+        }
+
+        .prev-grades-collapsed {
+            font-size: 13px;
+            font-family: 'Monaco', monospace;
+        }
+
+        .prev-grades-expanded {
+            font-size: 13px;
+            font-family: 'Monaco', monospace;
+            line-height: 1.6;
+        }
+
+        .expand-indicator {
+            font-size: 11px;
+            color: #999;
+            margin-left: 4px;
+        }
+
+        .grade-cell {
+            min-width: 70px;
+        }
+
+        .grade-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .grade-input:focus {
+            outline: none;
+            border-color: #7f8962;
+            box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+        }
+
+        .grade-input::placeholder {
+            color: #ccc;
+        }
+
+        .weight-cell {
+            min-width: 60px;
+        }
+
+        .weight-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .weight-input:focus {
+            outline: none;
+            border-color: #7f8962;
+            box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+        }
+
+        .weight-modified {
+            border-color: #7f8962;
+            background: #f0fdf4;
+        }
+
+        /* Summary */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #7f8962;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6f7851;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a1a1a;
+            border: 1px solid #d0d0d0;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+
+        /* Comparisons */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .comparison-item {
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 6px;
+            border-left: 3px solid #ccc;
+        }
+
+        .comparison-item.good {
+            border-left-color: #7f8962;
+            background: #f0fdf4;
+        }
+
+        .comparison-item h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .comparison-item ul {
+            list-style: none;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #1a1a1a;
+        }
+
+        .comparison-item li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Grades UI - Clean Redesign</h1>
+
+        <!-- Landing Page -->
+        <div class="mockup landing-mockup">
+            <h2>Landing Page (Smaller Cards, Matching Typography)</h2>
+
+            <div class="landing-header">
+                <h1>Grades</h1>
+                <p>Welcome back</p>
+            </div>
+
+            <div class="action-cards">
+                <div class="action-card">
+                    <div class="action-card-icon">
+                        <svg viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </div>
+                    <h3>New Grade</h3>
+                    <p>Create a new grade set</p>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-card-icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
+                        </svg>
+                    </div>
+                    <h3>Existing Grades</h3>
+                    <p>View & manage grades</p>
+                </div>
+            </div>
+
+            <p style="font-size: 13px; color: #999; text-align: center;">No grade sets yet. Create one to get started.</p>
+        </div>
+
+        <!-- Grading Interface - Clean Table -->
+        <div class="mockup">
+            <h2>Grading Interface - Clean Table Layout</h2>
+
+            <div class="grade-header">
+                <h2>Biology Test 1</h2>
+                <p>Grade 10A • Biology</p>
+            </div>
+
+            <div class="grade-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Class</span>
+                    <span class="meta-value">Grade 10A</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Subject</span>
+                    <span class="meta-value">Biology</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Status</span>
+                    <span class="meta-value" style="color: #f59e0b;">In Progress</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Default Weight</span>
+                    <span class="meta-value">5 pts</span>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Previous Grades</th>
+                            <th>Grade</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="student-cell">Alice Johnson</td>
+                            <td class="prev-grades prev-grades-expanded">
+                                Avg: 7.6 | % Avg: 76% | Trend: ↑
+                                <span class="expand-indicator">[collapse]</span>
+                            </td>
+                            <td class="grade-cell">
+                                <input type="number" class="grade-input" placeholder="—" min="0" max="10" step="0.5">
+                            </td>
+                            <td class="weight-cell">
+                                <input type="number" class="weight-input" value="5">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-cell">Bob Smith</td>
+                            <td class="prev-grades prev-grades-collapsed">
+                                8.5, 8.2, 7.9
+                                <span class="expand-indicator">[expand]</span>
+                            </td>
+                            <td class="grade-cell">
+                                <input type="number" class="grade-input" placeholder="—" min="0" max="10" step="0.5" value="8.5">
+                            </td>
+                            <td class="weight-cell">
+                                <input type="number" class="weight-input" value="5">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-cell">Carol Davis</td>
+                            <td class="prev-grades prev-grades-collapsed">
+                                9.0, 8.8, 9.2, 8.9
+                                <span class="expand-indicator">[expand]</span>
+                            </td>
+                            <td class="grade-cell">
+                                <input type="number" class="grade-input" placeholder="—" min="0" max="10" step="0.5">
+                            </td>
+                            <td class="weight-cell">
+                                <input type="number" class="weight-input weight-modified" value="3">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-cell">David Wilson</td>
+                            <td class="prev-grades prev-grades-collapsed">
+                                7.2, 7.5
+                                <span class="expand-indicator">[expand]</span>
+                            </td>
+                            <td class="grade-cell">
+                                <input type="number" class="grade-input" placeholder="—" min="0" max="10" step="0.5">
+                            </td>
+                            <td class="weight-cell">
+                                <input type="number" class="weight-input" value="5">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-cell">Emma Thompson</td>
+                            <td class="prev-grades prev-grades-collapsed">
+                                No previous grades
+                            </td>
+                            <td class="grade-cell">
+                                <input type="number" class="grade-input" placeholder="—" min="0" max="10" step="0.5" value="7.8">
+                            </td>
+                            <td class="weight-cell">
+                                <input type="number" class="weight-input" value="5">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="summary">
+                <div class="summary-item">
+                    <span class="summary-label">Graded</span>
+                    <span class="summary-value">2 / 5</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Progress</span>
+                    <span class="summary-value">40%</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Class Avg</span>
+                    <span class="summary-value">8.2</span>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-secondary">← Back</button>
+                <button class="btn-primary">Save Grades →</button>
+            </div>
+        </div>
+
+        <!-- Previous Grades Details -->
+        <div class="mockup">
+            <h2>Previous Grades - Expanded Example</h2>
+            <p style="margin-bottom: 16px; font-size: 13px; color: #999;">When clicking [expand], shows previous grades inline with metrics:</p>
+
+            <div style="padding: 16px; background: #fafafa; border-radius: 6px; font-family: 'Monaco', monospace; font-size: 13px; line-height: 1.8;">
+                <strong>Collapsed:</strong> 7.5, 8.0, 7.8, 8.5<br><br>
+                <strong>Expanded:</strong><br>
+                Test 1: 7.5<br>
+                Test 2: 8.0<br>
+                Quiz: 7.8<br>
+                Lab: 8.5<br><br>
+                <strong>Metrics:</strong><br>
+                Avg Grade (weighted): 7.95<br>
+                Avg % (simple): 77.9%<br>
+                Trend: ↑ Improving
+            </div>
+        </div>
+
+        <!-- Comparison: Before vs After -->
+        <div class="mockup">
+            <h2>Key Improvements</h2>
+            <div class="comparison-grid">
+                <div class="comparison-item">
+                    <h3>❌ Before</h3>
+                    <ul>
+                        <li>Confusing expandable row layout</li>
+                        <li>Too many background colors</li>
+                        <li>Inconsistent spacing</li>
+                        <li>Hard to read grade inputs</li>
+                        <li>Boxes everywhere</li>
+                        <li>Doesn't match rest of site</li>
+                    </ul>
+                </div>
+                <div class="comparison-item good">
+                    <h3>✓ After</h3>
+                    <ul>
+                        <li>Simple, clean table layout</li>
+                        <li>Minimal color usage</li>
+                        <li>Consistent spacing throughout</li>
+                        <li>Clear, visible inputs</li>
+                        <li>Text-only previous grades</li>
+                        <li>Matches website typography</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

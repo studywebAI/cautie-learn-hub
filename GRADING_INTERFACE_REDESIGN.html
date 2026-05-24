@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grading Interface Redesign</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 40px;
+            color: #1a1a1a;
+        }
+
+        .mockup {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .mockup h2 {
+            font-size: 20px;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+            border-bottom: 2px solid #7f8962;
+            padding-bottom: 15px;
+        }
+
+        /* Header section */
+        .grading-header {
+            margin-bottom: 30px;
+        }
+
+        .grading-header h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+        }
+
+        .grading-header p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .grade-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-item label {
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item value {
+            font-size: 16px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        /* Table styles */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            border: 1px solid #e5e5e5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #f9f9f9;
+            border-bottom: 2px solid #e5e5e5;
+        }
+
+        th {
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #1a1a1a;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .student-name {
+            font-weight: 500;
+            min-width: 150px;
+        }
+
+        .grade-input {
+            min-width: 80px;
+        }
+
+        .grade-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Monaco', monospace;
+        }
+
+        .grade-input input:focus {
+            outline: none;
+            border-color: #7f8962;
+            box-shadow: 0 0 0 3px rgba(127, 137, 98, 0.1);
+        }
+
+        .weight-input {
+            min-width: 70px;
+        }
+
+        .weight-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .previous-grades {
+            min-width: 150px;
+        }
+
+        .previous-grades-badge {
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+
+        .previous-grades-badge:hover {
+            background: #e5e5e5;
+        }
+
+        .previous-grades-badge.expanded {
+            background: #7f8962;
+            color: white;
+        }
+
+        /* Expanded previous grades */
+        .previous-grades-expanded {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .previous-grades-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .grade-history-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e5e5e5;
+        }
+
+        .grade-history-item .title {
+            font-size: 12px;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .grade-history-item .grade {
+            font-size: 16px;
+            font-weight: 600;
+            color: #7f8962;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .metric {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #7f8962;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* Summary bar */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e5e5e5;
+            margin-bottom: 30px;
+        }
+
+        .summary-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .summary-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        /* Buttons */
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #7f8962;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6f7851;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a1a1a;
+            border: 1px solid #d0d0d0;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+
+        .state-label {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #7f8962;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .comparison h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+        }
+
+        .comparison-item {
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+            border-left: 3px solid #ccc;
+        }
+
+        .comparison-item.bad {
+            border-left-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .comparison-item.good {
+            border-left-color: #7f8962;
+            background: #f0fdf4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Grading Interface Redesign</h1>
+
+        <!-- MOCKUP 1: Current vs Proposed -->
+        <div class="mockup">
+            <h2>Current vs. Proposed Layout</h2>
+
+            <div class="comparison">
+                <div>
+                    <h3>❌ Current (Messy)</h3>
+                    <div class="comparison-item bad">
+                        <p>• Too much whitespace</p>
+                        <p>• Cluttered with expandable rows</p>
+                        <p>• Grade input hard to see</p>
+                        <p>• No clear hierarchy</p>
+                        <p>• Inconsistent spacing</p>
+                        <p>• Doesn't match rest of site</p>
+                    </div>
+                </div>
+                <div>
+                    <h3>✓ Proposed (Clean Table)</h3>
+                    <div class="comparison-item good">
+                        <p>• Clean Excel-like table</p>
+                        <p>• Clear columns for each data type</p>
+                        <p>• Visible grade inputs</p>
+                        <p>• Strong visual hierarchy</p>
+                        <p>• Consistent spacing matching site</p>
+                        <p>• Professional appearance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOCKUP 2: Full Grading Interface -->
+        <div class="mockup">
+            <h2>Grading Interface - Full Layout</h2>
+
+            <div class="grading-header">
+                <h3>Biology Test 1</h3>
+                <p>Grade 10A • 24 students</p>
+            </div>
+
+            <div class="grade-info">
+                <div class="info-item">
+                    <label>Class</label>
+                    <value>Grade 10A</value>
+                </div>
+                <div class="info-item">
+                    <label>Subject</label>
+                    <value>Biology</value>
+                </div>
+                <div class="info-item">
+                    <label>Weight (Default)</label>
+                    <value>5 pts</value>
+                </div>
+                <div class="info-item">
+                    <label>Status</label>
+                    <value><span class="state-label">In Progress</span></value>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Previous Grades</th>
+                            <th>Grade</th>
+                            <th>Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="student-name">Alice Johnson</td>
+                            <td class="previous-grades">
+                                <div class="previous-grades-badge expanded">
+                                    ▼ 3 grades
+                                </div>
+                                <div class="previous-grades-expanded">
+                                    <div class="previous-grades-list">
+                                        <div class="grade-history-item">
+                                            <div class="title">Test 1</div>
+                                            <div class="grade">7.5</div>
+                                        </div>
+                                        <div class="grade-history-item">
+                                            <div class="title">Test 2</div>
+                                            <div class="grade">8.0</div>
+                                        </div>
+                                        <div class="grade-history-item">
+                                            <div class="title">Quiz</div>
+                                            <div class="grade">7.2</div>
+                                        </div>
+                                    </div>
+                                    <div class="metrics">
+                                        <div class="metric">
+                                            <div class="metric-label">Avg Grade</div>
+                                            <div class="metric-value">7.6</div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-label">Avg %</div>
+                                            <div class="metric-value">76%</div>
+                                        </div>
+                                        <div class="metric">
+                                            <div class="metric-label">Trend</div>
+                                            <div class="metric-value">↑</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="grade-input">
+                                <input type="number" min="0" max="10" step="0.5" placeholder="—">
+                            </td>
+                            <td class="weight-input">
+                                <input type="number" min="0.1" max="10" step="0.5" value="5">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-name">Bob Smith</td>
+                            <td class="previous-grades">
+                                <div class="previous-grades-badge">
+                                    ▶ 2 grades
+                                </div>
+                            </td>
+                            <td class="grade-input">
+                                <input type="number" min="0" max="10" step="0.5" value="8.5">
+                            </td>
+                            <td class="weight-input">
+                                <input type="number" min="0.1" max="10" step="0.5" value="5">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-name">Carol Davis</td>
+                            <td class="previous-grades">
+                                <div class="previous-grades-badge">
+                                    ▶ 4 grades
+                                </div>
+                            </td>
+                            <td class="grade-input">
+                                <input type="number" min="0" max="10" step="0.5" placeholder="—">
+                            </td>
+                            <td class="weight-input">
+                                <input type="number" min="0.1" max="10" step="0.5" value="3" style="border-color: #7f8962; background: #f0fdf4;">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td class="student-name">David Wilson</td>
+                            <td class="previous-grades">
+                                <div class="previous-grades-badge">
+                                    ▶ 3 grades
+                                </div>
+                            </td>
+                            <td class="grade-input">
+                                <input type="number" min="0" max="10" step="0.5" value="9.0">
+                            </td>
+                            <td class="weight-input">
+                                <input type="number" min="0.1" max="10" step="0.5" value="5">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="summary-bar">
+                <div class="summary-item">
+                    <div class="summary-label">Graded</div>
+                    <div class="summary-value">2 / 24</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Progress</div>
+                    <div class="summary-value">8%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Class Average</div>
+                    <div class="summary-value">8.8</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-secondary">← Back</button>
+                <button class="btn-primary">Save Grades →</button>
+            </div>
+        </div>
+
+        <!-- MOCKUP 3: Previous Grades Expanded State -->
+        <div class="mockup">
+            <h2>Previous Grades - Expanded Details</h2>
+            <p style="margin-bottom: 20px; color: #666; font-size: 14px;">When clicking "expand" on previous grades, shows all grades for selected subject with metrics:</p>
+
+            <div class="previous-grades-expanded" style="margin: 0;">
+                <div class="previous-grades-list">
+                    <div class="grade-history-item">
+                        <div class="title">Biology Test 1</div>
+                        <div class="grade">7.5</div>
+                    </div>
+                    <div class="grade-history-item">
+                        <div class="title">Biology Test 2</div>
+                        <div class="grade">8.0</div>
+                    </div>
+                    <div class="grade-history-item">
+                        <div class="title">Biology Quiz 1</div>
+                        <div class="grade">7.8</div>
+                    </div>
+                    <div class="grade-history-item">
+                        <div class="title">Lab Report</div>
+                        <div class="grade">8.5</div>
+                    </div>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-label">Weighted Avg</div>
+                        <div class="metric-value">7.95</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Simple Avg</div>
+                        <div class="metric-value">77.9%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Trend</div>
+                        <div class="metric-value">↑ Improving</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOCKUP 4: Key Features -->
+        <div class="mockup">
+            <h2>Key Design Features</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a1a1a;">Column Structure</h3>
+                    <div style="background: #fafafa; padding: 15px; border-radius: 6px; font-size: 14px; line-height: 1.8;">
+                        <strong>Student Name</strong> — Left aligned, fixed width<br><br>
+                        <strong>Previous Grades</strong> — Expandable section showing all subject grades<br><br>
+                        <strong>Grade Input</strong> — Single input per student<br><br>
+                        <strong>Weight</strong> — Adjustable per student (accessibility needs)
+                    </div>
+                </div>
+
+                <div>
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: #1a1a1a;">Metrics Shown When Expanded</h3>
+                    <div style="background: #fafafa; padding: 15px; border-radius: 6px; font-size: 14px; line-height: 1.8;">
+                        <strong>Weighted Average</strong> — Considers grade weights<br><br>
+                        <strong>Simple Average</strong> — Without weights (percentage)<br><br>
+                        <strong>Trend</strong> — ↑ Improving, ↓ Declining, → Stable
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
