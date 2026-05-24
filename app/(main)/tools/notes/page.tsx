@@ -1639,7 +1639,7 @@ function NotesPageContent() {
   );
 
   // Determine if we're in State 1 (input) or State 2 (settings)
-  const inState1 = !state1Completed && sourceText.trim().length === 0;
+  const inState1 = !state1Completed;
   const inState2 = state1Completed && !isDisplayingOutput;
 
   if (inState1) {
