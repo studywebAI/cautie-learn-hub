@@ -73,7 +73,7 @@ function parseShareContent(content: unknown): { text: string; attachmentLabel?: 
   return { text: '' };
 }
 
-function parseBodyTextPayload(value: unknown): { text: string; replyToId?: string } {
+function parseBodyTextPayload(value: unknown): { text: string; replyToId?: string; imageDataUrl?: string } {
   const raw = String(value || '').trim();
   if (!raw) return { text: '' };
   try {
@@ -82,6 +82,7 @@ function parseBodyTextPayload(value: unknown): { text: string; replyToId?: strin
       return {
         text: String((parsed as any).text || ''),
         replyToId: (parsed as any).replyToId ? String((parsed as any).replyToId) : undefined,
+        imageDataUrl: (parsed as any).imageDataUrl ? String((parsed as any).imageDataUrl) : undefined,
       };
     }
   } catch {}
@@ -249,12 +250,14 @@ export async function GET(
 
     const rows = (data || []).map((row: any) => {
       const author = profileMap.get(String(row.created_by || ''));
+      const parsed = parseBodyTextPayload(row.body_text);
       return {
         id: row.id,
         createdAt: row.created_at,
         audience: row.audience === 'all' ? 'all' : 'teacher',
-        text: parseBodyTextPayload(row.body_text).text,
-        replyToId: parseBodyTextPayload(row.body_text).replyToId,
+        text: parsed.text,
+        replyToId: parsed.replyToId,
+        imageDataUrl: parsed.imageDataUrl,
         authorId: String(row.created_by || ''),
         authorName: author?.name || 'User',
         authorEmail: author?.email || null,
@@ -293,6 +296,11 @@ export async function POST(
     const replyToId = String(body?.replyToId || '').trim();
     const attachmentLabel = String(body?.attachmentLabel || '').trim();
     const requestedAudience = String(body?.audience || 'all').toLowerCase() === 'teacher' ? 'teacher' : 'all';
+    // Validate imageDataUrl: must be a data URI starting with data:image/, max ~2MB base64
+    const rawImageDataUrl = body?.imageDataUrl ? String(body.imageDataUrl) : undefined;
+    const imageDataUrl = rawImageDataUrl && /^data:image\/(png|jpe?g|gif|webp);base64,/.test(rawImageDataUrl) && rawImageDataUrl.length <= 2_800_000
+      ? rawImageDataUrl
+      : undefined;
     const audience: ShareAudience = requestedAudience === 'teacher' && perm.isTeacher ? 'teacher' : 'all';
     const settings = await readShareSettings(supabase as any, classId);
     const muteEntry = Array.isArray(settings.mutedUsers)
@@ -312,7 +320,7 @@ export async function POST(
     }
     const source = body?.source && typeof body.source === 'object' ? body.source : null;
 
-    if (!text && !attachmentLabel) {
+    if (!text && !attachmentLabel && !imageDataUrl) {
       return NextResponse.json({ error: 'Message or attachment is required' }, { status: 400 });
     }
 
@@ -332,7 +340,7 @@ export async function POST(
         class_id: classId,
         created_by: user.id,
         audience,
-        body_text: JSON.stringify({ text, replyToId: payload.replyToId || undefined }),
+        body_text: JSON.stringify({ text, replyToId: payload.replyToId || undefined, imageDataUrl: imageDataUrl || undefined }),
         attachment_label: payload.attachmentLabel ?? null,
         source_type: payload.sourceType ?? null,
         source_ref_id: payload.sourceId ?? null,
@@ -400,6 +408,7 @@ export async function POST(
       audience: data.audience === 'all' ? 'all' : 'teacher',
       text,
       replyToId: payload.replyToId,
+      imageDataUrl: imageDataUrl || undefined,
       authorId: user.id,
       authorName: resolveProfileName(profile || {}, authorEmail, user.id),
       authorEmail,
