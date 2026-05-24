@@ -98,8 +98,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       {/* Class Selection */}
       <div className="space-y-3">
         <p className="text-sm font-semibold">
-          🏫 {isDutch ? 'Selecteer Klas' : 'Select Class'}
-          <span className="text-destructive">*</span>
+          {isDutch ? 'Selecteer Klas' : 'Select Class'} <span className="text-destructive">*</span>
         </p>
 
         <div className="space-y-2">
@@ -117,7 +116,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
                 <div className="flex-1">
                   <p className="text-sm font-semibold">{cls.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    📚 {cls.student_count || 0} {isDutch ? 'studenten' : 'students'}
+                    {cls.student_count || 0} {isDutch ? 'studenten' : 'students'}
                   </p>
                 </div>
                 {selectedClassId === cls.id && <ChevronRight className="h-4 w-4" />}
@@ -132,7 +131,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       {selectedClassId && (
         <div className="space-y-3 pt-3 border-t border-border">
           <p className="text-sm font-semibold">
-            🏷️ {isDutch ? 'Vak' : 'Subject'}
+            {isDutch ? 'Vak' : 'Subject'}
           </p>
 
           {loadingSubjects ? (
@@ -163,9 +162,8 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
 
       {/* Weight */}
       <div className="space-y-3 pt-3 border-t border-border">
-        <label className="text-sm font-semibold flex items-center gap-2">
-          ⚖️ {isDutch ? 'Gewicht/Punten' : 'Weight/Points'}
-          <span className="text-destructive">*</span>
+        <label className="text-sm font-semibold">
+          {isDutch ? 'Gewicht/Punten' : 'Weight/Points'} <span className="text-destructive">*</span>
         </label>
         <div className="flex gap-2 items-center">
           <Button

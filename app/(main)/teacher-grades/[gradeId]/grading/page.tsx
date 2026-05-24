@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Search, Save } from 'lucide-react';
+import { ChevronLeft, Search, Save, Edit2 } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -41,6 +41,7 @@ export default function GradingInterfacePage() {
   const [sort, setSort] = useState('name');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Load grade set and students
   useEffect(() => {
@@ -196,17 +197,29 @@ export default function GradingInterfacePage() {
           {isDutch ? 'Terug' : 'Back'}
         </button>
 
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1">
             <h1 className="page-title">{gradeSet.title}</h1>
             <p className="page-subtitle mt-0.5">
               {isDutch ? 'Beoordeel' : 'Grade'} {students.length} {isDutch ? 'studenten' : 'students'}
             </p>
           </div>
-          <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? (isDutch ? 'Opslaan...' : 'Saving...') : (isDutch ? 'Opslaan' : 'Save')}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={isEditMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsEditMode(!isEditMode)}
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              {isEditMode ? (isDutch ? 'Gereed' : 'Done') : (isDutch ? 'Bewerk' : 'Edit')}
+            </Button>
+            {isEditMode && (
+              <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? (isDutch ? 'Opslaan...' : 'Saving...') : (isDutch ? 'Opslaan' : 'Save')}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -283,14 +296,16 @@ export default function GradingInterfacePage() {
                     step="0.5"
                     value={grades[student.id] ?? ''}
                     onChange={(e) => {
+                      if (!isEditMode) return;
                       const value = e.target.value ? parseFloat(e.target.value) : null;
                       setGrades(prev => ({
                         ...prev,
                         [student.id]: value,
                       }));
                     }}
+                    disabled={!isEditMode}
                     placeholder="-"
-                    className="w-full text-center h-8 text-sm"
+                    className="w-20 text-center h-8 text-sm border border-border bg-white dark:bg-[hsl(var(--surface-1))] mx-auto disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </td>
               </tr>
@@ -300,43 +315,39 @@ export default function GradingInterfacePage() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3 p-4 bg-muted rounded-lg">
+      <div className="grid grid-cols-3 gap-2 p-3 bg-muted rounded-lg text-xs">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
-          <p className="font-bold text-lg">
+          <p className="text-muted-foreground mb-0.5">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
+          <p className="font-bold text-base">
             {gradedCount} / {students.length}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground mb-1">{isDutch ? 'Vooruitgang' : 'Progress'}</p>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 bg-background rounded-full overflow-hidden">
+          <p className="text-muted-foreground mb-1">{isDutch ? 'Vooruitgang' : 'Progress'}</p>
+          <div className="flex items-center gap-1.5">
+            <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
               <div
                 className="h-full bg-[var(--accent-brand)]"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <span className="font-semibold text-sm w-8 text-right">{progressPct}%</span>
+            <span className="font-semibold text-xs w-8 text-right">{progressPct}%</span>
           </div>
         </div>
         {averageGrade !== null && (
           <div>
-            <p className="text-xs text-muted-foreground mb-1">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-            <p className="font-bold text-lg">{averageGrade.toFixed(1)}</p>
+            <p className="text-muted-foreground mb-0.5">{isDutch ? 'Gemiddelde' : 'Average'}</p>
+            <p className="font-bold text-base">{averageGrade.toFixed(1)}</p>
           </div>
         )}
       </div>
 
-      {/* Save button */}
-      <div className="flex gap-2 pt-4 border-t border-border">
-        <Button variant="outline" onClick={() => router.back()}>
-          {isDutch ? 'Annuleren' : 'Cancel'}
-        </Button>
-        <Button onClick={handleSave} disabled={saving || gradedCount === 0} className="ml-auto">
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? (isDutch ? 'Opslaan...' : 'Saving...') : (isDutch ? 'Opslaan' : 'Save Changes')}
-        </Button>
-      </div>
+      {/* Hints for teacher */}
+      {!isEditMode && (
+        <div className="p-3 bg-muted rounded-lg text-xs text-muted-foreground text-center">
+          {isDutch ? 'Klik op "Bewerk" om cijfers in te voeren' : 'Click "Edit" to enter grades'}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grades UI Redesign</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      padding: 32px 20px;
+      color: #1a1a1a;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .header { margin-bottom: 40px; }
+    .header h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+    .header p { color: #666; font-size: 15px; }
+
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+      gap: 24px;
+    }
+
+    .screen {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .screen-title {
+      background: linear-gradient(135deg, #7f8962 0%, #6b7851 100%);
+      color: white;
+      padding: 14px 20px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .screen-content { padding: 28px; }
+
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a; }
+    .section-subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+    .icon-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+
+    .icon-box {
+      width: 20px;
+      height: 20px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .action-card {
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-card:hover { border-color: #7f8962; box-shadow: 0 2px 8px rgba(127, 137, 98, 0.1); }
+
+    .action-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #7f896220 0%, #6b785120 100%);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #7f8962;
+    }
+
+    .action-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+    .action-desc { font-size: 11px; color: #999; }
+
+    .grade-item {
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .grade-left { flex: 1; }
+    .grade-title { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 4px; }
+    .grade-meta { font-size: 11px; color: #999; }
+
+    .grade-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: right;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .badge-amber { background: #fef3c7; color: #92400e; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-gray { background: #f3f4f6; color: #6b7280; }
+
+    .progress-mini {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .progress-num { font-size: 12px; font-weight: 600; color: #1a1a1a; }
+    .progress-bar {
+      width: 50px;
+      height: 3px;
+      background: #e5e5e5;
+      border-radius: 1.5px;
+      overflow: hidden;
+    }
+
+    .progress-fill { height: 100%; background: #7f8962; width: 58%; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #1a1a1a;
+    }
+
+    .required { color: #dc2626; }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #7f8962;
+      box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+    }
+
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    .selector-card {
+      border: 2px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .selector-card:hover { border-color: #7f8962; background: #f7f9f3; }
+    .selector-card.selected { border-color: #7f8962; background: #f7f9f3; }
+
+    .selector-name { font-size: 13px; font-weight: 500; color: #1a1a1a; margin-bottom: 3px; }
+    .selector-meta { font-size: 11px; color: #999; }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      color: #1a1a1a;
+    }
+
+    .pill:hover { border-color: #7f8962; color: #7f8962; }
+    .pill.selected { background: #7f8962; border-color: #7f8962; color: white; }
+
+    .table-simple {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+    }
+
+    .table-simple th {
+      background: #f9f9f9;
+      padding: 10px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    .table-simple td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e5e5;
+      font-size: 13px;
+    }
+
+    .input-sm {
+      width: 70px;
+      padding: 6px;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .input-sm:focus {
+      outline: none;
+      border-color: #7f8962;
+      box-shadow: 0 0 0 2px rgba(127, 137, 98, 0.1);
+    }
+
+    .info-box {
+      background: #f7faf3;
+      border: 1px solid #d4dcc6;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12px;
+      color: #556943;
+      margin-top: 16px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-primary { background: #7f8962; color: white; }
+    .btn-primary:hover { background: #6b7851; }
+
+    .btn-outline { background: white; color: #1a1a1a; border: 1px solid #e5e5e5; }
+    .btn-outline:hover { border-color: #7f8962; color: #7f8962; }
+
+    .wizard-step {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .step-bar {
+      flex: 1;
+      height: 2px;
+      background: #e5e5e5;
+      border-radius: 1px;
+    }
+
+    .step-bar.active { background: #7f8962; }
+    .step-bar.completed { background: #7f8962; opacity: 0.5; }
+
+    .step-label {
+      font-size: 10px;
+      color: #999;
+      font-weight: 500;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .step-title { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary-cell {
+      text-align: center;
+    }
+
+    .summary-label { font-size: 10px; color: #999; font-weight: 500; margin-bottom: 4px; }
+    .summary-value { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+
+    .callout {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #92400e;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Grades UI Redesign</h1>
+      <p>Clean, minimal design with Lucide icons. No emoji decorators. Inspired by your app's existing theme.</p>
+    </div>
+
+    <div class="screens">
+
+      <!-- Screen 1: Landing -->
+      <div class="screen">
+        <div class="screen-title">1. Teacher Grades Landing</div>
+        <div class="screen-content">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <div style="width: 24px; height: 24px; background: linear-gradient(135deg, #7f8962, #6b7851); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px;">📊</div>
+            <div class="section-title">Grades</div>
+          </div>
+          <div class="section-subtitle">14 grade sets created</div>
+
+          <div class="action-grid">
+            <div class="action-card">
+              <div class="action-icon">+</div>
+              <div class="action-title">New Grade</div>
+              <div class="action-desc">Create a new grade set</div>
+            </div>
+            <div class="action-card">
+              <div class="action-icon">≡</div>
+              <div class="action-title">All Grades</div>
+              <div class="action-desc">View & manage</div>
+            </div>
+          </div>
+
+          <p style="font-size: 11px; color: #999; font-weight: 500; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Recent</p>
+
+          <div class="grade-item">
+            <div class="grade-left">
+              <div class="grade-title">Biology Test 1</div>
+              <div class="grade-meta">ggh · 12 May · 5 pts</div>
+            </div>
+            <div class="grade-right">
+              <div class="badge badge-amber">In progress</div>
+              <div class="progress-mini">
+                <div class="progress-num">7/12</div>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-box">
+            ✓ No emoji icons · Clean action cards · Proper status badges · Progress visualization
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: Wizard Step 1 -->
+      <div class="screen">
+        <div class="screen-title">2. Wizard Step 1 — Title & Description</div>
+        <div class="screen-content">
+          <div class="wizard-step">
+            <div style="flex: 1;">
+              <div class="step-bar active"></div>
+              <div class="step-label">Title & Description</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar"></div>
+              <div class="step-label">Class & Settings</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar"></div>
+              <div class="step-label">Grading</div>
+            </div>
+          </div>
+
+          <div class="step-title">Title & Description</div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <div class="icon-box" style="background: #e8ede0; color: #7f8962;">✎</div>
+              Title <span class="required">*</span>
+            </label>
+            <input type="text" class="form-input" placeholder="e.g., Biology Test 1" value="Biology Test 1">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <div class="icon-box" style="background: #e8ede0; color: #7f8962;">≡</div>
+              Description <span style="color: #999;">(optional)</span>
+            </label>
+            <textarea class="form-textarea" placeholder="Add instructions for students..."></textarea>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-primary" style="margin-left: auto;">Next →</button>
+          </div>
+
+          <div class="info-box">
+            ✓ No emoji labels · Icon boxes match theme · Clean typography
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 3: Wizard Step 2 -->
+      <div class="screen">
+        <div class="screen-title">3. Wizard Step 2 — Class & Settings</div>
+        <div class="screen-content">
+          <div class="wizard-step">
+            <div style="flex: 1;">
+              <div class="step-bar completed"></div>
+              <div class="step-label">Title & Description</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar active"></div>
+              <div class="step-label">Class & Settings</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar"></div>
+              <div class="step-label">Grading</div>
+            </div>
+          </div>
+
+          <div class="step-title">Class & Settings</div>
+
+          <div class="form-group">
+            <label class="form-label">Select Class <span class="required">*</span></label>
+            <div class="selector-card selected">
+              <div class="selector-name">ggh</div>
+              <div class="selector-meta">0 students enrolled</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Subject <span style="color: #999;">(optional)</span></label>
+            <div class="pill-group">
+              <div class="pill selected">subjectggh</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Weight / Points <span class="required">*</span></label>
+            <input type="number" class="form-input" value="5" min="0.1" max="10">
+            <div style="font-size: 11px; color: #999; margin-top: 4px;">(0.1 - 10 range)</div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-outline">← Back</button>
+            <button class="btn btn-primary" style="margin-left: auto;">Next →</button>
+          </div>
+
+          <div class="info-box">
+            ✓ Clean selectors · Proper hierarchy · No emoji decorators
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 4: Wizard Step 3 -->
+      <div class="screen">
+        <div class="screen-title">4. Wizard Step 3 — Grading Interface</div>
+        <div class="screen-content">
+          <div class="wizard-step">
+            <div style="flex: 1;">
+              <div class="step-bar completed"></div>
+              <div class="step-label">Title & Description</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar completed"></div>
+              <div class="step-label">Class & Settings</div>
+            </div>
+            <div style="flex: 1;">
+              <div class="step-bar active"></div>
+              <div class="step-label">Grading</div>
+            </div>
+          </div>
+
+          <div class="step-title">Enter Grades</div>
+
+          <div style="background: white; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+            <p style="font-weight: 500; font-size: 13px; margin-bottom: 2px;">Biology Test 1</p>
+            <p style="font-size: 11px; color: #999;">ggh · Weight: 5 pts</p>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-cell">
+              <div class="summary-label">Graded</div>
+              <div class="summary-value">7 / 12</div>
+            </div>
+            <div class="summary-cell">
+              <div class="summary-label">Progress</div>
+              <div class="summary-value">58%</div>
+            </div>
+            <div class="summary-cell">
+              <div class="summary-label">Average</div>
+              <div class="summary-value">7.4</div>
+            </div>
+          </div>
+
+          <table class="table-simple">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th style="text-align: center;">Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Alice</td>
+                <td style="text-align: center;"><input type="number" class="input-sm" value="8.5"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="button-group">
+            <button class="btn btn-outline">← Back</button>
+            <button class="btn btn-primary" style="margin-left: auto;">✓ Save & Complete</button>
+          </div>
+
+          <div class="info-box">
+            ✓ Grade input has visible border · Clear summary cards · Professional spacing
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 5: Card Wrapper -->
+      <div class="screen">
+        <div class="screen-title">5. Wizard Wrapper Card</div>
+        <div class="screen-content">
+          <div style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 24px;">
+            <p style="font-size: 12px; color: #999; margin-bottom: 8px;">Step 1 of 3</p>
+            <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">Title & Description</h2>
+
+            <div class="form-group">
+              <label class="form-label">Title <span class="required">*</span></label>
+              <input type="text" class="form-input" placeholder="e.g., Biology Test 1" value="Biology Test 1">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Description (optional)</label>
+              <textarea class="form-textarea" placeholder="Add instructions..."></textarea>
+            </div>
+
+            <div class="button-group">
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+
+          <div class="info-box">
+            ✓ Card uses bg-card (white/distinct) · Clear depth separation from page background
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 6: Grade Detail -->
+      <div class="screen">
+        <div class="screen-title">6. Grade Detail Page</div>
+        <div class="screen-content">
+          <div style="margin-bottom: 20px;">
+            <p style="font-size: 11px; color: #999; margin-bottom: 4px;">ggh · Biology</p>
+            <h2 class="section-title" style="margin-bottom: 4px;">Biology Test 1</h2>
+            <p style="font-size: 12px; color: #999;">Created 12 May 2026</p>
+          </div>
+
+          <div class="summary-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="summary-cell">
+              <div class="summary-label">Status</div>
+              <div class="badge badge-amber" style="justify-content: center;">In progress</div>
+            </div>
+            <div class="summary-cell">
+              <div class="summary-label">Weight</div>
+              <div class="summary-value">5 pts</div>
+            </div>
+          </div>
+
+          <div style="background: #f9f9f9; border: 1px solid #e5e5e5; border-radius: 6px; padding: 16px;">
+            <p style="font-size: 11px; color: #999; font-weight: 500; margin-bottom: 12px; text-transform: uppercase;">Grading Progress</p>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span style="font-size: 12px; color: #666;">7 of 12 graded</span>
+              <span style="font-size: 12px; font-weight: 600; color: #1a1a1a;">58%</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: #e5e5e5; border-radius: 3px; overflow: hidden;">
+              <div style="width: 58%; height: 100%; background: #7f8962;"></div>
+            </div>
+          </div>
+
+          <div class="button-group" style="margin-top: 20px;">
+            <button class="btn btn-primary" style="margin-left: auto;">Continue Grading →</button>
+          </div>
+
+          <div class="info-box">
+            ✓ Status badges with color · Clean data hierarchy · Progress visualization
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Summary -->
+    <div style="background: white; border: 1px solid #e5e5e5; border-radius: 8px; padding: 28px; margin-top: 40px;">
+      <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Implementation Summary</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e5e5e5;">
+            <th style="text-align: left; padding: 12px; font-weight: 600; font-size: 12px; color: #666;">File</th>
+            <th style="text-align: left; padding: 12px; font-weight: 600; font-size: 12px; color: #666;">Changes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #e5e5e5;">
+            <td style="padding: 12px; font-size: 12px; font-family: monospace; color: #667eea;">teacher-grades/page.tsx</td>
+            <td style="padding: 12px; font-size: 12px;">Remove emoji, redesign action cards, fix GradeCard with proper status badges & progress</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e5e5;">
+            <td style="padding: 12px; font-size: 12px; font-family: monospace; color: #667eea;">new/page.tsx</td>
+            <td style="padding: 12px; font-size: 12px;">Change Card from surface-panel to bg-card for depth</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e5e5;">
+            <td style="padding: 12px; font-size: 12px; font-family: monospace; color: #667eea;">step-*.tsx files</td>
+            <td style="padding: 12px; font-size: 12px;">Remove all emoji labels, use icon boxes for visual hierarchy</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #e5e5e5;">
+            <td style="padding: 12px; font-size: 12px; font-family: monospace; color: #667eea;">step-3-grading-interface.tsx</td>
+            <td style="padding: 12px; font-size: 12px;">Fix grade input: explicit border, white bg, wider width</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; font-size: 12px; font-family: monospace; color: #667eea;">[gradeId]/page.tsx</td>
+            <td style="padding: 12px; font-size: 12px;">Add colored status badges (amber/green/gray)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>

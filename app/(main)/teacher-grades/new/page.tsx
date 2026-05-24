@@ -131,7 +131,7 @@ export default function NewGradesWizard() {
       </div>
 
       {/* Content */}
-      <Card className="surface-panel border border-border p-6">
+      <Card className="bg-card border border-border p-6">
         {step === 1 && (
           <StepOneNameInfo
             onNext={handleNext}

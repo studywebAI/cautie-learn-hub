@@ -44,9 +44,8 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
     <div className="space-y-4">
       {/* Title */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold flex items-center gap-2">
-          📝 {isDutch ? 'Titel' : 'Title'}
-          <span className="text-destructive">*</span>
+        <label className="text-sm font-semibold">
+          {isDutch ? 'Titel' : 'Title'} <span className="text-destructive">*</span>
         </label>
         <Input
           value={formData.title}
@@ -60,8 +59,8 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold flex items-center gap-2">
-          📋 {isDutch ? 'Beschrijving' : 'Description'} ({isDutch ? 'optioneel' : 'optional'})
+        <label className="text-sm font-semibold">
+          {isDutch ? 'Beschrijving' : 'Description'} <span className="text-muted-foreground text-xs font-normal">({isDutch ? 'optioneel' : 'optional'})</span>
         </label>
         <Textarea
           value={formData.description}

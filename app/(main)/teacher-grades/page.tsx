@@ -32,11 +32,12 @@ function GradeCard({ grade }: { grade: GradeSet }) {
   const graded = grade.graded_count || 0;
   const total = grade.total_students || 0;
   const pct = total > 0 ? Math.round((graded / total) * 100) : 0;
-  const statusLabel = {
-    draft: '📋',
-    in_progress: '📊',
-    completed: '✅',
-  }[grade.status] || '📋';
+
+  const statusColor = {
+    draft: 'bg-gray-100 text-gray-700',
+    in_progress: 'bg-amber-100 text-amber-800',
+    completed: 'bg-green-100 text-green-800',
+  }[grade.status] || 'bg-gray-100 text-gray-700';
 
   return (
     <Link href={`/teacher-grades/${grade.id}`}>
@@ -45,7 +46,9 @@ function GradeCard({ grade }: { grade: GradeSet }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-sm font-semibold truncate">{grade.title}</h3>
-              <span className="text-lg">{statusLabel}</span>
+              <span className={`text-xs px-2 py-1 rounded ${statusColor} font-medium capitalize`}>
+                {grade.status === 'in_progress' ? 'In progress' : grade.status === 'completed' ? 'Done' : 'Draft'}
+              </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
               {grade.class_name}
@@ -58,10 +61,13 @@ function GradeCard({ grade }: { grade: GradeSet }) {
 
           <div className="flex-shrink-0 text-right space-y-1">
             <div className="text-[13px] font-semibold text-foreground">
-              [{graded}/{total}]
+              {graded} / {total}
             </div>
             <div className="text-[11px] font-medium text-muted-foreground">
               {pct}%
+            </div>
+            <div className="w-16 h-1.5 bg-border rounded-full overflow-hidden mt-1">
+              <div className="h-full bg-[var(--accent-brand)]" style={{ width: `${pct}%` }} />
             </div>
           </div>
         </div>

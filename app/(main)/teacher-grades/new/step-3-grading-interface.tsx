@@ -261,7 +261,7 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
                       }}
                       onClick={(e) => e.stopPropagation()}
                       placeholder="-"
-                      className="w-16 text-center h-8 text-xs"
+                      className="w-20 text-center h-8 text-xs border border-border bg-white dark:bg-[hsl(var(--surface-1))]"
                     />
                   </div>
                 </button>
@@ -318,24 +318,24 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
       </div>
 
       {/* Summary */}
-      <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
+      <div className="p-3 bg-muted rounded-lg space-y-1.5 text-xs">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</span>
-          <span className="font-semibold">{gradedCount} / {students.length}</span>
+          <span className="font-semibold text-sm">{gradedCount} / {students.length}</span>
         </div>
-        <div className="w-full h-2 bg-background rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
           <div
             className="h-full bg-[var(--accent-brand)] transition-all"
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground">
           {progressPct}% {isDutch ? 'voltooid' : 'complete'}
         </div>
         {averageGrade !== null && (
-          <div className="flex justify-between pt-2 border-t border-border">
+          <div className="flex justify-between pt-1 border-t border-border">
             <span className="text-muted-foreground">{isDutch ? 'Gemiddelde' : 'Average'}</span>
-            <span className="font-semibold">{averageGrade.toFixed(1)}</span>
+            <span className="font-semibold text-sm">{averageGrade.toFixed(1)}</span>
           </div>
         )}
       </div>

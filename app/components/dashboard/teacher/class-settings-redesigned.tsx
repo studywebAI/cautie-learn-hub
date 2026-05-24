@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { Copy, Check, Loader2 } from 'lucide-react';
 
 type ClassData = {
   id: string;
@@ -57,6 +58,21 @@ export function ClassSettingsRedesigned({
   const [teacherEmails, setTeacherEmails] = useState<string[]>(['']);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [inviteStatus, setInviteStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [joinCode, setJoinCode] = useState<string>('');
+  const [teacherJoinCode, setTeacherJoinCode] = useState<string>('');
+  const [scheduledTime, setScheduledTime] = useState<string>('');
+  const [isGeneratingTeacherCode, setIsGeneratingTeacherCode] = useState(false);
+  const [oneTimeTeacherCode, setOneTimeTeacherCode] = useState<string>('');
+  const [oneTimeTeacherCodeExpiresAt, setOneTimeTeacherCodeExpiresAt] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedTeacherCode, setCopiedTeacherCode] = useState(false);
+  const [copiedStudentLink, setCopiedStudentLink] = useState(false);
+  const [copiedTeacherLink, setCopiedTeacherLink] = useState(false);
+
+  const studentInviteLink = joinCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes?join_code=${joinCode}` : '';
+  const teacherInviteLink = oneTimeTeacherCode ? `${typeof window !== 'undefined' ? window.location.origin : ''}/classes/join/${oneTimeTeacherCode}` : '';
+  const studentQrCodeUrl = studentInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentInviteLink)}&format=png` : '';
+  const teacherQrCodeUrl = teacherInviteLink ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(teacherInviteLink)}&format=png` : '';
 
   useEffect(() => {
     void loadSettings();
@@ -65,10 +81,11 @@ export function ClassSettingsRedesigned({
   async function loadSettings() {
     setLoading(true);
     try {
-      const [classRes, groupRes, shareRes] = await Promise.allSettled([
+      const [classRes, groupRes, shareRes, codesRes] = await Promise.allSettled([
         fetch(`/api/classes/${classId}`),
         fetch(`/api/classes/${classId}/group`),
         fetch(`/api/classes/${classId}/share/settings`),
+        fetch(`/api/classes/${classId}/share/codes`),
       ]);
 
       if (classRes.status === 'fulfilled' && classRes.value.ok) {
@@ -89,6 +106,12 @@ export function ClassSettingsRedesigned({
         const settings = data.settings || {};
         setStudentChatEnabled(settings.allChatEnabled !== false);
         setTeacherChatEnabled(settings.teacherChatEnabled !== false);
+      }
+
+      if (codesRes.status === 'fulfilled' && codesRes.value.ok) {
+        const data = await codesRes.value.json();
+        setJoinCode(data.student_code || '');
+        setTeacherJoinCode(data.teacher_code || '');
       }
     } catch (e) {
     } finally {
@@ -115,6 +138,41 @@ export function ClassSettingsRedesigned({
     }
   }
 
+  async function copyToClipboard(text: string, type: 'code' | 'teacherCode' | 'link' | 'teacherLink') {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'code') setCopiedCode(true);
+      else if (type === 'teacherCode') setCopiedTeacherCode(true);
+      else if (type === 'link') setCopiedStudentLink(true);
+      else setCopiedTeacherLink(true);
+      setTimeout(() => {
+        setCopiedCode(false);
+        setCopiedTeacherCode(false);
+        setCopiedStudentLink(false);
+        setCopiedTeacherLink(false);
+      }, 2000);
+    } catch (e) {}
+  }
+
+  async function generateOneTimeTeacherCode() {
+    setIsGeneratingTeacherCode(true);
+    try {
+      const response = await fetch(`/api/classes/${classId}/teacher-invite-codes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expires_in_minutes: 60 }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate teacher code');
+      setOneTimeTeacherCode(data?.code?.code || '');
+      setOneTimeTeacherCodeExpiresAt(data?.code?.expires_at || null);
+    } catch (error: any) {
+      setInviteStatus({ ok: false, msg: error?.message || (isDutch ? 'Fout bij genereren code' : 'Error generating code') });
+    } finally {
+      setIsGeneratingTeacherCode(false);
+    }
+  }
+
   async function sendInvites() {
     const validStudents = studentEmails.map(e => e.trim()).filter(e => e.includes('@'));
     const validTeachers = teacherEmails.map(e => e.trim()).filter(e => e.includes('@'));
@@ -131,11 +189,13 @@ export function ClassSettingsRedesigned({
         body: JSON.stringify({
           studentEmails: validStudents,
           teacherEmails: validTeachers,
+          scheduledTime: scheduledTime || undefined,
         }),
       });
       if (res.ok) {
         setStudentEmails(['']);
         setTeacherEmails(['']);
+        setScheduledTime('');
         setInviteStatus({ ok: true, msg: isDutch ? 'Uitnodigingen verzonden!' : 'Invitations sent!' });
       } else {
         const d = await res.json().catch(() => ({}));
@@ -331,92 +391,230 @@ export function ClassSettingsRedesigned({
             </div>
           )}
 
-          {/* Invite Section — email only, no join codes */}
+          {/* Invite Section — expanded with QR codes, join codes, links, and teacher codes */}
           {activeSection === 'invite' && (
             <div className="space-y-6">
               {/* Student invites */}
               <div>
-                <h3 className="text-[13px] font-600 text-foreground mb-1">
+                <h3 className="text-[13px] font-600 text-foreground mb-3">
                   {isDutch ? 'Studenten uitnodigen' : 'Invite students'}
                 </h3>
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  {isDutch ? 'Voer e-mailadressen in om uitnodigingen te sturen.' : 'Enter email addresses to send invitations.'}
-                </p>
-                <div className="space-y-2">
-                  {studentEmails.map((email, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={e => {
-                          const next = [...studentEmails];
-                          next[idx] = e.target.value;
-                          setStudentEmails(next);
-                        }}
-                        placeholder={isDutch ? 'student@school.nl' : 'student@school.com'}
-                        className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
-                      />
-                      {studentEmails.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setStudentEmails(prev => prev.filter((_, i) => i !== idx))}
-                          className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
-                        >
-                          ✕
-                        </button>
-                      )}
+
+                {/* Student QR and codes */}
+                <div className="mb-4 grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)]">
+                  {studentQrCodeUrl && (
+                    <div className="flex flex-col items-center gap-2 rounded-md bg-muted p-3">
+                      <img src={studentQrCodeUrl} alt="Student QR Code" width={140} height={140} className="rounded" />
+                      <p className="text-[11px] text-muted-foreground text-center">{isDutch ? 'Scannen om toe te treden' : 'Scan to join'}</p>
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setStudentEmails(prev => [...prev, ''])}
-                    className="text-[12px] text-[#7f8962] hover:underline"
-                  >
-                    + {isDutch ? 'e-mailadres toevoegen' : 'add email'}
-                  </button>
+                  )}
+                  <div className="space-y-3">
+                    {joinCode && (
+                      <div>
+                        <p className="text-[11px] font-500 text-foreground mb-1.5">{isDutch ? 'Deelcode' : 'Join Code'}</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={joinCode}
+                            readOnly
+                            className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(joinCode, 'code')}
+                            className="p-2 border border-border rounded-md hover:bg-muted transition-colors"
+                          >
+                            {copiedCode ? <Check className="h-4 w-4 text-[#7f8962]" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {studentInviteLink && (
+                      <div>
+                        <p className="text-[11px] font-500 text-foreground mb-1.5">{isDutch ? 'Invitatie-link' : 'Invite Link'}</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={studentInviteLink}
+                            readOnly
+                            className="flex-1 px-3 py-2 text-[11px] border border-border rounded-md bg-background truncate"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(studentInviteLink, 'link')}
+                            className="p-2 border border-border rounded-md hover:bg-muted transition-colors"
+                          >
+                            {copiedStudentLink ? <Check className="h-4 w-4 text-[#7f8962]" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email invites */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-[11px] font-500 text-foreground mb-2">{isDutch ? 'E-mailuitnodigingen (optioneel)' : 'Email invitations (optional)'}</p>
+                  <div className="space-y-2">
+                    {studentEmails.map((email, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={e => {
+                            const next = [...studentEmails];
+                            next[idx] = e.target.value;
+                            setStudentEmails(next);
+                          }}
+                          placeholder={isDutch ? 'student@school.nl' : 'student@school.com'}
+                          className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                        />
+                        {studentEmails.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setStudentEmails(prev => prev.filter((_, i) => i !== idx))}
+                            className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setStudentEmails(prev => [...prev, ''])}
+                      className="text-[12px] text-[#7f8962] hover:underline"
+                    >
+                      + {isDutch ? 'e-mailadres toevoegen' : 'add email'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
+              {/* Scheduling */}
+              <div className="pt-4 border-t border-border">
+                <p className="text-[11px] font-500 text-foreground mb-2">{isDutch ? 'Inplannen (optioneel)' : 'Schedule (optional)'}</p>
+                <input
+                  type="datetime-local"
+                  value={scheduledTime}
+                  onChange={e => setScheduledTime(e.target.value)}
+                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                />
+                {scheduledTime && <p className="text-[11px] text-muted-foreground mt-1">{isDutch ? 'Wordt verzonden op: ' : 'Will be sent at: '}{new Date(scheduledTime).toLocaleString()}</p>}
+              </div>
+
               {/* Teacher invites */}
-              <div>
-                <h3 className="text-[13px] font-600 text-foreground mb-1">
+              <div className="pt-4 border-t border-border">
+                <h3 className="text-[13px] font-600 text-foreground mb-3">
                   {isDutch ? 'Docenten uitnodigen' : 'Invite teachers'}
                 </h3>
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  {isDutch ? 'Uitgenodigde docenten hebben dezelfde rechten.' : 'Invited teachers have equal access.'}
-                </p>
-                <div className="space-y-2">
-                  {teacherEmails.map((email, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={e => {
-                          const next = [...teacherEmails];
-                          next[idx] = e.target.value;
-                          setTeacherEmails(next);
-                        }}
-                        placeholder={isDutch ? 'collega@school.nl' : 'colleague@school.com'}
-                        className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
-                      />
-                      {teacherEmails.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setTeacherEmails(prev => prev.filter((_, i) => i !== idx))}
-                          className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
-                        >
-                          ✕
-                        </button>
+
+                {/* Teacher one-time code generation */}
+                <button
+                  type="button"
+                  onClick={() => void generateOneTimeTeacherCode()}
+                  disabled={isGeneratingTeacherCode}
+                  className="mb-4 rounded-md bg-[#7f8962] px-3 py-2 text-[12px] font-500 text-white hover:bg-[#6f7851] disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isGeneratingTeacherCode ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                  {isGeneratingTeacherCode
+                    ? (isDutch ? 'Genereren...' : 'Generating...')
+                    : (isDutch ? 'Genereer 1-uur code' : 'Generate 1-hour code')}
+                </button>
+
+                {/* Teacher QR and codes */}
+                {oneTimeTeacherCode && (
+                  <div className="mb-4 grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)]">
+                    {teacherQrCodeUrl && (
+                      <div className="flex flex-col items-center gap-2 rounded-md bg-muted p-3">
+                        <img src={teacherQrCodeUrl} alt="Teacher QR Code" width={140} height={140} className="rounded" />
+                        <p className="text-[11px] text-muted-foreground text-center">{isDutch ? 'Docent QR' : 'Teacher QR'}</p>
+                      </div>
+                    )}
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-[11px] font-500 text-foreground mb-1.5">{isDutch ? 'Eenmalige code' : 'One-time code'}</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={oneTimeTeacherCode}
+                            readOnly
+                            className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(oneTimeTeacherCode, 'teacherCode')}
+                            className="p-2 border border-border rounded-md hover:bg-muted transition-colors"
+                          >
+                            {copiedTeacherCode ? <Check className="h-4 w-4 text-[#7f8962]" /> : <Copy className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {oneTimeTeacherCodeExpiresAt && (
+                          <p className="text-[11px] text-muted-foreground mt-1">
+                            {isDutch ? 'Verloopt: ' : 'Expires: '}{new Date(oneTimeTeacherCodeExpiresAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                      {teacherInviteLink && (
+                        <div>
+                          <p className="text-[11px] font-500 text-foreground mb-1.5">{isDutch ? 'Docent-link' : 'Teacher link'}</p>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={teacherInviteLink}
+                              readOnly
+                              className="flex-1 px-3 py-2 text-[11px] border border-border rounded-md bg-background truncate"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(teacherInviteLink, 'teacherLink')}
+                              className="p-2 border border-border rounded-md hover:bg-muted transition-colors"
+                            >
+                              {copiedTeacherLink ? <Check className="h-4 w-4 text-[#7f8962]" /> : <Copy className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setTeacherEmails(prev => [...prev, ''])}
-                    className="text-[12px] text-[#7f8962] hover:underline"
-                  >
-                    + {isDutch ? 'docent toevoegen' : 'add teacher'}
-                  </button>
+                  </div>
+                )}
+
+                {/* Email invites */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <p className="text-[11px] font-500 text-foreground mb-2">{isDutch ? 'E-mailuitnodigingen' : 'Email invitations'}</p>
+                  <div className="space-y-2">
+                    {teacherEmails.map((email, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={e => {
+                            const next = [...teacherEmails];
+                            next[idx] = e.target.value;
+                            setTeacherEmails(next);
+                          }}
+                          placeholder={isDutch ? 'collega@school.nl' : 'colleague@school.com'}
+                          className="flex-1 px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                        />
+                        {teacherEmails.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setTeacherEmails(prev => prev.filter((_, i) => i !== idx))}
+                            className="px-2 text-[12px] text-muted-foreground hover:text-foreground"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setTeacherEmails(prev => [...prev, ''])}
+                      className="text-[12px] text-[#7f8962] hover:underline"
+                    >
+                      + {isDutch ? 'docent toevoegen' : 'add teacher'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -430,9 +628,10 @@ export function ClassSettingsRedesigned({
                 type="button"
                 onClick={() => void sendInvites()}
                 disabled={sendingInvite}
-                className="rounded-md bg-[#7f8962] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#6f7851] disabled:opacity-50 transition-colors"
+                className="rounded-md bg-[#7f8962] px-4 py-2 text-[13px] font-semibold text-white hover:bg-[#6f7851] disabled:opacity-50 transition-colors flex items-center gap-2"
               >
-                {sendingInvite ? '…' : (isDutch ? 'Uitnodigingen sturen' : 'Send invitations')}
+                {sendingInvite ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {sendingInvite ? (isDutch ? 'Verzenden...' : 'Sending...') : (isDutch ? 'Uitnodigingen sturen' : 'Send invitations')}
               </button>
             </div>
           )}

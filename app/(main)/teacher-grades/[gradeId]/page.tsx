@@ -178,10 +178,16 @@ export default function GradeDetailPage() {
       </div>
 
       {/* Metadata */}
-      <Card className="p-4 surface-panel border border-border space-y-2 text-sm">
-        <div className="flex justify-between">
+      <Card className="p-3 surface-panel border border-border space-y-1.5 text-xs">
+        <div className="flex justify-between items-center">
           <span className="text-muted-foreground">{isDutch ? 'Status' : 'Status'}:</span>
-          <span className="font-semibold capitalize">{gradeSet.status}</span>
+          <span className={`px-2 py-1 rounded text-xs font-medium ${
+            gradeSet.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+            gradeSet.status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
+            'bg-green-100 text-green-800'
+          }`}>
+            {gradeSet.status === 'in_progress' ? 'In progress' : gradeSet.status === 'completed' ? 'Done' : 'Draft'}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{isDutch ? 'Gewicht' : 'Weight'}:</span>
@@ -189,27 +195,27 @@ export default function GradeDetailPage() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{isDutch ? 'Gemaakt' : 'Created'}:</span>
-          <span className="font-semibold">{fmtDate(gradeSet.created_at)}</span>
+          <span className="font-semibold text-xs">{fmtDate(gradeSet.created_at)}</span>
         </div>
         {gradeSet.description && (
-          <div className="border-t border-border pt-2">
-            <p className="text-muted-foreground text-xs mb-1">{isDutch ? 'Beschrijving' : 'Description'}:</p>
-            <p className="text-sm">{gradeSet.description}</p>
+          <div className="border-t border-border pt-1.5">
+            <p className="text-muted-foreground text-xs mb-0.5">{isDutch ? 'Beschrijving' : 'Description'}:</p>
+            <p className="text-xs">{gradeSet.description}</p>
           </div>
         )}
       </Card>
 
       {/* Stats */}
       {stats && (
-        <Card className="p-4 surface-panel border border-border space-y-3">
-          <h3 className="font-semibold">{isDutch ? 'Beoordelingsvoortgang' : 'Grading Progress'}</h3>
+        <Card className="p-3 surface-panel border border-border space-y-2">
+          <h3 className="font-semibold text-sm">{isDutch ? 'Beoordelingsvoortgang' : 'Grading Progress'}</h3>
 
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</span>
               <span className="font-semibold">{stats.graded} / {stats.total}</span>
             </div>
-            <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-[var(--accent-brand)]"
                 style={{ width: `${progressPct}%` }}
@@ -219,37 +225,37 @@ export default function GradeDetailPage() {
           </div>
 
           {stats.average !== null && (
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="space-y-1.5 border-t border-border pt-2">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <p className="text-muted-foreground text-xs">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-                  <p className="font-bold text-lg">{stats.average.toFixed(1)}</p>
+                  <p className="font-bold text-base">{stats.average.toFixed(1)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">{isDutch ? 'Range' : 'Range'}</p>
-                  <p className="font-bold text-lg">
+                  <p className="font-bold text-base">
                     {stats.lowest?.toFixed(1)}-{stats.highest?.toFixed(1)}
                   </p>
                 </div>
               </div>
 
               {Object.keys(stats.distribution).length > 0 && (
-                <div className="border-t border-border pt-3">
-                  <p className="text-xs font-semibold mb-2">{isDutch ? 'Verdeling' : 'Distribution'}</p>
-                  <div className="space-y-1">
+                <div className="border-t border-border pt-2">
+                  <p className="text-xs font-semibold mb-1.5">{isDutch ? 'Verdeling' : 'Distribution'}</p>
+                  <div className="space-y-0.5">
                     {Array.from({ length: 10 }, (_, i) => 10 - i).map(grade => {
                       const count = stats.distribution[grade] || 0;
                       return (
                         <div key={grade} className="flex items-center justify-between text-xs">
-                          <span>{grade}.0:</span>
-                          <div className="flex items-center gap-2">
-                            <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <span className="w-6">{grade}.0:</span>
+                          <div className="flex items-center gap-1.5 flex-1 ml-2">
+                            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-[var(--accent-brand)]"
                                 style={{ width: `${stats.total > 0 ? (count / stats.total) * 100 : 0}%` }}
                               />
                             </div>
-                            <span className="font-medium w-6 text-right">{count}</span>
+                            <span className="font-medium w-4 text-right">{count}</span>
                           </div>
                         </div>
                       );
