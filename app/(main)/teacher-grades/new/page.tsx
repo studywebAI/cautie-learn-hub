@@ -3,7 +3,6 @@
 import { useState, useContext, useEffect } from 'react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, Check } from 'lucide-react';
 import StepOneNameInfo from './step-1-select-class';
@@ -91,71 +90,41 @@ export default function NewGradesWizard() {
   };
 
   return (
-    <div className="page-content max-w-2xl mx-auto space-y-6 py-6">
-      {/* Header with progress */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {isDutch ? 'Terug' : 'Back'}
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {isDutch ? 'Stap' : 'Step'} {step} {isDutch ? 'van' : 'of'} 3
-          </span>
-        </div>
-
-        {/* Step indicator */}
-        <div className="flex gap-2">
-          {([1, 2, 3] as const).map((s) => (
-            <div key={s} className="flex-1">
-              <div
-                className={`h-2 rounded-full transition-colors ${
-                  s === step
-                    ? 'bg-[var(--accent-brand)]'
-                    : s < step
-                    ? 'bg-[var(--accent-brand)]/50'
-                    : 'bg-muted'
-                }`}
-              />
-              <p className="text-[10px] text-muted-foreground mt-1 font-medium">
-                {stepLabels[s]}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <h1 className="page-title">{stepLabels[step]}</h1>
+    <div className="page-content">
+      {/* Header */}
+      <div className="page-header">
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {isDutch ? 'Terug' : 'Back'}
+        </button>
+        <span className="text-xs text-muted-foreground">
+          {isDutch ? 'Stap' : 'Step'} {step} {isDutch ? 'van' : 'of'} 3
+        </span>
       </div>
 
-      {/* Content */}
-      <Card className="bg-card border border-border p-6">
-        {step === 1 && (
-          <StepOneNameInfo
-            onNext={handleNext}
-            data={gradeData}
-          />
-        )}
+      {/* Step progress bar */}
+      <div className="flex gap-2">
+        {([1, 2, 3] as const).map((s) => (
+          <div key={s} className="flex-1">
+            <div className={`h-1.5 rounded-full transition-colors ${
+              s === step ? 'bg-[var(--accent-brand)]' : s < step ? 'bg-[var(--accent-brand)]/40' : 'bg-muted'
+            }`} />
+            <p className="text-xs text-muted-foreground mt-1">{stepLabels[s]}</p>
+          </div>
+        ))}
+      </div>
 
-        {step === 2 && (
-          <StepTwoClassAndSubject
-            onBack={handleBack}
-            onNext={handleNext}
-            data={gradeData}
-          />
-        )}
+      <h1 className="page-title">{stepLabels[step]}</h1>
 
-        {step === 3 && (
-          <StepThreeGrading
-            onBack={handleBack}
-            onSave={handleSaveGrades}
-            data={gradeData}
-            isSaving={isSaving}
-          />
-        )}
-      </Card>
+      {/* Step content */}
+      <div className="class-panel-lg">
+        {step === 1 && <StepOneNameInfo onNext={handleNext} data={gradeData} />}
+        {step === 2 && <StepTwoClassAndSubject onBack={handleBack} onNext={handleNext} data={gradeData} />}
+        {step === 3 && <StepThreeGrading onBack={handleBack} onSave={handleSaveGrades} data={gradeData} isSaving={isSaving} />}
+      </div>
     </div>
   );
 }

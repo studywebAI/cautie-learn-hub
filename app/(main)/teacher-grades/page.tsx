@@ -137,58 +137,50 @@ export default function TeacherGradesLanding() {
   }
 
   return (
-    <div className="page-content max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="page-title">{isDutch ? 'Cijfers' : 'Grades'}</h1>
-        <p className="page-subtitle mt-0.5">
-          {isDutch ? 'Welkom terug' : 'Welcome back'}
-        </p>
+    <div className="page-content">
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">{isDutch ? 'Cijfers' : 'Grades'}</h1>
+          <p className="page-subtitle">{isDutch ? 'Welkom terug' : 'Welcome back'}</p>
+        </div>
+        <Link href="/teacher-grades/new">
+          <Button size="sm">
+            <Plus className="h-4 w-4" />
+            {isDutch ? 'Nieuwe cijfers' : 'New grade'}
+          </Button>
+        </Link>
       </div>
 
-      {/* Action buttons */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
+      {/* Action cards */}
+      <div className="grid grid-cols-3 gap-3">
         <Link href="/teacher-grades/new">
-          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <Plus className="h-5 w-5 mb-2 text-[var(--accent-brand)]" />
-            <h3 className="font-semibold text-xs">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</h3>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}
-            </p>
-          </Card>
+          <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
+            <Plus className="h-4 w-4 text-[var(--accent-brand)]" />
+            <p className="text-sm font-semibold">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</p>
+            <p className="text-xs text-muted-foreground">{isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}</p>
+          </div>
         </Link>
-
         <Link href="/teacher-grades?view=all">
-          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <CheckSquare className="h-5 w-5 mb-2 text-[var(--accent-brand)]" />
-            <h3 className="font-semibold text-xs">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</h3>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}
-            </p>
-          </Card>
+          <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
+            <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
+            <p className="text-sm font-semibold">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</p>
+            <p className="text-xs text-muted-foreground">{isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}</p>
+          </div>
         </Link>
-
         <Link href="/teacher-grades/metrics">
-          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <div className="h-5 w-5 mb-2 text-[var(--accent-brand)]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="2" x2="12" y2="22" />
-                <polyline points="4 14 12 2 20 14" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-xs">{isDutch ? 'Metrics' : 'Metrics'}</h3>
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {isDutch ? 'Analyseer en vergelijk' : 'Analyze & compare'}
-            </p>
-          </Card>
+          <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
+            <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
+            <p className="text-sm font-semibold">{isDutch ? 'Metrics' : 'Metrics'}</p>
+            <p className="text-xs text-muted-foreground">{isDutch ? 'Analyseer en vergelijk' : 'Analyze & compare'}</p>
+          </div>
         </Link>
       </div>
 
       {/* Recent grades */}
       {recentGrades.length > 0 && (
-        <div className="space-y-3">
+        <div className="class-panel-lg space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {isDutch ? 'Recente cijfers' : 'Recent Grades'} ({allGrades.length} totaal)
+            {isDutch ? 'Recente cijfers' : 'Recent grades'} ({allGrades.length})
           </p>
           <div className="space-y-2">
             {recentGrades.map(grade => (
@@ -200,16 +192,14 @@ export default function TeacherGradesLanding() {
 
       {/* Empty state */}
       {allGrades.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-3">
+        <div className="class-panel-lg flex flex-col items-center justify-center gap-3 py-10 text-center">
           <p className="text-sm text-muted-foreground">
-            {isDutch
-              ? 'Nog geen cijferlijsten. Maak er een aan om te beginnen.'
-              : 'No grade sets yet. Create one to get started.'}
+            {isDutch ? 'Nog geen cijferlijsten. Maak er een aan om te beginnen.' : 'No grade sets yet. Create one to get started.'}
           </p>
           <Link href="/teacher-grades/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {isDutch ? 'Eerste Cijferlijst' : 'Create First Grade Set'}
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              {isDutch ? 'Eerste cijferlijst' : 'Create first grade set'}
             </Button>
           </Link>
         </div>

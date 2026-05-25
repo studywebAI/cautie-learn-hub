@@ -115,8 +115,8 @@
     --accent-teal: #22c55e;
     --brand-coral: #d97757;
     --page-max-width: 1280px;
-    --page-inline-padding: 16px;
-    --page-block-padding: 14px;
+    --page-inline-padding: 10px;
+    --page-block-padding: 10px;
   }
 
   .dark {
@@ -628,9 +628,9 @@
 
 @layer components {
   .app-main-shell {
-    --app-shell-space-top: 0.75rem;
-    --app-shell-space-left: 16px;
-    --app-shell-space-right: 16px;
+    --app-shell-space-top: 0.5rem;
+    --app-shell-space-left: 6px;
+    --app-shell-space-right: 6px;
     --app-shell-space-bottom: 0.2rem;
     padding-top: var(--app-shell-space-top);
     padding-left: var(--app-shell-space-left);
@@ -668,9 +668,9 @@
   }
   @media (min-width: 768px) {
     .app-main-shell {
-      --app-shell-space-top: 0.75rem;
-      --app-shell-space-left: 12px;
-      --app-shell-space-right: 12px;
+      --app-shell-space-top: 0.5rem;
+      --app-shell-space-left: 6px;
+      --app-shell-space-right: 6px;
       --app-shell-space-bottom: 0.2rem;
     }
   }
@@ -748,8 +748,8 @@
     --type-micro: 11px;
     --type-page: 20px;
     --type-section: 16px;
-    --page-inline-padding: 10px;
-    --page-block-padding: 10px;
+    --page-inline-padding: 8px;
+    --page-block-padding: 8px;
   }
 
   .class-shell {
