@@ -41,6 +41,12 @@ export function InviteTab({
     : '';
 
   useEffect(() => {
+    if (mode === 'teachers' && !oneTimeTeacherCode && !isGeneratingTeacherCode) {
+      void generateTeacherCode();
+    }
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     void logClassTabEvent({ classId, tab: 'invite', event: 'mount', stage: 'ui', level: 'info' });
 
     const loadPreferences = async () => {
@@ -143,29 +149,13 @@ export function InviteTab({
 
           {/* QR code */}
           <div className="flex flex-col items-center gap-2 shrink-0">
-            <div className="relative rounded-xl border border-border p-3 bg-white">
-              {/* Always render a real-looking QR — use a dummy URL when no code yet */}
-              <img
-                src={activeQr || `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=placeholder&format=png&margin=10`}
-                alt="QR Code"
-                width={180}
-                height={180}
-                className={['rounded transition-all duration-300', !activeQr ? 'blur-md select-none pointer-events-none' : ''].join(' ')}
-              />
-              {!activeQr && mode === 'teachers' && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-xl">
-                  <button
-                    onClick={generateTeacherCode}
-                    disabled={isGeneratingTeacherCode}
-                    className="flex items-center gap-1.5 rounded-md bg-white/90 border border-border px-3 py-1.5 text-[12px] text-foreground shadow-sm hover:bg-white transition-colors"
-                  >
-                    {isGeneratingTeacherCode
-                      ? <Loader2 className="h-3 w-3 animate-spin" />
-                      : <RefreshCw className="h-3 w-3" />}
-                    {isGeneratingTeacherCode ? 'Generating…' : 'Generate code'}
-                  </button>
-                </div>
-              )}
+            <div className="rounded-xl border border-border p-3 bg-white">
+              {activeQr
+                ? <img src={activeQr} alt="QR Code" width={180} height={180} className="rounded" />
+                : <div className="w-[180px] h-[180px] flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+              }
             </div>
             <p className="text-xs text-muted-foreground">
               {mode === 'students' ? 'Scan to join' : 'Scan to join as teacher'}
@@ -178,11 +168,11 @@ export function InviteTab({
               <Label className="text-sm">
                 {mode === 'students' ? 'Join Code' : 'Teacher Code'}
               </Label>
-              <div className="relative flex gap-2">
+              <div className="flex gap-2">
                 <Input
-                  value={activeCode || (mode === 'teachers' ? 'XXXXXX' : '')}
+                  value={activeCode}
                   readOnly
-                  className={['font-mono text-xl tracking-widest font-bold h-12 text-center transition-all duration-300', !activeCode ? 'blur-sm select-none' : ''].join(' ')}
+                  className="font-mono text-xl tracking-widest font-bold h-12 text-center"
                 />
                 <Button
                   variant="outline"
@@ -207,7 +197,7 @@ export function InviteTab({
               {copiedLink
                 ? <Check className="h-3.5 w-3.5 text-[#7f8962] shrink-0" />
                 : <Copy className="h-3.5 w-3.5 shrink-0" />}
-              <span className="truncate">{activeLink || 'No link yet'}</span>
+              <span className="truncate">{activeLink || '—'}</span>
             </button>
 
             {mode === 'students' && (
@@ -223,20 +213,15 @@ export function InviteTab({
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
+                {' · '}
+                <button
+                  onClick={generateTeacherCode}
+                  disabled={isGeneratingTeacherCode}
+                  className="underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  {isGeneratingTeacherCode ? 'Regenerating…' : 'Regenerate'}
+                </button>
               </p>
-            )}
-
-            {mode === 'teachers' && oneTimeTeacherCode && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={generateTeacherCode}
-                disabled={isGeneratingTeacherCode}
-                className="gap-1.5 text-xs text-muted-foreground"
-              >
-                <RefreshCw className="h-3 w-3" />
-                Regenerate
-              </Button>
             )}
           </div>
         </div>
