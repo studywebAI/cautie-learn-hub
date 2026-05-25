@@ -83,18 +83,20 @@ export function ClassSettingsRedesigned({
   async function loadSettings() {
     setLoading(true);
     try {
-      const [classRes, groupRes, shareRes, codesRes] = await Promise.allSettled([
+      const [classRes, groupRes, shareRes] = await Promise.allSettled([
         fetch(`/api/classes/${classId}`),
         fetch(`/api/classes/${classId}/group`),
         fetch(`/api/classes/${classId}/share/settings`),
-        fetch(`/api/classes/${classId}/share/codes`),
       ]);
 
       if (classRes.status === 'fulfilled' && classRes.value.ok) {
         const data = await classRes.value.json();
-        setClassData(data.class || data);
-        setEditName(data.class?.name || className);
-        setEditDesc(data.class?.description || '');
+        const cls = data.class || data;
+        setClassData(cls);
+        setEditName(cls.name || className);
+        setEditDesc(cls.description || '');
+        setJoinCode(cls.join_code || '');
+        setTeacherJoinCode(cls.teacher_join_code || '');
       }
 
       if (groupRes.status === 'fulfilled' && groupRes.value.ok) {
@@ -108,12 +110,6 @@ export function ClassSettingsRedesigned({
         const settings = data.settings || {};
         setStudentChatEnabled(settings.allChatEnabled !== false);
         setTeacherChatEnabled(settings.teacherChatEnabled !== false);
-      }
-
-      if (codesRes.status === 'fulfilled' && codesRes.value.ok) {
-        const data = await codesRes.value.json();
-        setJoinCode(data.student_code || '');
-        setTeacherJoinCode(data.teacher_code || '');
       }
     } catch (e) {
     } finally {

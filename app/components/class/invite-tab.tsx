@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Copy, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
-import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 
 type Mode = 'students' | 'teachers';
 
@@ -22,95 +20,35 @@ export function InviteTab({
 }) {
   const { toast } = useToast();
   const [mode, setMode] = useState<Mode>('students');
-  const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [preferences, setPreferences] = useState(DEFAULT_CLASS_PREFERENCES);
-  const [oneTimeTeacherCode, setOneTimeTeacherCode] = useState('');
-  const [oneTimeTeacherCodeExpiresAt, setOneTimeTeacherCodeExpiresAt] = useState<string | null>(null);
-  const [isGeneratingTeacherCode, setIsGeneratingTeacherCode] = useState(false);
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
-  const studentLink = joinCode ? `${origin}/classes?join_code=${joinCode}` : '';
-  const teacherLink = oneTimeTeacherCode ? `${origin}/classes/join/${oneTimeTeacherCode}` : '';
-
-  const activeCode = mode === 'students' ? joinCode : oneTimeTeacherCode;
-  const activeLink = mode === 'students' ? studentLink : teacherLink;
+  const activeCode = mode === 'students' ? joinCode : (teacherJoinCode || '');
+  const activeLink = activeCode
+    ? `${origin}/classes?join_code=${activeCode}`
+    : '';
   const activeQr = activeLink
     ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(activeLink)}&format=png&margin=10`
     : '';
 
-  useEffect(() => {
-    if (mode === 'teachers' && !oneTimeTeacherCode && !isGeneratingTeacherCode) {
-      void generateTeacherCode();
-    }
-  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    void logClassTabEvent({ classId, tab: 'invite', event: 'mount', stage: 'ui', level: 'info' });
-
-    const loadPreferences = async () => {
-      try {
-        const res = await fetch(`/api/classes/${classId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        setPreferences(normalizeClassPreferences(data.preferences || {}));
-      } catch {
-        setPreferences(DEFAULT_CLASS_PREFERENCES);
+  const copy = async (text: string, type: 'code' | 'link') => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'code') {
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 2000);
+      } else {
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2000);
       }
-    };
-    void loadPreferences();
-  }, [classId]);
-
-  const copyCode = async () => {
-    if (!activeCode) return;
-    try {
-      await navigator.clipboard.writeText(activeCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      toast({ title: 'Copied!' });
-      void logClassTabEvent({ classId, tab: 'invite', event: 'copy_to_clipboard', stage: 'action', level: 'debug', meta: { mode } });
+      toast({ title: type === 'code' ? 'Code copied!' : 'Link copied!' });
     } catch {
       toast({ title: 'Failed to copy', variant: 'destructive' });
     }
   };
-
-
-  const copyLink = async () => {
-    if (!activeLink) return;
-    try {
-      await navigator.clipboard.writeText(activeLink);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-      toast({ title: 'Link copied!' });
-    } catch {
-      toast({ title: 'Failed to copy', variant: 'destructive' });
-    }
-  };
-
-  const generateTeacherCode = async () => {
-    if (!preferences.invite_allow_teacher_invites) return;
-    setIsGeneratingTeacherCode(true);
-    try {
-      const res = await fetch(`/api/classes/${classId}/teacher-invite-codes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expires_in_minutes: 60 }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to generate teacher code');
-      setOneTimeTeacherCode(data?.code?.code || '');
-      setOneTimeTeacherCodeExpiresAt(data?.code?.expires_at || null);
-      toast({ title: 'Teacher code generated (valid 60 min)' });
-      void logClassTabEvent({ classId, tab: 'invite', event: 'teacher_code_generated', stage: 'action', level: 'info' });
-    } catch (error: any) {
-      toast({ title: error?.message || 'Failed to generate teacher code', variant: 'destructive' });
-    } finally {
-      setIsGeneratingTeacherCode(false);
-    }
-  };
-
-  const teachersDisabled = !preferences.invite_allow_teacher_invites;
 
   return (
     <div className="class-shell">
@@ -130,15 +68,12 @@ export function InviteTab({
             Students
           </button>
           <button
-            onClick={() => !teachersDisabled && setMode('teachers')}
-            disabled={teachersDisabled}
+            onClick={() => setMode('teachers')}
             className={[
               'px-5 py-1.5 rounded-md text-sm transition-all',
-              teachersDisabled
-                ? 'opacity-40 cursor-not-allowed text-muted-foreground'
-                : mode === 'teachers'
-                  ? 'bg-[#7f8962] text-white shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
+              mode === 'teachers'
+                ? 'bg-[#7f8962] text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
             ].join(' ')}
           >
             Teachers
@@ -152,8 +87,8 @@ export function InviteTab({
             <div className="rounded-xl border border-border p-3 bg-white">
               {activeQr
                 ? <img src={activeQr} alt="QR Code" width={180} height={180} className="rounded" />
-                : <div className="w-[180px] h-[180px] flex items-center justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                : <div className="w-[180px] h-[180px] flex items-center justify-center text-xs text-muted-foreground text-center px-4">
+                    No code available
                   </div>
               }
             </div>
@@ -162,7 +97,7 @@ export function InviteTab({
             </p>
           </div>
 
-          {/* Code + copy */}
+          {/* Code + link */}
           <div className="flex-1 space-y-3 w-full">
             <div className="space-y-1.5">
               <Label className="text-sm">
@@ -178,10 +113,10 @@ export function InviteTab({
                   variant="outline"
                   size="icon"
                   className="h-12 w-12 shrink-0"
-                  onClick={copyCode}
+                  onClick={() => copy(activeCode, 'code')}
                   disabled={!activeCode}
                 >
-                  {copied
+                  {copiedCode
                     ? <Check className="h-4 w-4 text-[#7f8962]" />
                     : <Copy className="h-4 w-4" />}
                 </Button>
@@ -190,7 +125,7 @@ export function InviteTab({
 
             {/* Copy link */}
             <button
-              onClick={copyLink}
+              onClick={() => copy(activeLink, 'link')}
               disabled={!activeLink}
               className="flex items-center gap-2 w-full rounded-md border border-border px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:pointer-events-none"
             >
@@ -200,29 +135,11 @@ export function InviteTab({
               <span className="truncate">{activeLink || '—'}</span>
             </button>
 
-            {mode === 'students' && (
-              <p className="text-xs text-muted-foreground">
-                Students can enter this code in the app to join.
-              </p>
-            )}
-
-            {mode === 'teachers' && oneTimeTeacherCodeExpiresAt && (
-              <p className="text-xs text-muted-foreground">
-                Expires at{' '}
-                {new Date(oneTimeTeacherCodeExpiresAt).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-                {' · '}
-                <button
-                  onClick={generateTeacherCode}
-                  disabled={isGeneratingTeacherCode}
-                  className="underline underline-offset-2 hover:text-foreground transition-colors"
-                >
-                  {isGeneratingTeacherCode ? 'Regenerating…' : 'Regenerate'}
-                </button>
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              {mode === 'students'
+                ? 'Students can use this code or link to join the class.'
+                : 'Share this code or link with teachers you want to add.'}
+            </p>
           </div>
         </div>
 
