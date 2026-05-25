@@ -127,8 +127,8 @@ type DrawingPath = {
 };
 
 const NOTE_FONTS = [
-  { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
   { value: 'Inter', label: 'Inter' },
+  { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
   { value: 'Arial', label: 'Arial' },
   { value: 'Georgia', label: 'Georgia' },
 ];
@@ -203,7 +203,7 @@ function NotesPageContent() {
   const [editMode, setEditMode] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(true);
   const [noteHtml, setNoteHtml] = useState('');
-  const [noteFontFamily, setNoteFontFamily] = useState('IBM Plex Sans');
+  const [noteFontFamily, setNoteFontFamily] = useState('Inter');
   const [noteFontSize, setNoteFontSize] = useState(18);
   const [noteFontWeight, setNoteFontWeight] = useState(420);
   const [noteLineHeight, setNoteLineHeight] = useState(1.65);
