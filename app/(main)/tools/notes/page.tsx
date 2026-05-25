@@ -7,7 +7,7 @@ import { useSavedRun } from '@/hooks/use-saved-run';
 import { Bold, Calendar, FileSignature, Italic, Loader2, Network, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { SourceInput } from '@/components/tools/source-input';
+import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
@@ -1876,23 +1876,21 @@ function NotesPageContent() {
   return (
     <>
     <WorkbenchShell title={pageTitle} sidebar={sidebar} breadcrumbIcon={breadcrumbIcon}>
-      <SourceInput
-        toolId="notes"
-        value={sourceText}
-        onChange={setSourceText}
-        onImageDataUriChange={setImageDataUri}
-        onSubmit={(compiledText) => {
-          if (typeof compiledText === 'string') {
-            setSourceText(compiledText);
-          }
-          return runNotesGeneration(String(compiledText || sourceText), { background: false });
-        }}
-        placeholder={t.sourceInputPlaceholder}
-        speechLanguage={language}
-        enableMic
-        enableCaptions={false}
-        sourceMergeMode="append_labeled"
-      />
+      <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
+        <ToolInputBox
+          toolId="notes"
+          placeholder={t.sourceInputPlaceholder}
+          onSourceChange={(text) => setSourceText(text)}
+          onImageDataUriChange={setImageDataUri}
+          onSubmit={(compiledText) => {
+            if (compiledText) setSourceText(compiledText);
+            void runNotesGeneration(compiledText || sourceText, { background: false });
+          }}
+          isLoading={isLoading}
+          submitLabel="Generate"
+          speechLanguage={language}
+        />
+      </div>
     </WorkbenchShell>
     </>
   );

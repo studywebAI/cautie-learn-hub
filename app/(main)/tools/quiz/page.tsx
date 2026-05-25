@@ -3,15 +3,15 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BrainCircuit, Loader2, X, Trash2 } from 'lucide-react';
+import { BrainCircuit, Loader2, Trash2, X } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SourceInput } from '@/components/tools/source-input';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { ToolInputBox } from '@/components/tools/tool-input-box';
 import type { Quiz } from '@/lib/types';
 import { classifyContent, isQuizTypeAvailable } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
@@ -71,7 +71,6 @@ function QuizPageContent() {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [state1Completed, setState1Completed] = useState(false);
 
   const [mode, setMode] = useState<QuizMode>('classic');
   const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback>('end');
@@ -352,7 +351,6 @@ function QuizPageContent() {
 
   const handleRestart = useCallback(() => {
     setQuiz(null);
-    setState1Completed(false);
     try {
       const raw = sessionStorage.getItem(QUIZ_PAGE_SESSION_KEY);
       if (!raw) return;
@@ -363,66 +361,6 @@ function QuizPageContent() {
       // ignore
     }
   }, []);
-
-  // State 1 handlers for upload buttons
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [state1LinkUrl, setState1LinkUrl] = useState('');
-  const [state1ShowLinkDialog, setState1ShowLinkDialog] = useState(false);
-  const [state1LinkLoading, setState1LinkLoading] = useState(false);
-
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (text) {
-        setSourceText((prev) => prev ? `${prev}\n\n${text}` : text);
-      }
-    };
-    reader.onerror = () => {
-      toast({ variant: 'destructive', title: 'File reading failed' });
-    };
-    reader.readAsText(file);
-  }, [toast]);
-
-  const handleLinkSubmit = useCallback(async () => {
-    const url = state1LinkUrl.trim();
-    if (!url) {
-      toast({ variant: 'destructive', title: 'Please enter a URL' });
-      return;
-    }
-
-    setState1LinkLoading(true);
-    try {
-      const response = await fetch('/api/tools/extract-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch URL');
-      }
-
-      const data = await response.json();
-      const extracted = data?.text?.trim();
-
-      if (extracted) {
-        setSourceText((prev) => prev ? `${prev}\n\n${extracted}` : extracted);
-        setState1LinkUrl('');
-        setState1ShowLinkDialog(false);
-        toast({ title: 'Content imported', description: 'URL content added to textarea' });
-      } else {
-        toast({ variant: 'destructive', title: 'No text found', description: 'Could not extract text from this URL' });
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'URL extraction failed', description: error?.message || 'Please try again' });
-    } finally {
-      setState1LinkLoading(false);
-    }
-  }, [state1LinkUrl, toast]);
 
   const sidebar = (
     <div className="space-y-6">
@@ -552,7 +490,7 @@ function QuizPageContent() {
 
       {showPresetOverlay ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-background p-4 shadow-xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-background p-4">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-medium">Mode presets</p>
               <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => setShowPresetOverlay(false)}>
@@ -624,244 +562,18 @@ function QuizPageContent() {
     );
   }
 
-  // Determine if we're in State 1 (input) or State 2 (settings)
-  // State 1: show until user clicks Continue
-  // State 2: show after Continue is clicked (settings view)
-  // Quiz taker: show when quiz is generated
-  const inState1 = !state1Completed;
-  const inState2 = state1Completed && !quiz;
-
-  if (inState1) {
-    // STATE 1: INPUT MATERIAL
-    return (
-      <div className="flex h-full w-full flex-col">
-        {/* Topbar */}
-        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
-          <span className="text-sm font-bold text-foreground">cautie</span>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Tools</span>
-            <span className="text-border">›</span>
-            <span className="font-semibold text-foreground">Quiz</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-foreground"></div>
-            <div className="w-2 h-2 rounded-full bg-border"></div>
-            <span className="text-xs text-muted-foreground ml-1">Step 1 of 2</span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto bg-background">
-          <div className="bg-card rounded-lg border border-border p-6 w-full max-w-2xl shadow-sm">
-
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-1.5 text-foreground">Create a Quiz</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Paste text, upload files, or add a link. We'll analyze the content and tailor the quiz settings for you.
-              </p>
-            </div>
-
-            {/* Upload Buttons */}
-            <div className="flex gap-2 flex-wrap mb-5">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".txt,.pdf,.docx,.md"
-              />
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Photo capture coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
-              </button>
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Voice recording coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Mic
-              </button>
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Import coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 13v6"/><path d="M9 16h6"/></svg>Import from
-              </button>
-              <button
-                onClick={() => setState1ShowLinkDialog(true)}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link
-              </button>
-
-              {/* Link dialog modal */}
-              {state1ShowLinkDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-                  <div className="w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-xl">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground">Paste a link</h3>
-                      <button
-                        onClick={() => setState1ShowLinkDialog(false)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      <input
-                        type="url"
-                        value={state1LinkUrl}
-                        onChange={(e) => setState1LinkUrl(e.target.value)}
-                        placeholder="https://example.com"
-                        className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:border-[var(--accent-brand)] focus:ring-2 focus:ring-[var(--accent-brand)]/10 outline-none transition-colors bg-muted/30 text-foreground"
-                        onKeyPress={(e) => e.key === 'Enter' && handleLinkSubmit()}
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => setState1ShowLinkDialog(false)}
-                          className="px-4 py-2 border border-border rounded-lg text-xs font-semibold text-muted-foreground hover:bg-accent/5 transition-all"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleLinkSubmit}
-                          disabled={state1LinkLoading || !state1LinkUrl.trim()}
-                          className="px-4 py-2 bg-[var(--accent-brand)] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                        >
-                          {state1LinkLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-                          {state1LinkLoading ? 'Loading...' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Textarea + Added sources */}
-            <div className="flex gap-4 mb-5 h-56">
-              {/* Textarea */}
-              <div className="flex-1 flex flex-col">
-                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Your content</div>
-                <textarea
-                  value={sourceText}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  placeholder="Paste text, article content, notes, or anything you want to create a quiz from..."
-                  className="flex-1 w-full p-3 border border-border rounded-lg text-sm text-foreground resize-none outline-none leading-relaxed focus:border-[var(--accent-brand)] focus:ring-2 focus:ring-[var(--accent-brand)]/10 transition-colors bg-muted/20 font-sans"
-                />
-                <span className="text-xs text-muted-foreground mt-1.5">Supports: text, PDF, DOCX, images, YouTube links, web URLs</span>
-              </div>
-
-              {/* Added sources */}
-              <div className="w-48 flex flex-col border-l border-border pl-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
-                <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                  <div className="text-center text-muted-foreground text-xs py-12 flex flex-col items-center justify-center">
-                    <svg className="w-6 h-6 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9-4 9 4" /></svg>
-                    No sources yet
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer buttons */}
-            <div className="flex gap-2 justify-end border-t border-border pt-4">
-              <button
-                onClick={() => setSourceText('')}
-                className="px-4 py-2 bg-muted border border-border rounded-md text-xs font-medium text-foreground hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                Clear
-              </button>
-              <button
-                disabled={!sourceText.trim()}
-                onClick={() => setState1Completed(true)}
-                className="px-4 py-2 bg-[var(--accent-brand)] text-white rounded-md text-xs font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                Continue →
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STATE 2: SETTINGS (new clean layout - not sidebar)
-  if (inState2) {
-    return (
-      <div className="flex h-full w-full flex-col bg-background">
-        {/* Topbar */}
-        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
-          <span className="text-sm font-bold text-foreground">cautie</span>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Tools</span>
-            <span className="text-border">›</span>
-            <span className="font-semibold text-foreground">Quiz</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-foreground"></div>
-            <div className="w-2 h-2 rounded-full bg-border"></div>
-            <span className="text-xs text-muted-foreground ml-1">Step 2 of 2</span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
-          <div className="bg-card rounded-lg border border-border w-full max-w-2xl shadow-sm">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-muted/30">
-              <h2 className="text-base font-bold text-foreground mb-1">Quiz Settings</h2>
-              <p className="text-xs text-muted-foreground">Configure your quiz based on the content you added.</p>
-            </div>
-
-            {/* Settings */}
-            <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{maxHeight: 'calc(100% - 180px)'}}>
-              {sidebar}
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-muted/30">
-              <button
-                onClick={() => void handleGenerate(sourceText)}
-                disabled={loading || !sourceText.trim()}
-                className="w-full px-4 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
-                {loading ? 'Generating...' : 'Generate Quiz'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // FALLBACK: Old sidebar layout (keep for now)
   return (
     <WorkbenchShell title="Quiz" sidebar={sidebar} breadcrumbIcon={<BrainCircuit className="h-4 w-4 text-[var(--accent-brand)]" />}>
-      <div className="flex h-full w-full flex-col justify-end pl-3 pr-2">
-        <SourceInput
+      <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
+        <ToolInputBox
           toolId="quiz"
-          value={sourceText}
-          onChange={setSourceText}
+          placeholder="Paste notes, articles, or any content to create a quiz from…"
+          onSourceChange={(text) => setSourceText(text)}
           onImageDataUriChange={setImageDataUri}
-          onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
-          placeholder=""
-          disabled={loading}
+          onSubmit={(compiledText) => void handleGenerate(compiledText || sourceText)}
+          isLoading={loading}
+          submitLabel="Generate"
           speechLanguage={language}
-          enableMic
-          enableCaptions={false}
-          sourceMergeMode="append_labeled"
-          showSubmitButton={false}
         />
       </div>
     </WorkbenchShell>

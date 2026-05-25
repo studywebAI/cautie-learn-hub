@@ -12,7 +12,7 @@ import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SourceInput } from '@/components/tools/source-input';
+import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { PillSelector } from '@/components/tools/pill-selector';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
@@ -860,18 +860,18 @@ function FlashcardsPageContent() {
       sidebar={sidebar}
       breadcrumbIcon={<Copy className="h-4 w-4" />}
     >
-      <SourceInput
-        toolId="flashcards"
-        value={sourceText}
-        onChange={setSourceText}
-        onImageDataUriChange={setImageDataUri}
-        onSubmit={(compiledText) => handleGenerate(String(compiledText || sourceText))}
-        placeholder={t.sourceInputPlaceholder}
-        speechLanguage={language}
-        enableMic={false}
-        enableCaptions={false}
-        sourceMergeMode="append_labeled"
-      />
+      <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
+        <ToolInputBox
+          toolId="flashcards"
+          placeholder={t.sourceInputPlaceholder}
+          onSourceChange={(text) => setSourceText(text)}
+          onImageDataUriChange={setImageDataUri}
+          onSubmit={(compiledText) => void handleGenerate(compiledText || sourceText)}
+          isLoading={isLoading}
+          submitLabel="Generate"
+          speechLanguage={language}
+        />
+      </div>
     </WorkbenchShell>
     </>
   );
