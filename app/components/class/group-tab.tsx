@@ -223,7 +223,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
 
         {/* ── Column header ── */}
         <div
-          className="grid gap-3 border-b border-border px-4 py-2.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60"
+          className="grid gap-3 border-b border-border px-4 py-2.5 text-[11px] text-muted-foreground"
           style={{ gridTemplateColumns: studentCols }}
         >
           <div>{isDutch ? 'Naam' : 'Name'}</div>
@@ -241,7 +241,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
             style={{ gridTemplateColumns: teacherCols, borderLeft: '3px solid #7f8962' }}
           >
             <div>
-              <p className="text-[13px] font-semibold leading-snug">{t.name}</p>
+              <p className="text-[13px] leading-snug">{t.name}</p>
               <p className="text-[11px] text-muted-foreground capitalize leading-snug">{t.role}</p>
             </div>
           </div>
@@ -273,7 +273,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                   {/* Name */}
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <p className="text-[13px] font-semibold leading-snug">{s.name}</p>
+                      <p className="text-[13px] leading-snug">{s.name}</p>
                       {isTeacher && (
                         <button
                           type="button"
@@ -369,23 +369,23 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                   <div className="border-t border-border/40 bg-[hsl(var(--interactive-hover))] px-4 py-3">
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase font-semibold tracking-wide">{isDutch ? 'Afwezigheid' : 'Absences'}</p>
-                        <p className={cn('text-[16px] font-bold mt-1',
+                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Afwezigheid' : 'Absences'}</p>
+                        <p className={cn('text-[16px] mt-1',
                           absences > 2 ? 'text-red-600' : absences > 0 ? 'text-amber-600' : 'text-[#7f8962]'
                         )}>
                           {absences}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase font-semibold tracking-wide">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-                        <p className={cn('text-[16px] font-bold mt-1',
+                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Gemiddelde' : 'Average'}</p>
+                        <p className={cn('text-[16px] mt-1',
                           avg === null ? 'text-muted-foreground' : avg >= 7 ? 'text-[#7f8962]' : avg >= 5.5 ? 'text-amber-600' : 'text-red-600'
                         )}>
                           {avg !== null ? avg.toFixed(1) : '—'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase font-semibold tracking-wide">{isDutch ? 'Status' : 'Status'}</p>
+                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Status' : 'Status'}</p>
                         <p className="text-[12px] mt-2">
                           {att.isPresent === true && <span className="text-[#7f8962]">✓ {isDutch ? 'Aanwezig' : 'Present'}</span>}
                           {att.isPresent === false && <span className="text-red-600">✗ {isDutch ? 'Afwezig' : 'Absent'}</span>}

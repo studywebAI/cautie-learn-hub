@@ -76,20 +76,6 @@ function SubjectsPageContent() {
 
     return (
       <div className="page-content">
-        <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
-            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Subjects</p>
-            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherSubjects.length}</p>
-          </div>
-          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
-            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Assignments</p>
-            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherAssignments.length}</p>
-          </div>
-          <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/35 p-4">
-            <p className="text-[11px] uppercase tracking-wide text-sidebar-foreground/80">Today</p>
-            <p className="mt-1 text-2xl leading-none text-sidebar-foreground">{teacherTasks.length}</p>
-          </div>
-        </div>
         <TodaysAgenda
           assignments={teacherAssignments}
           personalTasks={teacherTasks}
