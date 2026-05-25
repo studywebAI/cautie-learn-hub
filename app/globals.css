@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 @import "./styles/breakpoints.css";
 
 .tool-right-rail {
@@ -50,8 +50,8 @@
     --type-body: 14px;
     --type-section: 17px;
     --type-page: 22px;
-    --font-ui-previous: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-ui: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui-previous: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-ui-legacy: var(--font-ui-previous);
     --accent-brand: #7f8962;
     --background: 0 0% 92.8%;

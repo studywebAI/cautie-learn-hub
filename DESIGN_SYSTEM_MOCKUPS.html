@@ -3,1065 +3,1203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cautie Design System — Full Audit & Mockups</title>
-
-<!-- All font options -->
+<title>cautie — Font Comparison Mockups</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300..700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@100..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Inter', sans-serif;
     background: #f0f0f0;
     color: #1a1a1a;
+    font-family: Inter, sans-serif;
     font-size: 14px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* ——————————————— LAYOUT ——————————————— */
-  .page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; }
-  .section { margin-bottom: 72px; }
-  .section-title {
-    font-family: 'Inter', sans-serif;
-    font-size: 11px;
+  .page-header {
+    background: #1a1a1a;
+    color: white;
+    padding: 40px 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .page-header h1 {
+    font-family: Inter, sans-serif;
+    font-size: 20px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: -0.02em;
+    color: white;
+  }
+  .page-header p {
+    font-family: Inter, sans-serif;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+  .nav-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .nav-pills a {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    padding: 5px 12px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .nav-pills a:hover { color: white; background: rgba(255,255,255,0.14); }
+
+  .page-body {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-label {
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #888;
+    color: #7f8962;
     margin-bottom: 8px;
   }
-  .section-heading {
-    font-size: 22px;
-    font-weight: 600;
-    color: #111;
+  .section-title {
+    font-family: Inter, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #0f0f0f;
     margin-bottom: 6px;
   }
   .section-sub {
+    font-family: Inter, sans-serif;
     font-size: 14px;
     color: #666;
-    margin-bottom: 32px;
-    max-width: 640px;
+    margin-bottom: 40px;
     line-height: 1.6;
   }
 
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
-
-  .option-card {
-    background: white;
-    border-radius: 12px;
-    padding: 28px;
-    border: 2px solid transparent;
-    position: relative;
+  /* ─── FONT CARD ─── */
+  .font-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+    gap: 24px;
   }
-  .option-card.preferred { border-color: #7f8962; }
-  .preferred-badge {
-    position: absolute;
-    top: 12px; right: 12px;
-    background: #7f8962;
-    color: white;
+
+  .font-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid #e8e8e8;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .font-card:hover {
+    border-color: #7f8962;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  }
+
+  .font-card-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .font-name {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #999;
+  }
+  .font-used-by {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .tag {
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: #f4f5f0;
+    color: #7f8962;
+    border: 1px solid #e8ebdf;
+    white-space: nowrap;
+  }
+  .tag.blue { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
+  .tag.purple { background: #faf5ff; color: #7c3aed; border-color: #ede9fe; }
+  .tag.orange { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+  .tag.dark { background: #f1f1f1; color: #333; border-color: #ddd; }
+
+  /* Big display text */
+  .font-display {
+    padding: 24px 32px;
+    border-bottom: 1px solid #f4f4f4;
+  }
+  .font-display-text {
+    font-size: 52px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: #0f0f0f;
+    margin-bottom: 8px;
+  }
+  .font-display-sub {
+    font-size: 20px;
+    font-weight: 400;
+    color: #555;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+
+  /* Weight row */
+  .font-weights {
+    padding: 16px 32px;
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid #f4f4f4;
+    flex-wrap: wrap;
+  }
+  .weight-sample { display: flex; flex-direction: column; gap: 2px; }
+  .weight-label {
+    font-family: Inter, sans-serif;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 20px;
+    color: #bbb;
   }
-
-  .option-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #999;
-    margin-bottom: 16px;
-  }
-
-  .divider {
-    height: 1px;
-    background: #e8e8e8;
-    margin: 48px 0;
-  }
-
-  /* ——————————————— PROBLEM BANNER ——————————————— */
-  .problem-banner {
-    background: #fff3f0;
-    border: 1.5px solid #ffd0c7;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #6b2b1e;
-  }
-  .problem-banner strong { color: #b83c2c; font-weight: 600; }
-  .fix-banner {
-    background: #f0f7ed;
-    border: 1.5px solid #c3dab7;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #2d4a1e;
-  }
-  .fix-banner strong { color: #3a6b26; font-weight: 600; }
-
-  /* ——————————————— FONT DEMOS ——————————————— */
-  .font-demo-header { font-size: 28px; font-weight: 600; margin-bottom: 4px; line-height: 1.2; }
-  .font-demo-sub { font-size: 14px; font-weight: 400; color: #555; margin-bottom: 12px; }
-  .font-demo-body { font-size: 14px; font-weight: 400; line-height: 1.55; color: #333; margin-bottom: 12px; }
-  .font-demo-meta { font-size: 12px; color: #888; }
-  .font-weight-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
-  .font-weight-item { font-size: 13px; }
-  .font-name-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    background: #f0f0f0;
-    color: #333;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-bottom: 14px;
-    font-family: monospace;
-  }
-
-  .font-inter { font-family: 'Inter', sans-serif; }
-  .font-dm { font-family: 'DM Sans', sans-serif; }
-  .font-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
-  .font-outfit { font-family: 'Outfit', sans-serif; }
-  .font-ibm { font-family: 'IBM Plex Sans', sans-serif; }
-
-  /* ——————————————— TYPE SCALE ——————————————— */
-  .type-scale-row {
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  .type-scale-meta { width: 100px; font-size: 11px; color: #999; font-family: monospace; flex-shrink: 0; }
-  .type-scale-sample { flex: 1; color: #1a1a1a; }
-  .type-scale-spec { width: 120px; font-size: 11px; color: #bbb; font-family: monospace; text-align: right; flex-shrink: 0; }
-
-  /* ——————————————— COMPONENT DEMOS ——————————————— */
-  .comp-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-  .comp-label { font-size: 11px; color: #888; margin-bottom: 8px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
-
-  /* Button variants across radius options */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1;
-    cursor: pointer;
-    border: none;
-    padding: 0 16px;
-    height: 36px;
-    transition: all 0.15s;
-  }
-  .btn-primary { background: #1a1a1a; color: white; }
-  .btn-primary:hover { background: #333; }
-  .btn-brand { background: #7f8962; color: white; }
-  .btn-outline { background: white; color: #1a1a1a; border: 1.5px solid #e0e0e0; }
-  .btn-ghost { background: transparent; color: #555; }
-  .btn-ghost:hover { background: #f5f5f5; }
-  .btn-sm { height: 30px; padding: 0 12px; font-size: 13px; }
-  .btn-lg { height: 42px; padding: 0 20px; font-size: 15px; }
-
-  /* Radius variants */
-  .r-4 { border-radius: 4px; }
-  .r-6 { border-radius: 6px; }
-  .r-8 { border-radius: 8px; }
-  .r-10 { border-radius: 10px; }
-  .r-12 { border-radius: 12px; }
-  .r-full { border-radius: 999px; }
-
-  /* Input variants */
-  .inp {
-    display: flex;
-    align-items: center;
-    height: 36px;
-    background: white;
-    border: 1.5px solid #e0e0e0;
-    font-family: inherit;
-    font-size: 14px;
+  .weight-text {
+    font-size: 15px;
     color: #1a1a1a;
-    padding: 0 12px;
-    outline: none;
-    width: 100%;
-    transition: border-color 0.15s;
+    letter-spacing: -0.01em;
   }
-  .inp:focus { border-color: #7f8962; }
-  .inp-sm { height: 30px; font-size: 13px; }
-  .inp-lg { height: 42px; font-size: 15px; }
-  .inp-ghost { border-color: transparent; background: #f5f5f5; }
-  .inp-ghost:focus { background: white; border-color: #7f8962; }
 
-  /* Card variants */
-  .card-demo {
+  /* Body paragraph */
+  .font-body-sample {
+    padding: 20px 32px;
+    border-bottom: 1px solid #f4f4f4;
+  }
+  .font-body-sample p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #333;
+    max-width: 520px;
+  }
+
+  /* UI mockup inside font card */
+  .font-ui-sample {
+    padding: 20px 32px 28px;
+    background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sample-card {
     background: white;
-    padding: 20px;
+    border: 1px solid #ebebeb;
+    border-radius: 10px;
+    padding: 14px 16px;
   }
-  .card-demo-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
-  .card-demo-sub { font-size: 13px; color: #777; margin-bottom: 12px; }
-  .card-demo-body { font-size: 13px; color: #333; line-height: 1.55; }
-
-  /* Badge / chip variants */
-  .badge {
-    display: inline-flex;
+  .sample-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f0f0f;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .sample-card-sub {
+    font-size: 12px;
+    color: #888;
+    line-height: 1.5;
+  }
+  .sample-row {
+    display: flex;
     align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sample-input {
+    flex: 1;
+    min-width: 140px;
+    height: 34px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #333;
+    background: white;
+    outline: none;
+  }
+  .sample-btn {
+    height: 34px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #7f8962;
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+  }
+  .sample-btn-ghost {
+    height: 34px;
+    padding: 0 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    background: white;
+    color: #444;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .sample-nav {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    width: fit-content;
+  }
+  .sample-nav-item {
+    padding: 5px 14px;
+    border-radius: 6px;
     font-size: 12px;
     font-weight: 500;
+    color: #666;
+    cursor: pointer;
+  }
+  .sample-nav-item.active {
+    background: white;
+    color: #0f0f0f;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .sample-stats {
+    display: flex;
+    gap: 12px;
+  }
+  .sample-stat {
+    background: white;
+    border: 1px solid #ebebeb;
+    border-radius: 8px;
+    padding: 10px 14px;
+    flex: 1;
+    min-width: 80px;
+  }
+  .sample-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f0f0f;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .sample-stat-label {
+    font-size: 11px;
+    color: #999;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  /* ─── RECOMMENDED BADGE ─── */
+  .font-card.recommended {
+    border-color: #7f8962;
+    box-shadow: 0 0 0 3px rgba(127,137,98,0.12);
+  }
+  .recommended-badge {
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: white;
+    background: #7f8962;
     padding: 3px 10px;
     border-radius: 4px;
   }
-  .badge-gray { background: #f0f0f0; color: #555; }
-  .badge-green { background: #ecfdf5; color: #15803d; }
-  .badge-amber { background: #fffbeb; color: #b45309; }
-  .badge-red { background: #fef2f2; color: #b91c1c; }
-  .badge-brand { background: #f0f3ec; color: #5a6342; }
 
-  /* Toggle */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: white;
-    border-radius: 8px;
-    gap: 16px;
-    margin-bottom: 6px;
+  /* ─── SIDE BY SIDE COMPARISON ─── */
+  .comparison-section {
+    background: #1a1a1a;
+    border-radius: 20px;
+    padding: 48px;
+    color: white;
   }
-  .toggle-text { font-size: 14px; color: #1a1a1a; }
-  .toggle-sub { font-size: 12px; color: #888; margin-top: 1px; }
-  .toggle {
-    width: 44px;
-    height: 24px;
-    border-radius: 12px;
-    background: #e0e0e0;
-    position: relative;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.2s;
-  }
-  .toggle.on { background: #7f8962; }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: white;
-    top: 2px;
-    left: 2px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
-  }
-  .toggle.on::after { transform: translateX(20px); }
+  .comparison-section .section-label { color: rgba(127,137,98,0.9); }
+  .comparison-section .section-title { color: white; }
+  .comparison-section .section-sub { color: rgba(255,255,255,0.5); }
 
-  /* Sidebar mock */
-  .sidebar-mock {
-    background: white;
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
     overflow: hidden;
-    width: 200px;
-    border: 1.5px solid #ebebeb;
   }
-  .sidebar-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 16px;
-    font-size: 14px;
-    color: #555;
+  .comparison-col {
+    padding: 24px 20px;
+    border-right: 1px solid rgba(255,255,255,0.08);
     cursor: pointer;
-    transition: background 0.1s;
+    transition: background 0.15s;
   }
-  .sidebar-item:hover { background: #f5f5f5; }
-  .sidebar-item.active { background: #f5f5f5; color: #1a1a1a; font-weight: 500; }
-  .sidebar-icon { width: 16px; height: 16px; color: #888; }
+  .comparison-col:last-child { border-right: none; }
+  .comparison-col:hover { background: rgba(255,255,255,0.04); }
+  .comparison-col.highlight { background: rgba(127,137,98,0.12); border-color: rgba(127,137,98,0.2); }
 
-  /* ——————————————— AUDIT TABLE ——————————————— */
-  .audit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .audit-table th {
-    text-align: left;
-    padding: 10px 14px;
-    background: #f7f7f7;
+  .comp-font-label {
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 16px;
+  }
+  .comparison-col.highlight .comp-font-label { color: #7f8962; }
+
+  .comp-heading {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: white;
+    margin-bottom: 12px;
+  }
+  .comp-body {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 14px;
+  }
+  .comp-label {
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: #666;
-    border-bottom: 1.5px solid #ebebeb;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
   }
-  .audit-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: top;
-    line-height: 1.5;
-  }
-  .audit-table tr:last-child td { border-bottom: none; }
-  .audit-table .bad { color: #c0392b; }
-  .audit-table .good { color: #2a7a3b; }
-  .audit-table code {
-    font-family: monospace;
+  .comp-meta {
     font-size: 12px;
-    background: #f5f5f5;
-    padding: 1px 5px;
-    border-radius: 3px;
-    color: #333;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
   }
-  .severity-high { background: #fef2f2; color: #b91c1c; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
-  .severity-med { background: #fffbeb; color: #92400e; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
-  .severity-low { background: #f0f9ff; color: #0369a1; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
 
-  /* ——————————————— WEIGHT DEMO ——————————————— */
-  .weight-row { display: flex; flex-direction: column; gap: 6px; }
-  .weight-item { display: flex; align-items: baseline; gap: 12px; }
-  .weight-spec { width: 60px; font-size: 11px; color: #999; font-family: monospace; }
-
-  /* ——————————————— FULL PAGE MOCK ——————————————— */
-  .page-mock {
-    background: #efefef;
-    border-radius: 12px;
-    overflow: hidden;
+  /* ─── ALPHABET ROW ─── */
+  .alphabet-section {
     display: flex;
-    height: 400px;
-    border: 1.5px solid #e0e0e0;
+    flex-direction: column;
+    gap: 16px;
   }
-  .page-mock-sidebar {
-    width: 200px;
+  .alpha-row {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    padding: 20px 28px;
     background: white;
-    border-right: 1px solid #ebebeb;
-    padding: 16px 0;
+    border-radius: 12px;
+    border: 1.5px solid #e8e8e8;
+    transition: border-color 0.2s;
+  }
+  .alpha-row:hover { border-color: #7f8962; }
+  .alpha-font-name {
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    width: 130px;
     flex-shrink: 0;
   }
-  .page-mock-main {
-    flex: 1;
-    padding: 24px;
+  .alpha-text {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #111;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .alpha-numbers {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    color: #888;
+    white-space: nowrap;
   }
 
-  @media (max-width: 768px) {
-    .grid-2, .grid-3, .grid-5 { grid-template-columns: 1fr; }
-    .page-mock { flex-direction: column; height: auto; }
-    .page-mock-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #ebebeb; }
+  /* font specific classes */
+  .f-inter { font-family: 'Inter', sans-serif; }
+  .f-space { font-family: 'Space Grotesk', sans-serif; }
+  .f-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; }
+  .f-dm { font-family: 'DM Sans', sans-serif; }
+  .f-outfit { font-family: 'Outfit', sans-serif; }
+  .f-instrument { font-family: 'Instrument Sans', sans-serif; }
+  .f-nunito { font-family: 'Nunito', sans-serif; }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 0;
   }
 </style>
 </head>
 <body>
-<div class="page">
 
-  <!-- HEADER -->
-  <div style="margin-bottom: 48px;">
-    <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #7f8962; margin-bottom: 8px;">CAUTIE DESIGN SYSTEM</div>
-    <h1 style="font-size: 36px; font-weight: 700; color: #111; letter-spacing: -0.02em; margin-bottom: 10px;">Full Audit & Mockups</h1>
-    <p style="font-size: 16px; color: #666; max-width: 640px; line-height: 1.6;">
-      Complete inventory of every inconsistency found in the current codebase, plus multiple mockup options for fonts, type scales, spacing, and components — all using the existing sage green accent colour.
-    </p>
+<div class="page-header">
+  <div>
+    <h1>cautie — Font Comparison</h1>
+    <p>Pick your font. Every section uses the actual font rendered live.</p>
   </div>
+  <nav class="nav-pills">
+    <a href="#side-by-side">Side by Side</a>
+    <a href="#alphabet">Alphabet</a>
+    <a href="#inter">Inter</a>
+    <a href="#space">Space Grotesk</a>
+    <a href="#jakarta">Plus Jakarta Sans</a>
+    <a href="#dm">DM Sans</a>
+    <a href="#outfit">Outfit</a>
+    <a href="#instrument">Instrument Sans</a>
+    <a href="#nunito">Nunito</a>
+  </nav>
+</div>
 
+<div class="page-body">
 
-  <!-- ——————————————— SECTION 1: AUDIT ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 01</div>
-    <div class="section-heading">What's Broken Right Now</div>
-    <div class="section-sub">Every place the site deviates from a consistent baseline. These are the actual problems visible in the screenshots.</div>
+  <!-- ═══════════════════════════════════════
+       SECTION: SIDE BY SIDE DARK
+  ════════════════════════════════════════ -->
+  <section id="side-by-side">
+    <div class="section-label">Quick compare</div>
+    <div class="section-title">Same text. 7 fonts. Spot the difference.</div>
+    <div class="section-sub">All showing the same heading + body copy + label. Scroll right if needed.</div>
 
-    <table class="audit-table" style="background: white; border-radius: 12px; overflow: hidden; border: 1.5px solid #ebebeb; margin-bottom: 20px;">
-      <thead>
-        <tr>
-          <th style="width: 32%;">Problem</th>
-          <th style="width: 20%;">Current Code</th>
-          <th style="width: 20%;">Should Be</th>
-          <th style="width: 14%;">Severity</th>
-          <th>Where</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>font-weight: 400 forced on ALL elements</strong><br><span style="color:#666;font-size:12px;">Headings, labels, buttons all look identical weight. No visual hierarchy.</span></td>
-          <td><code>* { font-weight: 400 !important }</code></td>
-          <td class="good">Weight system: 400 body, 500 labels, 600 headings</td>
-          <td><span class="severity-high">HIGH</span></td>
-          <td>globals.css:530</td>
-        </tr>
-        <tr>
-          <td><strong>text-xl = text-lg (both 18px)</strong><br><span style="color:#666;font-size:12px;">xl is supposed to be larger than lg. Currently broken.</span></td>
-          <td><code>.text-xl { 18px } .text-lg { 18px }</code></td>
-          <td class="good">xl = 20px, lg = 18px</td>
-          <td><span class="severity-high">HIGH</span></td>
-          <td>globals.css:596</td>
-        </tr>
-        <tr>
-          <td><strong>Arbitrary font sizes everywhere</strong><br><span style="color:#666;font-size:12px;">text-[11px], text-[12px], text-[13px], text-[14px], text-[15px] all used with no pattern.</span></td>
-          <td>10+ different arbitrary sizes</td>
-          <td class="good">Only 5 steps: 12, 13, 15, 18, 22px</td>
-          <td><span class="severity-high">HIGH</span></td>
-          <td>Every component</td>
-        </tr>
-        <tr>
-          <td><strong>font-family: Georgia configured in Tailwind</strong><br><span style="color:#666;font-size:12px;">tailwind.config.ts sets font-sans to Georgia (serif) but CSS overrides to IBM Plex Sans. Conflicting systems.</span></td>
-          <td><code>sans: ["Georgia", ...]</code></td>
-          <td class="good">font-sans should match --font-ui</td>
-          <td><span class="severity-high">HIGH</span></td>
-          <td>tailwind.config.ts:16</td>
-        </tr>
-        <tr>
-          <td><strong>--font-ui uses "Arial Text G2"</strong><br><span style="color:#666;font-size:12px;">This font doesn't exist as a web font. Silently falls back to IBM Plex Sans. Should just use IBM Plex Sans directly.</span></td>
-          <td><code>--font-ui: "Arial Text G2"</code></td>
-          <td class="good">Pick one real web font as the system font</td>
-          <td><span class="severity-med">MED</span></td>
-          <td>globals.css:53</td>
-        </tr>
-        <tr>
-          <td><strong>Border radius inconsistency</strong><br><span style="color:#666;font-size:12px;">rounded-xl, rounded-lg, rounded-md, rounded-sm, rounded-full used randomly. Class settings use rounded-md, buttons use rounded-xl, inputs use rounded-xl.</span></td>
-          <td>5+ different radii mixed</td>
-          <td class="good">2 radii: r-md for inputs/buttons, r-lg for cards</td>
-          <td><span class="severity-med">MED</span></td>
-          <td>button.tsx, input.tsx, all components</td>
-        </tr>
-        <tr>
-          <td><strong>Input height inconsistency</strong><br><span style="color:#666;font-size:12px;">h-8 (32px), h-9 (36px), h-10 (40px), h-12 (48px) all appear. No standard height for form inputs.</span></td>
-          <td>4 different heights</td>
-          <td class="good">h-9 (36px) standard, h-12 for hero inputs only</td>
-          <td><span class="severity-med">MED</span></td>
-          <td>All forms and wizards</td>
-        </tr>
-        <tr>
-          <td><strong>Hardcoded hex colours instead of tokens</strong><br><span style="color:#666;font-size:12px;">bg-[#7f8962], text-[#7f8962], bg-[#6f7851] scattered everywhere instead of var(--accent-brand).</span></td>
-          <td><code>bg-[#7f8962]</code> 20+ instances</td>
-          <td class="good"><code>bg-[var(--accent-brand)]</code></td>
-          <td><span class="severity-med">MED</span></td>
-          <td>class-settings-redesigned.tsx + many more</td>
-        </tr>
-        <tr>
-          <td><strong>font-500 / font-600 not in Tailwind</strong><br><span style="color:#666;font-size:12px;">font-500, font-600 are used but are not valid Tailwind classes. These silently do nothing.</span></td>
-          <td><code>font-500, font-600</code></td>
-          <td class="good"><code>font-medium, font-semibold</code></td>
-          <td><span class="severity-med">MED</span></td>
-          <td>class-settings-redesigned.tsx</td>
-        </tr>
-        <tr>
-          <td><strong>Chat message bubbles use accent-brand background</strong><br><span style="color:#666;font-size:12px;">Message bubbles are fully filled with #7f8962 making them look like errors, hard to read.</span></td>
-          <td>bg-[#7f8962] on messages</td>
-          <td class="good">Light bg with accent border, or proper contrast</td>
-          <td><span class="severity-low">LOW</span></td>
-          <td>Messenger/chat tabs</td>
-        </tr>
-        <tr>
-          <td><strong>Agenda page button top-right is pitch black</strong><br><span style="color:#666;font-size:12px;">Screenshot shows a completely black rectangle button that looks broken compared to the rest of the UI.</span></td>
-          <td>bg-foreground button</td>
-          <td class="good">bg-[var(--accent-brand)] or outline variant</td>
-          <td><span class="severity-low">LOW</span></td>
-          <td>Agenda / Schedule page</td>
-        </tr>
-        <tr>
-          <td><strong>Subjects page card has no visual weight</strong><br><span style="color:#666;font-size:12px;">Subject card shows "asd / comma" with no clear hierarchy. Title and subtitle look the same weight.</span></td>
-          <td>Both texts 400 weight</td>
-          <td class="good">Title 500, subtitle 400 muted</td>
-          <td><span class="severity-low">LOW</span></td>
-          <td>Subjects page</td>
-        </tr>
-        <tr>
-          <td><strong>b and strong forced to weight 400</strong><br><span style="color:#666;font-size:12px;">Bold tags don't actually bold anything. This breaks any user-generated rich text.</span></td>
-          <td><code>b, strong { font-weight: 400 }</code></td>
-          <td class="good"><code>b, strong { font-weight: 600 }</code></td>
-          <td><span class="severity-low">LOW</span></td>
-          <td>globals.css:611</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-
-  <!-- ——————————————— SECTION 2: FONT OPTIONS ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 02</div>
-    <div class="section-heading">Font Options</div>
-    <div class="section-sub">Five researched options showing how each looks at different weights. The goal: readable, clean, slightly elevated — not generic, not distracting. Shown with actual UI copy.</div>
-
-    <div class="grid-3" style="margin-bottom: 20px;">
-
-      <!-- Option A: Inter -->
-      <div class="option-card preferred">
-        <span class="preferred-badge">Recommended</span>
-        <div class="font-name-badge">Inter</div>
-        <div class="font-inter">
-          <div class="font-demo-header" style="font-weight:600;">Grade Analytics</div>
-          <div class="font-demo-sub" style="font-weight:400;">Class overview for this week</div>
-          <div class="font-demo-body" style="font-weight:400;">Students can access their grades, assignments and schedule from this panel.</div>
-          <div class="font-demo-meta">28 students • 3 subjects • Last updated 2 min ago</div>
-          <div class="font-weight-row">
-            <div class="font-weight-item font-inter" style="font-weight:300;">Light 300</div>
-            <div class="font-weight-item font-inter" style="font-weight:400;">Regular 400</div>
-            <div class="font-weight-item font-inter" style="font-weight:500;">Medium 500</div>
-            <div class="font-weight-item font-inter" style="font-weight:600;">Semibold 600</div>
-          </div>
+    <div style="overflow-x: auto; border-radius: 16px;">
+      <div class="comparison-grid" style="min-width: 980px;">
+        <!-- Inter -->
+        <div class="comparison-col highlight" title="Inter">
+          <div class="comp-font-label f-inter">Inter</div>
+          <div class="comp-heading f-inter">Learn smarter, not harder</div>
+          <div class="comp-body f-inter">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-inter">CLASS AVG</div>
+          <div class="comp-meta f-inter">7.4 / 10 • 28 students</div>
         </div>
-        <div style="margin-top: 14px; font-size: 12px; color: #888; line-height: 1.5;">
-          Most used SaaS font. Designed for screens. Excellent at 13–15px. Used by Linear, Vercel, Figma. Clean but not boring.
+        <!-- Space Grotesk -->
+        <div class="comparison-col" title="Space Grotesk">
+          <div class="comp-font-label f-space">Space Grotesk</div>
+          <div class="comp-heading f-space">Learn smarter, not harder</div>
+          <div class="comp-body f-space">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-space">CLASS AVG</div>
+          <div class="comp-meta f-space">7.4 / 10 • 28 students</div>
         </div>
-      </div>
-
-      <!-- Option B: DM Sans -->
-      <div class="option-card preferred" style="border-color: #a0a0a0;">
-        <span class="preferred-badge" style="background: #555;">Also Good</span>
-        <div class="font-name-badge">DM Sans</div>
-        <div class="font-dm">
-          <div class="font-demo-header" style="font-weight:600;">Grade Analytics</div>
-          <div class="font-demo-sub" style="font-weight:400;">Class overview for this week</div>
-          <div class="font-demo-body" style="font-weight:400;">Students can access their grades, assignments and schedule from this panel.</div>
-          <div class="font-demo-meta">28 students • 3 subjects • Last updated 2 min ago</div>
-          <div class="font-weight-row">
-            <div class="font-weight-item font-dm" style="font-weight:300;">Light 300</div>
-            <div class="font-weight-item font-dm" style="font-weight:400;">Regular 400</div>
-            <div class="font-weight-item font-dm" style="font-weight:500;">Medium 500</div>
-            <div class="font-weight-item font-dm" style="font-weight:600;">Semibold 600</div>
-          </div>
+        <!-- Plus Jakarta Sans -->
+        <div class="comparison-col" title="Plus Jakarta Sans">
+          <div class="comp-font-label f-jakarta">Plus Jakarta Sans</div>
+          <div class="comp-heading f-jakarta">Learn smarter, not harder</div>
+          <div class="comp-body f-jakarta">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-jakarta">CLASS AVG</div>
+          <div class="comp-meta f-jakarta">7.4 / 10 • 28 students</div>
         </div>
-        <div style="margin-top: 14px; font-size: 12px; color: #888; line-height: 1.5;">
-          Rounder and slightly warmer than Inter. More approachable feel. Great for educational tools. Used by Notion, Webflow. Pairs well with the sage green accent.
+        <!-- DM Sans -->
+        <div class="comparison-col" title="DM Sans">
+          <div class="comp-font-label f-dm">DM Sans</div>
+          <div class="comp-heading f-dm">Learn smarter, not harder</div>
+          <div class="comp-body f-dm">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-dm">CLASS AVG</div>
+          <div class="comp-meta f-dm">7.4 / 10 • 28 students</div>
         </div>
-      </div>
-
-      <!-- Option C: Plus Jakarta Sans -->
-      <div class="option-card">
-        <div class="font-name-badge">Plus Jakarta Sans</div>
-        <div class="font-jakarta">
-          <div class="font-demo-header" style="font-weight:600;">Grade Analytics</div>
-          <div class="font-demo-sub" style="font-weight:400;">Class overview for this week</div>
-          <div class="font-demo-body" style="font-weight:400;">Students can access their grades, assignments and schedule from this panel.</div>
-          <div class="font-demo-meta">28 students • 3 subjects • Last updated 2 min ago</div>
-          <div class="font-weight-row">
-            <div class="font-weight-item font-jakarta" style="font-weight:300;">Light 300</div>
-            <div class="font-weight-item font-jakarta" style="font-weight:400;">Regular 400</div>
-            <div class="font-weight-item font-jakarta" style="font-weight:500;">Medium 500</div>
-            <div class="font-weight-item font-jakarta" style="font-weight:600;">Semibold 600</div>
-          </div>
+        <!-- Outfit -->
+        <div class="comparison-col" title="Outfit">
+          <div class="comp-font-label f-outfit">Outfit</div>
+          <div class="comp-heading f-outfit">Learn smarter, not harder</div>
+          <div class="comp-body f-outfit">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-outfit">CLASS AVG</div>
+          <div class="comp-meta f-outfit">7.4 / 10 • 28 students</div>
         </div>
-        <div style="margin-top: 14px; font-size: 12px; color: #888; line-height: 1.5;">
-          Premium feel with distinctive character. Very readable. Used by high-end SaaS products. Slightly more "designed" feel than Inter.
+        <!-- Instrument Sans -->
+        <div class="comparison-col" title="Instrument Sans">
+          <div class="comp-font-label f-instrument">Instrument Sans</div>
+          <div class="comp-heading f-instrument">Learn smarter, not harder</div>
+          <div class="comp-body f-instrument">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-instrument">CLASS AVG</div>
+          <div class="comp-meta f-instrument">7.4 / 10 • 28 students</div>
         </div>
-      </div>
-
-      <!-- Option D: Outfit -->
-      <div class="option-card">
-        <div class="font-name-badge">Outfit</div>
-        <div class="font-outfit">
-          <div class="font-demo-header" style="font-weight:600;">Grade Analytics</div>
-          <div class="font-demo-sub" style="font-weight:400;">Class overview for this week</div>
-          <div class="font-demo-body" style="font-weight:400;">Students can access their grades, assignments and schedule from this panel.</div>
-          <div class="font-demo-meta">28 students • 3 subjects • Last updated 2 min ago</div>
-          <div class="font-weight-row">
-            <div class="font-weight-item font-outfit" style="font-weight:300;">Light 300</div>
-            <div class="font-weight-item font-outfit" style="font-weight:400;">Regular 400</div>
-            <div class="font-weight-item font-outfit" style="font-weight:500;">Medium 500</div>
-            <div class="font-weight-item font-outfit" style="font-weight:600;">Semibold 600</div>
-          </div>
-        </div>
-        <div style="margin-top: 14px; font-size: 12px; color: #888; line-height: 1.5;">
-          Very friendly and modern. Wider letter-spacing. Works very well for dashboards and educational contexts. Less common — distinctive.
-        </div>
-      </div>
-
-      <!-- Option E: IBM Plex Sans (current) -->
-      <div class="option-card" style="opacity: 0.85;">
-        <div class="font-name-badge">IBM Plex Sans (current)</div>
-        <div class="font-ibm">
-          <div class="font-demo-header" style="font-weight:600;">Grade Analytics</div>
-          <div class="font-demo-sub" style="font-weight:400;">Class overview for this week</div>
-          <div class="font-demo-body" style="font-weight:400;">Students can access their grades, assignments and schedule from this panel.</div>
-          <div class="font-demo-meta">28 students • 3 subjects • Last updated 2 min ago</div>
-          <div class="font-weight-row">
-            <div class="font-weight-item font-ibm" style="font-weight:300;">Light 300</div>
-            <div class="font-weight-item font-ibm" style="font-weight:400;">Regular 400</div>
-            <div class="font-weight-item font-ibm" style="font-weight:500;">Medium 500</div>
-            <div class="font-weight-item font-ibm" style="font-weight:600;">Semibold 600</div>
-          </div>
-        </div>
-        <div style="margin-top: 14px; font-size: 12px; color: #888; line-height: 1.5;">
-          Currently used. IBM-feel, slightly technical/cold. Works but doesn't have the warmth that fits an educational platform. Functional not inspired.
+        <!-- Nunito -->
+        <div class="comparison-col" title="Nunito">
+          <div class="comp-font-label f-nunito">Nunito</div>
+          <div class="comp-heading f-nunito">Learn smarter, not harder</div>
+          <div class="comp-body f-nunito">Track your students' progress in real time. Set goals, record grades, and see who needs help.</div>
+          <div class="comp-label f-nunito">CLASS AVG</div>
+          <div class="comp-meta f-nunito">7.4 / 10 • 28 students</div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
+  <!-- ═══════════════════════════════════════
+       SECTION: ALPHABET
+  ════════════════════════════════════════ -->
+  <section id="alphabet">
+    <div class="section-label">Letterforms</div>
+    <div class="section-title">Alphabet & Numbers</div>
+    <div class="section-sub">This is where you see the real personality differences — the a, g, t, and numbers tell everything.</div>
 
-  <!-- ——————————————— SECTION 3: TYPE SCALES ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 03</div>
-    <div class="section-heading">Type Scale Options</div>
-    <div class="section-sub">Three scale options. Each defines exactly 5 sizes + the weight for each. The goal is maximum clarity from the smallest label to the page title.</div>
-
-    <div class="grid-3">
-
-      <!-- Scale A -->
-      <div class="option-card preferred">
-        <span class="preferred-badge">Recommended</span>
-        <div class="option-label">Scale A — Compact</div>
-        <div class="font-inter">
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-micro</div>
-            <div class="type-scale-sample" style="font-size:12px; font-weight:400; color:#666;">Metadata, labels, timestamps</div>
-            <div class="type-scale-spec">12px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-small</div>
-            <div class="type-scale-sample" style="font-size:13px; font-weight:400;">Secondary text, descriptions</div>
-            <div class="type-scale-spec">13px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-body</div>
-            <div class="type-scale-sample" style="font-size:14px; font-weight:400;">Body text, form inputs</div>
-            <div class="type-scale-spec">14px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-label</div>
-            <div class="type-scale-sample" style="font-size:14px; font-weight:500;">Labels, card titles</div>
-            <div class="type-scale-spec">14px / 500</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-section</div>
-            <div class="type-scale-sample" style="font-size:17px; font-weight:600;">Section headings</div>
-            <div class="type-scale-spec">17px / 600</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-page</div>
-            <div class="type-scale-sample" style="font-size:22px; font-weight:600;">Page title</div>
-            <div class="type-scale-spec">22px / 600</div>
-          </div>
-        </div>
-        <div style="margin-top: 12px; font-size: 12px; color: #888; line-height: 1.5;">Dense, efficient. Best for data-heavy pages like grades and analytics. Matches how Linear / Notion feel.</div>
+    <div class="alphabet-section">
+      <div class="alpha-row">
+        <div class="alpha-font-name f-inter">Inter ★</div>
+        <div class="alpha-text f-inter">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-inter">0123456789</div>
       </div>
-
-      <!-- Scale B -->
-      <div class="option-card">
-        <div class="option-label">Scale B — Comfortable</div>
-        <div class="font-inter">
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-micro</div>
-            <div class="type-scale-sample" style="font-size:12px; font-weight:400; color:#666;">Metadata, labels, timestamps</div>
-            <div class="type-scale-spec">12px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-small</div>
-            <div class="type-scale-sample" style="font-size:13px; font-weight:400;">Secondary text</div>
-            <div class="type-scale-spec">13px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-body</div>
-            <div class="type-scale-sample" style="font-size:15px; font-weight:400;">Body text, form inputs</div>
-            <div class="type-scale-spec">15px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-label</div>
-            <div class="type-scale-sample" style="font-size:15px; font-weight:500;">Labels, card titles</div>
-            <div class="type-scale-spec">15px / 500</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-section</div>
-            <div class="type-scale-sample" style="font-size:18px; font-weight:600;">Section headings</div>
-            <div class="type-scale-spec">18px / 600</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-page</div>
-            <div class="type-scale-sample" style="font-size:24px; font-weight:600;">Page title</div>
-            <div class="type-scale-spec">24px / 600</div>
-          </div>
-        </div>
-        <div style="margin-top: 12px; font-size: 12px; color: #888; line-height: 1.5;">Slightly larger than Scale A. Better for mixed use where text needs more breathing room.</div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-space">Space Grotesk</div>
+        <div class="alpha-text f-space">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-space">0123456789</div>
       </div>
-
-      <!-- Scale C -->
-      <div class="option-card">
-        <div class="option-label">Scale C — Airy</div>
-        <div class="font-inter">
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-micro</div>
-            <div class="type-scale-sample" style="font-size:12px; font-weight:400; color:#666;">Metadata, labels</div>
-            <div class="type-scale-spec">12px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-small</div>
-            <div class="type-scale-sample" style="font-size:14px; font-weight:400;">Secondary text</div>
-            <div class="type-scale-spec">14px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-body</div>
-            <div class="type-scale-sample" style="font-size:16px; font-weight:400;">Body text, inputs</div>
-            <div class="type-scale-spec">16px / 400</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-label</div>
-            <div class="type-scale-sample" style="font-size:16px; font-weight:500;">Labels, card titles</div>
-            <div class="type-scale-spec">16px / 500</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-section</div>
-            <div class="type-scale-sample" style="font-size:20px; font-weight:600;">Section headings</div>
-            <div class="type-scale-spec">20px / 600</div>
-          </div>
-          <div class="type-scale-row">
-            <div class="type-scale-meta">--type-page</div>
-            <div class="type-scale-sample" style="font-size:28px; font-weight:600;">Page title</div>
-            <div class="type-scale-spec">28px / 600</div>
-          </div>
-        </div>
-        <div style="margin-top: 12px; font-size: 12px; color: #888; line-height: 1.5;">Larger and more spacious. Better for students (accessibility). Less efficient for dense data views.</div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-jakarta">Plus Jakarta Sans</div>
+        <div class="alpha-text f-jakarta">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-jakarta">0123456789</div>
+      </div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-dm">DM Sans</div>
+        <div class="alpha-text f-dm">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-dm">0123456789</div>
+      </div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-outfit">Outfit</div>
+        <div class="alpha-text f-outfit">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-outfit">0123456789</div>
+      </div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-instrument">Instrument Sans</div>
+        <div class="alpha-text f-instrument">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-instrument">0123456789</div>
+      </div>
+      <div class="alpha-row">
+        <div class="alpha-font-name f-nunito">Nunito</div>
+        <div class="alpha-text f-nunito">Aa Bb Cc Dd Ee Ff Gg Hh Ii Jj Kk Ll Mm Nn Oo Pp Qq Rr Ss Tt Uu Vv Ww Xx Yy Zz</div>
+        <div class="alpha-numbers f-nunito">0123456789</div>
       </div>
     </div>
-  </div>
+  </section>
 
 
-  <!-- ——————————————— SECTION 4: COMPONENT SETS ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 04</div>
-    <div class="section-heading">Component Options</div>
-    <div class="section-sub">Three complete sets of components using different border-radius systems. Every component in each set matches — inputs, buttons, and cards all use the same radius.</div>
+  <!-- ═══════════════════════════════════════
+       SECTION: INDIVIDUAL FONT CARDS
+  ════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Individual breakdown</div>
+    <div class="section-title">Each font in full context</div>
+    <div class="section-sub">Display text · body copy · all weights · real UI component. Every element below is rendered in that font.</div>
 
-    <div class="grid-3">
+    <div class="font-grid">
 
-      <!-- Set A: Rounded -->
-      <div class="option-card preferred">
-        <span class="preferred-badge">Recommended</span>
-        <div class="option-label">Set A — Rounded (r-8 base)</div>
-
-        <div class="comp-label">Inputs</div>
-        <div class="comp-row" style="flex-direction: column; gap: 8px;">
-          <input class="inp r-8" placeholder="Enter class name" style="font-family: Inter, sans-serif;">
-          <input class="inp r-8" placeholder="Search students..." style="font-family: Inter, sans-serif;">
-          <input class="inp r-8 inp-ghost" placeholder="Optional description" style="font-family: Inter, sans-serif;">
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Buttons</div>
-        <div class="comp-row">
-          <button class="btn btn-primary r-8" style="font-family: Inter, sans-serif;">Save changes</button>
-          <button class="btn btn-outline r-8" style="font-family: Inter, sans-serif;">Cancel</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-brand r-8" style="font-family: Inter, sans-serif;">Invite students</button>
-          <button class="btn btn-ghost r-8" style="font-family: Inter, sans-serif;">More options</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-sm btn-primary r-8" style="font-family: Inter, sans-serif;">Add</button>
-          <button class="btn btn-sm btn-outline r-8" style="font-family: Inter, sans-serif;">Edit</button>
-          <button class="btn btn-lg btn-brand r-8" style="font-family: Inter, sans-serif;">Continue →</button>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Cards</div>
-        <div class="card-demo r-8" style="border: 1.5px solid #ebebeb; margin-bottom: 8px;">
-          <div class="card-demo-title" style="font-family: Inter, sans-serif; font-weight: 500;">Biology — Test 1</div>
-          <div class="card-demo-sub" style="font-family: Inter, sans-serif;">6A • 28 students</div>
-          <div class="card-demo-body" style="font-family: Inter, sans-serif;">Graded 22 of 28 students. Class average: 7.4</div>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Badges</div>
-        <div class="comp-row">
-          <span class="badge badge-gray r-4" style="font-family: Inter, sans-serif;">Draft</span>
-          <span class="badge badge-amber r-4" style="font-family: Inter, sans-serif;">In progress</span>
-          <span class="badge badge-green r-4" style="font-family: Inter, sans-serif;">Completed</span>
-          <span class="badge badge-red r-4" style="font-family: Inter, sans-serif;">Failed</span>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Toggles</div>
-        <div class="toggle-row" style="border-radius: 8px; border: 1px solid #ebebeb;">
+      <!-- ──────────────── INTER ──────────────── -->
+      <div class="font-card recommended" id="inter">
+        <div class="font-card-header">
           <div>
-            <div class="toggle-text" style="font-family: Inter, sans-serif;">Student chat</div>
-            <div class="toggle-sub" style="font-family: Inter, sans-serif;">Allow students to message each other</div>
+            <div class="font-name f-inter">Inter</div>
+            <div style="font-family: Inter; font-size: 12px; color: #999; margin-top: 2px;">Humanist sans-serif · Rasmus Andersson, 2016</div>
           </div>
-          <div class="toggle on"></div>
-        </div>
-        <div class="toggle-row" style="border-radius: 8px; border: 1px solid #ebebeb;">
-          <div>
-            <div class="toggle-text" style="font-family: Inter, sans-serif;">Attendance tracking</div>
-            <div class="toggle-sub" style="font-family: Inter, sans-serif;">Record daily attendance</div>
-          </div>
-          <div class="toggle"></div>
-        </div>
-      </div>
-
-      <!-- Set B: Sharp-ish -->
-      <div class="option-card">
-        <div class="option-label">Set B — Subtle (r-6 base)</div>
-
-        <div class="comp-label">Inputs</div>
-        <div class="comp-row" style="flex-direction: column; gap: 8px;">
-          <input class="inp r-6" placeholder="Enter class name" style="font-family: DM Sans, sans-serif;">
-          <input class="inp r-6" placeholder="Search students..." style="font-family: DM Sans, sans-serif;">
-          <input class="inp r-6 inp-ghost" placeholder="Optional description" style="font-family: DM Sans, sans-serif;">
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Buttons</div>
-        <div class="comp-row">
-          <button class="btn btn-primary r-6" style="font-family: DM Sans, sans-serif;">Save changes</button>
-          <button class="btn btn-outline r-6" style="font-family: DM Sans, sans-serif;">Cancel</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-brand r-6" style="font-family: DM Sans, sans-serif;">Invite students</button>
-          <button class="btn btn-ghost r-6" style="font-family: DM Sans, sans-serif;">More options</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-sm btn-primary r-6" style="font-family: DM Sans, sans-serif;">Add</button>
-          <button class="btn btn-sm btn-outline r-6" style="font-family: DM Sans, sans-serif;">Edit</button>
-          <button class="btn btn-lg btn-brand r-6" style="font-family: DM Sans, sans-serif;">Continue →</button>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Cards</div>
-        <div class="card-demo r-6" style="border: 1.5px solid #ebebeb; margin-bottom: 8px;">
-          <div class="card-demo-title" style="font-family: DM Sans, sans-serif; font-weight: 500;">Biology — Test 1</div>
-          <div class="card-demo-sub" style="font-family: DM Sans, sans-serif;">6A • 28 students</div>
-          <div class="card-demo-body" style="font-family: DM Sans, sans-serif;">Graded 22 of 28 students. Class average: 7.4</div>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Badges</div>
-        <div class="comp-row">
-          <span class="badge badge-gray r-4" style="font-family: DM Sans, sans-serif;">Draft</span>
-          <span class="badge badge-amber r-4" style="font-family: DM Sans, sans-serif;">In progress</span>
-          <span class="badge badge-green r-4" style="font-family: DM Sans, sans-serif;">Completed</span>
-          <span class="badge badge-red r-4" style="font-family: DM Sans, sans-serif;">Failed</span>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Toggles</div>
-        <div class="toggle-row" style="border-radius: 6px; border: 1px solid #ebebeb;">
-          <div>
-            <div class="toggle-text" style="font-family: DM Sans, sans-serif;">Student chat</div>
-            <div class="toggle-sub" style="font-family: DM Sans, sans-serif;">Allow students to message each other</div>
-          </div>
-          <div class="toggle on"></div>
-        </div>
-        <div class="toggle-row" style="border-radius: 6px; border: 1px solid #ebebeb;">
-          <div>
-            <div class="toggle-text" style="font-family: DM Sans, sans-serif;">Attendance tracking</div>
-            <div class="toggle-sub" style="font-family: DM Sans, sans-serif;">Record daily attendance</div>
-          </div>
-          <div class="toggle"></div>
-        </div>
-      </div>
-
-      <!-- Set C: Very rounded/pill -->
-      <div class="option-card">
-        <div class="option-label">Set C — Pill (r-12 / full)</div>
-
-        <div class="comp-label">Inputs</div>
-        <div class="comp-row" style="flex-direction: column; gap: 8px;">
-          <input class="inp r-12" placeholder="Enter class name" style="font-family: Plus Jakarta Sans, sans-serif;">
-          <input class="inp r-12" placeholder="Search students..." style="font-family: Plus Jakarta Sans, sans-serif;">
-          <input class="inp r-12 inp-ghost" placeholder="Optional description" style="font-family: Plus Jakarta Sans, sans-serif;">
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Buttons</div>
-        <div class="comp-row">
-          <button class="btn btn-primary r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Save changes</button>
-          <button class="btn btn-outline r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Cancel</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-brand r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Invite students</button>
-          <button class="btn btn-ghost r-full" style="font-family: Plus Jakarta Sans, sans-serif;">More options</button>
-        </div>
-        <div class="comp-row">
-          <button class="btn btn-sm btn-primary r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Add</button>
-          <button class="btn btn-sm btn-outline r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Edit</button>
-          <button class="btn btn-lg btn-brand r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Continue →</button>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Cards</div>
-        <div class="card-demo r-12" style="border: 1.5px solid #ebebeb; margin-bottom: 8px;">
-          <div class="card-demo-title" style="font-family: Plus Jakarta Sans, sans-serif; font-weight: 500;">Biology — Test 1</div>
-          <div class="card-demo-sub" style="font-family: Plus Jakarta Sans, sans-serif;">6A • 28 students</div>
-          <div class="card-demo-body" style="font-family: Plus Jakarta Sans, sans-serif;">Graded 22 of 28 students. Class average: 7.4</div>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Badges</div>
-        <div class="comp-row">
-          <span class="badge badge-gray r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Draft</span>
-          <span class="badge badge-amber r-full" style="font-family: Plus Jakarta Sans, sans-serif;">In progress</span>
-          <span class="badge badge-green r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Completed</span>
-          <span class="badge badge-red r-full" style="font-family: Plus Jakarta Sans, sans-serif;">Failed</span>
-        </div>
-
-        <div class="comp-label" style="margin-top:16px;">Toggles</div>
-        <div class="toggle-row" style="border-radius: 12px; border: 1px solid #ebebeb;">
-          <div>
-            <div class="toggle-text" style="font-family: Plus Jakarta Sans, sans-serif;">Student chat</div>
-            <div class="toggle-sub" style="font-family: Plus Jakarta Sans, sans-serif;">Allow students to message each other</div>
-          </div>
-          <div class="toggle on"></div>
-        </div>
-        <div class="toggle-row" style="border-radius: 12px; border: 1px solid #ebebeb;">
-          <div>
-            <div class="toggle-text" style="font-family: Plus Jakarta Sans, sans-serif;">Attendance tracking</div>
-            <div class="toggle-sub" style="font-family: Plus Jakarta Sans, sans-serif;">Record daily attendance</div>
-          </div>
-          <div class="toggle"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ——————————————— SECTION 5: FULL PAGE MOCK ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 05</div>
-    <div class="section-heading">Full Page Mockups</div>
-    <div class="section-sub">How the whole thing looks together with the recommended choices applied. Showing Grades page and Settings page side by side.</div>
-
-    <div class="grid-2" style="margin-bottom: 20px;">
-
-      <!-- Grades page mock -->
-      <div>
-        <div style="font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 500;">Grades page — Inter + Scale A + Set A</div>
-        <div class="page-mock">
-          <div class="page-mock-sidebar">
-            <div style="padding: 0 16px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #aaa; text-transform: uppercase; font-family: Inter, sans-serif;">Menu</div>
-            <div class="sidebar-item font-inter">Dashboard</div>
-            <div class="sidebar-item active font-inter">Grades</div>
-            <div class="sidebar-item font-inter">Agenda</div>
-            <div class="sidebar-item font-inter">Subjects</div>
-            <div class="sidebar-item font-inter">Studyset</div>
-            <div style="height: 1px; background: #f0f0f0; margin: 8px 0;"></div>
-            <div class="sidebar-item font-inter">Quiz</div>
-            <div class="sidebar-item font-inter">Flashcards</div>
-            <div class="sidebar-item font-inter">Notes</div>
-          </div>
-          <div class="page-mock-main">
-            <div style="font-family: Inter, sans-serif;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
-                <div>
-                  <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: #111;">Grades</div>
-                  <div style="font-size: 13px; color: #888; margin-top: 2px;">Welcome back</div>
-                </div>
-                <button class="btn btn-brand r-8" style="font-family: Inter, sans-serif; font-size: 13px; height: 32px; padding: 0 14px;">+ New Grade</button>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px;">
-                <div style="background: white; border-radius: 8px; padding: 14px; border: 1.5px solid #ebebeb;">
-                  <div style="font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em;">New Grade</div>
-                  <div style="font-size: 13px; color: #444; margin-top: 6px;">Create a new grade set</div>
-                </div>
-                <div style="background: white; border-radius: 8px; padding: 14px; border: 1.5px solid #ebebeb;">
-                  <div style="font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em;">Existing</div>
-                  <div style="font-size: 13px; color: #444; margin-top: 6px;">View & manage</div>
-                </div>
-                <div style="background: white; border-radius: 8px; padding: 14px; border: 1.5px solid #ebebeb;">
-                  <div style="font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.05em;">Metrics</div>
-                  <div style="font-size: 13px; color: #444; margin-top: 6px;">Analyze & compare</div>
-                </div>
-              </div>
-              <div style="font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Recent Grades (3)</div>
-              <div style="background: white; border-radius: 8px; padding: 12px 14px; border: 1px solid #ebebeb; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                  <div style="font-size: 14px; font-weight: 500; color: #1a1a1a;">Biology Test 1</div>
-                  <div style="font-size: 12px; color: #888; margin-top: 2px;">6A • Biology • 2 Jun</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="font-size: 13px; font-weight: 500;">22 / 28</div>
-                  <span style="font-size: 11px; background: #f0f9eb; color: #4a7c20; padding: 2px 7px; border-radius: 4px; font-weight: 500;">Done</span>
-                </div>
-              </div>
-              <div style="background: white; border-radius: 8px; padding: 12px 14px; border: 1px solid #ebebeb; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                  <div style="font-size: 14px; font-weight: 500; color: #1a1a1a;">Maths Chapter 4</div>
-                  <div style="font-size: 12px; color: #888; margin-top: 2px;">6B • Maths • 30 May</div>
-                </div>
-                <div style="text-align: right;">
-                  <div style="font-size: 13px; font-weight: 500;">14 / 31</div>
-                  <span style="font-size: 11px; background: #fffbeb; color: #92400e; padding: 2px 7px; border-radius: 4px; font-weight: 500;">In progress</span>
-                </div>
-              </div>
+          <div style="display:flex; gap: 6px; flex-direction: column; align-items: flex-end;">
+            <div class="recommended-badge">Recommended</div>
+            <div class="font-used-by">
+              <span class="tag dark">GitHub</span>
+              <span class="tag dark">Linear</span>
+              <span class="tag dark">Vercel</span>
+              <span class="tag dark">Notion</span>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Settings page mock -->
-      <div>
-        <div style="font-size: 12px; color: #888; margin-bottom: 8px; font-weight: 500;">Settings page — Inter + Scale A + Set A</div>
-        <div class="page-mock">
-          <div class="page-mock-sidebar">
-            <div style="padding: 0 16px 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: #aaa; text-transform: uppercase; font-family: Inter, sans-serif;">Settings</div>
-            <div class="sidebar-item active font-inter">Class Info</div>
-            <div class="sidebar-item font-inter">Access</div>
-            <div class="sidebar-item font-inter">Features</div>
-            <div class="sidebar-item font-inter">Invite</div>
+        <div class="font-display">
+          <div class="font-display-text f-inter">cautie learn hub</div>
+          <div class="font-display-sub f-inter">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-inter">400 Regular</div>
+            <div class="weight-text f-inter" style="font-weight: 400;">Regular text body</div>
           </div>
-          <div class="page-mock-main">
-            <div style="font-family: Inter, sans-serif;">
-              <div style="margin-bottom: 20px;">
-                <div style="font-size: 16px; font-weight: 600; color: #111;">Class Information</div>
-                <div style="font-size: 13px; color: #888; margin-top: 2px;">Basic information about your class</div>
-              </div>
-              <div style="margin-bottom: 16px;">
-                <div style="font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px;">Class Name</div>
-                <input class="inp r-8" value="Klas 6A" style="font-family: Inter, sans-serif; font-size: 14px; max-width: 300px;">
-              </div>
-              <div style="margin-bottom: 20px;">
-                <div style="font-size: 13px; font-weight: 500; color: #333; margin-bottom: 6px;">Description <span style="font-weight:400; color: #aaa;">(optional)</span></div>
-                <textarea class="inp r-8" style="height: 72px; resize: none; padding: 10px 12px; font-family: Inter, sans-serif; font-size: 14px; max-width: 300px; width: 100%;" placeholder=""></textarea>
-              </div>
-              <div style="height: 1px; background: #f0f0f0; margin-bottom: 20px;"></div>
-              <div style="font-size: 14px; font-weight: 500; color: #333; margin-bottom: 12px;">Features</div>
-              <div class="toggle-row r-8" style="border: 1px solid #ebebeb; margin-bottom: 6px; border-radius: 8px;">
-                <div>
-                  <div style="font-size: 14px; color: #1a1a1a; font-family: Inter;">Student chat</div>
-                  <div style="font-size: 12px; color: #888; font-family: Inter;">Allow students to message each other</div>
-                </div>
-                <div class="toggle on"></div>
-              </div>
-              <div class="toggle-row r-8" style="border: 1px solid #ebebeb; border-radius: 8px;">
-                <div>
-                  <div style="font-size: 14px; color: #1a1a1a; font-family: Inter;">Attendance</div>
-                  <div style="font-size: 12px; color: #888; font-family: Inter;">Track daily attendance</div>
-                </div>
-                <div class="toggle"></div>
-              </div>
+          <div class="weight-sample">
+            <div class="weight-label f-inter">500 Medium</div>
+            <div class="weight-text f-inter" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-inter">600 Semibold</div>
+            <div class="weight-text f-inter" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-inter">700 Bold</div>
+            <div class="weight-text f-inter" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-inter" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-inter active">Overview</div>
+            <div class="sample-nav-item f-inter">Grades</div>
+            <div class="sample-nav-item f-inter">Students</div>
+            <div class="sample-nav-item f-inter">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-inter">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-inter">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-inter">7.4</div>
+              <div class="sample-stat-label f-inter">Class avg</div>
             </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-inter">24</div>
+              <div class="sample-stat-label f-inter">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-inter">3</div>
+              <div class="sample-stat-label f-inter">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-inter" placeholder="Search students..." />
+            <button class="sample-btn f-inter">Add Grade</button>
+            <button class="sample-btn-ghost f-inter">Export</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
+      <!-- ──────────────── SPACE GROTESK ──────────────── -->
+      <div class="font-card" id="space">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-space">Space Grotesk</div>
+            <div style="font-family: 'Space Grotesk'; font-size: 12px; color: #999; margin-top: 2px;">Geometric sans · Florian Karsten, 2020</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag dark">Claude.ai</span>
+            <span class="tag dark">Anthropic</span>
+            <span class="tag dark">Klim-style</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-space">cautie learn hub</div>
+          <div class="font-display-sub f-space">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-space">400 Regular</div>
+            <div class="weight-text f-space" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-space">500 Medium</div>
+            <div class="weight-text f-space" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-space">600 Semibold</div>
+            <div class="weight-text f-space" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-space">700 Bold</div>
+            <div class="weight-text f-space" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-space" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-space active">Overview</div>
+            <div class="sample-nav-item f-space">Grades</div>
+            <div class="sample-nav-item f-space">Students</div>
+            <div class="sample-nav-item f-space">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-space">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-space">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-space">7.4</div>
+              <div class="sample-stat-label f-space">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-space">24</div>
+              <div class="sample-stat-label f-space">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-space">3</div>
+              <div class="sample-stat-label f-space">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-space" placeholder="Search students..." />
+            <button class="sample-btn f-space">Add Grade</button>
+            <button class="sample-btn-ghost f-space">Export</button>
+          </div>
+        </div>
+      </div>
 
-  <!-- ——————————————— SECTION 6: WHAT TO IMPLEMENT ——————————————— -->
-  <div class="section">
-    <div class="section-title">Section 06</div>
-    <div class="section-heading">Proposed Fixes — Exact Code Changes</div>
-    <div class="section-sub">Exactly what needs to change in globals.css and tailwind.config.ts to fix all the inconsistencies. These are the minimum changes for maximum impact.</div>
+      <!-- ──────────────── PLUS JAKARTA SANS ──────────────── -->
+      <div class="font-card" id="jakarta">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-jakarta">Plus Jakarta Sans</div>
+            <div style="font-family: 'Plus Jakarta Sans'; font-size: 12px; color: #999; margin-top: 2px;">Geometric humanist · Tokotype, 2022</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag purple">StudyFetch</span>
+            <span class="tag purple">EdTech apps</span>
+            <span class="tag purple">11labs vibe</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-jakarta">cautie learn hub</div>
+          <div class="font-display-sub f-jakarta">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-jakarta">400 Regular</div>
+            <div class="weight-text f-jakarta" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-jakarta">500 Medium</div>
+            <div class="weight-text f-jakarta" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-jakarta">600 Semibold</div>
+            <div class="weight-text f-jakarta" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-jakarta">700 Bold</div>
+            <div class="weight-text f-jakarta" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-jakarta" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-jakarta active">Overview</div>
+            <div class="sample-nav-item f-jakarta">Grades</div>
+            <div class="sample-nav-item f-jakarta">Students</div>
+            <div class="sample-nav-item f-jakarta">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-jakarta">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-jakarta">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-jakarta">7.4</div>
+              <div class="sample-stat-label f-jakarta">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-jakarta">24</div>
+              <div class="sample-stat-label f-jakarta">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-jakarta">3</div>
+              <div class="sample-stat-label f-jakarta">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-jakarta" placeholder="Search students..." />
+            <button class="sample-btn f-jakarta">Add Grade</button>
+            <button class="sample-btn-ghost f-jakarta">Export</button>
+          </div>
+        </div>
+      </div>
 
-    <div class="fix-banner">
-      <strong>Fix 1 — Font:</strong> Change <code>@import</code> to Inter. Update <code>--font-ui</code> to <code>"Inter"</code>. Update tailwind.config.ts <code>font-sans</code> to <code>["Inter", ...fontFamily.sans]</code>. One font, no fallback chaos.
-    </div>
-    <div class="fix-banner">
-      <strong>Fix 2 — Font weights:</strong> Remove <code>* { font-weight: 400 !important }</code>. Add proper rules: body = 400, labels = 500, headings = 600. Fix <code>b, strong</code> to 600. This alone will make the site look 10× better.
-    </div>
-    <div class="fix-banner">
-      <strong>Fix 3 — Type scale:</strong> Replace 4 variables with 5: <code>--type-micro: 12px</code>, <code>--type-small: 13px</code>, <code>--type-body: 14px</code>, <code>--type-section: 17px</code>, <code>--type-page: 22px</code>. Fix text-xl to 20px (not same as text-lg).
-    </div>
-    <div class="fix-banner">
-      <strong>Fix 4 — Border radius:</strong> Set <code>--radius: 0.5rem</code> (8px). This makes rounded-lg = 8px, rounded-md = 6px. Use rounded-lg for inputs/buttons, rounded-xl for cards. Consistent everywhere.
-    </div>
-    <div class="fix-banner">
-      <strong>Fix 5 — Colour tokens:</strong> Find+replace all <code>bg-[#7f8962]</code>, <code>text-[#7f8962]</code>, <code>bg-[#6f7851]</code> with <code>bg-[var(--accent-brand)]</code> / <code>text-[var(--accent-brand)]</code> / <code>bg-[var(--accent-brand)]/90</code>.
-    </div>
-    <div class="fix-banner">
-      <strong>Fix 6 — font-500/font-600:</strong> Find+replace all <code>font-500</code> → <code>font-medium</code> and <code>font-600</code> → <code>font-semibold</code> in class-settings-redesigned.tsx (and anywhere else used).
-    </div>
-  </div>
+      <!-- ──────────────── DM SANS ──────────────── -->
+      <div class="font-card" id="dm">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-dm">DM Sans</div>
+            <div style="font-family: 'DM Sans'; font-size: 12px; color: #999; margin-top: 2px;">Geometric sans · Colophon, 2019 · Variable</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag blue">Google</span>
+            <span class="tag blue">Material Design feel</span>
+            <span class="tag blue">Google Docs vibe</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-dm">cautie learn hub</div>
+          <div class="font-display-sub f-dm">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-dm">400 Regular</div>
+            <div class="weight-text f-dm" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-dm">500 Medium</div>
+            <div class="weight-text f-dm" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-dm">600 Semibold</div>
+            <div class="weight-text f-dm" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-dm">700 Bold</div>
+            <div class="weight-text f-dm" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-dm" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-dm active">Overview</div>
+            <div class="sample-nav-item f-dm">Grades</div>
+            <div class="sample-nav-item f-dm">Students</div>
+            <div class="sample-nav-item f-dm">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-dm">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-dm">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-dm">7.4</div>
+              <div class="sample-stat-label f-dm">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-dm">24</div>
+              <div class="sample-stat-label f-dm">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-dm">3</div>
+              <div class="sample-stat-label f-dm">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-dm" placeholder="Search students..." />
+            <button class="sample-btn f-dm">Add Grade</button>
+            <button class="sample-btn-ghost f-dm">Export</button>
+          </div>
+        </div>
+      </div>
 
+      <!-- ──────────────── OUTFIT ──────────────── -->
+      <div class="font-card" id="outfit">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-outfit">Outfit</div>
+            <div style="font-family: 'Outfit'; font-size: 12px; color: #999; margin-top: 2px;">Geometric sans · Rodrigo Fuenzalida, 2021</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag orange">Framer</span>
+            <span class="tag orange">SaaS landing pages</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-outfit">cautie learn hub</div>
+          <div class="font-display-sub f-outfit">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-outfit">400 Regular</div>
+            <div class="weight-text f-outfit" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-outfit">500 Medium</div>
+            <div class="weight-text f-outfit" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-outfit">600 Semibold</div>
+            <div class="weight-text f-outfit" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-outfit">700 Bold</div>
+            <div class="weight-text f-outfit" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-outfit" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-outfit active">Overview</div>
+            <div class="sample-nav-item f-outfit">Grades</div>
+            <div class="sample-nav-item f-outfit">Students</div>
+            <div class="sample-nav-item f-outfit">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-outfit">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-outfit">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-outfit">7.4</div>
+              <div class="sample-stat-label f-outfit">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-outfit">24</div>
+              <div class="sample-stat-label f-outfit">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-outfit">3</div>
+              <div class="sample-stat-label f-outfit">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-outfit" placeholder="Search students..." />
+            <button class="sample-btn f-outfit">Add Grade</button>
+            <button class="sample-btn-ghost f-outfit">Export</button>
+          </div>
+        </div>
+      </div>
 
-  <!-- Footer -->
-  <div style="text-align: center; padding: 40px 0 0; color: #bbb; font-size: 12px;">
-    Cautie Design System Audit • 2026 • Open in browser to see live font comparisons
+      <!-- ──────────────── INSTRUMENT SANS ──────────────── -->
+      <div class="font-card" id="instrument">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-instrument">Instrument Sans</div>
+            <div style="font-family: 'Instrument Sans'; font-size: 12px; color: #999; margin-top: 2px;">Grotesque sans · Rodrigo Fuenzalida, 2022</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag purple">11labs</span>
+            <span class="tag purple">Loom</span>
+            <span class="tag purple">Tech editorial</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-instrument">cautie learn hub</div>
+          <div class="font-display-sub f-instrument">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-instrument">400 Regular</div>
+            <div class="weight-text f-instrument" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-instrument">500 Medium</div>
+            <div class="weight-text f-instrument" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-instrument">600 Semibold</div>
+            <div class="weight-text f-instrument" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-instrument">700 Bold</div>
+            <div class="weight-text f-instrument" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-instrument" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-instrument active">Overview</div>
+            <div class="sample-nav-item f-instrument">Grades</div>
+            <div class="sample-nav-item f-instrument">Students</div>
+            <div class="sample-nav-item f-instrument">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-instrument">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-instrument">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-instrument">7.4</div>
+              <div class="sample-stat-label f-instrument">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-instrument">24</div>
+              <div class="sample-stat-label f-instrument">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-instrument">3</div>
+              <div class="sample-stat-label f-instrument">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-instrument" placeholder="Search students..." />
+            <button class="sample-btn f-instrument">Add Grade</button>
+            <button class="sample-btn-ghost f-instrument">Export</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ──────────────── NUNITO ──────────────── -->
+      <div class="font-card" id="nunito">
+        <div class="font-card-header">
+          <div>
+            <div class="font-name f-nunito">Nunito</div>
+            <div style="font-family: 'Nunito'; font-size: 12px; color: #999; margin-top: 2px;">Rounded sans · Vernon Adams, 2014</div>
+          </div>
+          <div class="font-used-by">
+            <span class="tag blue">Duolingo feel</span>
+            <span class="tag blue">Khan Academy vibe</span>
+            <span class="tag blue">EdTech friendly</span>
+          </div>
+        </div>
+        <div class="font-display">
+          <div class="font-display-text f-nunito">cautie learn hub</div>
+          <div class="font-display-sub f-nunito">The future of learning, powered by AI</div>
+        </div>
+        <div class="font-weights">
+          <div class="weight-sample">
+            <div class="weight-label f-nunito">400 Regular</div>
+            <div class="weight-text f-nunito" style="font-weight: 400;">Regular text body</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-nunito">500 Medium</div>
+            <div class="weight-text f-nunito" style="font-weight: 500;">Medium labels tabs</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-nunito">600 Semibold</div>
+            <div class="weight-text f-nunito" style="font-weight: 600;">Semibold headings</div>
+          </div>
+          <div class="weight-sample">
+            <div class="weight-label f-nunito">700 Bold</div>
+            <div class="weight-text f-nunito" style="font-weight: 700;">Bold page titles</div>
+          </div>
+        </div>
+        <div class="font-body-sample">
+          <p class="f-nunito" style="font-weight: 400; font-size: 14px; line-height: 1.65; color: #333;">
+            Track your students' performance across every subject. See real-time averages, flag students who need extra support, and share reports instantly. cautie adapts to your classroom — not the other way around.
+          </p>
+        </div>
+        <div class="font-ui-sample">
+          <div class="sample-nav">
+            <div class="sample-nav-item f-nunito active">Overview</div>
+            <div class="sample-nav-item f-nunito">Grades</div>
+            <div class="sample-nav-item f-nunito">Students</div>
+            <div class="sample-nav-item f-nunito">Settings</div>
+          </div>
+          <div class="sample-card">
+            <div class="sample-card-title f-nunito">Mathematics — Class 3B</div>
+            <div class="sample-card-sub f-nunito">Last updated 2 hours ago · 28 students enrolled</div>
+          </div>
+          <div class="sample-stats">
+            <div class="sample-stat">
+              <div class="sample-stat-value f-nunito">7.4</div>
+              <div class="sample-stat-label f-nunito">Class avg</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-nunito">24</div>
+              <div class="sample-stat-label f-nunito">Graded</div>
+            </div>
+            <div class="sample-stat">
+              <div class="sample-stat-value f-nunito">3</div>
+              <div class="sample-stat-label f-nunito">Below avg</div>
+            </div>
+          </div>
+          <div class="sample-row">
+            <input class="sample-input f-nunito" placeholder="Search students..." />
+            <button class="sample-btn f-nunito">Add Grade</button>
+            <button class="sample-btn-ghost f-nunito">Export</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /font-grid -->
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       SECTION: REFERENCE TABLE
+  ════════════════════════════════════════ -->
+  <section>
+    <div class="section-label">Reference</div>
+    <div class="section-title">Who uses what</div>
+    <div class="section-sub">What the companies you mentioned actually use, and the closest available Google Fonts match.</div>
+
+    <div style="background: white; border-radius: 16px; border: 1.5px solid #e8e8e8; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse; font-family: Inter, sans-serif;">
+        <thead>
+          <tr style="background: #f8f8f8; border-bottom: 1px solid #eee;">
+            <th style="padding: 14px 20px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #999;">Company</th>
+            <th style="padding: 14px 20px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #999;">Actual font used</th>
+            <th style="padding: 14px 20px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #999;">Free match</th>
+            <th style="padding: 14px 20px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #999;">Vibe</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 14px 20px; font-size: 14px; font-weight: 600; color: #111;">Claude / Anthropic</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #555;">Söhne (Klim Type) — paid</td>
+            <td style="padding: 14px 20px;"><span style="font-family: 'Space Grotesk'; font-size: 14px; font-weight: 600; color: #7f8962;">Space Grotesk</span> is closest</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #888;">Distinctive geometric, slightly quirky, premium</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 14px 20px; font-size: 14px; font-weight: 600; color: #111;">Google</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #555;">Google Sans (proprietary)</td>
+            <td style="padding: 14px 20px;"><span style="font-family: 'DM Sans'; font-size: 14px; font-weight: 600; color: #7f8962;">DM Sans</span> is very close</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #888;">Clean, rounded, highly readable, approachable</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 14px 20px; font-size: 14px; font-weight: 600; color: #111;">ElevenLabs (11labs)</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #555;">Instrument Sans (open source)</td>
+            <td style="padding: 14px 20px;"><span style="font-family: 'Instrument Sans'; font-size: 14px; font-weight: 600; color: #7f8962;">Instrument Sans</span> — it IS free</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #888;">Condensed, editorial, tech, slightly formal</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #f0f0f0;">
+            <td style="padding: 14px 20px; font-size: 14px; font-weight: 600; color: #111;">StudyFetch</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #555;">Plus Jakarta Sans</td>
+            <td style="padding: 14px 20px;"><span style="font-family: 'Plus Jakarta Sans'; font-size: 14px; font-weight: 600; color: #7f8962;">Plus Jakarta Sans</span> — it IS free</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #888;">Friendly geometric, modern, energetic</td>
+          </tr>
+          <tr>
+            <td style="padding: 14px 20px; font-size: 14px; font-weight: 600; color: #111;">GitHub / Linear / Notion</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #555;">Inter (open source)</td>
+            <td style="padding: 14px 20px;"><span style="font-family: Inter; font-size: 14px; font-weight: 600; color: #7f8962;">Inter</span> — it IS free</td>
+            <td style="padding: 14px 20px; font-size: 13px; color: #888;">Industry standard, neutral, extremely readable</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div style="padding: 20px 0; text-align: center; font-family: Inter, sans-serif; font-size: 12px; color: #bbb;">
+    cautie Design System — Font Comparison · Open in browser with internet connection for fonts to load
   </div>
 
 </div>

@@ -127,6 +127,7 @@ type DrawingPath = {
 };
 
 const NOTE_FONTS = [
+  { value: 'Plus Jakarta Sans', label: 'Plus Jakarta Sans' },
   { value: 'Inter', label: 'Inter' },
   { value: 'IBM Plex Sans', label: 'IBM Plex Sans' },
   { value: 'Arial', label: 'Arial' },
@@ -203,7 +204,7 @@ function NotesPageContent() {
   const [editMode, setEditMode] = useState(false);
   const [showNotesPanel, setShowNotesPanel] = useState(true);
   const [noteHtml, setNoteHtml] = useState('');
-  const [noteFontFamily, setNoteFontFamily] = useState('Inter');
+  const [noteFontFamily, setNoteFontFamily] = useState('Plus Jakarta Sans');
   const [noteFontSize, setNoteFontSize] = useState(18);
   const [noteFontWeight, setNoteFontWeight] = useState(420);
   const [noteLineHeight, setNoteLineHeight] = useState(1.65);

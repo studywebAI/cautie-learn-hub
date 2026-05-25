@@ -13,9 +13,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
-        body: ["Inter", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
-        headline: ["Inter", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
+        sans: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
+        body: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
+        headline: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", ...fontFamily.sans],
         dyslexia: ["var(--font-atkinson-hyperlegible)", ...fontFamily.sans],
       },
       colors: {

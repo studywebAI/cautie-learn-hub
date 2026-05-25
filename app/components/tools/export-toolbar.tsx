@@ -50,7 +50,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, getPrintHtml, ti
   <meta charset="utf-8" />
   <title>${fileName}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -60,7 +60,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, getPrintHtml, ti
     }
     
     body {
-      font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: 11pt;
       line-height: 1.6;
       color: #1a1a1a;
@@ -75,7 +75,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, getPrintHtml, ti
     }
     
     .doc-header h1 {
-      font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-family: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: 22pt;
       font-weight: 700;
       letter-spacing: -0.02em;
@@ -229,7 +229,7 @@ export function ExportToolbar({ toolType, getMarkdown, getHtml, getPrintHtml, ti
   <title>${fileName}</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Inter, "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; padding: 40pt; }
+    body { font-family: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.6; color: #1a1a1a; padding: 40pt; }
     h1 { font-size: 20pt; font-weight: 700; margin-bottom: 8pt; }
     h2 { font-size: 14pt; font-weight: 600; margin: 16pt 0 8pt; border-bottom: 1px solid #eee; padding-bottom: 4pt; }
     h3 { font-size: 12pt; font-weight: 600; margin: 12pt 0 6pt; }

@@ -13,9 +13,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
-        body: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
-        headline: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        body: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
+        headline: ["Plus Jakarta Sans", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
         dyslexia: ["var(--font-atkinson-hyperlegible)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
