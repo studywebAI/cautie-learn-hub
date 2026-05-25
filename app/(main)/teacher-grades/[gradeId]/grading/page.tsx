@@ -5,14 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Search, Save, Edit2 } from 'lucide-react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  ChevronLeft,
+  Save,
+  Edit2,
+  Download,
+  RotateCcw,
+  RotateCw,
+  ChevronUp,
+  ChevronDown,
+  Upload,
+} from 'lucide-react';
+import { useGradeHistory } from '@/hooks/useGradeHistory';
+import { getGradeColor } from '@/lib/grade-coloring';
+import { calculateGradeStats, getGradeDistribution } from '@/lib/grade-calculations';
+import { exportGradesToHTML, exportGradesToPDF, exportGradesToCSV, downloadGradesAsCSV } from '@/lib/grade-export';
+import BulkImportDialog from '@/components/grades/bulk-import-dialog';
 
 type Student = {
   id: string;
@@ -20,10 +28,10 @@ type Student = {
   email?: string;
 };
 
-type GradeData = {
-  student_id: string;
-  grade_numeric?: number | null;
-  grade_value?: string | null;
+type PreviousGrade = {
+  title: string;
+  grade: number;
+  weight?: number;
 };
 
 export default function GradingInterfacePage() {
@@ -34,14 +42,18 @@ export default function GradingInterfacePage() {
   const router = useRouter();
 
   const [gradeSet, setGradeSet] = useState<any>(null);
+  const [classId, setClassId] = useState<string>('');
   const [students, setStudents] = useState<Student[]>([]);
-  const [grades, setGrades] = useState<Record<string, number | null>>({});
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'graded' | 'ungraded'>('all');
-  const [sort, setSort] = useState('name');
+  const gradeHistory = useGradeHistory({});
+  const { state: grades, setState: setGradeState, undo, redo, canUndo, canRedo } = gradeHistory;
+  const [weights, setWeights] = useState<Record<string, number | null>>({});
+  const [sort, setSort] = useState<'name' | 'high-to-low' | 'low-to-high'>('name');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
+  const [previousGrades, setPreviousGrades] = useState<Record<string, PreviousGrade[]>>({});
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
   // Load grade set and students
   useEffect(() => {
@@ -49,7 +61,7 @@ export default function GradingInterfacePage() {
       try {
         const classes = context?.classes || [];
         let foundGrade = null;
-        let classId = null;
+        let foundClassId = null;
 
         // Find the grade set
         for (const cls of classes) {
@@ -60,30 +72,35 @@ export default function GradingInterfacePage() {
           const gs = (data.grade_sets || []).find((g: any) => g.id === gradeId);
           if (gs) {
             foundGrade = gs;
-            classId = cls.id;
+            foundClassId = cls.id;
             break;
           }
         }
 
-        if (!foundGrade || !classId) {
+        if (!foundGrade || !foundClassId) {
           setLoading(false);
           return;
         }
 
         setGradeSet(foundGrade);
+        setClassId(foundClassId);
 
         // Load students
-        const studRes = await fetch(`/api/classes/${classId}/students`);
+        const studRes = await fetch(`/api/classes/${foundClassId}/students`);
         if (studRes.ok) {
           const studData = await studRes.json();
-          setStudents(studData.students || []);
+          const loadedStudents = studData.students || [];
+          setStudents(loadedStudents);
 
-          // Initialize grades from student_grades
+          // Initialize grades and weights from grade set
           const gradeMap: Record<string, number | null> = {};
+          const weightMap: Record<string, number | null> = {};
           (foundGrade.student_grades || []).forEach((sg: any) => {
             gradeMap[sg.student_id] = sg.grade_numeric || null;
+            weightMap[sg.student_id] = sg.weight || null;
           });
-          setGrades(gradeMap);
+          setGradeState(gradeMap);
+          setWeights(weightMap);
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -95,61 +112,101 @@ export default function GradingInterfacePage() {
     loadData();
   }, [gradeId, context?.classes]);
 
-  const filteredStudents = useMemo(() => {
-    let result = [...students];
+  // Load previous grades when student is expanded
+  const loadPreviousGrades = async (studentId: string) => {
+    if (previousGrades[studentId]) return;
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(s => s.full_name.toLowerCase().includes(q));
+    try {
+      const res = await fetch(
+        `/api/classes/${classId}/students/${studentId}/grades${
+          gradeSet.subject_id ? `?subjectId=${gradeSet.subject_id}` : ''
+        }`
+      );
+      if (!res.ok) {
+        setPreviousGrades(prev => ({ ...prev, [studentId]: [] }));
+        return;
+      }
+      const responseData = await res.json();
+      setPreviousGrades(prev => ({
+        ...prev,
+        [studentId]: responseData.grades || [],
+      }));
+    } catch {
+      setPreviousGrades(prev => ({ ...prev, [studentId]: [] }));
+    }
+  };
+
+  const sortedStudents = useMemo(() => {
+    const sorted = [...students];
+
+    if (sort === 'name') {
+      sorted.sort((a, b) => a.full_name.localeCompare(b.full_name));
+    } else if (sort === 'high-to-low') {
+      sorted.sort((a, b) => (grades[b.id] ?? -Infinity) - (grades[a.id] ?? -Infinity));
+    } else if (sort === 'low-to-high') {
+      sorted.sort((a, b) => (grades[a.id] ?? Infinity) - (grades[b.id] ?? Infinity));
     }
 
-    if (filter === 'graded') {
-      result = result.filter(s => grades[s.id] !== undefined && grades[s.id] !== null);
-    } else if (filter === 'ungraded') {
-      result = result.filter(s => grades[s.id] === undefined || grades[s.id] === null);
-    }
-
-    if (sort === 'grade') {
-      result.sort((a, b) => (grades[b.id] ?? -1) - (grades[a.id] ?? -1));
-    } else {
-      result.sort((a, b) => a.full_name.localeCompare(b.full_name));
-    }
-
-    return result;
-  }, [students, search, filter, sort, grades]);
+    return sorted;
+  }, [students, sort, grades]);
 
   const gradedCount = useMemo(() => {
     return Object.values(grades).filter(g => g !== null && g !== undefined).length;
   }, [grades]);
 
-  const averageGrade = useMemo(() => {
+  const classAverage = useMemo(() => {
     const gradeValues = Object.values(grades).filter((g): g is number => g !== null && g !== undefined);
     if (gradeValues.length === 0) return null;
     return gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length;
   }, [grades]);
 
+  const stats = useMemo(() => {
+    const gradeValues = Object.values(grades).filter((g): g is number => g !== null && g !== undefined);
+    if (gradeValues.length === 0) return null;
+    return calculateGradeStats(gradeValues);
+  }, [grades]);
+
+  const distribution = useMemo(() => {
+    const gradeValues = Object.values(grades).filter((g): g is number => g !== null && g !== undefined);
+    if (gradeValues.length === 0) return null;
+    return getGradeDistribution(gradeValues);
+  }, [grades]);
+
+  const getPreviousStats = (studentId: string) => {
+    const prev = previousGrades[studentId] || [];
+    if (prev.length === 0) return null;
+
+    const sum = prev.reduce((acc, g) => acc + g.grade, 0);
+    const avg = sum / prev.length;
+    const percentage = (avg / 10) * 100;
+
+    return {
+      grades: prev,
+      average: avg,
+      percentage: Math.round(percentage),
+    };
+  };
+
   const progressPct = students.length > 0 ? Math.round((gradedCount / students.length) * 100) : 0;
 
   const handleSave = async () => {
-    if (!gradeSet?.id || !gradeSet?.class_id) return;
+    if (!gradeSet?.id || !classId) return;
 
     setSaving(true);
     try {
-      // Save each grade individually
       const promises = Object.entries(grades).map(async ([studentId, grade]) => {
-        if (grade === null || grade === undefined) return;
-
-        return fetch(`/api/classes/${gradeSet.class_id}/grades/${gradeSet.id}/students/${studentId}`, {
+        return fetch(`/api/classes/${classId}/grades/${gradeSet.id}/students/${studentId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ grade }),
+          body: JSON.stringify({
+            grade,
+            weight: weights[studentId] || null,
+          }),
         });
       });
 
       await Promise.all(promises);
-
-      // Redirect back to grade details
-      router.push(`/teacher-grades/${gradeId}`);
+      setIsEditMode(false);
     } catch (err) {
       console.error('Error saving grades:', err);
     } finally {
@@ -157,9 +214,65 @@ export default function GradingInterfacePage() {
     }
   };
 
+  const handleExportHTML = () => {
+    if (!gradeSet) return;
+    const html = exportGradesToHTML(
+      {
+        title: gradeSet.title,
+        class_name: gradeSet.class_name || '',
+        subject_title: gradeSet.subject?.title,
+        created_at: gradeSet.created_at,
+        status: gradeSet.status,
+        weight: gradeSet.weight,
+        students: sortedStudents.map(s => ({
+          studentId: s.id,
+          studentName: s.full_name,
+          grade: grades[s.id] || null,
+          weight: weights[s.id] || undefined,
+          letterGrade: getGradeColor(grades[s.id] || undefined).letterGrade,
+          color: getGradeColor(grades[s.id] || undefined).color,
+        })),
+        stats,
+        distribution,
+      }
+    );
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${gradeSet.title.replace(/\s+/g, '_')}_grades.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkImport = (gradeMap: Record<string, number | null>) => {
+    // Map the imported grades using student IDs
+    const idMap: Record<string, string> = {};
+    students.forEach(s => {
+      const name = s.full_name.toLowerCase();
+      idMap[name] = s.id;
+    });
+
+    const newGrades = { ...grades };
+    Object.entries(gradeMap).forEach(([studentName, grade]) => {
+      const matchingKey = Object.keys(idMap).find(key =>
+        key.includes(studentName.toLowerCase()) ||
+        studentName.toLowerCase().includes(key)
+      );
+      if (matchingKey) {
+        newGrades[idMap[matchingKey]] = grade;
+      }
+    });
+
+    setGradeState(newGrades);
+  };
+
   if (loading) {
     return (
-      <div className="page-content max-w-4xl mx-auto py-6">
+      <div className="page-content max-w-6xl mx-auto py-6">
         <div className="space-y-4">
           <div className="h-8 w-48 bg-muted rounded animate-pulse" />
           <div className="h-96 bg-muted rounded animate-pulse" />
@@ -170,7 +283,7 @@ export default function GradingInterfacePage() {
 
   if (!gradeSet) {
     return (
-      <div className="page-content max-w-4xl mx-auto py-6">
+      <div className="page-content max-w-6xl mx-auto py-6">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
@@ -186,168 +299,288 @@ export default function GradingInterfacePage() {
   }
 
   return (
-    <div className="page-content max-w-4xl mx-auto py-6 space-y-4">
+    <div className="page-content max-w-6xl mx-auto py-6 space-y-4">
       {/* Header */}
-      <div>
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {isDutch ? 'Terug' : 'Back'}
-        </button>
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        {isDutch ? 'Terug' : 'Back'}
+      </button>
 
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex-1">
-            <h1 className="page-title">{gradeSet.title}</h1>
-            <p className="page-subtitle mt-0.5">
-              {isDutch ? 'Beoordeel' : 'Grade'} {students.length} {isDutch ? 'studenten' : 'students'}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={isEditMode ? "default" : "outline"}
-              size="sm"
-              onClick={() => setIsEditMode(!isEditMode)}
-            >
-              <Edit2 className="h-4 w-4 mr-2" />
-              {isEditMode ? (isDutch ? 'Gereed' : 'Done') : (isDutch ? 'Bewerk' : 'Edit')}
-            </Button>
-            {isEditMode && (
-              <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? (isDutch ? 'Opslaan...' : 'Saving...') : (isDutch ? 'Opslaan' : 'Save')}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Filter */}
-      <div className="space-y-3">
-        <div className="flex gap-2">
-          <div className="flex-1 relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={isDutch ? 'Zoek studenten...' : 'Search students...'}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-9"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {(['all', 'graded', 'ungraded'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`text-xs px-3 py-1.5 rounded-md border transition-colors ${
-                filter === f
-                  ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-                  : 'border-border text-muted-foreground hover:border-foreground/30'
-              }`}
-            >
-              {f === 'all' ? (isDutch ? 'Alle' : 'All') : f === 'graded' ? (isDutch ? 'Beoordeeld' : 'Graded') : (isDutch ? 'Niet beoordeeld' : 'Not Graded')}
-              {' '}({filteredStudents.length})
-            </button>
-          ))}
-          <div className="ml-auto">
-            <Select value={sort} onValueChange={setSort}>
-              <SelectTrigger className="w-auto text-xs h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">{isDutch ? 'Op naam' : 'By Name'}</SelectItem>
-                <SelectItem value="grade">{isDutch ? 'Op cijfer' : 'By Grade'}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Grading table */}
-      <div className="overflow-x-auto border border-border rounded-lg">
-        <table className="w-full text-sm">
-          <thead className="bg-muted border-b border-border">
-            <tr>
-              <th className="text-left p-3 font-semibold text-xs text-muted-foreground">
-                {isDutch ? 'Studenten' : 'Student Name'}
-              </th>
-              <th className="text-center p-3 font-semibold text-xs text-muted-foreground w-24">
-                {isDutch ? 'Cijfer' : 'Grade'}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredStudents.map((student, idx) => (
-              <tr
-                key={student.id}
-                className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                  idx % 2 === 0 ? '' : 'bg-muted/10'
-                }`}
-              >
-                <td className="p-3 text-sm font-medium">{student.full_name}</td>
-                <td className="p-3 text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.5"
-                    value={grades[student.id] ?? ''}
-                    onChange={(e) => {
-                      if (!isEditMode) return;
-                      const value = e.target.value ? parseFloat(e.target.value) : null;
-                      setGrades(prev => ({
-                        ...prev,
-                        [student.id]: value,
-                      }));
-                    }}
-                    disabled={!isEditMode}
-                    placeholder="-"
-                    className="w-20 text-center h-8 text-sm border border-border bg-white dark:bg-[hsl(var(--surface-1))] mx-auto disabled:opacity-60 disabled:cursor-not-allowed"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-2 p-3 bg-muted rounded-lg text-xs">
-        <div>
-          <p className="text-muted-foreground mb-0.5">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
-          <p className="font-bold text-base">
-            {gradedCount} / {students.length}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1">
+          <h1 className="page-title">{gradeSet.title}</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            {isDutch ? 'Klas' : 'Class'}: {gradeSet.class_name}
+            {gradeSet.subject?.title && ` • ${gradeSet.subject.title}`}
           </p>
         </div>
-        <div>
-          <p className="text-muted-foreground mb-1">{isDutch ? 'Vooruitgang' : 'Progress'}</p>
-          <div className="flex items-center gap-1.5">
-            <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[var(--accent-brand)]"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-            <span className="font-semibold text-xs w-8 text-right">{progressPct}%</span>
+
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportHTML}
+            title={isDutch ? 'Exporteren als HTML' : 'Export as HTML'}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+
+          {isEditMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsImportDialogOpen(true)}
+              title={isDutch ? 'Bulk importeren' : 'Bulk import'}
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
+          )}
+
+          <Button
+            variant={isEditMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setIsEditMode(!isEditMode)}
+          >
+            <Edit2 className="h-4 w-4 mr-2" />
+            {isEditMode ? isDutch ? 'Gereed' : 'Done' : isDutch ? 'Bewerk' : 'Edit'}
+          </Button>
+
+          {isEditMode && (
+            <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? isDutch ? 'Opslaan...' : 'Saving...' : isDutch ? 'Opslaan' : 'Save'}
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Sort buttons and undo/redo */}
+      {isEditMode && (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={sort === 'name' ? 'default' : 'outline'}
+            onClick={() => setSort('name')}
+          >
+            {isDutch ? 'Naam' : 'Name'}
+          </Button>
+          <Button
+            size="sm"
+            variant={sort === 'high-to-low' ? 'default' : 'outline'}
+            onClick={() => setSort('high-to-low')}
+          >
+            {isDutch ? 'Hoog → Laag' : 'High → Low'}
+          </Button>
+          <Button
+            size="sm"
+            variant={sort === 'low-to-high' ? 'default' : 'outline'}
+            onClick={() => setSort('low-to-high')}
+          >
+            {isDutch ? 'Laag → Hoog' : 'Low → High'}
+          </Button>
+
+          <div className="ml-auto flex gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={undo}
+              disabled={!canUndo}
+              title={isDutch ? 'Ongedaan maken' : 'Undo'}
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={redo}
+              disabled={!canRedo}
+              title={isDutch ? 'Opnieuw doen' : 'Redo'}
+            >
+              <RotateCw className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-        {averageGrade !== null && (
-          <div>
-            <p className="text-muted-foreground mb-0.5">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-            <p className="font-bold text-base">{averageGrade.toFixed(1)}</p>
+      )}
+
+      {/* Table */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        {/* Table header */}
+        <div className="bg-muted border-b border-border">
+          <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground">
+            <div>{isDutch ? 'Student' : 'Student'}</div>
+            <div>{isDutch ? 'Vorige Cijfers' : 'Previous Grades'}</div>
+            <div className="text-center">{isDutch ? 'Cijfer' : 'Grade'}</div>
+            <div className="text-center">{isDutch ? 'Gewicht' : 'Weight'}</div>
           </div>
+        </div>
+
+        {/* Table body */}
+        {students.length === 0 ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            {isDutch ? 'Geen studenten in deze klas' : 'No students in this class'}
+          </div>
+        ) : (
+          sortedStudents.map(student => {
+            const isExpanded = expandedStudent === student.id;
+            const stats = getPreviousStats(student.id);
+            const currentGrade = grades[student.id];
+            const currentWeight = weights[student.id];
+            const gradeColor = getGradeColor(currentGrade || undefined);
+
+            return (
+              <div key={student.id}>
+                {/* Main row */}
+                <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 items-center border-b border-border hover:bg-muted/30 transition-colors">
+                  {/* Student name with expand button */}
+                  <button
+                    onClick={() => handleExpandStudent(student.id)}
+                    className="flex items-center gap-2 text-left hover:text-[var(--accent-brand)] transition-colors"
+                  >
+                    {stats && stats.grades.length > 0 && (
+                      <>
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                      </>
+                    )}
+                    <span className="text-sm font-medium">{student.full_name}</span>
+                  </button>
+
+                  {/* Previous grades summary */}
+                  <div className="text-xs text-muted-foreground">
+                    {stats && stats.grades.length > 0 ? (
+                      <div>
+                        <div>
+                          {stats.grades.map(g => g.grade.toFixed(1)).join(', ')}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-1">
+                          {isDutch ? 'Avg' : 'Avg'}: {stats.percentage}% • {stats.average.toFixed(1)}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+
+                  {/* Grade input */}
+                  <div className="flex justify-center">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.5"
+                      value={currentGrade ?? ''}
+                      onChange={e => {
+                        if (!isEditMode) return;
+                        const value = e.target.value ? parseFloat(e.target.value) : null;
+                        setGradeState({ ...grades, [student.id]: value });
+                      }}
+                      disabled={!isEditMode}
+                      placeholder=""
+                      style={{
+                        color: currentGrade !== null ? gradeColor.color : 'inherit',
+                        borderColor: currentGrade !== null ? gradeColor.color : 'var(--color-border)',
+                      }}
+                      className="w-16 text-center h-9 text-sm border-2 bg-white dark:bg-[hsl(var(--surface-1))] disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Weight input */}
+                  <div className="flex justify-center">
+                    <Input
+                      type="number"
+                      min="0.1"
+                      max="10"
+                      step="0.5"
+                      value={currentWeight ?? ''}
+                      onChange={e => {
+                        if (!isEditMode) return;
+                        const value = e.target.value ? parseFloat(e.target.value) : null;
+                        setWeights({ ...weights, [student.id]: value });
+                      }}
+                      disabled={!isEditMode}
+                      placeholder=""
+                      className="w-14 text-center h-9 text-sm border border-border bg-white dark:bg-[hsl(var(--surface-1))] disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                {/* Expanded row */}
+                {isExpanded && stats && stats.grades.length > 0 && (
+                  <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 bg-muted/20 border-b border-border/50 text-xs">
+                    <div />
+                    <div className="space-y-1 col-span-3">
+                      <div className="space-y-1">
+                        {stats.grades.map((grade, idx) => (
+                          <div key={idx} className="flex justify-between text-muted-foreground">
+                            <span>{grade.title}</span>
+                            <span className="font-medium">{grade.grade.toFixed(1)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
-      {/* Hints for teacher */}
+      {/* Summary stats */}
+      {stats && (
+        <div className="grid grid-cols-5 gap-3 p-3 bg-muted rounded-lg text-xs">
+          <div>
+            <p className="text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
+            <p className="text-lg font-semibold">{gradedCount} / {students.length}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">{isDutch ? 'Voortgang' : 'Progress'}</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[var(--accent-brand)]"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="font-semibold">{progressPct}%</span>
+            </div>
+          </div>
+          <div>
+            <p className="text-muted-foreground">{isDutch ? 'Gemiddelde' : 'Average'}</p>
+            <p className="text-lg font-semibold">{stats.average.toFixed(1)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">{isDutch ? 'Mediaan' : 'Median'}</p>
+            <p className="text-lg font-semibold">{stats.median.toFixed(1)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">{isDutch ? 'Std Dev' : 'Std Dev'}</p>
+            <p className="text-lg font-semibold">{stats.stdDev.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Edit mode hint */}
       {!isEditMode && (
         <div className="p-3 bg-muted rounded-lg text-xs text-muted-foreground text-center">
           {isDutch ? 'Klik op "Bewerk" om cijfers in te voeren' : 'Click "Edit" to enter grades'}
         </div>
       )}
+
+      {/* Bulk import dialog */}
+      <BulkImportDialog
+        isOpen={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        onImport={handleBulkImport}
+        studentNames={students.map(s => s.full_name)}
+      />
     </div>
   );
 }

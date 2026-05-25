@@ -45,12 +45,12 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
       {/* Title */}
       <div className="space-y-2">
         <label className="text-sm font-semibold">
-          {isDutch ? 'Titel' : 'Title'} <span className="text-destructive">*</span>
+          {isDutch ? 'Titel' : 'Title'}
         </label>
         <Input
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder={isDutch ? 'bijv. Biologie Test 1' : 'e.g., Biology Test 1'}
+          placeholder=""
           maxLength={100}
           className="h-9"
         />
@@ -66,7 +66,7 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={3}
-          placeholder={isDutch ? 'Voeg instructies toe voor studenten...' : 'Add instructions for students...'}
+          placeholder=""
           className="text-sm"
         />
       </div>

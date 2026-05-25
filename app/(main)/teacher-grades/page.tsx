@@ -147,23 +147,38 @@ export default function TeacherGradesLanding() {
       </div>
 
       {/* Action buttons */}
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         <Link href="/teacher-grades/new">
-          <Card className="p-6 hover:shadow-lg transition-all cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <Plus className="h-8 w-8 mb-3 text-[var(--accent-brand)]" />
-            <h3 className="font-semibold text-sm">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</h3>
-            <p className="text-[12px] text-muted-foreground mt-1">
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
+            <Plus className="h-5 w-5 mb-2 text-[var(--accent-brand)]" />
+            <h3 className="font-semibold text-xs">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
               {isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}
             </p>
           </Card>
         </Link>
 
         <Link href="/teacher-grades?view=all">
-          <Card className="p-6 hover:shadow-lg transition-all cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
-            <CheckSquare className="h-8 w-8 mb-3 text-[var(--accent-brand)]" />
-            <h3 className="font-semibold text-sm">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</h3>
-            <p className="text-[12px] text-muted-foreground mt-1">
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
+            <CheckSquare className="h-5 w-5 mb-2 text-[var(--accent-brand)]" />
+            <h3 className="font-semibold text-xs">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
               {isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}
+            </p>
+          </Card>
+        </Link>
+
+        <Link href="/teacher-grades/metrics">
+          <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer surface-panel border border-border h-full flex flex-col items-center justify-center text-center">
+            <div className="h-5 w-5 mb-2 text-[var(--accent-brand)]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="2" x2="12" y2="22" />
+                <polyline points="4 14 12 2 20 14" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-xs">{isDutch ? 'Metrics' : 'Metrics'}</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {isDutch ? 'Analyseer en vergelijk' : 'Analyze & compare'}
             </p>
           </Card>
         </Link>

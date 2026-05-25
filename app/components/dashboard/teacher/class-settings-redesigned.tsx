@@ -677,16 +677,19 @@ function Toggle({
         {description && <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>}
       </div>
       <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
         onClick={() => onChange(!enabled)}
         className={cn(
-          'w-10 h-6 rounded-full transition-colors relative',
-          enabled ? 'bg-[#7f8962]' : 'bg-border'
+          'w-11 h-6 rounded-full transition-colors duration-200 relative shrink-0',
+          enabled ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'
         )}
       >
         <div
           className={cn(
-            'w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform',
-            enabled ? 'translate-x-4.5' : 'translate-x-0.5'
+            'w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-transform duration-200',
+            enabled ? 'translate-x-[22px]' : 'translate-x-0.5'
           )}
         />
       </button>

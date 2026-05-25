@@ -31,7 +31,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
 
   const [selectedClassId, setSelectedClassId] = useState(data.classId || '');
   const [selectedSubjectId, setSelectedSubjectId] = useState(data.subjectId || '');
-  const [weight, setWeight] = useState(data.weight || 5);
+  const [weight, setWeight] = useState<number | null>(data.weight || null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -71,7 +71,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       newErrors.classId = isDutch ? 'Selecteer een klas' : 'Select a class';
     }
 
-    if (weight < 0.1 || weight > 10) {
+    if (weight !== null && (weight < 0.1 || weight > 10)) {
       newErrors.weight = isDutch ? 'Gewicht tussen 0.1 en 10' : 'Weight must be between 0.1 and 10';
     }
 
@@ -86,7 +86,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
         classId: selectedClassId,
         className: selectedClass?.name || '',
         subjectId: selectedSubjectId || null,
-        weight,
+        weight: weight !== null ? weight : undefined,
       });
     }
   };
@@ -97,34 +97,56 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
     <div className="space-y-4">
       {/* Class Selection */}
       <div className="space-y-3">
-        <p className="text-sm font-semibold">
-          {isDutch ? 'Selecteer Klas' : 'Select Class'} <span className="text-destructive">*</span>
-        </p>
+        {!selectedClassId ? (
+          <>
+            <p className="text-sm font-semibold">
+              {isDutch ? 'Selecteer Klas' : 'Select Class'}
+            </p>
 
-        <div className="space-y-2">
-          {classes.map((cls) => (
-            <button
-              key={cls.id}
-              onClick={() => setSelectedClassId(cls.id)}
-              className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
-                selectedClassId === cls.id
-                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5'
-                  : 'border-border hover:border-[var(--accent-brand)]/30'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">{cls.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {cls.student_count || 0} {isDutch ? 'studenten' : 'students'}
-                  </p>
-                </div>
-                {selectedClassId === cls.id && <ChevronRight className="h-4 w-4" />}
-              </div>
-            </button>
-          ))}
-        </div>
-        {errors.classId && <p className="text-xs text-destructive">{errors.classId}</p>}
+            <div className="space-y-2">
+              {classes.map((cls) => (
+                <button
+                  key={cls.id}
+                  onClick={() => setSelectedClassId(cls.id)}
+                  className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                    selectedClassId === cls.id
+                      ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5'
+                      : 'border-border hover:border-[var(--accent-brand)]/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{cls.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cls.student_count || 0} {isDutch ? 'studenten' : 'students'}
+                      </p>
+                    </div>
+                    {selectedClassId === cls.id && <ChevronRight className="h-4 w-4" />}
+                  </div>
+                </button>
+              ))}
+            </div>
+            {errors.classId && <p className="text-xs text-destructive">{errors.classId}</p>}
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedClassId('')}
+              >
+                ← {isDutch ? 'Terug' : 'Back'}
+              </Button>
+            </div>
+            <div className="p-3 rounded-lg border border-[var(--accent-brand)] bg-[var(--accent-brand)]/5">
+              <p className="text-sm font-semibold">{selectedClass?.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {selectedClass?.student_count || 0} {isDutch ? 'studenten' : 'students'}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Subject Pills */}
@@ -161,38 +183,26 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       )}
 
       {/* Weight */}
-      <div className="space-y-3 pt-3 border-t border-border">
-        <label className="text-sm font-semibold">
-          {isDutch ? 'Gewicht/Punten' : 'Weight/Points'} <span className="text-destructive">*</span>
-        </label>
-        <div className="flex gap-2 items-center">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setWeight(Math.max(0.1, weight - 0.5))}
-          >
-            −
-          </Button>
+      {selectedClassId && (
+        <div className="space-y-3 pt-3 border-t border-border">
+          <label className="text-sm font-semibold">
+            {isDutch ? 'Gewicht/Punten' : 'Weight/Points'}
+          </label>
           <Input
             type="number"
-            value={weight}
-            onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+            value={weight || ''}
+            onChange={(e) => setWeight(e.target.value ? parseFloat(e.target.value) : null)}
             step={0.5}
             min={0.1}
             max={10}
-            className="text-center h-9 flex-1"
+            placeholder=""
+            className="h-9"
           />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setWeight(Math.min(10, weight + 0.5))}
-          >
-            +
-          </Button>
+          <p className="text-xs text-muted-foreground">{isDutch ? 'optioneel (0.1 - 10)' : 'optional (0.1 - 10)'}</p>
+          {errors.weight && <p className="text-xs text-destructive">{errors.weight}</p>}
         </div>
-        <p className="text-xs text-muted-foreground">(0.1 - 10)</p>
-        {errors.weight && <p className="text-xs text-destructive">{errors.weight}</p>}
-      </div>
+      )}
+
 
       {/* Navigation */}
       <div className="flex justify-between gap-2 mt-6 pt-4 border-t border-border">
