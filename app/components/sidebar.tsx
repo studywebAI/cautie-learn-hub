@@ -11,7 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
@@ -30,6 +29,7 @@ import {
   Check,
   FolderOpen,
   Loader2,
+  PanelLeft,
 } from 'lucide-react';
 import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
 import { useDeviceTier } from '@/hooks/use-device-tier';
@@ -45,10 +45,6 @@ type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
 type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 
-const RecentsSidebar = dynamic(
-  () => import('./recents-sidebar').then((m) => m.RecentsSidebar),
-  { ssr: false }
-);
 
 const SidebarProfile = dynamic(
   () => import('./sidebar-profile').then((m) => m.SidebarProfile),
@@ -65,7 +61,7 @@ export function AppSidebar() {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
-  const { setOpenMobile, openMobile, state: sidebarState, setOpen } = useSidebar();
+  const { setOpenMobile, openMobile, state: sidebarState, setOpen, toggleSidebar } = useSidebar();
   const expandSidebar = () => { if (sidebarState === 'collapsed') setOpen(true); };
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1214,11 +1210,6 @@ export function AppSidebar() {
               </>
             )}
 
-            <div className="space-y-2">
-              {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-5" />}
-                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
-              <RecentsSidebar />
-            </div>
           </SidebarContent>
           <SidebarFooter className="flex flex-col gap-2 px-2 pb-2 pt-2">
             <SidebarProfile />
@@ -1232,31 +1223,26 @@ export function AppSidebar() {
   // Tablet + desktop: regular sidebar with trigger
   return (
     <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden")} collapsible="icon">
-      <div className="absolute top-1/2 right-0 transform -translate-y-1/2 z-50">
-        <SidebarTrigger />
-      </div>
       <SidebarContent className="px-2 py-2 flex-1">
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
-                  {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
+            {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
             <SidebarMenu>
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
                   {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                    <>
-                      <SidebarMenuButton
-                        data-nav-dropdown-trigger="true"
-                        onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                        onMouseLeave={scheduleClose}
-                        onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                        isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
-                        tooltip={item.label}
-                      >
-                        <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                        <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                      </SidebarMenuButton>
-                    </>
+                    <SidebarMenuButton
+                      data-nav-dropdown-trigger="true"
+                      onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                      onMouseLeave={scheduleClose}
+                      onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                      isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                      tooltip={item.label}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                    </SidebarMenuButton>
                   ) : (
                     <SidebarMenuButton
                       asChild
@@ -1264,8 +1250,8 @@ export function AppSidebar() {
                       tooltip={item.label}
                     >
                       <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                        <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                        <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -1278,7 +1264,7 @@ export function AppSidebar() {
         {visibleToolsItems.length > 0 && (
           <>
             {showSectionHeaders && visibleMainItems.length > 0 && <div className="h-2" />}
-                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
+            {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionTools}</p>}
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1288,8 +1274,8 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                      <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1301,7 +1287,7 @@ export function AppSidebar() {
         {visibleOtherItems.length > 0 && (
           <>
             {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0) && <div className="h-2" />}
-                {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
+            {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionOther}</p>}
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
@@ -1311,8 +1297,8 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
-                      <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1320,14 +1306,30 @@ export function AppSidebar() {
             </SidebarMenu>
           </>
         )}
-
-        <div className="space-y-2">
-          {showSectionHeaders && (visibleMainItems.length > 0 || visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-2" />}
-              {showSectionHeaders && <p className="px-2 pb-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionRecents}</p>}
-          <RecentsSidebar />
-        </div>
       </SidebarContent>
-      <SidebarFooter className="px-2 pt-2 pb-2 flex flex-col gap-2">
+
+      <SidebarFooter className="px-2 pt-1 pb-2 flex flex-col gap-2">
+        {/* Collapse / expand toggle button */}
+        <button
+          onClick={toggleSidebar}
+          title={sidebarState === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(
+            "flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5",
+            "text-[13px] font-medium text-sidebar-foreground/55",
+            "transition-colors duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.7)] hover:text-sidebar-foreground",
+            "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+          )}
+        >
+          <PanelLeft
+            className={cn(
+              "h-4 w-4 shrink-0 transition-transform duration-300 ease-in-out",
+              sidebarState === 'collapsed' && "rotate-180"
+            )}
+          />
+          <span className="transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">
+            Collapse
+          </span>
+        </button>
         <SidebarProfile />
       </SidebarFooter>
       {renderFloatingDropdown()}
