@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
+import "./styles/animations.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Atkinson_Hyperlegible } from 'next/font/google';
 import { cn } from "@/lib/utils";

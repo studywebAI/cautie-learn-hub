@@ -29,6 +29,8 @@ import { extractShareableClasses } from '@/lib/classes/shareable-classes';
 import { postClassShareItem } from '@/lib/class-share/client';
 import { classifyContent } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
+import { PageHeader } from '@/components/ui/page-header';
+import { SkeletonGroup, SkeletonCard } from '@/components/ui/skeleton';
 
 type Phase = 'input' | 'options' | 'study';
 
@@ -425,10 +427,11 @@ function FlashcardsPageContent() {
   // STUDY PHASE - show generated cards
   if (phase === 'study' && generatedCards && currentView === 'study') {
     return (
-      <>
       <div className="h-full flex flex-col">
-        <div className="p-3 md:p-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => { handleRestart(); setPhase('options'); }} className="rounded-full text-xs">{t.back}</Button>
+        <PageHeader title="Study Flashcards" hideBreadcrumb />
+        <div className="flex-1 min-h-0 overflow-auto flex flex-col">
+          <div className="p-3 md:p-4 flex items-center justify-between border-b border-border/20">
+            <Button variant="ghost" onClick={() => { handleRestart(); setPhase('options'); }} className="rounded-full text-xs">{t.back}</Button>
           {studyCompleted && (
             <ExportToolbar
               toolType="flashcards"
@@ -445,231 +448,232 @@ function FlashcardsPageContent() {
             className="rounded-full text-xs"
           />
         </div>
-        <div className="flex-1 min-h-0 overflow-auto">
-          <FlashcardViewer
-            cards={generatedCards}
-            mode={studyMode}
-            cardStartSide={cardStartSide}
-            onRestart={handleRestart}
-            taskId={taskId || undefined}
-            studysetId={studysetId || undefined}
-            onCompletionChange={setStudyCompleted}
-            settings={{
-              activeRecallOnly,
-              interleavingMode,
-              semanticLinking,
-              errorTagging,
-              memoryStrengthMeter,
-              timePerCardSeconds,
-              autoFlipDelayMs,
-            }}
-          />
+          <div className="flex-1 min-h-0 overflow-auto">
+            <FlashcardViewer
+              cards={generatedCards}
+              mode={studyMode}
+              cardStartSide={cardStartSide}
+              onRestart={handleRestart}
+              taskId={taskId || undefined}
+              studysetId={studysetId || undefined}
+              onCompletionChange={setStudyCompleted}
+              settings={{
+                activeRecallOnly,
+                interleavingMode,
+                semanticLinking,
+                errorTagging,
+                memoryStrengthMeter,
+                timePerCardSeconds,
+                autoFlipDelayMs,
+              }}
+            />
+          </div>
         </div>
       </div>
-      </>
     );
   }
 
-  const sidebar = (
-    <div className="space-y-6">
-      <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Title</p>
-        <Input
-          value={customTitle}
-          onChange={(e) => setCustomTitle(e.target.value)}
-          className="h-9 bg-[hsl(var(--background))] text-sm"
-          disabled={isLoading}
-        />
-      </div>
-
-      <div className="space-y-2">
-        <PillSelector label="Mode" options={modeOptions} value={studyMode} onChange={(v) => setStudyMode(normalizeStudyMode(v))} disabled={isLoading} />
-      </div>
-      <div className="space-y-2">
-        <PillSelector
-          label="Card side"
-          options={startSideOptions}
-          value={cardStartSide}
-          onChange={(v) => setCardStartSide(v === 'explanation' ? 'explanation' : 'term')}
-          disabled={isLoading}
-        />
-      </div>
-
-      {contentClass && (
-        <div className="flex flex-wrap gap-1.5">
-          {contentClass.vocabulary === 'y' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Vocabulary</span>
-          )}
-          {contentClass.code === 'y' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Code</span>
-          )}
-          {contentClass.processes === 'y' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Processes</span>
-          )}
-          {contentClass.people === 'y' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">People</span>
-          )}
-          {contentClass.dates === 'y' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#ebebeb] text-[#555]">Dates</span>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Questions</p>
-          <span className="text-xs font-mono tabular-nums">{flashcardCount}</span>
-        </div>
-        <Slider
-          value={[flashcardCount]}
-          onValueChange={([v]) => setFlashcardCount(v)}
-          min={1}
-          max={50}
-          step={1}
-          disabled={isLoading}
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Save to recents</p>
-        <Switch
-          checked={saveToRecents}
-          onCheckedChange={setSaveToRecents}
-          className="h-5 w-9 data-[state=checked]:!bg-emerald-800 data-[state=unchecked]:!bg-red-800 data-[state=checked]:[&>span]:translate-x-4 [&>span]:h-4 [&>span]:w-4"
-        />
-      </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Active recall only</p>
-          <Switch
-            checked={activeRecallOnly}
-            onCheckedChange={(checked) => {
-              setActiveRecallOnly(checked);
-              void saveAdvancedSettingsPatch({ flashcards: { active_recall_only: checked } as any }, { tool: 'flashcards' });
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Interleaving mode</p>
-          <Switch checked={interleavingMode} onCheckedChange={(checked) => {
-            setInterleavingMode(checked);
-            void saveAdvancedSettingsPatch({ flashcards: { interleaving_mode: checked } as any }, { tool: 'flashcards' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Semantic linking</p>
-          <Switch checked={semanticLinking} onCheckedChange={(checked) => {
-            setSemanticLinking(checked);
-            void saveAdvancedSettingsPatch({ flashcards: { semantic_linking: checked } as any }, { tool: 'flashcards' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Error tagging</p>
-          <Switch checked={errorTagging} onCheckedChange={(checked) => {
-            setErrorTagging(checked);
-            void saveAdvancedSettingsPatch({ flashcards: { error_tagging: checked } as any }, { tool: 'flashcards' });
-          }} />
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Memory strength meter</p>
-          <Switch checked={memoryStrengthMeter} onCheckedChange={(checked) => {
-            setMemoryStrengthMeter(checked);
-            void saveAdvancedSettingsPatch({ flashcards: { memory_strength_meter: checked } as any }, { tool: 'flashcards' });
-          }} />
-        </div>
-      </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Time per card (seconds)</p>
-          <span className="text-xs font-mono tabular-nums">{timePerCardSeconds}</span>
-        </div>
-        <Slider value={[timePerCardSeconds]} onValueChange={([v]) => {
-          setTimePerCardSeconds(v);
-          void saveAdvancedSettingsPatch({ flashcards: { time_per_card_seconds: v } as any }, { tool: 'flashcards' });
-        }} min={0} max={120} step={1} disabled={isLoading} />
-      </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">Auto flip delay (ms)</p>
-          <span className="text-xs font-mono tabular-nums">{autoFlipDelayMs}</span>
-        </div>
-        <Slider value={[autoFlipDelayMs]} onValueChange={([v]) => {
-          setAutoFlipDelayMs(v);
-          void saveAdvancedSettingsPatch({ flashcards: { auto_flip_delay_ms: v } as any }, { tool: 'flashcards' });
-        }} min={0} max={15000} step={250} disabled={isLoading} />
-      </div>
-
-      <ImportToolbar
-        toolType="flashcards"
-        onImport={(text) => {
-          const cards = text.includes('<') ? parseFlashcardsFromHtml(text) : parseFlashcardsFromMarkdown(text);
-          if (cards && cards.length > 0) {
-            setGeneratedCards(cards);
-            setCurrentView('study');
-          } else {
-            toast({ variant: 'destructive', title: t.couldNotParse, description: t.flashcards.parseError });
-          }
-        }}
-        disabled={isLoading}
-      />
-    </div>
-  );
-
-  // OPTIONS PHASE - show sidebar + ToolInputBox for generation
+  // OPTIONS PHASE - show settings panel
   if (phase === 'options') {
     return (
-      <WorkbenchShell
-        title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
-        sidebar={sidebar}
-        breadcrumbIcon={<Copy className="h-4 w-4" />}
-      >
-        <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-1.5 text-muted-foreground self-start"
-            onClick={() => setPhase('input')}
-          >
-            ← Change input
-          </Button>
-          <ToolInputBox
-            toolId="flashcards"
-            placeholder={t.sourceInputPlaceholder}
-            onSourceChange={(text) => setSourceText(text)}
-            onImageDataUriChange={setImageDataUri}
-            onSubmit={(compiledText) => {
-              setPhase('study');
-              void handleGenerate(compiledText || sourceText);
-            }}
-            isLoading={isLoading}
-            submitLabel="Generate"
-            speechLanguage={language}
-            hideToolSwitcher
-          />
+      <div className="h-full flex flex-col">
+        <PageHeader
+          title="Customize Flashcards"
+          subtitle="Adjust your settings and generate"
+          hideBreadcrumb
+        />
+
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-4xl mx-auto p-6 space-y-6">
+            {/* Title section */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+              <Input
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                className="h-9 text-sm"
+                placeholder="Flashcards title (optional)"
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Study Mode */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Study Mode</p>
+              <div className="flex flex-wrap gap-2">
+                {modeOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setStudyMode(normalizeStudyMode(option.value))}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      studyMode === option.value
+                        ? 'border-border bg-background text-foreground'
+                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Card Side */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Side</p>
+              <div className="flex flex-wrap gap-2">
+                {startSideOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => setCardStartSide(option.value === 'explanation' ? 'explanation' : 'term')}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      cardStartSide === option.value
+                        ? 'border-border bg-background text-foreground'
+                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Content classification tags */}
+            {contentClass && (
+              <div className="flex flex-wrap gap-1.5">
+                {contentClass.vocabulary === 'y' && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Vocabulary</span>
+                )}
+                {contentClass.code === 'y' && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Code</span>
+                )}
+                {contentClass.processes === 'y' && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Processes</span>
+                )}
+                {contentClass.people === 'y' && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">People</span>
+                )}
+                {contentClass.dates === 'y' && (
+                  <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Dates</span>
+                )}
+              </div>
+            )}
+
+            {/* Card Count */}
+            <div className="space-y-2 border-t border-border pt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Count</p>
+                <span className="text-xs font-mono">{flashcardCount}</span>
+              </div>
+              <Slider
+                value={[flashcardCount]}
+                onValueChange={([v]) => setFlashcardCount(v)}
+                min={1}
+                max={50}
+                step={1}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Save to recents */}
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Save to Recents</p>
+              <Switch
+                checked={saveToRecents}
+                onCheckedChange={setSaveToRecents}
+              />
+            </div>
+
+            {/* Advanced settings collapse */}
+            <div className="border-t border-border pt-4 space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Advanced Options</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Active Recall Only</p>
+                  <Switch
+                    checked={activeRecallOnly}
+                    onCheckedChange={(checked) => {
+                      setActiveRecallOnly(checked);
+                      void saveAdvancedSettingsPatch({ flashcards: { active_recall_only: checked } as any }, { tool: 'flashcards' });
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Interleaving Mode</p>
+                  <Switch checked={interleavingMode} onCheckedChange={(checked) => {
+                    setInterleavingMode(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { interleaving_mode: checked } as any }, { tool: 'flashcards' });
+                  }} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Semantic Linking</p>
+                  <Switch checked={semanticLinking} onCheckedChange={(checked) => {
+                    setSemanticLinking(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { semantic_linking: checked } as any }, { tool: 'flashcards' });
+                  }} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Error Tagging</p>
+                  <Switch checked={errorTagging} onCheckedChange={(checked) => {
+                    setErrorTagging(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { error_tagging: checked } as any }, { tool: 'flashcards' });
+                  }} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Memory Strength Meter</p>
+                  <Switch checked={memoryStrengthMeter} onCheckedChange={(checked) => {
+                    setMemoryStrengthMeter(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { memory_strength_meter: checked } as any }, { tool: 'flashcards' });
+                  }} />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </WorkbenchShell>
+
+        {/* Footer with actions */}
+        <div className="border-t border-border p-4 flex justify-between gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPhase('input');
+              setSourceText('');
+              setCustomTitle('');
+            }}
+          >
+            Back
+          </Button>
+          <Button
+            onClick={() => {
+              setPhase('study');
+              void handleGenerate(sourceText);
+            }}
+            disabled={isLoading || !sourceText.trim()}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Copy className="mr-2 h-4 w-4" />
+                Generate Flashcards
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     );
   }
 
+  // Fallback (should not reach here if all phases are covered)
   return (
-    <WorkbenchShell
-      title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
-      sidebar={sidebar}
-      breadcrumbIcon={<Copy className="h-4 w-4" />}
-    >
-      <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
-        <ToolInputBox
-          toolId="flashcards"
-          placeholder={t.sourceInputPlaceholder}
-          onSourceChange={(text) => setSourceText(text)}
-          onImageDataUriChange={setImageDataUri}
-          onSubmit={(compiledText) => void handleGenerate(compiledText || sourceText)}
-          isLoading={isLoading}
-          submitLabel="Generate"
-          speechLanguage={language}
-        />
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center space-y-2">
+        <h2 className="text-lg font-semibold">Flashcards</h2>
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
-    </WorkbenchShell>
+    </div>
   );
 }
 

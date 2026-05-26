@@ -19,6 +19,8 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers';
 import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
+import { PageHeader } from '@/components/ui/page-header';
+import { FunLoader } from '@/components/tools/fun-loader';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';
@@ -126,6 +128,8 @@ type DrawingPath = {
   opacity: number;
 };
 
+type Phase = 'input' | 'options' | 'study';
+
 const NOTE_FONTS = [
   { value: 'Plus Jakarta Sans', label: 'Plus Jakarta Sans' },
   { value: 'Inter', label: 'Inter' },
@@ -189,6 +193,7 @@ function NotesPageContent() {
     { value: 'timeline', label: 'Timeline', description: 'Chronological sequence of events or steps' },
   ];
 
+  const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState('');
   const [state1Completed, setState1Completed] = useState(false);
   const [length, setLength] = useState<'short' | 'medium' | 'long'>('medium');
@@ -1188,8 +1193,9 @@ function NotesPageContent() {
   if (generatedNotes) {
     const isVisualMode = mode === 'wordweb' || mode === 'timeline';
     return (
-      <>
-      <div className="h-full overflow-auto pl-1.5 pr-0 pt-1.5 pb-0">
+      <div className="h-full flex flex-col">
+        <PageHeader title={`Study ${pageTitle}`} hideBreadcrumb />
+        <div className="flex-1 overflow-auto pl-1.5 pr-0 pt-1.5 pb-0">
         <div className="w-full space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Button
@@ -1462,7 +1468,6 @@ function NotesPageContent() {
           </div>
         </div>
       </div>
-      </>
     );
   }
 
@@ -1868,31 +1873,181 @@ function NotesPageContent() {
             </div>
           </div>
         </div>
+        </div>
       </div>
     );
   }
 
-  // FALLBACK: Old sidebar layout
-  return (
-    <>
-    <WorkbenchShell title={pageTitle} sidebar={sidebar} breadcrumbIcon={breadcrumbIcon}>
-      <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
-        <ToolInputBox
-          toolId="notes"
-          placeholder={t.sourceInputPlaceholder}
-          onSourceChange={(text) => setSourceText(text)}
-          onImageDataUriChange={setImageDataUri}
-          onSubmit={(compiledText) => {
-            if (compiledText) setSourceText(compiledText);
-            void runNotesGeneration(compiledText || sourceText, { background: false });
-          }}
-          isLoading={isLoading}
-          submitLabel="Generate"
-          speechLanguage={language}
+  // STATE 1: Input phase - clean centered input
+  if (phase === 'input' && !generatedNotes) {
+    return (
+      <WorkbenchShell
+        title={pageTitle}
+        sidebar={<div />}
+        hideSidebar={true}
+        breadcrumbIcon={breadcrumbIcon}
+      >
+        <div className="flex h-full w-full flex-col items-center justify-center p-4">
+          <div className="w-full max-w-2xl space-y-4">
+            <div className="space-y-1.5 text-center">
+              <h1 className="text-2xl font-semibold tracking-tight">Create {pageTitle}</h1>
+              <p className="text-sm text-muted-foreground">
+                Paste your content, upload a file, or drop a link
+              </p>
+            </div>
+            <ToolInputBox
+              toolId="notes"
+              placeholder={t.sourceInputPlaceholder}
+              onSourceChange={(text) => setSourceText(text)}
+              onImageDataUriChange={setImageDataUri}
+              onSubmit={(compiledText) => {
+                if (compiledText) setSourceText(compiledText);
+                setPhase('options');
+              }}
+              isLoading={false}
+              submitLabel="Next"
+              speechLanguage={language}
+              hideToolSwitcher
+            />
+          </div>
+        </div>
+      </WorkbenchShell>
+    );
+  }
+
+  // STATE 2: Options phase - configuration panel
+  if (phase === 'options' && !generatedNotes) {
+    return (
+      <div className="h-full flex flex-col">
+        <PageHeader
+          title={`Customize ${pageTitle}`}
+          subtitle="Configure your content generation settings"
+          hideBreadcrumb
         />
+
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-4xl mx-auto p-6 space-y-6">
+            {/* Style selection */}
+            {!isWordwebPreset && !isTimelinePreset && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Note Style</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {noteStyleOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setStyle(option.value)}
+                      className={`p-3 rounded-lg border transition-colors text-left ${
+                        style === option.value
+                          ? 'border-border bg-background'
+                          : 'border-transparent bg-muted hover:bg-muted/80'
+                      }`}
+                    >
+                      <p className="text-sm font-medium">{option.label}</p>
+                      <p className="text-xs text-muted-foreground">{option.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Length selection */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Length</p>
+              <div className="flex flex-wrap gap-2">
+                {['short', 'medium', 'long'].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setLength(option as 'short' | 'medium' | 'long')}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      length === option
+                        ? 'border-border bg-background text-foreground'
+                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Audience selection */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Target Audience</p>
+              <div className="flex flex-wrap gap-2">
+                {['student', 'teacher', 'parent'].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setAudience(option)}
+                    className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      audience === option
+                        ? 'border-border bg-background text-foreground'
+                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
+                    }`}
+                  >
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Title input */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+              <Input
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                className="h-9 text-sm"
+                placeholder="Optional title for your content"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className="border-t border-border p-4 flex justify-between gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPhase('input');
+              setSourceText('');
+            }}
+          >
+            Back
+          </Button>
+          <Button
+            onClick={() => {
+              setPhase('study');
+              void runNotesGeneration(sourceText, { background: false });
+            }}
+            disabled={isLoading || !sourceText.trim()}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              `Generate ${pageTitle}`
+            )}
+          </Button>
+        </div>
       </div>
-    </WorkbenchShell>
-    </>
+    );
+  }
+
+  // If loading, show loader
+  if (isLoading) {
+    return <FunLoader tool="notes" />;
+  }
+
+  // Fallback
+  return (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center space-y-2">
+        <h2 className="text-lg font-semibold">{pageTitle}</h2>
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    </div>
   );
 }
 
