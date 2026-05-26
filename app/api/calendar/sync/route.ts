@@ -1,8 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { DAVClient, Calendar, DAVAccount } from 'tsdav';
-import { parseString } from 'xml2js';
-import * as ICAL from 'ical.js';
+import { parseICalendarData, getCalDAVClient, CalendarEvent } from './caldav-utils';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -15,88 +13,9 @@ export const maxDuration = 60;
  *
  * User needs NO API keys - only their calendar account credentials (username/password).
  * CalDAV is a protocol supported natively by all major calendar providers.
+ *
+ * Passwords are encrypted at rest using pgcrypto.
  */
-
-interface CalendarEvent {
-  title: string;
-  description?: string;
-  start: Date;
-  end: Date;
-  uid: string;
-}
-
-async function parseICalendarData(icalData: string): Promise<CalendarEvent[]> {
-  const events: CalendarEvent[] = [];
-
-  try {
-    const jcal = ICAL.parse(icalData);
-    const comp = new ICAL.Component(jcal);
-    const vevents = comp.getAllSubcomponents('vevent');
-
-    for (const vevent of vevents) {
-      const event = new ICAL.Event(vevent);
-
-      events.push({
-        title: event.summary || 'Untitled Event',
-        description: event.description || '',
-        start: event.startDate.toJSDate(),
-        end: event.endDate.toJSDate(),
-        uid: event.uid,
-      });
-    }
-  } catch (error) {
-    console.error('Error parsing iCalendar data:', error);
-  }
-
-  return events;
-}
-
-async function getCalDAVClient(
-  provider: string,
-  caldavUrl: string | null,
-  username: string,
-  password: string
-): Promise<{ client: DAVClient; baseUrl: string } | null> {
-  let baseUrl = caldavUrl;
-
-  if (!baseUrl) {
-    switch (provider) {
-      case 'apple':
-        baseUrl = 'https://caldav.icloud.com/';
-        break;
-      case 'google':
-        baseUrl = 'https://caldav.google.com/caldav/v2/';
-        break;
-      case 'outlook':
-        baseUrl = 'https://outlook.office365.com/api/v2.0/me/';
-        break;
-      default:
-        return null;
-    }
-  }
-
-  try {
-    const client = new DAVClient({
-      baseURL: baseUrl,
-      credentials: {
-        username,
-        password,
-      },
-      authtype: 'basic',
-      defaultAccountType: 'caldav',
-    });
-
-    // Test connection
-    await client.fetchCalendarObjects({ rejectOnMissingUrl: false }).catch(
-      () => null
-    );
-
-    return { client, baseUrl };
-  } catch (error) {
-    console.error(`Failed to create CalDAV client for ${provider}:`, error);
-    return null;
-  }
-}
 
 async function syncCalendarAccount(
   supabase: any,
@@ -110,11 +29,28 @@ async function syncCalendarAccount(
   message: string;
 }> {
   try {
+    // Decrypt password before using
+    const { data: decryptedPassword, error: decryptError } = await supabase.rpc(
+      'decrypt_password',
+      { encrypted_password: account.password }
+    );
+
+    if (decryptError || !decryptedPassword) {
+      console.error('Failed to decrypt password:', decryptError);
+      return {
+        accountId: account.id,
+        provider: account.provider,
+        status: 'error',
+        eventsCount: 0,
+        message: 'Failed to decrypt calendar credentials',
+      };
+    }
+
     const { client, baseUrl } = (await getCalDAVClient(
       account.provider,
       account.caldav_url,
       account.username,
-      account.password
+      decryptedPassword
     )) || { client: null, baseUrl: null };
 
     if (!client) {
