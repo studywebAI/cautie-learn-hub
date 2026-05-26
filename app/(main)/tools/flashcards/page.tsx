@@ -30,6 +30,8 @@ import { postClassShareItem } from '@/lib/class-share/client';
 import { classifyContent } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
 
+type Phase = 'input' | 'options' | 'study';
+
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
   if (value === 'write' || value === 'type') return 'multiple-choice';
@@ -59,6 +61,7 @@ function FlashcardsPageContent() {
     [appContext]
   );
 
+  const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
@@ -378,16 +381,54 @@ function FlashcardsPageContent() {
   }, [customTitle, generatedCards, studyMode, toast]);
 
 
+  // INPUT PHASE - just textbox, no sidebar
+  if (phase === 'input') {
+    return (
+      <WorkbenchShell
+        title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
+        sidebar={<div />}
+        hideSidebar={true}
+        breadcrumbIcon={<Copy className="h-4 w-4" />}
+      >
+        <div className="flex h-full w-full flex-col items-center justify-center p-4">
+          <div className="w-full max-w-2xl space-y-4">
+            <div className="space-y-1.5 text-center">
+              <h1 className="text-2xl font-semibold tracking-tight">Create Flashcards</h1>
+              <p className="text-sm text-muted-foreground">
+                Paste your notes, upload a file, or drop a link
+              </p>
+            </div>
+            <ToolInputBox
+              toolId="flashcards"
+              placeholder={t.sourceInputPlaceholder}
+              onSourceChange={(text) => setSourceText(text)}
+              onImageDataUriChange={setImageDataUri}
+              onSubmit={(compiledText) => {
+                setSourceText(compiledText);
+                setPhase('options');
+              }}
+              isLoading={false}
+              submitLabel="Next"
+              speechLanguage={language}
+              hideToolSwitcher
+            />
+          </div>
+        </div>
+      </WorkbenchShell>
+    );
+  }
+
   if (isLoading) {
     return <FunLoader tool="flashcards" />;
   }
 
-  if (generatedCards && currentView === 'study') {
+  // STUDY PHASE - show generated cards
+  if (phase === 'study' && generatedCards && currentView === 'study') {
     return (
       <>
       <div className="h-full flex flex-col">
         <div className="p-3 md:p-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={handleRestart} className="rounded-full text-xs">{t.back}</Button>
+          <Button variant="ghost" onClick={() => { handleRestart(); setPhase('options'); }} className="rounded-full text-xs">{t.back}</Button>
           {studyCompleted && (
             <ExportToolbar
               toolType="flashcards"
@@ -573,6 +614,42 @@ function FlashcardsPageContent() {
       />
     </div>
   );
+
+  // OPTIONS PHASE - show sidebar + ToolInputBox for generation
+  if (phase === 'options') {
+    return (
+      <WorkbenchShell
+        title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
+        sidebar={sidebar}
+        breadcrumbIcon={<Copy className="h-4 w-4" />}
+      >
+        <div className="flex h-full w-full flex-col justify-end p-3 gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-1.5 text-muted-foreground self-start"
+            onClick={() => setPhase('input')}
+          >
+            ← Change input
+          </Button>
+          <ToolInputBox
+            toolId="flashcards"
+            placeholder={t.sourceInputPlaceholder}
+            onSourceChange={(text) => setSourceText(text)}
+            onImageDataUriChange={setImageDataUri}
+            onSubmit={(compiledText) => {
+              setPhase('study');
+              void handleGenerate(compiledText || sourceText);
+            }}
+            isLoading={isLoading}
+            submitLabel="Generate"
+            speechLanguage={language}
+            hideToolSwitcher
+          />
+        </div>
+      </WorkbenchShell>
+    );
+  }
 
   return (
     <WorkbenchShell
