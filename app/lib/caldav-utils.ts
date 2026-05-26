@@ -1,5 +1,5 @@
 import { DAVClient } from 'tsdav';
-import * as ICAL from 'ical.js';
+import ICAL from 'ical.js';
 
 export interface CalendarEvent {
   title: string;

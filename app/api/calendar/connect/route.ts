@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { getCalDAVClient } from './caldav-utils';
+import { getCalDAVClient } from '@/lib/caldav-utils';
 
 export const runtime = 'nodejs';
 

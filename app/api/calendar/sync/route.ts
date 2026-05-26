@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
-import { parseICalendarData, getCalDAVClient, CalendarEvent } from './caldav-utils';
+import { parseICalendarData, getCalDAVClient, CalendarEvent } from '@/lib/caldav-utils';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
