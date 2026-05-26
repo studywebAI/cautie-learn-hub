@@ -1,7 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { DAVClient, Calendar, DAVAccount } from 'tsdav';
+import { parseString } from 'xml2js';
+import * as ICAL from 'ical.js';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 /**
  * CalDAV Sync Endpoint
@@ -12,6 +16,198 @@ export const runtime = 'nodejs';
  * User needs NO API keys - only their calendar account credentials (username/password).
  * CalDAV is a protocol supported natively by all major calendar providers.
  */
+
+interface CalendarEvent {
+  title: string;
+  description?: string;
+  start: Date;
+  end: Date;
+  uid: string;
+}
+
+async function parseICalendarData(icalData: string): Promise<CalendarEvent[]> {
+  const events: CalendarEvent[] = [];
+
+  try {
+    const jcal = ICAL.parse(icalData);
+    const comp = new ICAL.Component(jcal);
+    const vevents = comp.getAllSubcomponents('vevent');
+
+    for (const vevent of vevents) {
+      const event = new ICAL.Event(vevent);
+
+      events.push({
+        title: event.summary || 'Untitled Event',
+        description: event.description || '',
+        start: event.startDate.toJSDate(),
+        end: event.endDate.toJSDate(),
+        uid: event.uid,
+      });
+    }
+  } catch (error) {
+    console.error('Error parsing iCalendar data:', error);
+  }
+
+  return events;
+}
+
+async function getCalDAVClient(
+  provider: string,
+  caldavUrl: string | null,
+  username: string,
+  password: string
+): Promise<{ client: DAVClient; baseUrl: string } | null> {
+  let baseUrl = caldavUrl;
+
+  if (!baseUrl) {
+    switch (provider) {
+      case 'apple':
+        baseUrl = 'https://caldav.icloud.com/';
+        break;
+      case 'google':
+        baseUrl = 'https://caldav.google.com/caldav/v2/';
+        break;
+      case 'outlook':
+        baseUrl = 'https://outlook.office365.com/api/v2.0/me/';
+        break;
+      default:
+        return null;
+    }
+  }
+
+  try {
+    const client = new DAVClient({
+      baseURL: baseUrl,
+      credentials: {
+        username,
+        password,
+      },
+      authtype: 'basic',
+      defaultAccountType: 'caldav',
+    });
+
+    // Test connection
+    await client.fetchCalendarObjects({ rejectOnMissingUrl: false }).catch(
+      () => null
+    );
+
+    return { client, baseUrl };
+  } catch (error) {
+    console.error(`Failed to create CalDAV client for ${provider}:`, error);
+    return null;
+  }
+}
+
+async function syncCalendarAccount(
+  supabase: any,
+  user: any,
+  account: any
+): Promise<{
+  accountId: string;
+  provider: string;
+  status: string;
+  eventsCount: number;
+  message: string;
+}> {
+  try {
+    const { client, baseUrl } = (await getCalDAVClient(
+      account.provider,
+      account.caldav_url,
+      account.username,
+      account.password
+    )) || { client: null, baseUrl: null };
+
+    if (!client) {
+      return {
+        accountId: account.id,
+        provider: account.provider,
+        status: 'error',
+        eventsCount: 0,
+        message: 'Failed to connect to calendar server',
+      };
+    }
+
+    // Fetch all calendar objects
+    const calendarObjects = await client.fetchCalendarObjects({
+      rejectOnMissingUrl: false,
+    });
+
+    let eventCount = 0;
+    const eventsToSync: CalendarEvent[] = [];
+
+    // Parse calendar data
+    for (const obj of calendarObjects) {
+      if (obj.data) {
+        const events = await parseICalendarData(obj.data);
+        eventsToSync.push(...events);
+        eventCount += events.length;
+      }
+    }
+
+    // Store events in personal tasks
+    if (eventsToSync.length > 0) {
+      // Insert or update personal tasks from calendar events
+      for (const event of eventsToSync) {
+        // Use the event UID as a stable identifier for updates
+        const { data: existing } = await supabase
+          .from('personal_tasks')
+          .select('id')
+          .eq('user_id', user.id)
+          .match({ title: event.title, due_date: event.end.toISOString().split('T')[0] })
+          .single()
+          .catch(() => ({ data: null }));
+
+        if (existing) {
+          // Update existing personal task
+          await supabase
+            .from('personal_tasks')
+            .update({
+              title: event.title,
+              description: `${event.description || ''}\n\n[Synced from ${account.provider} Calendar]`.trim(),
+              due_date: event.end.toISOString().split('T')[0],
+            })
+            .eq('id', existing.id)
+            .catch((err) => console.error('Update failed:', err));
+        } else {
+          // Create new personal task from calendar event
+          await supabase
+            .from('personal_tasks')
+            .insert({
+              user_id: user.id,
+              title: event.title,
+              description: `${event.description || ''}\n\n[Synced from ${account.provider} Calendar]`.trim(),
+              due_date: event.end.toISOString().split('T')[0],
+              status: 'pending',
+            })
+            .catch((err) => console.error('Insert failed:', err));
+        }
+      }
+    }
+
+    // Update last sync timestamp
+    await supabase
+      .from('calendar_accounts')
+      .update({ last_synced_at: new Date().toISOString() })
+      .eq('id', account.id);
+
+    return {
+      accountId: account.id,
+      provider: account.provider,
+      status: 'success',
+      eventsCount: eventCount,
+      message: `Synced ${eventCount} events from ${account.provider}`,
+    };
+  } catch (error: any) {
+    console.error(`Sync failed for account ${account.id}:`, error);
+    return {
+      accountId: account.id,
+      provider: account.provider,
+      status: 'error',
+      eventsCount: 0,
+      message: error?.message || 'Sync failed',
+    };
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,69 +246,35 @@ export async function POST(request: NextRequest) {
 
     if (!accounts || accounts.length === 0) {
       return NextResponse.json(
-        { error: 'No calendar accounts found', synced: [] },
+        {
+          success: false,
+          error: 'No calendar accounts found',
+          synced: [],
+        },
         { status: 404 }
       );
     }
 
     const syncResults = [];
 
+    // Sync each account
     for (const account of accounts) {
-      try {
-        // TODO: Implement actual CalDAV protocol interaction
-        // This will involve:
-        // 1. Building CalDAV request URLs based on provider
-        // 2. Making authenticated HTTP requests to calendar servers
-        // 3. Parsing iCalendar responses
-        // 4. Storing events in the agenda
-
-        // Placeholder: Build provider-specific CalDAV URL
-        let caldavBaseUrl = account.caldav_url;
-
-        if (!caldavBaseUrl) {
-          switch (account.provider) {
-            case 'apple':
-              // Apple iCloud CalDAV endpoint
-              caldavBaseUrl = 'https://caldav.icloud.com/';
-              break;
-            case 'google':
-              // Google Calendar uses CalDAV protocol
-              caldavBaseUrl = 'https://caldav.google.com/caldav/v2/';
-              break;
-            case 'outlook':
-              // Microsoft Outlook uses CalDAV via their endpoint
-              caldavBaseUrl = 'https://outlook.office365.com/api/v2.0/me/calendarview/';
-              break;
-          }
-        }
-
-        // Mark as synced
-        await supabase
-          .from('calendar_accounts')
-          .update({ last_synced_at: new Date().toISOString() })
-          .eq('id', account.id);
-
-        syncResults.push({
-          accountId: account.id,
-          provider: account.provider,
-          status: 'synced',
-          message: 'Calendar sync queued (implementation pending)',
-        });
-      } catch (error: any) {
-        console.error(`Sync failed for account ${account.id}:`, error);
-        syncResults.push({
-          accountId: account.id,
-          provider: account.provider,
-          status: 'error',
-          message: error?.message || 'Sync failed',
-        });
-      }
+      const result = await syncCalendarAccount(supabase, user, account);
+      syncResults.push(result);
     }
+
+    const successCount = syncResults.filter((r) => r.status === 'success').length;
+    const totalEvents = syncResults.reduce((sum, r) => sum + r.eventsCount, 0);
 
     return NextResponse.json({
       success: true,
       synced: syncResults,
-      message: 'Calendar sync initiated. Full CalDAV implementation coming next.',
+      summary: {
+        accountsSynced: successCount,
+        totalAccounts: accounts.length,
+        totalEventsSynced: totalEvents,
+      },
+      message: `Synced ${successCount}/${accounts.length} calendars with ${totalEvents} total events`,
     });
   } catch (error: any) {
     console.error('Calendar sync error:', error);

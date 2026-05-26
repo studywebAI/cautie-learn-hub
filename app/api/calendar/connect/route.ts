@@ -40,8 +40,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Validate CalDAV credentials by attempting a connection
-    // For now, we'll just store them encrypted in the database
+    // Validate CalDAV credentials by attempting a connection
+    const { client } = (await getCalDAVClient(provider, caldavUrl, username, password)) || {
+      client: null
+    };
+
+    if (!client) {
+      return NextResponse.json(
+        { error: 'Invalid calendar credentials. Please check your email/username and password.' },
+        { status: 400 }
+      );
+    }
+
+    // Encrypt password before storing
+    const { data: encryptedData, error: encryptError } = await supabase.rpc(
+      'encrypt_password',
+      { password }
+    );
+
+    if (encryptError || !encryptedData) {
+      console.error('Password encryption failed:', encryptError);
+      return NextResponse.json(
+        { error: 'Failed to encrypt credentials' },
+        { status: 500 }
+      );
+    }
 
     const { data, error } = await supabase
       .from('calendar_accounts')
@@ -49,7 +72,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         provider,
         username,
-        password, // TODO: Encrypt this in production
+        password: encryptedData, // Encrypted password stored
         caldav_url: caldavUrl || null,
         last_synced_at: null,
       })
@@ -65,14 +88,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Trigger initial sync in the background
-    fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/calendar/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-      },
-      body: JSON.stringify({ accountId: data.id }),
-    }).catch((err) => console.error('Background sync failed:', err));
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    setTimeout(() => {
+      fetch(`${baseUrl}/api/calendar/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accountId: data.id }),
+      }).catch((err) => console.error('Background sync failed:', err));
+    }, 1000);
 
     return NextResponse.json(
       { success: true, account: data },
