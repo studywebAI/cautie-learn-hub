@@ -13,9 +13,10 @@ import { ListView } from '@/components/agenda/list-view';
 import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
+import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageSection } from '@/components/layout/page-section';
-import { PlusCircle, SlidersHorizontal, Download, Upload } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, Calendar } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -564,51 +565,7 @@ function AgendaPageContent() {
       .catch(() => {});
   };
 
-  const handleExportToCalendar = async () => {
-    try {
-      const response = await fetch('/api/agenda/export?format=ics');
-      if (!response.ok) throw new Error('Export failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `agenda-${new Date().toISOString().slice(0, 10)}.ics`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({ title: 'Exported successfully', description: 'Your agenda has been exported as an ICS file.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Export failed', description: error?.message });
-    }
-  };
-
-  const handleImportFromCalendar = async (file: File) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/agenda/import', { method: 'POST', body: formData });
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        toast({ variant: 'destructive', title: 'Import failed', description: data?.message || 'Could not import calendar file' });
-        return;
-      }
-
-      toast({
-        title: 'Import successful',
-        description: `Found ${data.events.length} events in your calendar file.`,
-      });
-
-      // TODO: In production, handle the imported events and save them to the database
-      console.log('Imported events:', data.events);
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Import failed', description: error?.message });
-    }
-  };
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
 
   const handleEventMove = async (eventId: string, newDate: Date) => {
     const event = events.find((row) => row.id === eventId);
@@ -721,30 +678,16 @@ function AgendaPageContent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
-              <Button variant="outline" size="sm" className="h-9 rounded-xl px-3.5" onClick={handleExportToCalendar} title="Export to Apple Calendar, Google Calendar, Outlook, etc.">
-                <Download className="mr-2 h-4 w-4" />
-                Export
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-xl px-3.5"
+                onClick={() => setIsCalendarDialogOpen(true)}
+                title="Connect your Apple Calendar, Google Calendar, Outlook, or other CalDAV-compatible service"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Connect Calendar
               </Button>
-
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".ics,.ical,.ifb,. ifbx"
-                  onChange={(e) => e.target.files?.[0] && handleImportFromCalendar(e.target.files[0])}
-                  style={{ display: 'none' }}
-                  id="calendar-import"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 rounded-xl px-3.5"
-                  onClick={() => document.getElementById('calendar-import')?.click()}
-                  title="Import from Apple Calendar, Google Calendar, Outlook, etc."
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import
-                </Button>
-              </div>
             </div>
 
             {isStudent && (
@@ -814,6 +757,11 @@ function AgendaPageContent() {
           initialDate={selectedDay}
         />
       )}
+
+      <CalendarConnectionDialog
+        isOpen={isCalendarDialogOpen}
+        setIsOpen={setIsCalendarDialogOpen}
+      />
     </PageSection>
   );
 }
