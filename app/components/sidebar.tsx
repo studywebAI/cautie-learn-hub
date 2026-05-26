@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  LayoutDashboard,
+  Home,
   Library,
   BrainCircuit,
   NotebookPen,
@@ -31,6 +31,7 @@ import {
   Loader2,
   PanelLeft,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
@@ -150,14 +151,14 @@ export function AppSidebar() {
 
   const menuItems = isTeacher
     ? [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: Library },
         { href: teacherManageHref, label: t.manage, icon: Users },
         { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
         { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: CalendarDays },
       ]
     : [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: Library },
         { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
         { href: '/classes', label: t.classes, icon: Users },
@@ -1222,7 +1223,12 @@ export function AppSidebar() {
 
   // Tablet + desktop: regular sidebar with trigger
   return (
-    <Sidebar className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden")} collapsible="icon">
+    <Sidebar
+      className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300")}
+      collapsible="icon"
+      onMouseEnter={() => { if (sidebarState === 'collapsed') setOpen(true); }}
+      onMouseLeave={() => { if (sidebarState === 'expanded') setOpen(false); }}
+    >
       <SidebarContent className="px-2 py-2 flex-1">
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
