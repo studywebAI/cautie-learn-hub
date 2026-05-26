@@ -24,7 +24,7 @@ const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "18rem"
 const SIDEBAR_WIDTH_MOBILE = "14rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SIDEBAR_WIDTH_ICON = "3.5rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -225,7 +225,7 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-              "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+              "duration-300 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-in-out",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -235,7 +235,7 @@ const Sidebar = React.forwardRef<
         />
         <div
             className={cn(
-              "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
+              "duration-300 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-in-out md:flex",
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -492,7 +492,7 @@ const SidebarMenu = React.forwardRef<
   <ul
     ref={ref}
     data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+    className={cn("flex w-full min-w-0 flex-col gap-1 group-data-[collapsible=icon]:gap-2", className)}
     {...props}
   />
 ))
@@ -512,7 +512,7 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-normal text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.85)] hover:text-sidebar-foreground active:bg-[hsl(var(--sidebar-accent)/1)] active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-normal data-[active=true]:text-sidebar-foreground dark:data-[active=true]:text-white data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.9)] data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
+        "peer/menu-button relative flex w-full items-center gap-2 overflow-hidden rounded-xl p-1.5 pl-2.5 text-left text-[13px] font-normal text-[hsl(var(--sidebar-foreground)/0.94)] outline-none transition-[width,height,padding,color,background-color] duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.85)] hover:text-sidebar-foreground active:bg-[hsl(var(--sidebar-accent)/1)] active:text-sidebar-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-[hsl(var(--sidebar-accent)/1)] data-[active=true]:font-normal data-[active=true]:text-sidebar-foreground dark:data-[active=true]:text-white data-[active=true]:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] data-[state=open]:hover:bg-[hsl(var(--sidebar-accent)/0.9)] data-[state=open]:hover:text-sidebar-foreground group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-2.5 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

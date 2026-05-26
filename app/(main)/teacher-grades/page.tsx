@@ -45,7 +45,7 @@ function GradeCard({ grade }: { grade: GradeSet }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-sm font-semibold truncate">{grade.title}</h3>
+              <h3 className="text-sm truncate">{grade.title}</h3>
               <span className={`text-xs px-2 py-1 rounded ${statusColor} font-medium capitalize`}>
                 {grade.status === 'in_progress' ? 'In progress' : grade.status === 'completed' ? 'Done' : 'Draft'}
               </span>
@@ -60,7 +60,7 @@ function GradeCard({ grade }: { grade: GradeSet }) {
           </div>
 
           <div className="flex-shrink-0 text-right space-y-1">
-            <div className="text-[13px] font-semibold text-foreground">
+            <div className="text-[13px] text-foreground">
               {graded} / {total}
             </div>
             <div className="text-[11px] font-medium text-muted-foreground">
@@ -156,21 +156,21 @@ export default function TeacherGradesLanding() {
         <Link href="/teacher-grades/new">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
             <Plus className="h-4 w-4 text-[var(--accent-brand)]" />
-            <p className="text-sm font-semibold">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</p>
+            <p className="text-sm">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}</p>
           </div>
         </Link>
         <Link href="/teacher-grades?view=all">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
             <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
-            <p className="text-sm font-semibold">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</p>
+            <p className="text-sm">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}</p>
           </div>
         </Link>
         <Link href="/teacher-grades/metrics">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
             <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
-            <p className="text-sm font-semibold">{isDutch ? 'Metrics' : 'Metrics'}</p>
+            <p className="text-sm">{isDutch ? 'Metrics' : 'Metrics'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Analyseer en vergelijk' : 'Analyze & compare'}</p>
           </div>
         </Link>
@@ -179,7 +179,7 @@ export default function TeacherGradesLanding() {
       {/* Recent grades */}
       {recentGrades.length > 0 && (
         <div className="class-panel-lg space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
             {isDutch ? 'Recente cijfers' : 'Recent grades'} ({allGrades.length})
           </p>
           <div className="space-y-2">

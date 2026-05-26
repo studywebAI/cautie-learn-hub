@@ -28,6 +28,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const isTablet = deviceTier === "tablet";
     const isPhone = deviceTier === "phone";
 
+    const [sidebarDefaultOpen] = useState(() => {
+        if (typeof document === 'undefined') return false;
+        const match = document.cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/);
+        if (match) return match[1] === 'true';
+        return false;
+    });
+
     useEffect(() => {
         setRoutePulseVisible(true);
         const timer = window.setTimeout(() => setRoutePulseVisible(false), 120);
@@ -35,7 +42,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, [pathname]);
 
     return (
-        <SidebarProvider defaultOpen={!isTablet}>
+        <SidebarProvider defaultOpen={isPhone ? false : sidebarDefaultOpen}>
             <FirstTimeSetupGate />
             <GlobalCommandPalette />
             {routePulseVisible && (

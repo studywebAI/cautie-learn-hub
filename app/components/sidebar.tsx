@@ -15,23 +15,23 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  BookOpen,
-  Home,
+  LayoutDashboard,
+  Library,
   BrainCircuit,
-  Copy,
-  FileSignature,
-  Network,
-  Route,
-  School,
-  Calendar,
+  NotebookPen,
+  Workflow,
+  FolderKanban,
+  Users,
+  CalendarDays,
+  BarChart2,
   Menu,
   ArrowUpRight,
   ChevronDown,
   Check,
   FolderOpen,
   Loader2,
-  ClipboardList,
 } from 'lucide-react';
+import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { Button } from './ui/button';
@@ -65,7 +65,8 @@ export function AppSidebar() {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
-  const { setOpenMobile, openMobile, state: sidebarState } = useSidebar();
+  const { setOpenMobile, openMobile, state: sidebarState, setOpen } = useSidebar();
+  const expandSidebar = () => { if (sidebarState === 'collapsed') setOpen(true); };
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didWarmTeacherResourcesRef = useRef(false);
@@ -153,27 +154,27 @@ export function AppSidebar() {
 
   const menuItems = isTeacher
     ? [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: teacherManageHref, label: t.manage, icon: School },
-        { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
-        { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: Calendar },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard },
+        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: Library },
+        { href: teacherManageHref, label: t.manage, icon: Users },
+        { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
+        { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: CalendarDays },
       ]
     : [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-        { href: '/subjects', label: dictionary.sidebar.subjects, icon: BookOpen },
-        { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardList },
-        { href: '/classes', label: t.classes, icon: School },
-        { href: '/agenda', label: dictionary.sidebar.agenda, icon: Calendar },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard },
+        { href: '/subjects', label: dictionary.sidebar.subjects, icon: Library },
+        { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
+        { href: '/classes', label: t.classes, icon: Users },
+        { href: '/agenda', label: dictionary.sidebar.agenda, icon: CalendarDays },
       ];
 
   const toolsMenuItems = [
-    { href: '/tools/studyset', label: t.studyset, icon: Route },
+    { href: '/tools/studyset', label: t.studyset, icon: FolderKanban },
     { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
-    { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Copy },
-    { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: FileSignature },
-    { href: '/tools/wordweb', label: 'Mindmap', icon: Network },
-    { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: Calendar },
+    { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: FlashcardIcon },
+    { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: NotebookPen },
+    { href: '/tools/wordweb', label: 'Mindmap', icon: Workflow },
+    { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: TimelineIcon },
   ];
 
   const otherMenuItems: Array<{ href: string; label: string; icon: typeof FolderOpen }> = [];
@@ -1262,7 +1263,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link prefetch={false} href={item.href}>
+                      <Link prefetch={false} href={item.href} onClick={expandSidebar}>
                         <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                         <span className="text-[13px] font-medium leading-4">{item.label}</span>
                       </Link>
@@ -1286,7 +1287,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link prefetch={false} href={item.href}>
+                    <Link prefetch={false} href={item.href} onClick={expandSidebar}>
                       <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                       <span className="text-[13px] font-medium leading-4">{item.label}</span>
                     </Link>
@@ -1309,7 +1310,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link prefetch={false} href={item.href}>
+                    <Link prefetch={false} href={item.href} onClick={expandSidebar}>
                       <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                       <span className="text-[13px] font-medium leading-4">{item.label}</span>
                     </Link>
