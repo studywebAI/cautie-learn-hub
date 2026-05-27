@@ -416,10 +416,10 @@ export function ToolInputBox({
       return;
     }
 
-    // Large text paste → attachment card (but also keep in textarea)
+    // Large text paste → attachment card only (not in textarea for cleaner UI)
     const text = e.clipboardData.getData('text');
     if (text.length >= 100) {
-      // Let the default paste happen (text goes into textarea), plus create a card
+      e.preventDefault(); // Prevent text from also appearing in textarea
       setAttachments((prev) => [
         ...prev,
         {
@@ -439,6 +439,10 @@ export function ToolInputBox({
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
+
+    // Close menus after file is selected
+    setShowPhotosSubmenu(false);
+    setShowPlusMenu(false);
 
     for (const file of files) {
       const isImage = file.type.startsWith('image/');
@@ -678,10 +682,7 @@ export function ToolInputBox({
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
                     onClick={() => {
                       void handleScreenshot();
-                      queueMicrotask(() => {
-                        setShowPhotosSubmenu(false);
-                        setShowPlusMenu(false);
-                      });
+                      setShowPhotosSubmenu(false);
                     }}
                     disabled={capturing}
                   >
@@ -699,15 +700,7 @@ export function ToolInputBox({
                   <button
                     type="button"
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
-                    onClick={() => {
-                      // Click BEFORE closing menus so the input is still mounted
-                      fileInputRef.current?.click();
-                      // Then close menus in the next tick
-                      queueMicrotask(() => {
-                        setShowPhotosSubmenu(false);
-                        setShowPlusMenu(false);
-                      });
-                    }}
+                    onClick={() => fileInputRef.current?.click()}
                   >
                     <Image className="h-4 w-4 text-muted-foreground" />
                     Photo library
@@ -718,12 +711,7 @@ export function ToolInputBox({
               <button
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
-                onClick={() => {
-                  fileInputRef.current?.click();
-                  queueMicrotask(() => {
-                    setShowPlusMenu(false);
-                  });
-                }}
+                onClick={() => fileInputRef.current?.click()}
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 Add files
