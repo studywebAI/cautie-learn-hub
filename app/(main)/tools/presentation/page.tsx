@@ -2,7 +2,7 @@
 
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FileUp, Loader2, Sparkles, Upload } from 'lucide-react';
+import { FileUp, Loader2, Sparkles, Upload, ChevronLeft } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,10 @@ import { PresentationPreview } from '@/components/presentation/presentation-prev
 import { SlideshowView } from '@/components/presentation/slideshow-view';
 import { ActionBar } from '@/components/presentation/action-bar';
 import { OneDriveExportFolderPicker } from '@/components/presentation/onedrive-export-folder-picker';
+import { PageHeader } from '@/components/ui/page-header';
 
 type PresentationPlatform = 'powerpoint' | 'google-slides' | 'keynote';
-type WorkflowStage = 'source' | 'settings' | 'building' | 'preview';
+type Phase = 'input' | 'options' | 'study';
 type SlideSetupItem = { title: string; subject: string };
 type SourceAttachment = {
   key: string;
@@ -206,7 +207,7 @@ function PresentationPageContent() {
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
 
-  const [stage, setStage] = useState<WorkflowStage>('source');
+  const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(initialSourceSeed);
   const [sourceAttachments, setSourceAttachments] = useState<SourceAttachment[]>([]);
   const [customTitle, setCustomTitle] = useState('');
@@ -287,7 +288,7 @@ function PresentationPageContent() {
 
   const persistWorkflowSnapshot = useCallback(
     async (overrides?: Partial<{
-      stage: WorkflowStage;
+      phase: Phase;
       slideSubjects: string[];
       setupPreset: {
         title?: string;
@@ -303,7 +304,7 @@ function PresentationPageContent() {
     }>) => {
       if (!projectId) return;
       const body = {
-        stage: overrides?.stage ?? stage,
+        stage: overrides?.phase ?? phase,
         slideSubjects: overrides?.slideSubjects ?? serializeSlideSetup(slideSetup),
         setupPreset: overrides?.setupPreset ?? {
           title: presetTitle.trim() || 'Custom preset',
@@ -325,7 +326,7 @@ function PresentationPageContent() {
     },
     [
       projectId,
-      stage,
+      phase,
       slideSetup,
       presetTitle,
       themePreset,
@@ -339,10 +340,10 @@ function PresentationPageContent() {
     ]
   );
 
-  const goToStage = useCallback(
-    (nextStage: WorkflowStage) => {
-      setStage(nextStage);
-      void persistWorkflowSnapshot({ stage: nextStage });
+  const goToPhase = useCallback(
+    (nextPhase: Phase) => {
+      setPhase(nextPhase);
+      void persistWorkflowSnapshot({ phase: nextPhase });
     },
     [persistWorkflowSnapshot]
   );
@@ -872,7 +873,7 @@ function PresentationPageContent() {
     return () => window.clearTimeout(handle);
   }, [
     projectId,
-    stage,
+    phase,
     slideSetup,
     presetTitle,
     themePreset,
@@ -902,7 +903,7 @@ function PresentationPageContent() {
           platform,
           uiConfig: { ...uiConfig, platform },
           workflowState: {
-            stage,
+            stage: phase,
             slideSubjects: serializeSlideSetup(slideSetup),
             setupPreset: {
               title: presetTitle.trim() || 'Custom preset',
@@ -1014,7 +1015,7 @@ function PresentationPageContent() {
     return pid;
   }, [autoMode, ensureProjectAndSources, platform, slideSetup, sourceText, uiConfig]);
 
-  const continueToSettings = useCallback(async () => {
+  const continueToOptions = useCallback(async () => {
     if (!sourceText.trim()) {
       toast({
         variant: 'destructive',
@@ -1026,7 +1027,7 @@ function PresentationPageContent() {
     setIsPlanning(true);
     try {
       await runPlanningStep();
-      goToStage('settings');
+      goToPhase('options');
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -1036,12 +1037,11 @@ function PresentationPageContent() {
     } finally {
       setIsPlanning(false);
     }
-  }, [goToStage, runPlanningStep, sourceText, toast]);
+  }, [goToPhase, runPlanningStep, sourceText, toast]);
 
   const buildPresentation = useCallback(async () => {
     if (!sourceText.trim()) return;
     setIsBuilding(true);
-    goToStage('building');
     try {
       const pid = await ensureProjectAndSources();
       const response = await fetch(`/api/presentation/${pid}/build`, {
@@ -1077,10 +1077,10 @@ function PresentationPageContent() {
       setAnalysis(nextPlan?.analysis || null);
       setPrototype(mapBuildToPrototype(payload));
       setSelectedSlideIndex(0);
-      goToStage('preview');
+      goToPhase('study');
       toast({ title: 'Presentation built', description: 'Deck generated successfully.' });
     } catch (error: any) {
-      goToStage('settings');
+      goToPhase('options');
       toast({
         variant: 'destructive',
         title: 'Could not build presentation',
@@ -1105,7 +1105,7 @@ function PresentationPageContent() {
     themePreset,
     toast,
     uiConfig,
-    goToStage,
+    goToPhase,
   ]);
 
   const downloadPresentation = useCallback(async () => {
@@ -1287,7 +1287,7 @@ function PresentationPageContent() {
           </div>
         )}
 
-        {stage === 'preview' && prototype && (
+        {phase === 'study' && prototype && (
           <Card className="border border-border/70">
             <CardContent className="py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1312,7 +1312,7 @@ function PresentationPageContent() {
           </Card>
         )}
 
-        {stage === 'preview' && activeShareUrl && (
+        {phase === 'study' && activeShareUrl && (
           <div className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 surface-interactive p-2">
             <Badge variant="secondary">Public preview active</Badge>
             <a href={activeShareUrl} target="_blank" rel="noreferrer" className="text-xs underline underline-offset-2">
@@ -1324,119 +1324,149 @@ function PresentationPageContent() {
           </div>
         )}
 
-        {stage === 'source' && (
-          <div className="flex min-h-[68vh] flex-col gap-5">
-            <Card className="border border-border/60">
-              <CardContent className="pt-5">
-                {sourceAttachments.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border/60 surface-interactive px-5 py-7 text-center">
-                    <p className="text-sm font-medium">Add material to start</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Upload files or import recents</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {sourceAttachments.map((source) => (
-                      <div
-                        key={source.key}
-                        className="rounded-xl border border-border/60 surface-interactive px-3 py-2 text-xs transition-colors hover:border-emerald-500/60"
-                      >
-                        <p className="max-w-[260px] truncate font-medium">{source.fileName}</p>
-                        <p className="text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {importOpen && (
-              <Card className="border border-border/60">
-                <CardContent className="pt-4">
-                  <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search local recents..." className="h-8" />
-                    <select
-                      value={importSourceFilter}
-                      onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
-                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                    >
-                      <option value="all">All local recents</option>
-                      <option value="tool_runs">Tool runs (local)</option>
-                      <option value="materials">Materials (local)</option>
-                    </select>
-                    <select
-                      value={importSort}
-                      onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                    >
-                      <option value="newest">Time: Newest</option>
-                      <option value="oldest">Time: Oldest</option>
-                      <option value="most_used">Most used</option>
-                      <option value="name">Name</option>
-                    </select>
-                  </div>
-                  <div className="max-h-44 overflow-auto rounded-md border border-border/60 p-2">
-                    {importCatalogLoading ? (
-                      <div className="flex h-20 items-center justify-center">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
-                    ) : visibleRecents.length === 0 ? null : (
-                      <div className="space-y-1.5">
-                        {visibleRecents.slice(0, 40).map((item) => (
-                          <div key={item.id} className="flex items-center justify-between gap-2 rounded border border-border/50 px-2 py-1.5">
-                            <div className="min-w-0">
-                              <p className="truncate text-xs font-medium">{item.name}</p>
-                              <p suppressHydrationWarning className="text-[11px] text-muted-foreground">
-                                {formatRecentTimestamp(item.lastModifiedDateTime)}
-                              </p>
-                            </div>
-                            <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={() => void importRecentsFiles([item])}>
-                              Import
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="mt-auto rounded-2xl border border-border/60 surface-panel p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
-                    <Upload className="mr-1.5 h-3.5 w-3.5" />
-                    Upload
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setImportOpen((prev) => !prev)}>
-                    <FileUp className="mr-1.5 h-3.5 w-3.5" />
-                    Import
-                  </Button>
-                </div>
-                <Button
-                  size="sm"
-                  className="h-9 px-4 text-xs"
-                  onClick={() => void continueToSettings()}
-                  disabled={(!sourceText.trim() && sourceAttachments.length === 0) || isPlanning || isBuilding}
-                >
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  Analyze
-                </Button>
+        {phase === 'input' && (
+          <div className="flex min-h-[65vh] flex-col items-center justify-center px-4 py-8">
+            <div className="w-full max-w-2xl space-y-6">
+              <div className="text-center">
+                <h1 className="text-3xl font-semibold leading-tight">Create Presentation</h1>
+                <p className="mt-2 text-base text-muted-foreground">Add material or describe what your presentation should cover</p>
               </div>
 
-              <textarea
-                value={sourceText}
-                onChange={(event) => setSourceText(event.target.value)}
-                placeholder="Describe your presentation or add material..."
-                className="min-h-[56px] max-h-[124px] w-full resize-y rounded-xl border border-border/70 bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
-              />
-            </div>
+              <div className="space-y-4">
+                {/* Attachments display */}
+                {sourceAttachments.length > 0 && (
+                  <div className="rounded-2xl border border-border/60 bg-surface-1/50 p-4">
+                    <p className="mb-3 text-sm font-medium text-foreground">Materials attached ({sourceAttachments.length})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {sourceAttachments.map((source) => (
+                        <div
+                          key={source.key}
+                          className="rounded-lg border border-border/60 bg-background px-3 py-2 text-xs transition-colors hover:border-border"
+                        >
+                          <p className="max-w-[240px] truncate font-medium">{source.fileName}</p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">{source.sourceType.replace('_', ' ')}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
+                {/* Import panel */}
+                {importOpen && (
+                  <div className="rounded-2xl border border-border/60 bg-surface-1/50 p-4">
+                    <p className="mb-3 text-sm font-medium text-foreground">Import from recents</p>
+                    <div className="mb-3 grid grid-cols-1 gap-2">
+                      <Input
+                        value={importSearch}
+                        onChange={(e) => setImportSearch(e.target.value)}
+                        placeholder="Search..."
+                        className="h-9"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={importSourceFilter}
+                          onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
+                          className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
+                        >
+                          <option value="all">All recents</option>
+                          <option value="tool_runs">Tool runs</option>
+                          <option value="materials">Materials</option>
+                        </select>
+                        <select
+                          value={importSort}
+                          onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
+                          className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
+                        >
+                          <option value="newest">Newest</option>
+                          <option value="oldest">Oldest</option>
+                          <option value="most_used">Most used</option>
+                          <option value="name">Name</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="max-h-40 overflow-auto rounded-lg border border-border/60 p-2">
+                      {importCatalogLoading ? (
+                        <div className="flex h-16 items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        </div>
+                      ) : visibleRecents.length === 0 ? (
+                        <p className="text-center text-xs text-muted-foreground py-4">No recents found</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {visibleRecents.slice(0, 40).map((item) => (
+                            <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border/40 px-2 py-1.5 hover:bg-surface-chip transition-colors">
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-medium">{item.name}</p>
+                                <p suppressHydrationWarning className="text-[11px] text-muted-foreground">
+                                  {formatRecentTimestamp(item.lastModifiedDateTime)}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => void importRecentsFiles([item])}
+                              >
+                                Import
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Input area */}
+                <div className="rounded-2xl border border-border/60 bg-surface-panel p-4 space-y-3">
+                  <textarea
+                    value={sourceText}
+                    onChange={(event) => setSourceText(event.target.value)}
+                    placeholder="Describe your presentation topic, key points, or paste content..."
+                    className="min-h-24 max-h-32 w-full resize-y rounded-lg border border-border/70 bg-background px-3 py-2 text-sm placeholder:text-muted-foreground outline-none focus:border-border focus:ring-1 focus:ring-ring transition-colors"
+                  />
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 px-3 text-xs"
+                        onClick={() => uploadInputRef.current?.click()}
+                      >
+                        <Upload className="mr-1.5 h-3.5 w-3.5" />
+                        Upload
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 px-3 text-xs"
+                        onClick={() => setImportOpen((prev) => !prev)}
+                      >
+                        <FileUp className="mr-1.5 h-3.5 w-3.5" />
+                        {importOpen ? 'Hide' : 'Import'}
+                      </Button>
+                    </div>
+                    <Button
+                      className="h-9 px-4 text-xs"
+                      onClick={() => void continueToOptions()}
+                      disabled={(!sourceText.trim() && sourceAttachments.length === 0) || isPlanning || isBuilding}
+                    >
+                      <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                      Analyze
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
-        {stage === 'settings' && (
-          <div className="space-y-4">
+        {phase === 'options' && (
+          <div className="flex flex-col gap-6">
+            <PageHeader title="Customize Presentation" subtitle="Adjust settings and structure for your needs" hideBreadcrumb={false} />
+            <div className="mx-auto w-full max-w-4xl space-y-6 px-4">
             <div className="rounded-2xl border border-border/60 surface-panel p-3">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
@@ -1675,40 +1705,50 @@ function PresentationPageContent() {
               </CardContent>
             </Card>
 
-            <div className="flex">
-              <Button size="lg" onClick={() => void buildPresentation()} disabled={isBuilding || isPlanning}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate presentation
-              </Button>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6">
+                <Button
+                  variant="outline"
+                  className="h-10 px-4"
+                  onClick={() => goToPhase('input')}
+                  disabled={isBuilding || isPlanning}
+                >
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                <Button
+                  className="h-10 px-6"
+                  onClick={() => void buildPresentation()}
+                  disabled={isBuilding || isPlanning}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generate Presentation
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {stage === 'building' && (
-          <Card className="border border-border/70">
-            <CardContent className="py-10">
-              <div className="mx-auto max-w-xl space-y-4 text-center">
-                <p className="text-sm text-muted-foreground">Building presentation in 2 AI steps (plan to generate)...</p>
-                <div className="h-2 overflow-hidden rounded-full surface-interactive">
-                  <div className="h-full w-1/2 animate-pulse rounded-full bg-foreground" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {stage === 'preview' && prototype && (
-          <PresentationPreview
-            manifest={prototype.previewManifest}
-            selectedSlideIndex={selectedSlideIndex}
-            onSelectSlide={setSelectedSlideIndex}
-            onStartSlideshow={() => setIsSlideshow(true)}
-            onDownload={() => void downloadPresentation()}
-            onExportCloud={() => void exportToCloud()}
-            onShare={() => void sharePreview()}
-            exportingCloud={isExportingCloud}
-            cloudLabel={cloudLabel}
-          />
+        {phase === 'study' && prototype && (
+          <div className="flex flex-col gap-6">
+            <PageHeader
+              title={prototype.title || 'Presentation'}
+              subtitle={previewMeta || ''}
+              hideBreadcrumb={false}
+            />
+            <div className="mx-auto w-full max-w-6xl px-4">
+              <PresentationPreview
+                manifest={prototype.previewManifest}
+                selectedSlideIndex={selectedSlideIndex}
+                onSelectSlide={setSelectedSlideIndex}
+                onStartSlideshow={() => setIsSlideshow(true)}
+                onDownload={() => void downloadPresentation()}
+                onExportCloud={() => void exportToCloud()}
+                onShare={() => void sharePreview()}
+                exportingCloud={isExportingCloud}
+                cloudLabel={cloudLabel}
+              />
+            </div>
+          </div>
         )}
       </div>
 

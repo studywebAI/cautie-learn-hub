@@ -1246,7 +1246,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                       tooltip={item.label}
                     >
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </SidebarMenuButton>
                   ) : (
@@ -1256,7 +1256,7 @@ export function AppSidebar() {
                       tooltip={item.label}
                     >
                       <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -1280,7 +1280,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1303,7 +1303,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href} onClick={expandSidebar}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)]" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
