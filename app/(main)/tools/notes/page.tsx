@@ -1645,239 +1645,7 @@ function NotesPageContent() {
     </div>
   );
 
-  // Determine if we're in State 1 (input) or State 2 (settings)
-  const inState1 = !state1Completed;
-  const inState2 = state1Completed && !isDisplayingOutput;
-
-  if (inState1) {
-    // STATE 1: INPUT MATERIAL
-    const state1Title = isWordwebPreset ? 'Create a Mindmap' : isTimelinePreset ? 'Create a Timeline' : 'Create Notes';
-    const state1Description = isWordwebPreset
-      ? 'Paste text, upload files, or add a link. We\'ll analyze the content and tailor the mindmap generation for you.'
-      : isTimelinePreset
-      ? 'Paste text, upload files, or add a link. We\'ll analyze the content and tailor the timeline for you.'
-      : 'Paste text, upload files, or add a link. We\'ll analyze the content and tailor the notes for you.';
-    const placeholderText = isWordwebPreset
-      ? 'Paste text, article content, notes, or anything you want to create a mindmap from...'
-      : isTimelinePreset
-      ? 'Paste text, article content, notes, or anything you want to create a timeline from...'
-      : 'Paste text, article content, notes, or anything you want to create notes from...';
-
-    return (
-      <div className="flex h-full w-full flex-col">
-        {/* Topbar */}
-        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
-          <span className="text-sm font-bold text-foreground">cautie</span>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Tools</span>
-            <span className="text-border">›</span>
-            <span className="font-semibold text-foreground">{pageTitle}</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-foreground"></div>
-            <div className="w-2 h-2 rounded-full bg-border"></div>
-            <span className="text-xs text-muted-foreground ml-1">Step 1 of 2</span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto bg-background">
-          <div className="bg-card rounded-lg border border-border p-6 w-full max-w-2xl shadow-sm">
-
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-1.5 text-foreground">{state1Title}</h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {state1Description}
-              </p>
-            </div>
-
-            {/* Upload Buttons */}
-            <div className="flex gap-2 flex-wrap mb-5">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileUpload}
-                className="hidden"
-                accept=".txt,.pdf,.docx,.md"
-              />
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Photo capture coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Photo
-              </button>
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Voice recording coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>Mic
-              </button>
-              <button
-                onClick={() => toast({ variant: 'default', title: 'Import coming soon', description: 'This feature will be available soon.' })}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 13v6"/><path d="M9 16h6"/></svg>Import from
-              </button>
-              <button
-                onClick={() => setState1ShowLinkDialog(true)}
-                className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-md bg-muted text-foreground text-xs font-medium hover:bg-muted/80 hover:border-accent/50 transition-all"
-              >
-                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link
-              </button>
-
-              {/* Link dialog modal */}
-              {state1ShowLinkDialog && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-                  <div className="w-full max-w-md rounded-xl border border-border bg-card p-4 shadow-xl">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground">Paste a link</h3>
-                      <button
-                        onClick={() => setState1ShowLinkDialog(false)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-3">
-                      <input
-                        type="url"
-                        value={state1LinkUrl}
-                        onChange={(e) => setState1LinkUrl(e.target.value)}
-                        placeholder="https://example.com"
-                        className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:border-[var(--accent-brand)] focus:ring-2 focus:ring-[var(--accent-brand)]/10 outline-none transition-colors bg-muted/30 text-foreground"
-                        onKeyPress={(e) => e.key === 'Enter' && handleLinkSubmit()}
-                      />
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => setState1ShowLinkDialog(false)}
-                          className="px-4 py-2 border border-border rounded-lg text-xs font-semibold text-muted-foreground hover:bg-accent/5 transition-all"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleLinkSubmit}
-                          disabled={state1LinkLoading || !state1LinkUrl.trim()}
-                          className="px-4 py-2 bg-[var(--accent-brand)] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
-                        >
-                          {state1LinkLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-                          {state1LinkLoading ? 'Loading...' : 'Add'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Textarea + Added sources */}
-            <div className="flex gap-5 mb-6 h-72">
-              {/* Textarea */}
-              <div className="flex-1 flex flex-col">
-                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Your content</div>
-                <textarea
-                  value={sourceText}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  placeholder={placeholderText}
-                  className="flex-1 w-full p-3 border border-border rounded-lg text-sm font-inherit text-foreground resize-none outline-none leading-relaxed focus:border-[var(--accent-brand)] focus:ring-2 focus:ring-[var(--accent-brand)]/10 transition-colors bg-muted/20"
-                />
-                <span className="text-xs text-muted-foreground mt-1.5">Supports: text, PDF, DOCX, images, YouTube links, web URLs</span>
-              </div>
-
-              {/* Added sources */}
-              <div className="w-48 flex flex-col border-l border-border pl-3">
-                <div className="text-xs font-bold uppercase tracking-wider text-foreground mb-2">Added (0)</div>
-                <div className="flex-1 overflow-y-auto flex flex-col gap-2">
-                  <div className="text-center text-muted-foreground text-xs py-12 flex flex-col items-center justify-center">
-                    <svg className="w-6 h-6 mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9-4 9 4" /></svg>
-                    No sources yet
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer buttons */}
-            <div className="flex gap-3 justify-end border-t border-border pt-5">
-              <button
-                onClick={() => setSourceText('')}
-                className="px-5 py-2.5 bg-muted border border-border rounded-lg text-xs font-semibold text-foreground hover:bg-muted/80 hover:border-accent/30 transition-all"
-              >
-                Clear
-              </button>
-              <button
-                disabled={!sourceText.trim()}
-                onClick={() => setState1Completed(true)}
-                className="px-5 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                Continue →
-              </button>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STATE 2: SETTINGS (new clean layout)
-  if (inState2) {
-    return (
-      <div className="flex h-full w-full flex-col bg-background">
-        {/* Topbar */}
-        <div className="h-[52px] border-b border-border bg-background px-8 flex items-center gap-3 flex-shrink-0">
-          <span className="text-sm font-bold text-foreground">cautie</span>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>Tools</span>
-            <span className="text-border">›</span>
-            <span className="font-semibold text-foreground">{pageTitle}</span>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-foreground"></div>
-            <div className="w-2 h-2 rounded-full bg-border"></div>
-            <span className="text-xs text-muted-foreground ml-1">Step 2 of 2</span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 flex items-center justify-center px-4 py-8 overflow-y-auto">
-          <div className="bg-card rounded-lg border border-border w-full max-w-2xl shadow-sm">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-border bg-muted/30">
-              <h2 className="text-base font-bold text-foreground mb-1">{pageTitle} Settings</h2>
-              <p className="text-xs text-muted-foreground">Configure your {pageTitle.toLowerCase()} based on the content you added.</p>
-            </div>
-
-            {/* Settings */}
-            <div className="px-6 py-6 space-y-6 overflow-y-auto" style={{maxHeight: 'calc(100% - 180px)'}}>
-              {sidebar}
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-border bg-muted/30">
-              <button
-                onClick={() => {
-                  setIsLoading(true);
-                  return runNotesGeneration(sourceText, { background: false });
-                }}
-                disabled={isLoading || !sourceText.trim()}
-                className="w-full px-4 py-2.5 bg-[var(--accent-brand)] text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-              >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : breadcrumbIcon}
-                {isLoading ? 'Generating...' : `Generate ${pageTitle}`}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Phase-based state management handles State 1, 2, and 3
   // STATE 1: Input phase - clean centered input
   if (phase === 'input' && !generatedNotes) {
     return (
@@ -2030,6 +1798,232 @@ function NotesPageContent() {
               `Generate ${pageTitle}`
             )}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // STATE 3: STUDY PHASE - show generated notes
+  if (phase === 'study' && generatedNotes) {
+    const isVisualMode = mode === 'wordweb' || mode === 'timeline';
+    return (
+      <div className="h-full flex flex-col">
+        <PageHeader title={`Study ${pageTitle}`} hideBreadcrumb />
+        <div className="flex-1 overflow-auto pl-1.5 pr-0 pt-1.5 pb-0">
+          <div className="w-full space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setGeneratedNotes(null);
+                  setCanonicalDoc(null);
+                  setPaintActive(false);
+                  setHighlightActive(false);
+                  setEditMode(false);
+                  setPhase('options');
+                }}
+                className="rounded-full"
+              >
+                Back
+              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant={showNotesPanel ? 'default' : 'outline'}
+                  size="sm"
+                  className="rounded-full h-8 gap-1.5"
+                  onClick={() => setShowNotesPanel((value) => !value)}
+                  disabled={isVisualMode}
+                >
+                  <PanelsRightBottom className="h-3.5 w-3.5" />
+                  <span className="text-xs">Editor</span>
+                </Button>
+                {!isVisualMode ? (
+                  <>
+                    <TextHighlighterToolbar
+                      active={highlightActive}
+                      onToggle={() => { setHighlightActive(h => !h); if (paintActive) setPaintActive(false); }}
+                      containerRef={notesContentRef}
+                      singleUse
+                      onApplied={() => setHighlightActive(false)}
+                      onContentChanged={(html) => {
+                        const cleaned = sanitizeEditorHtml(html);
+                        setNoteHtml(cleaned);
+                        persistNotesState(cleaned);
+                      }}
+                    />
+                    <Button
+                      variant={paintActive ? 'default' : 'outline'}
+                      size="sm"
+                      className="rounded-full h-8 gap-1.5"
+                      onClick={() => { setPaintActive(p => !p); if (highlightActive) setHighlightActive(false); }}
+                    >
+                      <Paintbrush className="h-3.5 w-3.5" />
+                      <span className="text-xs">Annotate</span>
+                    </Button>
+                    <Button
+                      variant={editMode ? 'default' : 'outline'}
+                      size="sm"
+                      className="rounded-full h-8 gap-1.5"
+                      onClick={() => setEditMode((v) => !v)}
+                    >
+                      <span className="text-xs">{editMode ? 'Stop edit' : 'Edit text'}</span>
+                    </Button>
+                  </>
+                ) : null}
+                <ExportToolbar
+                  toolType="notes"
+                  title={customTitle.trim() || undefined}
+                  getMarkdown={() => notesToMarkdown(editableSections)}
+                  getHtml={() => noteHtml || notesToHtml(generatedNotes)}
+                  getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
+                />
+                <SendToClassButton
+                  classes={shareableClasses}
+                  classIdFromRoute={classId}
+                  sending={isSharingToClass}
+                  onSend={handleShareToClass}
+                  className="rounded-full h-8"
+                />
+              </div>
+            </div>
+
+            <div className={cn('grid gap-4', !isVisualMode && showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
+              {mode === 'wordweb' && canonicalDoc ? (
+                <WordwebCanvas
+                  document={canonicalDoc}
+                  onChange={applyCanonicalDocument}
+                  settings={{
+                    wordwebDensity: advancedSettings?.visuals.wordweb_density,
+                    interactionRequired: advancedSettings?.visuals.interaction_required,
+                  }}
+                />
+              ) : mode === 'timeline' && canonicalDoc ? (
+                <TimelineBoard
+                  document={canonicalDoc}
+                  onChange={applyCanonicalDocument}
+                  settings={{
+                    rangeStart: advancedSettings?.timeline.range_enabled ? (advancedSettings?.timeline.range_start ?? '') : '',
+                    rangeEnd: advancedSettings?.timeline.range_enabled ? (advancedSettings?.timeline.range_end ?? '') : '',
+                    scaleMode: advancedSettings?.timeline.scale_mode,
+                  }}
+                />
+              ) : (
+                <div
+                  className="relative rounded-2xl border surface-panel p-5 md:p-6"
+                  style={{
+                    fontFamily: noteFontFamily,
+                    fontSize: `${noteFontSize}px`,
+                    fontWeight: noteFontWeight,
+                    lineHeight: noteLineHeight,
+                    color: noteTextColor,
+                  }}
+                >
+                  <div
+                    ref={notesContentRef}
+                    className={cn(
+                      'prose prose-sm md:prose-base max-w-none focus:outline-none',
+                      editMode ? 'rounded-xl border border-dashed border-border p-3' : ''
+                    )}
+                    contentEditable={editMode}
+                    suppressContentEditableWarning
+                    dangerouslySetInnerHTML={{ __html: noteHtml || sanitizeEditorHtml(notesToHtml(generatedNotes)) }}
+                    onInput={(event) => {
+                      const html = sanitizeEditorHtml((event.currentTarget as HTMLDivElement).innerHTML);
+                      setNoteHtml(html);
+                      persistNotesState(html);
+                    }}
+                    onBlur={(event) => {
+                      const html = sanitizeEditorHtml((event.currentTarget as HTMLDivElement).innerHTML);
+                      setNoteHtml(html);
+                      persistNotesState(html);
+                    }}
+                  />
+                  <PaintOverlay
+                    active={paintActive}
+                    onClose={() => setPaintActive(false)}
+                    singleUse
+                    initialPaths={annotationPaths}
+                    onPathsChange={(nextPaths) => {
+                      setAnnotationPaths(nextPaths);
+                      persistNotesState(noteHtml, nextPaths);
+                    }}
+                  />
+                </div>
+              )}
+
+              {!isVisualMode && showNotesPanel && (
+                <aside className="rounded-2xl border surface-panel p-4 space-y-4 h-fit xl:sticky xl:top-4">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Include blocks (multi-select)</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {NOTE_BLOCK_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={cn(
+                            'px-3 py-1 rounded-full text-xs border',
+                            selectedNoteBlocks.includes(option.value)
+                              ? 'border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
+                              : 'border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]'
+                          )}
+                          onClick={() => toggleMulti(option.value, setSelectedNoteBlocks)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Auto highlight targets</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {autoHighlightTargets.map((target) => (
+                        <button
+                          key={target.value}
+                          type="button"
+                          className={cn(
+                            'px-3 py-1 rounded-full text-xs border',
+                            selectedAutoHighlightTargets.includes(target.value)
+                              ? 'border-[hsl(var(--foreground)/0.28)] bg-[hsl(var(--foreground)/0.16)] text-foreground'
+                              : 'border-border bg-[hsl(var(--background))] text-foreground hover:bg-[hsl(var(--accent))]'
+                          )}
+                          onClick={() => toggleMulti(target.value, setSelectedAutoHighlightTargets)}
+                        >
+                          {target.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={autoHighlightColor.startsWith('#') ? autoHighlightColor : '#facc15'}
+                        onChange={(e) => setAutoHighlightColor(e.target.value)}
+                        className="h-7 w-10 rounded border border-border bg-transparent"
+                      />
+                      <Button type="button" variant="outline" className="h-7 rounded-full text-xs" onClick={applyAutoHighlights}>
+                        Apply highlights
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Text formatting</p>
+                    <div className="flex items-center gap-1.5">
+                      <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('bold')}>
+                        <Bold className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('italic')}>
+                        <Italic className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full" onClick={() => applyInlineFormat('underline')}>
+                        <Underline className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </aside>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
