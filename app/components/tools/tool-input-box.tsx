@@ -676,7 +676,13 @@ export function ToolInputBox({
                   <button
                     type="button"
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
-                    onClick={() => { void handleScreenshot(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                    onClick={() => {
+                      void handleScreenshot();
+                      queueMicrotask(() => {
+                        setShowPhotosSubmenu(false);
+                        setShowPlusMenu(false);
+                      });
+                    }}
                     disabled={capturing}
                   >
                     {capturing ? <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
@@ -693,7 +699,15 @@ export function ToolInputBox({
                   <button
                     type="button"
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
-                    onClick={() => { fileInputRef.current?.click(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                    onClick={() => {
+                      // Click BEFORE closing menus so the input is still mounted
+                      fileInputRef.current?.click();
+                      // Then close menus in the next tick
+                      queueMicrotask(() => {
+                        setShowPhotosSubmenu(false);
+                        setShowPlusMenu(false);
+                      });
+                    }}
                   >
                     <Image className="h-4 w-4 text-muted-foreground" />
                     Photo library
@@ -704,7 +718,12 @@ export function ToolInputBox({
               <button
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
-                onClick={() => { fileInputRef.current?.click(); setShowPlusMenu(false); }}
+                onClick={() => {
+                  fileInputRef.current?.click();
+                  queueMicrotask(() => {
+                    setShowPlusMenu(false);
+                  });
+                }}
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 Add files
