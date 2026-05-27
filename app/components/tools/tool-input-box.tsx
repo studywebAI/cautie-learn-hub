@@ -51,6 +51,7 @@ const TOOLS = [
   { id: 'quiz',       label: 'Quiz',        href: '/tools/quiz' },
   { id: 'flashcards', label: 'Flashcards',  href: '/tools/flashcards' },
   { id: 'notes',      label: 'Notes',       href: '/tools/notes' },
+  { id: 'mindmap',    label: 'Mindmap',     href: '/tools/mindmap' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -207,6 +208,7 @@ export function ToolInputBox({
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const [showPhotosSubmenu, setShowPhotosSubmenu] = useState(false);
   const [linkValue, setLinkValue] = useState('');
   const [linkLoading, setLinkLoading] = useState(false);
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
@@ -664,19 +666,48 @@ export function ToolInputBox({
               <button
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
-                onClick={() => { fileInputRef.current?.click(); setShowPlusMenu(false); }}
+                onClick={() => { setShowPhotosSubmenu(!showPhotosSubmenu); }}
               >
                 <Image className="h-4 w-4 text-muted-foreground" />
-                Add files or photos
+                Photos
               </button>
+              {showPhotosSubmenu && (
+                <>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
+                    onClick={() => { void handleScreenshot(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                    disabled={capturing}
+                  >
+                    {capturing ? <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
+                    Take screenshot
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
+                    onClick={() => { alert('Camera feature coming soon'); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                  >
+                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    Take photo
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
+                    onClick={() => { fileInputRef.current?.click(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                  >
+                    <Image className="h-4 w-4 text-muted-foreground" />
+                    Photo library
+                  </button>
+                </>
+              )}
+              <div className="h-px bg-border my-1" />
               <button
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
-                onClick={() => void handleScreenshot()}
-                disabled={capturing}
+                onClick={() => { fileInputRef.current?.click(); setShowPlusMenu(false); }}
               >
-                {capturing ? <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
-                Take a screenshot
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Add files
               </button>
               <div className="h-px bg-border my-1" />
               <button
