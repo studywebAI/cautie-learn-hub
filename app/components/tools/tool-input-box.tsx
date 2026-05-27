@@ -209,11 +209,85 @@ export function ToolInputBox({
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkValue, setLinkValue] = useState('');
   const [linkLoading, setLinkLoading] = useState(false);
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const toolMenuRef = useRef<HTMLDivElement>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Ocean animal placeholder texts
+  const oceanPlaceholders = [
+    'Anglerfish glow in the pitch-black depths at 1000 feet, using bioluminescent lures to attract prey in the darkness of the abyss.',
+    'Giant squid with eyes the size of dinner plates hunt in the midnight zone, navigating through water colder than ice.',
+    'Vampire squid pulse with eerie red light, their web-like skin undulating as they drift through the deep ocean trenches.',
+    'Gulper eels have massive mouths that can unhinge to swallow fish larger than themselves in the abyssal zone.',
+    'Dumbo octopuses, named for their ear-like fins, are the deepest-living octopuses ever discovered in the ocean.',
+    'Barreleye fish have transparent heads with tubular eyes that look upward through their see-through skull.',
+    'Viperfish possess needle-like teeth so large they cannot fully close their mouths, lurking in deep water darkness.',
+    'Fangtooth fish may be small but have the largest teeth relative to body size of any deep-sea fish in existence.',
+    'Dragonfish emit red bioluminescent light that most creatures cannot see, giving them a hunting advantage in the abyss.',
+    'Hatchetfish use photophores on their bellies to create counter-illumination, camouflaging themselves from predators below.',
+    'Spookfish possess mirror-like eyes and large teeth, perfectly adapted for hunting in the perpetual darkness.',
+    'Sixgill sharks are ancient predators that patrol the deep trenches, unchanged for millions of years.',
+    'Dumbo squid drift slowly across the ocean floor like underwater ghosts, their graceful movements barely disturbing the water.',
+    'Lanternfish migrate upward each night to feed, creating the largest animal migration by biomass on Earth.',
+    'Goblin sharks are living fossils with long snouts and razor-sharp teeth, rarely seen by humans in the deep.',
+    'Tube worms cluster around hydrothermal vents, thriving in scalding water that would kill most ocean life.',
+    'Amphipods resembling tiny shrimp scavenge on the floor of the deepest ocean trenches known to science.',
+    'Brittle stars with incredibly long arms crawl across the abyssal plains searching for food particles.',
+    'Yeti crabs discovered near hydrothermal vents are covered in silky hair-like setae, unlike any known crustacean.',
+    'Bioluminescent jellyfish drift through the darkness, their translucent bodies glowing with ethereal beauty and mystery.',
+  ];
+
+  // Animated placeholder effect
+  useEffect(() => {
+    if (sourceText.trim()) return; // Don't animate if user is typing
+
+    let currentCharIndex = 0;
+    const currentText = oceanPlaceholders[placeholderIndex % oceanPlaceholders.length];
+    let isTyping = true;
+
+    const animateChar = () => {
+      if (!isTyping) {
+        // Backspace phase
+        if (currentCharIndex > 0) {
+          currentCharIndex--;
+          setAnimatedPlaceholder(currentText.substring(0, currentCharIndex));
+          animationTimeoutRef.current = setTimeout(animateChar, 30);
+        } else {
+          // Done backspacing, move to next text
+          setPlaceholderIndex((i) => i + 1);
+          isTyping = true;
+          currentCharIndex = 0;
+          animateChar();
+        }
+      } else {
+        // Typing phase
+        if (currentCharIndex < currentText.length) {
+          currentCharIndex++;
+          setAnimatedPlaceholder(currentText.substring(0, currentCharIndex));
+          animationTimeoutRef.current = setTimeout(animateChar, 20);
+        } else {
+          // Done typing, pause before backspacing
+          animationTimeoutRef.current = setTimeout(() => {
+            isTyping = false;
+            animateChar();
+          }, 15000); // 15 second pause
+        }
+      }
+    };
+
+    animateChar();
+
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, [sourceText, placeholderIndex, oceanPlaceholders]);
 
   const currentTool = TOOLS.find((t) => t.id === toolId) ?? TOOLS[0];
 
@@ -472,7 +546,7 @@ export function ToolInputBox({
               handleSubmit();
             }
           }}
-          placeholder={placeholder}
+          placeholder={placeholder || animatedPlaceholder}
           rows={3}
           className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none leading-relaxed min-h-[72px] max-h-[220px]"
         />
@@ -518,7 +592,7 @@ export function ToolInputBox({
           </button>
 
           {showPlusMenu && (
-            <div className="absolute bottom-10 left-0 z-50 w-52 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
+            <div className="absolute top-full left-0 mt-2 z-[999] w-52 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
@@ -591,7 +665,7 @@ export function ToolInputBox({
             </button>
 
             {showToolMenu && (
-              <div className="absolute bottom-10 right-0 z-50 w-40 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
+              <div className="absolute top-full right-0 mt-2 z-[999] w-40 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
                 {TOOLS.map((tool) => (
                   <button
                     key={tool.id}
