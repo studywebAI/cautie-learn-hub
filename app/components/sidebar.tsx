@@ -1124,7 +1124,7 @@ export function AppSidebar() {
 
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="overflow-hidden">
-          <SidebarContent className="flex-1 px-2 py-2">
+          <SidebarContent className="flex-1 overflow-y-auto px-2 py-2">
             {renderTeacherClassSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
@@ -1229,7 +1229,7 @@ export function AppSidebar() {
       onMouseEnter={() => { if (sidebarState === 'collapsed') setOpen(true); }}
       onMouseLeave={() => { if (sidebarState === 'expanded') setOpen(false); }}
     >
-      <SidebarContent className="px-2 py-2 flex-1">
+      <SidebarContent className="px-2 py-2 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>

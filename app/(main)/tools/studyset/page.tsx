@@ -41,6 +41,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { PageSection } from '@/components/layout/page-section';
+import { PageHeader } from '@/components/ui/page-header';
 
 type StudysetRow = {
   id: string;
@@ -123,12 +124,12 @@ const COLOR_OPTIONS: ColorOption[] = [
   { id: 'slate', swatchClass: 'bg-[#64748b]' },
 ];
 
-const SOFT_SURFACE = 'border border-[#e5e7eb] bg-[#f8fafc] dark:border-zinc-800 dark:bg-zinc-900/40';
+const SOFT_SURFACE = 'border border-border/60 bg-surface-1/50';
 const CALENDAR_CLASSES = {
   day_selected:
-    'bg-[#e5e7eb] text-[#111827] hover:bg-[#d1d5db] hover:text-[#111827] focus:bg-[#d1d5db] focus:text-[#111827] dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600',
-  day_today: 'bg-[#f1f5f9] text-[#0f172a] dark:bg-zinc-800 dark:text-zinc-100',
-  day_range_middle: 'aria-selected:bg-[#e5e7eb] aria-selected:text-[#111827] dark:aria-selected:bg-zinc-700 dark:aria-selected:text-zinc-100',
+    'bg-surface-chip text-foreground hover:bg-surface-chip hover:text-foreground focus:bg-surface-chip focus:text-foreground',
+  day_today: 'bg-surface-1 text-foreground',
+  day_range_middle: 'aria-selected:bg-surface-chip aria-selected:text-foreground',
 };
 
 function toIsoLocalDate(date: Date) {
@@ -591,27 +592,28 @@ export default function StudysetPage() {
         )}
 
         {view === 'create' && (
-          <Card className="flex min-h-[calc(100vh-10rem)] flex-col border-none">
-            <CardHeader className="pb-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <CardTitle>Create studyset</CardTitle>
-                  <CardDescription>{STEP_TITLES[step]}</CardDescription>
+          <div className="flex flex-col gap-6">
+            <PageHeader title="Create Studyset" subtitle={`Step ${step + 1}: ${STEP_TITLES[step]}`} hideBreadcrumb={false} />
+            <Card className="mx-auto w-full max-w-2xl flex flex-col gap-6">
+              <CardHeader className="pb-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div>
+                    <CardTitle className="text-lg">{STEP_TITLES[step]}</CardTitle>
+                  </div>
+                  <div className="ml-auto flex items-center gap-2">
+                    {STEP_TITLES.map((title, index) => (
+                      <div
+                        key={title}
+                        className={`rounded-full px-3 py-1 text-xs ${
+                          index === step ? 'surface-interactive text-foreground' : 'bg-background text-muted-foreground'
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {STEP_TITLES.map((title, index) => (
-                    <div
-                      key={title}
-                      className={`rounded-full px-3 py-1 text-xs ${
-                        index === step ? 'surface-interactive text-foreground' : 'bg-background text-muted-foreground'
-                      }`}
-                    >
-                      {index + 1}. {title}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
 
             <CardContent className="flex flex-1 flex-col space-y-4">
               {step === 0 && (
@@ -621,8 +623,8 @@ export default function StudysetPage() {
                     <Input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
-                      placeholder=""
-                      className={`border-[#d1d5db] bg-[#f8fafc] text-zinc-900 placeholder:text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-100 dark:placeholder:text-zinc-400`}
+                      placeholder="My StudySet"
+                      className="h-9"
                     />
                   </div>
 
@@ -633,7 +635,7 @@ export default function StudysetPage() {
                       {showIconOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
                     </Button>
                     {showIconOptions && (
-                      <div className="grid grid-cols-8 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-12 dark:border-zinc-800 dark:bg-zinc-900/40">
+                      <div className={`grid grid-cols-8 gap-1.5 rounded-lg p-2 md:grid-cols-12 ${SOFT_SURFACE}`}>
                         {ICON_OPTIONS.map((option) => {
                           const ActiveIcon = option.Icon;
                           const selected = selectedIcon === option.id;
@@ -646,8 +648,8 @@ export default function StudysetPage() {
                               title={option.id}
                               className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
                                 selected
-                                  ? 'bg-[#e2e8f0] text-foreground ring-1 ring-[#94a3b8] dark:bg-zinc-700 dark:ring-zinc-500'
-                                  : 'bg-white text-muted-foreground hover:bg-[#f1f5f9] dark:bg-zinc-900 dark:hover:bg-zinc-800'
+                                  ? 'bg-surface-chip text-foreground ring-1 ring-border'
+                                  : 'bg-background text-muted-foreground hover:bg-surface-interactive'
                               }`}
                             >
                               <ActiveIcon className="h-3.5 w-3.5" />
@@ -665,7 +667,7 @@ export default function StudysetPage() {
                       {showColorOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
                     </Button>
                     {showColorOptions && (
-                      <div className="grid grid-cols-10 gap-1.5 rounded-lg border border-[#e5e7eb] bg-[#f8fafc] p-2 md:grid-cols-14 dark:border-zinc-800 dark:bg-zinc-900/40">
+                      <div className={`grid grid-cols-10 gap-1.5 rounded-lg p-2 md:grid-cols-14 ${SOFT_SURFACE}`}>
                         {COLOR_OPTIONS.map((color) => {
                           const selected = selectedColor === color.id;
                           return (
@@ -756,8 +758,8 @@ export default function StudysetPage() {
                     {uploads.length > 0 && (
                       <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
                         {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                            <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                          <div key={`${file.name}-${file.size}`} className="rounded-lg border border-border/60 bg-background p-2">
+                            <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-surface-1">
                               <FileText className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <p className="truncate text-xs">{file.name}</p>
@@ -781,7 +783,7 @@ export default function StudysetPage() {
                       <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
                     </div>
                     <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
+                      <div className="rounded-lg border border-border/60 bg-background p-2">
                         <div className="mb-1 flex items-center justify-between gap-2">
                           <p className="text-xs font-medium">Selected OneDrive files</p>
                           {microsoftConnected && (
@@ -798,8 +800,8 @@ export default function StudysetPage() {
                         )}
                         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                           {sortedOneDriveFiles.map((file) => (
-                            <div key={file.id} className="rounded-lg border border-[#d1d5db] bg-white p-2 dark:border-zinc-800 dark:bg-zinc-900">
-                              <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-[#f1f5f9] dark:bg-zinc-800">
+                            <div key={file.id} className="rounded-lg border border-border/60 bg-background p-2">
+                              <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-surface-1">
                                 <FileText className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <p className="truncate text-xs">{file.name}</p>
@@ -849,6 +851,7 @@ export default function StudysetPage() {
               </div>
             </CardContent>
           </Card>
+            </div>
         )}
     </PageSection>
   );

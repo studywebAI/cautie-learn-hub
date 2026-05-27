@@ -554,6 +554,23 @@ export function ToolInputBox({
                 <Link className="h-4 w-4 text-muted-foreground" />
                 Add a link
               </button>
+              <div className="h-px bg-border my-1" />
+              <button
+                type="button"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm"
+                onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
+              >
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Import from recents
+              </button>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm"
+                onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+              >
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Microsoft 365
+              </button>
             </div>
           )}
         </div>
