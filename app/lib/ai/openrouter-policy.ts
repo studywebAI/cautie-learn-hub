@@ -1,4 +1,4 @@
-export const OPENROUTER_PROVIDER_PREFERENCE = 'openai' as const;
+export const OPENROUTER_PROVIDER_PREFERENCE = 'openrouter' as const;
 export const OPENROUTER_LOCKED_MODEL = 'google/gemini-2.5-flash-lite' as const;
 
 export function resolveOpenRouterApiKey() {
