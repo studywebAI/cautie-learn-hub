@@ -215,8 +215,12 @@ export function ToolInputBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
+  const plusButtonRef = useRef<HTMLButtonElement>(null);
   const toolMenuRef = useRef<HTMLDivElement>(null);
+  const toolButtonRef = useRef<HTMLButtonElement>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
+  const [plusMenuPosition, setPlusMenuPosition] = useState({ top: 0, left: 0 });
+  const [toolMenuPosition, setToolMenuPosition] = useState({ top: 0, right: 0 });
 
   // Ocean animal placeholder texts
   const oceanPlaceholders = [
@@ -313,6 +317,57 @@ export function ToolInputBox({
     el.style.height = 'auto';
     el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
   }, [sourceText]);
+
+  // ---------------------------------------------------------------------------
+  // Position the plus menu (fixed positioning to escape overflow-hidden)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!showPlusMenu || !plusButtonRef.current) return;
+
+    const updatePosition = () => {
+      if (!plusButtonRef.current) return;
+      const rect = plusButtonRef.current.getBoundingClientRect();
+      setPlusMenuPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [showPlusMenu]);
+
+  // ---------------------------------------------------------------------------
+  // Position the tool menu (fixed positioning to escape overflow-hidden)
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!showToolMenu || !toolButtonRef.current) return;
+
+    const updatePosition = () => {
+      if (!toolButtonRef.current) return;
+      const rect = toolButtonRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      setToolMenuPosition({
+        top: rect.bottom + 8,
+        right: viewportWidth - rect.right,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [showToolMenu]);
 
   // ---------------------------------------------------------------------------
   // Close dropdowns on outside click
@@ -582,8 +637,9 @@ export function ToolInputBox({
       {/* Bottom bar */}
       <div className="flex items-center gap-1.5 px-2 pb-2 pt-0">
         {/* + button */}
-        <div className="relative" ref={plusMenuRef}>
+        <div ref={plusMenuRef}>
           <button
+            ref={plusButtonRef}
             type="button"
             onClick={() => { setShowPlusMenu((v) => !v); setShowToolMenu(false); }}
             className="h-8 w-8 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors"
@@ -592,7 +648,10 @@ export function ToolInputBox({
           </button>
 
           {showPlusMenu && (
-            <div className="absolute top-full left-0 mt-2 z-[999] w-52 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
+            <div className="fixed z-[999] w-52 rounded-lg border border-border bg-card shadow-lg py-1 text-sm" style={{
+              top: `${plusMenuPosition.top}px`,
+              left: `${plusMenuPosition.left}px`,
+            }}>
               {/* Hidden file input */}
               <input
                 ref={fileInputRef}
@@ -654,8 +713,9 @@ export function ToolInputBox({
 
         {/* Tool switcher */}
         {!hideToolSwitcher && (
-          <div className="relative" ref={toolMenuRef}>
+          <div ref={toolMenuRef}>
             <button
+              ref={toolButtonRef}
               type="button"
               onClick={() => { setShowToolMenu((v) => !v); setShowPlusMenu(false); }}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors border border-transparent hover:border-border"
@@ -665,7 +725,10 @@ export function ToolInputBox({
             </button>
 
             {showToolMenu && (
-              <div className="absolute top-full right-0 mt-2 z-[999] w-40 rounded-lg border border-border bg-card shadow-lg py-1 text-sm">
+              <div className="fixed z-[999] w-40 rounded-lg border border-border bg-card shadow-lg py-1 text-sm" style={{
+                top: `${toolMenuPosition.top}px`,
+                right: `${toolMenuPosition.right}px`,
+              }}>
                 {TOOLS.map((tool) => (
                   <button
                     key={tool.id}
