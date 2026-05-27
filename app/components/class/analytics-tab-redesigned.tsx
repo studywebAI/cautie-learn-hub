@@ -87,14 +87,14 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-border bg-white px-4 py-8 text-center text-sm text-muted-foreground dark:bg-[hsl(var(--surface-1))]">
+      <div className="rounded-lg border border-border bg-background px-4 py-8 text-center text-sm text-muted-foreground">
         <p>{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
+    <div className="overflow-hidden rounded-[10px] border border-border bg-background">
       {/* Topbar */}
       <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
         <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
