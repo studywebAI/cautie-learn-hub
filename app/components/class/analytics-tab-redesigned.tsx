@@ -96,8 +96,8 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
   return (
     <div className="overflow-hidden rounded-[10px] border border-border bg-background">
       {/* Topbar */}
-      <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
-        <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
+      <div className="flex items-center gap-1.5 border-b border-border bg-muted px-4 py-2.5 text-[12px] text-muted-foreground">
+        <span className="font-semibold text-foreground">
           {isDutch ? 'Analyse' : 'Analytics'}
         </span>
       </div>
@@ -106,15 +106,15 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
         {/* Controls */}
         <div className="mb-4 flex items-center justify-between gap-4">
           {/* Class / Per student toggle */}
-          <div className="flex overflow-hidden rounded-[6px] border border-[#e0e0e0] dark:border-border">
+          <div className="flex overflow-hidden rounded-[6px] border border-border">
             <button
               type="button"
               onClick={() => setView('class')}
               className={cn(
-                'border-r border-[#e0e0e0] px-3 py-[5px] text-[12px] transition-colors dark:border-border',
+                'border-r border-border px-3 py-[5px] text-[12px] transition-colors',
                 view === 'class'
-                  ? 'bg-[#7f8962] text-white'
-                  : 'bg-white text-[#666] hover:bg-[#f5f5f5] dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70'
+                  ? 'bg-[var(--accent-brand)] text-background'
+                  : 'bg-background text-foreground/70 hover:bg-muted'
               )}
             >
               {isDutch ? 'Klas' : 'Class'}
@@ -125,8 +125,8 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
               className={cn(
                 'px-3 py-[5px] text-[12px] transition-colors',
                 view === 'student'
-                  ? 'bg-[#7f8962] text-white'
-                  : 'bg-white text-[#666] hover:bg-[#f5f5f5] dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70'
+                  ? 'bg-[var(--accent-brand)] text-background'
+                  : 'bg-background text-foreground/70 hover:bg-muted'
               )}
             >
               {isDutch ? 'Per leerling' : 'Per student'}
@@ -135,11 +135,11 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
 
           {/* Period selector */}
           <div className="flex items-center gap-2">
-            <span className="text-[12px] text-[#888]">{isDutch ? 'Periode:' : 'Period:'}</span>
+            <span className="text-[12px] text-muted-foreground">{isDutch ? 'Periode:' : 'Period:'}</span>
             <select
               value={period}
               onChange={e => setPeriod(e.target.value as any)}
-              className="rounded-[6px] border border-[#ddd] bg-white px-2.5 py-1.5 text-[12px] text-[#555] dark:border-border dark:bg-[hsl(var(--surface-2))] dark:text-foreground/70"
+              className="rounded-[6px] border border-border bg-background px-2.5 py-1.5 text-[12px] text-foreground/70"
             >
               <option value="term">{isDutch ? 'Dit semester' : 'This term'}</option>
               <option value="month">{isDutch ? 'Vorige maand' : 'Last month'}</option>
@@ -150,14 +150,14 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
 
         {/* Analytics table */}
         {subjects.length === 0 ? (
-          <div className="rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] px-4 py-8 text-center text-[13px] text-[#aaa] dark:border-border dark:bg-[hsl(var(--surface-2))]">
+          <div className="rounded-[8px] border border-border bg-muted px-4 py-8 text-center text-[13px] text-muted-foreground">
             {isDutch ? 'Geen gegevens beschikbaar.' : 'No data available.'}
           </div>
         ) : (
-          <div className="rounded-[8px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
+          <div className="rounded-[8px] border border-border bg-background">
             {/* Column headers */}
             <div
-              className="grid gap-2 border-b border-[#ebebeb] px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-[#bbb]"
+              className="grid gap-2 border-b border-border px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60"
               style={{ gridTemplateColumns: '1fr 40px 80px 48px' }}
             >
               <div>{isDutch ? 'Vak' : 'Subject'}</div>
@@ -170,33 +170,33 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
             {subjects.map((s, i) => {
               const pct = s.avg ? Math.min(100, (s.avg / 10) * 100) : 0;
               const trendColor =
-                s.trend > 0.05 ? 'text-[#7f8962]' : s.trend < -0.05 ? 'text-red-600' : 'text-[#aaa]';
+                s.trend > 0.05 ? 'text-[var(--accent-brand)]' : s.trend < -0.05 ? 'text-red-600' : 'text-muted-foreground';
               const trendLabel = s.trend > 0 ? `+${s.trend.toFixed(1)}` : s.trend.toFixed(1);
 
               return (
                 <div
                   key={s.name}
                   className={cn(
-                    'grid items-center gap-2 px-4 py-[9px] transition-colors hover:bg-[hsl(var(--interactive-hover))]',
-                    i > 0 && 'border-t border-[#f0f0f0]'
+                    'grid items-center gap-2 px-4 py-[9px] transition-colors hover:bg-muted/50',
+                    i > 0 && 'border-t border-border/30'
                   )}
                   style={{ gridTemplateColumns: '1fr 40px 80px 48px' }}
                 >
                   {/* Subject name */}
-                  <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                  <div className="text-[13px] font-semibold text-foreground">
                     {s.name}
                   </div>
 
                   {/* Average */}
-                  <div className="text-right text-[14px] font-bold text-[#7f8962]">
+                  <div className="text-right text-[14px] font-bold text-[var(--accent-brand)]">
                     {s.avg !== null ? s.avg.toFixed(1) : '—'}
                   </div>
 
                   {/* Progress bar */}
                   <div className="flex items-center">
-                    <div className="h-[5px] w-full overflow-hidden rounded-full bg-[#ebebeb]">
+                    <div className="h-[5px] w-full overflow-hidden rounded-full bg-muted">
                       <div
-                        className="h-full rounded-full bg-[#7f8962] transition-all"
+                        className="h-full rounded-full bg-[var(--accent-brand)] transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -214,7 +214,7 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
 
         {/* Alert box (if any subject is below 5.5) */}
         {subjects.some(s => (s.avg ?? 0) < 5.5) && (
-          <div className="mt-4 rounded-[6px] bg-[#fdf3e3] px-3 py-2.5 text-[12px] text-[#c87d25] dark:bg-[hsl(var(--accent-brand)/0.1)]">
+          <div className="mt-4 rounded-[6px] bg-[var(--accent-brand)]/10 px-3 py-2.5 text-[12px] text-[var(--accent-brand)]">
             <p className="font-semibold">
               {isDutch
                 ? 'Let op: Sommige vakken scoren onder gemiddeld.'

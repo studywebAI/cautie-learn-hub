@@ -38,7 +38,7 @@ function fmtDate(iso: string, loc: Locale) {
 
 function gradeColor(g: number | null): string {
   if (g === null) return 'text-muted-foreground';
-  if (g >= 7) return 'text-[#7f8962]';
+  if (g >= 7) return 'text-[var(--accent-brand)]';
   if (g >= 5.5) return 'text-amber-600';
   return 'text-red-600';
 }
@@ -75,7 +75,7 @@ function GradeDistChart({ grades, isDutch }: { grades: StudentGrade[]; isDutch: 
             <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: '#bbb' }} axisLine={false} tickLine={false} />
             <Tooltip
               cursor={{ fill: 'transparent' }}
-              contentStyle={{ fontSize: 12, border: '1px solid #e4e4e4', borderRadius: 6, padding: '4px 10px' }}
+              contentStyle={{ fontSize: 12, border: '1px solid var(--border)', borderRadius: 6, padding: '4px 10px', backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
               formatter={(value: number, _name: string, entry: any) => [
                 `${value} ${isDutch ? 'leerlingen' : 'students'} (${entry.payload.range})`,
                 '',
@@ -237,7 +237,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="flex h-8 items-center gap-1.5 rounded-md bg-[#7f8962] px-3 text-[12px] font-semibold text-white hover:opacity-90"
+          className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent-brand)] px-3 text-[12px] font-semibold text-background hover:opacity-90"
         >
           <Plus className="h-3.5 w-3.5" />
           {isDutch ? 'Nieuwe cijferlijst' : 'New grade set'}
@@ -279,7 +279,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
       {/* Error */}
       {error && (
         <div className="rounded-md border border-border bg-[hsl(var(--surface-1))] px-4 py-3 text-sm text-muted-foreground">
-          {error} <button className="ml-2 text-[#7f8962] underline" onClick={() => void loadSets()}>Retry</button>
+          {error} <button className="ml-2 text-[var(--accent-brand)] underline" onClick={() => void loadSets()}>Retry</button>
         </div>
       )}
 
@@ -307,7 +307,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                       {gs.subject && <>{gs.subject} · </>}
                       <span className={cn('font-semibold',
-                        gs.status === 'published' ? 'text-[#7f8962]' : 'text-amber-600'
+                        gs.status === 'published' ? 'text-[var(--accent-brand)]' : 'text-amber-600'
                       )}>
                         {gs.status === 'published' ? (isDutch ? 'Gepubliceerd' : 'Published') : (isDutch ? 'Concept' : 'Draft')}
                       </span>
@@ -344,7 +344,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                       {isEditing && (
                         <>
                           <button type="button" onClick={() => void saveGrades(gs.id)}
-                            className="h-7 rounded-md bg-[#7f8962] px-2.5 text-[11px] font-semibold text-white hover:opacity-90">
+                            className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[11px] font-semibold text-background hover:opacity-90">
                             {isDutch ? 'Opslaan' : 'Save'}
                           </button>
                           <button type="button" onClick={() => setEditingSet(null)}
@@ -356,7 +356,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                       {gs.status === 'draft' && !isEditing && (
                         <button type="button" disabled={publishing === gs.id}
                           onClick={() => void publishSet(gs.id)}
-                          className="h-7 rounded-md bg-[#7f8962] px-2.5 text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                          className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[11px] font-semibold text-background hover:opacity-90 disabled:opacity-50">
                           {publishing === gs.id ? '…' : (isDutch ? 'Publiceren' : 'Publish')}
                         </button>
                       )}
@@ -539,7 +539,7 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
           </div>
           {calcResult !== null && (
             <div className={cn('mt-3 rounded-md px-3 py-2 text-[13px] font-semibold',
-              calcResult <= 10 ? 'bg-[#edf1e5] text-[#7f8962]' : 'bg-[#fde9e8] text-red-600'
+              calcResult <= 10 ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]' : 'bg-red-600/10 text-red-600'
             )}>
               {calcResult <= 10
                 ? (isDutch ? `Je hebt minimaal een ${calcResult} nodig.` : `You need at least a ${calcResult}.`)
@@ -604,8 +604,8 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                   onClick={() => setExpandedSubject(isOpen ? null : subject)}
                   className={cn('flex w-full items-center gap-3 px-3.5 py-[11px] text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]', i > 0 && 'border-t border-border/40')}>
                   <span className="flex-1 text-[13px] font-semibold">{subject}</span>
-                  <div className="h-[5px] w-24 overflow-hidden rounded-full bg-[#ebebeb]">
-                    <div className="h-full rounded-full bg-[#7f8962]" style={{ width: `${pct}%` }} />
+                  <div className="h-[5px] w-24 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-[var(--accent-brand)]" style={{ width: `${pct}%` }} />
                   </div>
                   <span className={cn('w-10 text-right text-[16px] font-bold', gradeColor(avg))}>
                     {avg !== null ? avg : '—'}

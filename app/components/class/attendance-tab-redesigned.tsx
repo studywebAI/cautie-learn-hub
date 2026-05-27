@@ -252,7 +252,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
               onClick={() => setViewMode(v)}
               className={cn(
                 'px-3 py-1.5 text-[12px] transition-colors',
-                viewMode === v ? 'bg-[var(--accent-brand)] text-white' : 'bg-white text-muted-foreground hover:bg-[hsl(var(--interactive-hover))]',
+                viewMode === v ? 'bg-[var(--accent-brand)] text-background' : 'bg-background text-muted-foreground hover:bg-muted',
                 v !== 'class' && 'border-l border-border'
               )}
             >
@@ -278,8 +278,8 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
                   className={cn(
                     'rounded-full border px-2.5 py-1 text-[11px] transition-colors',
                     filter === f
-                      ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
-                      : 'border-border bg-white text-muted-foreground hover:border-[var(--accent-brand)]'
+                      ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-background'
+                      : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]'
                   )}
                 >
                   {label}
@@ -294,7 +294,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
           <select
             value={selectedStudent || ''}
             onChange={e => setSelectedStudent(e.target.value || null)}
-            className="h-8 rounded-md border border-border bg-white px-2 text-[12px] text-foreground"
+            className="h-8 rounded-md border border-border bg-background px-2 text-[12px] text-foreground"
           >
             <option value="">{isDutch ? 'Selecteer leerling…' : 'Select student…'}</option>
             {data.students.sort((a, b) => a.name.localeCompare(b.name)).map(s => (
@@ -458,8 +458,8 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
                     className={cn(
                       'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
                       recordType === t
-                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
-                        : 'border-border bg-white text-muted-foreground hover:border-[var(--accent-brand)]'
+                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-background'
+                        : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]'
                     )}
                   >
                     {isDutch ? EVENT_LABELS[t].nl : EVENT_LABELS[t].en}

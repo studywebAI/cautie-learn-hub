@@ -180,7 +180,7 @@ export function LogsTabRedesigned({
               className={cn(
                 'px-3 py-1.5 rounded-md text-[12px] font-500 transition-colors border',
                 filter === type
-                  ? 'bg-[#7f8962] text-white border-[#7f8962]'
+                  ? 'bg-[var(--accent-brand)] text-background border-[var(--accent-brand)]'
                   : 'bg-background border-border text-foreground/70 hover:border-foreground/50'
               )}
             >
