@@ -213,7 +213,7 @@ function NotesPageContent() {
   const [noteFontSize, setNoteFontSize] = useState(18);
   const [noteFontWeight, setNoteFontWeight] = useState(420);
   const [noteLineHeight, setNoteLineHeight] = useState(1.65);
-  const [noteTextColor, setNoteTextColor] = useState('#181818');
+  const [noteTextColor, setNoteTextColor] = useState('currentColor');
   const [selectedNoteBlocks, setSelectedNoteBlocks] = useState<string[]>(['bullets', 'key-terms', 'summary']);
   const [selectedAutoHighlightTargets, setSelectedAutoHighlightTargets] = useState<string[]>(['terms']);
   const [autoHighlightColor, setAutoHighlightColor] = useState('rgba(250, 204, 21, 0.38)');
@@ -1468,13 +1468,14 @@ function NotesPageContent() {
           </div>
         </div>
       </div>
+      </div>
     );
   }
 
   const sidebar = (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Title</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
@@ -1489,9 +1490,9 @@ function NotesPageContent() {
         </div>
       ) : null}
 
-      <div className="space-y-2 border-t border-[#d0d0d0] pt-4">
+      <div className="space-y-2 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Length</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Length</p>
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider
@@ -1505,7 +1506,7 @@ function NotesPageContent() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">Save to recents</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
           onCheckedChange={setSaveToRecents}
@@ -1872,7 +1873,6 @@ function NotesPageContent() {
               </button>
             </div>
           </div>
-        </div>
         </div>
       </div>
     );
