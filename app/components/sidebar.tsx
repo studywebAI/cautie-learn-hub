@@ -52,6 +52,11 @@ const SidebarProfile = dynamic(
   { ssr: false }
 );
 
+const RecentsSidebar = dynamic(
+  () => import('./recents-sidebar').then((m) => m.RecentsSidebar),
+  { ssr: false }
+);
+
 export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1224,7 +1229,7 @@ export function AppSidebar() {
   // Tablet + desktop: regular sidebar with trigger
   return (
     <Sidebar
-      className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300")}
+      className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300 rounded-r-2xl")}
       collapsible="icon"
       onMouseEnter={() => { if (sidebarState === 'collapsed') setOpen(true); }}
       onMouseLeave={() => { if (sidebarState === 'expanded') setOpen(false); }}
@@ -1314,6 +1319,11 @@ export function AppSidebar() {
             </SidebarMenu>
           </>
         )}
+
+        {/* Recents section — only shows when expanded */}
+        <div className="group-data-[collapsible=icon]:hidden mt-4">
+          <RecentsSidebar />
+        </div>
       </SidebarContent>
 
       <SidebarFooter className="px-2 pt-1 pb-2 flex flex-col gap-2">

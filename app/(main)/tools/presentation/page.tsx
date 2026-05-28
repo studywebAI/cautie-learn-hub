@@ -1438,15 +1438,6 @@ function PresentationPageContent() {
                         <Upload className="mr-1.5 h-3.5 w-3.5" />
                         Upload
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 px-3 text-xs"
-                        onClick={() => setImportOpen((prev) => !prev)}
-                      >
-                        <FileUp className="mr-1.5 h-3.5 w-3.5" />
-                        {importOpen ? 'Hide' : 'Import'}
-                      </Button>
                     </div>
                     <Button
                       className="h-9 px-4 text-xs"
@@ -1472,10 +1463,6 @@ function PresentationPageContent() {
                 <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => uploadInputRef.current?.click()}>
                   <Upload className="mr-1.5 h-3.5 w-3.5" />
                   Upload
-                </Button>
-                <Button size="sm" variant="outline" className="h-9 px-3 text-xs" onClick={() => setImportOpen((prev) => !prev)}>
-                  <FileUp className="mr-1.5 h-3.5 w-3.5" />
-                  Import
                 </Button>
               </div>
               <textarea

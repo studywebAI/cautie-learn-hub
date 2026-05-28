@@ -25,12 +25,12 @@ type ToolMeta = {
 };
 
 const ALL_TOOLS: ToolMeta[] = [
-  { id: 'flashcards', label: 'Flashcard Maker', href: '/tools/flashcards', icon: FlashcardIcon },
-  { id: 'quiz',       label: 'Quiz Generator',  href: '/tools/quiz',        icon: BrainCircuit },
-  { id: 'notes',      label: 'Notes',           href: '/tools/notes',       icon: NotebookPen },
-  { id: 'mindmap',    label: 'Mindmap',         href: '/tools/wordweb',     icon: Workflow },
-  { id: 'timeline',   label: 'Timeline',        href: '/tools/timeline',    icon: TimelineIcon },
-  { id: 'studyset',   label: 'Studyset',        href: '/tools/studyset',    icon: FolderKanban },
+  { id: 'flashcards', label: 'Flashcards', href: '/tools/flashcards', icon: FlashcardIcon },
+  { id: 'quiz',       label: 'Quiz',       href: '/tools/quiz',        icon: BrainCircuit },
+  { id: 'notes',      label: 'Notes',      href: '/tools/notes',       icon: NotebookPen },
+  { id: 'mindmap',    label: 'Mindmap',    href: '/tools/wordweb',     icon: Workflow },
+  { id: 'timeline',   label: 'Timeline',   href: '/tools/timeline',    icon: TimelineIcon },
+  { id: 'studyset',   label: 'Studyset',   href: '/tools/studyset',    icon: FolderKanban },
 ];
 
 type ToolResult = ToolMeta & {

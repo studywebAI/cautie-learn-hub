@@ -29,6 +29,7 @@ export function PageHeader({
         'border-b border-border/40 bg-gradient-to-br from-background to-background/95',
         'px-4 md:px-6 py-3 md:py-4',
         'flex flex-col gap-2.5',
+        'rounded-b-2xl',
         className
       )}
     >
