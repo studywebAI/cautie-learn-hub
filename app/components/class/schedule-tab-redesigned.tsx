@@ -400,10 +400,11 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <button
                 type="button"
                 onClick={() => setViewMode('week')}
+                style={viewMode === 'week' ? { backgroundColor: '#7f8962', color: '#ffffff' } : undefined}
                 className={cn(
                   'border-r border-border px-3 py-[5px] text-[12px] transition-colors',
                   viewMode === 'week'
-                    ? 'bg-[var(--accent-brand)] text-white'
+                    ? 'border-[var(--accent-brand)]'
                     : 'bg-background text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -412,10 +413,11 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <button
                 type="button"
                 onClick={() => setViewMode('day')}
+                style={viewMode === 'day' ? { backgroundColor: '#7f8962', color: '#ffffff' } : undefined}
                 className={cn(
                   'px-3 py-[5px] text-[12px] transition-colors',
                   viewMode === 'day'
-                    ? 'bg-[var(--accent-brand)] text-white'
+                    ? 'border-[var(--accent-brand)]'
                     : 'bg-background text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -446,7 +448,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                 <button
                   type="button"
                   onClick={() => setShowAddForm(!showAddForm)}
-                  className="flex items-center gap-1.5 rounded-[6px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] px-3 py-[5px] text-[12px] font-semibold text-white"
+                  style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
+                  className="flex items-center gap-1.5 rounded-[6px] border border-[var(--accent-brand)] px-3 py-[5px] text-[12px] font-semibold"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {isDutch ? 'Toevoegen' : 'Add slot'}
@@ -527,7 +530,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                   type="button"
                   onClick={() => void createSlot()}
                   disabled={saving}
-                  className="rounded-[6px] bg-[var(--accent-brand)] px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                  style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
+                  className="rounded-[6px] px-4 py-1.5 text-[12px] font-semibold disabled:opacity-50"
                 >
                   {saving ? '…' : (isDutch ? 'Opslaan' : 'Save')}
                 </button>
@@ -765,7 +769,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
             <Button
               onClick={() => void saveEditSlot()}
               disabled={saving}
-              className="bg-[var(--accent-brand)] text-white hover:opacity-90"
+              style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
+              className="hover:opacity-90"
             >
               {saving ? '…' : (isDutch ? 'Opslaan' : 'Save changes')}
             </Button>
