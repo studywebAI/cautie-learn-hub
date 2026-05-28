@@ -15,7 +15,7 @@ set role = coalesce(nullif(trim(role), ''), 'student')
 where role is null or trim(role) = '';
 
 alter table if exists public.class_members
-  alter column role set default 'student';
+  alter column role saet default 'student';
 
 alter table if exists public.class_members
   alter column role set not null;
