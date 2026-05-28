@@ -46,7 +46,7 @@ export async function GET(
   try {
     const { subjectId, chapterId } = await params;
     subjectsLog('chapter-overview', requestId, 'request.start', { subjectId, chapterId });
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();

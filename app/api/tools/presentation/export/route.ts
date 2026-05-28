@@ -349,7 +349,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (destination === 'google') {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const supabase = await createClient(cookieStore);
       const {
         data: { user },
@@ -389,7 +389,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return validation.error
     }
     const { action, class_ids: classIds, data } = validation.data
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

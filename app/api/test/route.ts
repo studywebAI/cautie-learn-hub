@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // GET test subjects functionality
 export async function GET() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

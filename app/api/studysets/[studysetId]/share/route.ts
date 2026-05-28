@@ -11,7 +11,7 @@ export async function POST(
 ) {
   try {
     const { studysetId } = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

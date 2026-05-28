@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 // Returns the authenticated student's own grades (published grade sets only)
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

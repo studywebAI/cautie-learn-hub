@@ -12,7 +12,7 @@ export async function GET(
     const { classId } = await params
     const subjectId = req.nextUrl.searchParams.get('subjectId')
     
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -162,7 +162,7 @@ export async function POST(
 
     const normalizedCategory = allowedCategories.has(category) ? category : 'test'
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   log('GET - Starting request...')
   
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     const { name, description, subject_title } = validation.data;
     log('POST - Validated data:', { name, description, subject_title });
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();

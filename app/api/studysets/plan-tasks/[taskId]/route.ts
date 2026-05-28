@@ -13,7 +13,7 @@ export async function PATCH(
 ) {
   try {
     const { taskId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const body = await req.json().catch(() => ({}))
     const nextCompleted = Boolean(body?.completed)

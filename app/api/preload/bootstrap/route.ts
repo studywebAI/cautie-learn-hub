@@ -30,7 +30,7 @@ function parseClassIds(raw: string | null): string[] {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;

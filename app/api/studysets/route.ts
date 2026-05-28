@@ -29,7 +29,7 @@ function getTaskHref(taskType: string, studysetId: string, taskId: string) {
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const {
@@ -258,7 +258,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const body = await req.json().catch(() => ({}))
 

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -75,7 +75,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -45,7 +45,7 @@ export async function GET(
 ) {
   const requestId = makeRequestId('chapter_paragraphs');
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
     subjectsLog('chapter-paragraphs', requestId, 'request.start', {
@@ -181,7 +181,7 @@ export async function POST(
     }
     const { title } = validation.data;
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
 

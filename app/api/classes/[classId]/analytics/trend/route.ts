@@ -100,7 +100,7 @@ export async function GET(
   { params }: { params: { classId: string } }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();

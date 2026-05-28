@@ -12,7 +12,7 @@ const defaultSettings = {
 export async function GET(_: Request, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const { classId } = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,7 +37,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ classId: s
 export async function PATCH(request: Request, { params }: { params: Promise<{ classId: string }> }) {
   try {
     const { classId } = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

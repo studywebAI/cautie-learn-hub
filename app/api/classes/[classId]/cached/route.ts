@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
     const cacheService = new CacheService();
     const changeDetection = new ChangeDetectionService();

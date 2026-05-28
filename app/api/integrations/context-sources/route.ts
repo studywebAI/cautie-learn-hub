@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     const rateLimit = checkRateLimit(request, { key: 'integration-sources-get', limit: 80, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = checkRateLimit(request, { key: 'integration-sources-post', limit: 20, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest) {
     const rateLimit = checkRateLimit(request, { key: 'integration-sources-delete', limit: 40, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

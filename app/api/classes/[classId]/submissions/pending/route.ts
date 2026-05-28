@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { classId } = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     // Get current user

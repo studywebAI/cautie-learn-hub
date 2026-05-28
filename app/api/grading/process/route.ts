@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     // Get one pending grading job

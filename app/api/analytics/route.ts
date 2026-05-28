@@ -11,7 +11,7 @@ const CACHE_DURATION = 60 * 60 * 1000 // 1 hour
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();

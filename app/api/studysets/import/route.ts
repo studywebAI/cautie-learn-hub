@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const parsed = verifyStudysetShareToken(token);
     if (!parsed) return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 });
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

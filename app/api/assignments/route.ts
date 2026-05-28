@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 // GET assignments for current user
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assignment title is required' }, { status: 400 });
     }
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

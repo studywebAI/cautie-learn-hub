@@ -91,7 +91,7 @@ function sanitizeShareHref(input: unknown): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
     if (!payload) return NextResponse.json({ error: 'Invalid or expired link' }, { status: 400 });
 
     if (payload.kind === 'tool_run' && payload.id) {
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const supabase = await createClient(cookieStore);
       const { data: run, error } = await (supabase as any)
         .from('tool_runs')

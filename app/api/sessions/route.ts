@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // POST - Start a new session or end a session (via sendBeacon)
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 // PUT - Stop a session
 export async function PUT(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

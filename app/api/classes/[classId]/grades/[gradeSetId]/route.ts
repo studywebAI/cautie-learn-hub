@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const { classId, gradeSetId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -137,7 +137,7 @@ export async function PUT(
     const body = await req.json()
     const { action, title, description, category, weight, status, release_date, student_grades, grading_preset_id } = body
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -378,7 +378,7 @@ export async function DELETE(
   try {
     const { classId, gradeSetId } = await params
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

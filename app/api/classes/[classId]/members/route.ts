@@ -24,7 +24,7 @@ export async function GET(
   try {
     const { classId } = await params
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -113,7 +113,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'display_name is too long' }, { status: 400 })
     }
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -174,7 +174,7 @@ export async function DELETE(
 ) {
   try {
     const { classId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

@@ -17,7 +17,7 @@ export async function GET(
   try {
     const resolvedParams = await params
     const classId = resolvedParams.classId
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -104,7 +104,7 @@ export async function POST(
     }
     const { title, subject_id } = validation.data;
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()

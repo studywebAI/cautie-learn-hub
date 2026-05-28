@@ -27,7 +27,7 @@ export async function GET(
   logSubjectDetail('GET - Subject detail requested', { subjectId, url: request.url })
 
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()

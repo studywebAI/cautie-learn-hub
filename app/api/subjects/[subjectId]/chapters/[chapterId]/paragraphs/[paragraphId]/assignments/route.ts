@@ -13,7 +13,7 @@ export async function GET(
 ) {
   const requestId = makeRequestId('paragraph_assignments');
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
     subjectsLog('paragraph-assignments', requestId, 'request.start', {
@@ -132,7 +132,7 @@ export async function POST(
   { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
 

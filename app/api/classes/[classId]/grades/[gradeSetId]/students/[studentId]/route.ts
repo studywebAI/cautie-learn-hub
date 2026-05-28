@@ -12,7 +12,7 @@ export async function POST(
     const body = await req.json();
     const { grade } = body;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     // Auth check
@@ -98,7 +98,7 @@ export async function GET(
   try {
     const { gradeSetId, studentId } = await params;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: grade, error } = await supabase

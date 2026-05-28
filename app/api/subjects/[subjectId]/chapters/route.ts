@@ -41,7 +41,7 @@ export async function GET(
 ) {
   const requestId = makeRequestId('subject_chapters');
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
     subjectsLog('subject-chapters', requestId, 'request.start', {
@@ -147,7 +147,7 @@ export async function POST(
   { params }: { params: Promise<{ subjectId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params;
 

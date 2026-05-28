@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: { classId: string; itemId: string } }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const {
@@ -47,7 +47,7 @@ export async function POST(
   { params }: { params: { classId: string; itemId: string } }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const {

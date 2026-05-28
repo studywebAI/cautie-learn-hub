@@ -147,7 +147,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Join code is required' }, { status: 400 });
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { classData, matchedBy, lookupErrors } = await findClassByCode(supabase, code)
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
   }
   const classCode = sanitizeCode(validation.data.class_code);
   const subjectTitleInput = sanitizeCode(validation.data.subject_title);
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();

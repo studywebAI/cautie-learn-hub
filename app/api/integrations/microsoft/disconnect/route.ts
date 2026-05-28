@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const rateLimit = checkRateLimit(request, { key: 'ms-disconnect', limit: 15, windowMs: 60_000 });
     if (!rateLimit.ok) return rateLimit.response;
 
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

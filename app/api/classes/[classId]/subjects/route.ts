@@ -13,7 +13,7 @@ type SubjectCreateRequest = {
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ classId: string }> }) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { classId } = await params;
 
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ clas
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ classId: string }> }) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { classId } = await params;
 

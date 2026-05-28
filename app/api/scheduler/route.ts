@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 // Helper function to check and update assignment visibility/locking based on schedules
 async function checkAndUpdateAssignments() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const now = new Date().toISOString();

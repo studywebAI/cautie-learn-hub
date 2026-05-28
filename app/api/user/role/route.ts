@@ -10,7 +10,7 @@ function logRole(...args: any[]) {
 
 export async function GET() {
   logRole('GET - Starting role lookup')
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();

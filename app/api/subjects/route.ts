@@ -140,7 +140,7 @@ export async function GET(req: Request) {
     const requestUrl = new URL(req.url);
     const classIdFilter = requestUrl.searchParams.get('classId');
     const isLite = requestUrl.searchParams.get('lite') === '1';
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -428,7 +428,7 @@ export async function POST(request: NextRequest) {
       classIdsPreview: Array.isArray(classIds) ? classIds.slice(0, 5) : []
     })
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     // Get current user
@@ -584,7 +584,7 @@ export async function PUT(request: NextRequest) {
     }
     const { id, title, description, class_ids: classIds } = validation.data;
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     // Update the subject in Supabase
@@ -690,7 +690,7 @@ export async function DELETE(request: NextRequest) {
     }
     const { id } = validation.data;
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     // Delete class-subject links first

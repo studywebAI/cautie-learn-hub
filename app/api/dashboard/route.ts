@@ -9,7 +9,7 @@ const dashboardResponseCache = new Map<string, { updatedAt: number; payload: any
 export async function GET(request: Request) {
   try {
     const source = new URL(request.url).searchParams.get('source') || 'unknown';
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

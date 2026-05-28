@@ -12,7 +12,7 @@ export async function GET(
 ) {
   const resolvedParams = await params
   const { classId } = resolvedParams
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -46,7 +46,7 @@ export async function POST(
   const resolvedParams = await params
   const { classId } = resolvedParams
   const { name, description, weight, color } = await request.json()
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()

@@ -51,7 +51,7 @@ export async function GET(
       subjectId,
       url: request.url,
     });
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();

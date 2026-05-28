@@ -71,7 +71,7 @@ export async function GET(
   const resolvedParams = await params;
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -143,7 +143,7 @@ export async function POST(
   const resolvedParams = await params
 
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

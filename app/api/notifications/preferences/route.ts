@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 // GET user notification preferences
 export async function GET(request: Request) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
 // POST/PUT update user notification preferences
 export async function POST(request: NextRequest) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (!rateLimit.ok) return rateLimit.response;
 
     const body = BodySchema.parse(await request.json().catch(() => ({})));
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

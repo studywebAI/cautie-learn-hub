@@ -10,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const { interventionId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const {

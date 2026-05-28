@@ -12,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ answerId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser()

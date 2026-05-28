@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { classId } = await params;
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createClient(cookieStore);
 
     // Get class members

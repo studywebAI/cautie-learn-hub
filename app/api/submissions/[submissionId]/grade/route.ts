@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { grade, rubricScores, feedback } = validation.data
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -136,7 +136,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ subm
   const resolvedParams = await params
   const { submissionId } = resolvedParams
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()

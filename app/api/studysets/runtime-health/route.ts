@@ -38,7 +38,7 @@ const REQUIRED_COLUMNS: Record<string, string[]> = {
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

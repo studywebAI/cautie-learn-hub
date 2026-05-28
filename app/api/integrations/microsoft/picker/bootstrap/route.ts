@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
   if (!rateLimit.ok) return rateLimit.response;
 
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

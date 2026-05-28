@@ -18,7 +18,7 @@ export async function DELETE(
   const { searchParams } = new URL(request.url);
   const guestId = searchParams.get('guestId');
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -97,7 +97,7 @@ export async function PATCH(
     settings,
   } = body;
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -203,7 +203,7 @@ export async function PUT(
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
   const { title, due_date, chapter_id, block_id, guestId, type, content, files, is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = await request.json();
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();

@@ -57,7 +57,7 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -161,7 +161,7 @@ export async function PATCH(
 ) {
   try {
     const { classId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const body = await req.json()
 
@@ -258,7 +258,7 @@ export async function POST(
 ) {
   try {
     const { classId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const body = await req.json()
 

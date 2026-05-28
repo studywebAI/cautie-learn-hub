@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

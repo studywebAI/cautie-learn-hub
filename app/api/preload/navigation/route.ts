@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       path: request.nextUrl.pathname,
       classId: request.nextUrl.searchParams.get('classId') || null,
     })
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const { data: auth } = await supabase.auth.getUser()
     const user = auth?.user

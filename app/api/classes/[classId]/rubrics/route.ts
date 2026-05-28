@@ -11,7 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ classId: string }> }
 ) {
   const { classId } = await params
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -37,7 +37,7 @@ export async function POST(
 ) {
   const { classId } = await params
   const { name, description, items } = await request.json()
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const { data: { user } } = await supabase.auth.getUser()

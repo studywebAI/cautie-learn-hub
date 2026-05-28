@@ -11,7 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ assignmentId: string; subjectId: string; chapterId: string; paragraphId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params
 

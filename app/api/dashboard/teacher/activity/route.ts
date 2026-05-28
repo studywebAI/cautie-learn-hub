@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 // Returns recent activity items for the teacher's dashboard feed
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

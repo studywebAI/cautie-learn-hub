@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       path: request.nextUrl.pathname,
       search: request.nextUrl.search,
     });
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

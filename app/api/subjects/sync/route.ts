@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const startedAt = Date.now();
   const durationMs = () => Date.now() - startedAt;
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const { data: auth } = await supabase.auth.getUser();
     const user = auth?.user;

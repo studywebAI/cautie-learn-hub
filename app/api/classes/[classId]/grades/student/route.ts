@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { classId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()

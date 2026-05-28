@@ -52,7 +52,7 @@ export async function GET(
   try {
     const { subjectId, chapterId, paragraphId } = await params;
     subjectsLog('paragraph-overview', requestId, 'request.start', { subjectId, chapterId, paragraphId });
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
 
     const { data: auth } = await supabase.auth.getUser();

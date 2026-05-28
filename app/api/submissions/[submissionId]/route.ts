@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ submissionId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params
     const submissionId = resolvedParams.submissionId
@@ -66,7 +66,7 @@ export async function PUT(
   { params }: { params: Promise<{ submissionId: string }> }
 ) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const resolvedParams = await params
     const submissionId = resolvedParams.submissionId

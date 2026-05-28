@@ -13,7 +13,7 @@ function getTaskHref(taskType: string, studysetId: string, taskId: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const {

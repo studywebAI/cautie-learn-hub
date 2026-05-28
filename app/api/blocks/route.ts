@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 // GET blocks for a user (standalone endpoint for browsing blocks)
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
     const { searchParams } = new URL(request.url)
     const paragraphId = searchParams.get('paragraph_id')
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
     const { type, data: blockData, paragraph_id, assignment_id, position, locked, show_feedback, ai_grading_override } = validation.data;
 
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: userError } = await supabase.auth.getUser()

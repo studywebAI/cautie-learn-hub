@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     
     // Get current user
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 // GET to check current subscription status
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     
     const { data: { user }, error: authError } = await supabase.auth.getUser();

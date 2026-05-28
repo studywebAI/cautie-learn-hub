@@ -12,7 +12,7 @@ export async function POST(
 ) {
   try {
     const { classId, itemId } = await params
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // POST /api/extension/capture - Handle browser extension captures
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
 
     // Verify user is authenticated

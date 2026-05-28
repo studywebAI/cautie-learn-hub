@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = BodySchema.parse(await request.json().catch(() => ({})));
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
     const {
       data: { user },

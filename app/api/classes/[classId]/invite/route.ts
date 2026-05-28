@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { studentEmails, teacherEmails, scheduledTime } = validation.data
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   // Check authentication
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 export async function GET(request: NextRequest, { params }: { params: Promise<{ classId: string }> }) {
   const { classId } = await params;
   
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   // Check authentication
