@@ -364,14 +364,14 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
   if (loading) {
     return (
       <div className="flex h-48 items-center justify-center">
-        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-[#7f8962]" />
+        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-[var(--accent-brand)]" />
       </div>
     );
   }
 
   if (!enabled) {
     return (
-      <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white p-8 text-center dark:border-border dark:bg-[hsl(var(--surface-1))]">
+      <div className="overflow-hidden rounded-[10px] border border-border bg-background p-8 text-center">
         <p className="text-[13px] text-muted-foreground">
           {isDutch ? 'Rooster is niet ingeschakeld voor deze klas.' : 'Schedule is not enabled for this class.'}
         </p>
@@ -382,10 +382,10 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
   /* ── Main render ── */
   return (
     <>
-      <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
+      <div className="overflow-hidden rounded-[10px] border border-border bg-background">
         {/* Topbar */}
-        <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
-          <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
+        <div className="flex items-center gap-1.5 border-b border-border bg-muted/50 px-4 py-2.5 text-[12px] text-muted-foreground">
+          <span className="font-semibold text-foreground">
             {isDutch ? 'Rooster' : 'Schedule'}
           </span>
           <span>·</span>
@@ -396,7 +396,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
           {/* Controls row */}
           <div className="mb-4 flex items-center justify-between">
             {/* Week / Day toggle */}
-            <div className="flex overflow-hidden rounded-[6px] border border-[#e0e0e0] dark:border-border">
+            <div className="flex overflow-hidden rounded-[6px] border border-border">
               <button
                 type="button"
                 onClick={() => setViewMode('week')}
@@ -466,8 +466,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
 
           {/* ── Add slot form ── */}
           {showAddForm && isTeacher && (
-            <div className="mb-4 rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-4 dark:border-border dark:bg-[hsl(var(--surface-2))]">
-              <p className="mb-3 text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+            <div className="mb-4 rounded-[8px] border border-border bg-muted/30 p-4">
+              <p className="mb-3 text-[13px] font-semibold text-foreground">
                 {isDutch ? 'Nieuw roosterblok' : 'New schedule slot'}
               </p>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -534,7 +534,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="rounded-[6px] border border-[#ddd] bg-white px-4 py-1.5 text-[12px] text-[#555] dark:bg-[hsl(var(--surface-1))] dark:border-border"
+                  className="rounded-[6px] border border-border bg-background px-4 py-1.5 text-[12px] text-muted-foreground hover:bg-muted"
                 >
                   {isDutch ? 'Annuleren' : 'Cancel'}
                 </button>
@@ -577,8 +577,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                             className={cn(
                               'min-h-[44px] rounded-[4px]',
                               slot
-                                ? 'border-l-[3px] border-l-[#7f8962] bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.12)]'
-                                : 'border-l-[3px] border-l-[#e4e4e4] bg-[#fafafa] dark:bg-[hsl(var(--surface-2))]',
+                                ? 'border-l-[3px] border-l-[var(--accent-brand)] bg-[var(--accent-brand)]/10'
+                                : 'border-l-[3px] border-l-border bg-muted/30',
                               editMode && slot && 'cursor-pointer outline outline-2 outline-dashed outline-[#c87d25]',
                             )}
                             onDragOver={e => e.preventDefault()}
@@ -602,7 +602,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                                 <div className="text-[10px] font-semibold text-[var(--accent-brand)]">
                                   {fmt24(slot.start_time)}–{fmt24(slot.end_time)}
                                 </div>
-                                <div className="mt-0.5 text-[11px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                                <div className="mt-0.5 text-[11px] font-semibold text-foreground">
                                   {slot.title}
                                 </div>
                                 {slot.notes && (
@@ -661,7 +661,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <p className="mb-2.5 text-[12px] font-semibold text-[var(--accent-brand)]">{todayLabel}</p>
 
               {todaySlots.length === 0 ? (
-                <div className="rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-6 text-center text-[13px] text-[#aaa] dark:border-border dark:bg-[hsl(var(--surface-2))]">
+                <div className="rounded-[8px] border border-border bg-muted/30 p-6 text-center text-[13px] text-muted-foreground">
                   {isDutch ? 'Geen lessen vandaag.' : 'No classes today.'}
                 </div>
               ) : (
@@ -672,8 +672,8 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                       <div
                         key={slot.id}
                         className={cn(
-                          'grid items-center gap-3 rounded-[6px] border-b border-[#f0f0f0] p-[11px_10px] last:border-b-0 dark:border-border',
-                          isCurrent ? 'bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.1)]' : ''
+                          'grid items-center gap-3 rounded-[6px] border-b border-border p-[11px_10px] last:border-b-0',
+                          isCurrent ? 'bg-[var(--accent-brand)]/10' : ''
                         )}
                         style={{ gridTemplateColumns: '60px 1fr 60px' }}
                       >
@@ -681,7 +681,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                           {fmt24(slot.start_time)}
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                          <div className="text-[13px] font-semibold text-foreground">
                             {slot.title}
                           </div>
                           {slot.notes && (
