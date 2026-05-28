@@ -217,7 +217,7 @@ export function ClassSettingsRedesigned({
   return (
     <div className="grid gap-4" style={{ gridTemplateColumns: '220px 1fr' }}>
       {/* Sidebar Navigation */}
-      <div className="rounded-lg border border-border bg-white dark:bg-[hsl(var(--surface-1))]">
+      <div className="rounded-lg border border-border bg-background">
         <nav className="flex flex-col">
           {SECTIONS.map((section, idx) => {
             const labels: Record<Section, { en: string; nl: string }> = {
@@ -236,7 +236,7 @@ export function ClassSettingsRedesigned({
                   'px-4 py-3 text-[13px] font-500 text-left transition-colors',
                   idx > 0 && 'border-t border-border',
                   activeSection === section
-                    ? 'bg-[#7f8962] text-white'
+                    ? 'bg-[var(--accent-brand)] text-background'
                     : 'text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -248,7 +248,7 @@ export function ClassSettingsRedesigned({
       </div>
 
       {/* Content Area */}
-      <div className="rounded-lg border border-border bg-white dark:bg-[hsl(var(--surface-1))]">
+      <div className="rounded-lg border border-border bg-background">
         <div className="border-b border-border px-6 py-4">
           <h2 className="text-[16px] font-semibold text-foreground">
             {activeSection === 'classinfo' && (isDutch ? 'Klasinformatie' : 'Class Information')}
@@ -276,7 +276,7 @@ export function ClassSettingsRedesigned({
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962]"
+                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[var(--accent-brand)]"
                 />
               </SettingField>
 
@@ -287,7 +287,7 @@ export function ClassSettingsRedesigned({
                 <textarea
                   value={editDesc}
                   onChange={e => setEditDesc(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[#7f8962] resize-none"
+                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[var(--accent-brand)] resize-none"
                   rows={3}
                 />
               </SettingField>

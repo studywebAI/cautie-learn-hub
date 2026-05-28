@@ -23,7 +23,7 @@ type Message = {
 type Channel = 'all' | 'teachers';
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '🙌', '✅', '❓'];
-const MAX_IMAGE_BYTES = 2_000_000; // 2 MB
+const MAX_IMAGE_BYTES = 2_000_000;
 
 function formatTime(iso: string): string {
   try {
@@ -105,7 +105,6 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
-    // Reset input so the same file can be re-selected
     e.target.value = '';
   }
 
@@ -159,10 +158,10 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
   const canSend = !!(text.trim() || imagePreview) && !sending;
 
   return (
-    <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
+    <div className="overflow-hidden rounded-[10px] border border-border bg-background">
       {/* Topbar */}
-      <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
-        <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
+      <div className="flex items-center gap-1.5 border-b border-border bg-muted/50 px-4 py-2.5 text-[12px] text-muted-foreground">
+        <span className="font-semibold text-foreground">
           {isDutch ? 'Berichten' : 'Messenger'}
         </span>
       </div>
@@ -171,8 +170,8 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
       <div className="grid h-[460px]" style={{ gridTemplateColumns: '180px 1fr' }}>
 
         {/* ── Channel sidebar ── */}
-        <div className="flex flex-col gap-0.5 overflow-y-auto border-r border-[#ebebeb] p-3 dark:border-border">
-          <div className="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[.5px] text-[#bbb]">
+        <div className="flex flex-col gap-0.5 overflow-y-auto border-r border-border p-3">
+          <div className="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[.5px] text-muted-foreground/60">
             {isDutch ? 'Kanalen' : 'Channels'}
           </div>
 
@@ -181,21 +180,18 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
             type="button"
             onClick={() => setChannel('all')}
             className={cn(
-              'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-[#555] transition-colors dark:text-foreground/70',
+              'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
               channel === 'all'
-                ? 'bg-[#edf1e5] font-semibold text-[#7f8962]'
-                : 'hover:bg-[#f5f5f5] dark:hover:bg-[hsl(var(--interactive-hover))]'
+                ? 'bg-[var(--accent-brand)]/10 font-semibold text-[var(--accent-brand)]'
+                : 'hover:bg-muted/60'
             )}
           >
-            <span
-              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] text-[12px] font-bold"
-              style={{ background: '#e5eef8', color: '#3a7fc1' }}
-            >
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-blue-100 text-[12px] font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               A
             </span>
             {isDutch ? 'Iedereen' : 'All'}
             {messages.length > 0 && channel !== 'all' && (
-              <span className="ml-auto h-[7px] w-[7px] flex-shrink-0 rounded-full" style={{ background: '#7f8962' }} />
+              <span className="ml-auto h-[7px] w-[7px] flex-shrink-0 rounded-full bg-[var(--accent-brand)]" />
             )}
           </button>
 
@@ -205,16 +201,13 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               type="button"
               onClick={() => setChannel('teachers')}
               className={cn(
-                'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-[#555] transition-colors dark:text-foreground/70',
+                'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
                 channel === 'teachers'
-                  ? 'bg-[#edf1e5] font-semibold text-[#7f8962]'
-                  : 'hover:bg-[#f5f5f5] dark:hover:bg-[hsl(var(--interactive-hover))]'
+                  ? 'bg-[var(--accent-brand)]/10 font-semibold text-[var(--accent-brand)]'
+                  : 'hover:bg-muted/60'
               )}
             >
-              <span
-                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] text-[12px] font-bold"
-                style={{ background: '#edf1e5', color: '#7f8962' }}
-              >
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-[var(--accent-brand)]/10 text-[12px] font-bold text-[var(--accent-brand)]">
                 T
               </span>
               {isDutch ? 'Docenten' : 'Teachers'}
@@ -225,14 +218,14 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
         {/* ── Thread area ── */}
         <div className="flex min-w-0 flex-col">
           {/* Thread header */}
-          <div className="flex items-center justify-between border-b border-[#ebebeb] px-4 py-3 dark:border-border">
-            <p className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <p className="text-[13px] font-semibold text-foreground">
               {channelLabel}
             </p>
             <button
               type="button"
               onClick={() => void loadMessages()}
-              className="text-[11px] text-[#aaa] hover:text-[#555] dark:text-muted-foreground"
+              className="text-[11px] text-muted-foreground hover:text-foreground"
             >
               {isDutch ? 'Vernieuwen' : 'Refresh'}
             </button>
@@ -246,7 +239,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-1 items-center justify-center text-center">
-                <p className="text-[13px] text-[#aaa]">
+                <p className="text-[13px] text-muted-foreground">
                   {channel === 'all'
                     ? (isDutch ? 'Nog geen berichten. Stuur het eerste!' : 'No messages yet. Send the first one!')
                     : (isDutch ? 'Nog geen berichten van docenten.' : 'No teacher messages yet.')}
@@ -257,15 +250,14 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                 const isOwn = msg.authorId === currentUserId;
                 return (
                   <div key={msg.id} className={cn('group flex gap-2.5', isOwn ? 'flex-row-reverse justify-end' : 'flex-row justify-start')}>
-                    {/* Message bubble */}
                     <div className={cn('min-w-0 max-w-xs rounded-[12px] px-3.5 py-2.5',
                       isOwn
-                        ? 'bg-[#7f8962] text-white'
-                        : 'bg-[#f0f0f0] text-[#1a1a1a] dark:bg-[hsl(var(--surface-2))] dark:text-foreground'
+                        ? 'bg-[var(--accent-brand)] text-background'
+                        : 'bg-muted text-foreground'
                     )}>
                       {/* Meta line */}
-                      <div className="mb-[3px] text-[11px] text-[#bbb]">
-                        <strong className="font-semibold text-[#444] dark:text-foreground/70">
+                      <div className="mb-[3px] text-[11px] text-muted-foreground">
+                        <strong className="font-semibold text-foreground/70">
                           {isOwn ? (isDutch ? 'Jij' : 'You') : msg.authorName}
                         </strong>
                         {'  '}
@@ -286,7 +278,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
 
                       {/* Message text */}
                       {msg.content && (
-                        <div className="text-[13px] leading-[1.45] text-[#1a1a1a] dark:text-foreground">
+                        <div className="text-[13px] leading-[1.45] text-foreground">
                           {msg.content}
                         </div>
                       )}
@@ -302,8 +294,8 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                               className={cn(
                                 'rounded-full border px-[7px] py-[2px] text-[12px] transition-colors',
                                 r.reactedByMe
-                                  ? 'border-[#7f8962] bg-[#edf1e5]'
-                                  : 'border-[#e4e4e4] bg-[#f5f5f5] hover:border-[#7f8962]'
+                                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10'
+                                  : 'border-border bg-muted hover:border-[var(--accent-brand)]'
                               )}
                             >
                               {r.emoji} {r.count}
@@ -317,18 +309,18 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                         <button
                           type="button"
                           onClick={() => setShowEmojis(showEmojis === msg.id ? null : msg.id)}
-                          className="invisible rounded-full border border-[#e4e4e4] bg-[#f5f5f5] px-1.5 py-0.5 text-[10px] text-[#aaa] hover:border-[#7f8962] group-hover:visible"
+                          className="invisible rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-[var(--accent-brand)] group-hover:visible"
                         >
                           + react
                         </button>
                         {showEmojis === msg.id && (
-                          <div className="absolute bottom-full left-0 z-10 mb-1 flex gap-1 rounded-lg border border-[#e4e4e4] bg-white p-1.5 shadow-md dark:bg-[hsl(var(--surface-2))]">
+                          <div className="absolute bottom-full left-0 z-10 mb-1 flex gap-1 rounded-lg border border-border bg-background p-1.5 shadow-md">
                             {EMOJI_OPTIONS.map(e => (
                               <button
                                 key={e}
                                 type="button"
                                 onClick={() => toggleReaction(msg.id, e)}
-                                className="rounded px-1 py-0.5 text-base hover:bg-[#f5f5f5]"
+                                className="rounded px-1 py-0.5 text-base hover:bg-muted"
                               >
                                 {e}
                               </button>
@@ -345,12 +337,12 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
           </div>
 
           {/* ── Composer ── */}
-          <div className="border-t border-[#ebebeb] p-[10px_14px] dark:border-border">
-            <div className="overflow-hidden rounded-[8px] border border-[#e0e0e0] dark:border-border">
+          <div className="border-t border-border p-[10px_14px]">
+            <div className="overflow-hidden rounded-[8px] border border-border">
 
               {/* Image preview */}
               {imagePreview && (
-                <div className="relative border-b border-[#ebebeb] p-2 dark:border-border">
+                <div className="relative border-b border-border p-2">
                   <img
                     src={imagePreview}
                     alt=""
@@ -381,17 +373,16 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                   ? (isDutch ? 'Schrijf een bericht naar Iedereen…' : 'Write a message to All…')
                   : (isDutch ? 'Schrijf een bericht naar Docenten…' : 'Write a message to Teachers…')}
                 rows={2}
-                className="w-full resize-none bg-[#fafafa] px-3 pt-2 text-[13px] text-[#1a1a1a] outline-none placeholder:text-[#aaa] dark:bg-[hsl(var(--surface-2))] dark:text-foreground"
+                className="w-full resize-none bg-muted/30 px-3 pt-2 text-[13px] text-foreground outline-none placeholder:text-muted-foreground"
               />
 
               {/* Toolbar */}
-              <div className="flex items-center justify-between gap-2 border-t border-[#ebebeb] bg-[#f7f7f7] px-3 py-2 dark:border-border dark:bg-[hsl(var(--surface-2))]">
-                {/* Image upload button */}
+              <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/50 px-3 py-2">
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   title={isDutch ? 'Afbeelding toevoegen' : 'Attach image'}
-                  className="rounded-[6px] p-1.5 text-[#aaa] transition-colors hover:bg-[#ebebeb] hover:text-[#555] dark:hover:bg-[hsl(var(--interactive-hover))]"
+                  className="rounded-[6px] p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <ImagePlus className="h-4 w-4" />
                 </button>
@@ -403,12 +394,11 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                   onChange={handleImageSelect}
                 />
 
-                {/* Send button */}
                 <button
                   type="button"
                   disabled={!canSend}
                   onClick={() => void sendMessage()}
-                  className="rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-1.5 text-[12px] font-semibold text-white transition-opacity hover:bg-[#6f7851] disabled:opacity-50"
+                  className="rounded-[6px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] px-3 py-1.5 text-[12px] font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {sending ? '…' : (isDutch ? 'Stuur' : 'Send')}
                 </button>
