@@ -98,6 +98,8 @@ const flowMap: Record<string, () => Promise<FlowHandler>> = {
     import("@/ai/flows/image-search-for-question-context").then((m) => m.imageSearchForQuestionContext),
   videoContextFromWhitelist: () =>
     import("@/ai/flows/video-context-from-whitelist").then((m) => m.videoContextFromWhitelist),
+  describeImage: () =>
+    import("@/ai/flows/describe-image").then((m) => m.describeImage),
 };
 
 export function getSupportedFlows() {

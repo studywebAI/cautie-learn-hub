@@ -203,6 +203,10 @@ function QuizPageContent() {
 
   const [inputMode, setInputMode] = useState<'literal' | 'research'>('literal');
 
+  // Image description — describe once on upload, reuse as text context everywhere
+  const [imageDescription, setImageDescription] = useState<string | null>(null);
+  const [imageDescLoading, setImageDescLoading] = useState(false);
+
   // Content classification — drives which question types are shown
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
   const [aiCategories, setAiCategories] = useState<Record<string, string> | null>(null);
@@ -224,15 +228,43 @@ function QuizPageContent() {
     };
   }, [sourceText]);
 
+  // Called when user picks an image in State 1 — describes it once, stores result as text context
+  const handleImageDataUriChange = useCallback((dataUri: string | null) => {
+    setImageDataUri(dataUri);
+    setImageDescription(null);
+    if (!dataUri) return;
+    setImageDescLoading(true);
+    fetch('/api/ai/handle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ flowName: 'describeImage', input: { imageDataUri: dataUri } }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.description) {
+          const topicsStr = Array.isArray(data.topics) && data.topics.length > 0
+            ? ` Topics: ${data.topics.join(', ')}.`
+            : '';
+          const typeStr = data.contentType && data.contentType !== 'unknown'
+            ? ` Type: ${data.contentType}.`
+            : '';
+          setImageDescription(`[Image description:${typeStr} ${data.description}${topicsStr}]`);
+        }
+      })
+      .catch(() => { /* non-fatal — image is still sent to quiz generation directly */ })
+      .finally(() => setImageDescLoading(false));
+  }, []);
+
   // Triggered once when user clicks Next in State 1 — runs in background while user sees State 2
-  const triggerAiCategoryEval = useCallback((text: string) => {
-    if (!text || text.trim().length < 150) return;
+  const triggerAiCategoryEval = useCallback((text: string, imgDesc: string | null) => {
+    const combined = imgDesc ? `${text}\n\n${imgDesc}` : text;
+    if (!combined || combined.trim().length < 150) return;
     setAiCategoryLoading(true);
     setAiCategories(null);
     fetch('/api/ai/handle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flowName: 'evaluateContentCategories', input: { sourceText: text.slice(0, 4000) } }),
+      body: JSON.stringify({ flowName: 'evaluateContentCategories', input: { sourceText: combined.slice(0, 4000) } }),
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => { if (data && typeof data === 'object') setAiCategories(data); })
@@ -374,8 +406,12 @@ function QuizPageContent() {
   const buildGenerationInput = useCallback((compiledText: string) => {
     const requestedCount = mode === 'adaptive' ? 12 : questionCount;
     runCounterRef.current += 1;
+    // Append image description so adaptive re-fetches (which don't re-send the image) also have context
+    const enrichedText = imageDescription
+      ? `${compiledText}\n\n${imageDescription}`
+      : compiledText;
     return {
-      sourceText: compiledText,
+      sourceText: enrichedText,
       imageDataUri: imageDataUri || undefined,
       questionCount: requestedCount,
       language,
@@ -397,7 +433,7 @@ function QuizPageContent() {
       imageContext: { enabled: true },
       videoContext: { enabled: true },
     };
-  }, [answerFeedback, gradingModes, imageDataUri, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
+  }, [answerFeedback, gradingModes, imageDataUri, imageDescription, knowledgeScore, language, mode, questionCount, questionTypes, region, schoolingLevel]);
 
   const handleGenerate = useCallback(async (compiledText: string) => {
     if (!compiledText.trim()) return;
@@ -740,6 +776,8 @@ function QuizPageContent() {
             setPhase('input');
             setSourceText('');
             setTitle('');
+            setImageDescription(null);
+            setImageDataUri(null);
           }}
         >
           ← Back
@@ -790,18 +828,32 @@ function QuizPageContent() {
               toolId="quiz"
               placeholder="Paste your content here..."
               onSourceChange={(text) => setSourceText(text)}
-              onImageDataUriChange={setImageDataUri}
+              onImageDataUriChange={handleImageDataUriChange}
               onSubmit={(compiledText) => {
                 setSourceText(compiledText);
                 setPhase('options');
                 // Fire AI category evaluation once in the background while user sees State 2
-                triggerAiCategoryEval(compiledText);
+                // Pass image description so image content is factored into category detection
+                triggerAiCategoryEval(compiledText, imageDescription);
               }}
               isLoading={false}
               submitLabel="Next"
               speechLanguage={language}
               hideToolSwitcher
             />
+            {/* Image analysis indicator */}
+            {imageDescLoading && (
+              <div className="flex items-center gap-1.5 justify-center text-[11px] text-muted-foreground/70">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Analysing image…
+              </div>
+            )}
+            {imageDescription && !imageDescLoading && (
+              <div className="flex items-center gap-1.5 justify-center text-[11px] text-[var(--accent-brand)]/70">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-brand)]/60" />
+                Image analysed — will be used as context
+              </div>
+            )}
             {/* Literal / Research mode toggle */}
             <div className="flex items-center justify-center gap-1 pt-1">
               <p className="text-[11px] text-muted-foreground mr-1">Mode:</p>
