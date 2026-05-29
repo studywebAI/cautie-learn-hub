@@ -1,13 +1,396 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Loader2, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
+
+// ─── Variant selection ────────────────────────────────────────────────────────
+// Deterministic: same question always gets same variant (seeded from question ID).
+// Weighted: lower knowledgeScore → more likely to get the easier variant.
+function selectVariant(questionId: string, knowledgeScore: number, numVariants: number): number {
+  // Simple hash of question ID → 0..99
+  let hash = 0;
+  for (let i = 0; i < questionId.length; i++) {
+    hash = (hash * 31 + questionId.charCodeAt(i)) >>> 0;
+  }
+  const roll = hash % 100;
+  // Build cumulative probability buckets: variant 0 = easiest, variant N-1 = hardest
+  // knowledgeScore 0 → weights heavily towards easy; 100 → weights heavily towards hard
+  if (numVariants === 1) return 0;
+  if (numVariants === 2) {
+    // Easy gets (100 - knowledgeScore)%, Hard gets knowledgeScore%
+    return roll < (100 - knowledgeScore) ? 0 : 1;
+  }
+  if (numVariants === 3) {
+    const easy = Math.round(50 - knowledgeScore * 0.4);   // 50→10 as knowledge 0→100
+    const medium = 35;
+    return roll < easy ? 0 : roll < easy + medium ? 1 : 2;
+  }
+  return 0;
+}
+
+// ─── MCQ Variants ─────────────────────────────────────────────────────────────
+
+// Variant A: Card Grid (2×2 for 4 options)
+function MCQCardGrid({ question, answer, disabled, onChange, reveal, correctOptionId }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean;
+  onChange: (v: AnswerValue) => void; reveal: boolean; correctOptionId: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {question.options.map((option) => {
+        const selected = answer?.kind === 'option' && answer.value === option.id;
+        const isCorrect = option.id === correctOptionId;
+        let cls = 'border border-border bg-muted/40 hover:bg-muted/70 text-foreground';
+        if (reveal && isCorrect && selected) cls = 'border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200';
+        else if (reveal && isCorrect) cls = 'border-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300';
+        else if (reveal && selected) cls = 'border-2 border-red-400 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+        else if (selected) cls = 'border-2 border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-foreground';
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange({ kind: 'option', value: option.id })}
+            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-medium transition-all ${cls}`}
+          >
+            {cleanOptionText(option.text)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Variant B: Radio List (standard, clean)
+function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOptionId }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean;
+  onChange: (v: AnswerValue) => void; reveal: boolean; correctOptionId: string;
+}) {
+  return (
+    <div className="space-y-2.5">
+      {question.options.map((option) => {
+        const selected = answer?.kind === 'option' && answer.value === option.id;
+        const isCorrect = option.id === correctOptionId;
+        let cls = 'border border-border bg-background hover:border-[var(--accent-brand)]/50 hover:bg-muted/30';
+        if (reveal && isCorrect && selected) cls = 'border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30';
+        else if (reveal && isCorrect) cls = 'border-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20';
+        else if (reveal && selected) cls = 'border-2 border-red-400 bg-red-50 dark:bg-red-900/30';
+        else if (selected) cls = 'border-2 border-[var(--accent-brand)] bg-[var(--accent-brand)]/5';
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange({ kind: 'option', value: option.id })}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left transition-all ${cls}`}
+          >
+            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/40'}`}>
+              {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+            </span>
+            <span className="text-[13px] text-foreground">{cleanOptionText(option.text)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Variant C: Color Blocks — uses brand color in different tones (no rainbow)
+const BRAND_TONES = [
+  'bg-[var(--accent-brand)] text-white',
+  'bg-[var(--accent-brand)]/75 text-white',
+  'bg-[var(--accent-brand)]/50 text-foreground',
+  'bg-[var(--accent-brand)]/30 text-foreground',
+];
+
+function MCQColorBlocks({ question, answer, disabled, onChange, reveal, correctOptionId }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean;
+  onChange: (v: AnswerValue) => void; reveal: boolean; correctOptionId: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {question.options.map((option, idx) => {
+        const selected = answer?.kind === 'option' && answer.value === option.id;
+        const isCorrect = option.id === correctOptionId;
+        let cls = BRAND_TONES[idx % BRAND_TONES.length];
+        if (reveal && isCorrect && selected) cls = 'bg-emerald-500 text-white ring-4 ring-emerald-300';
+        else if (reveal && isCorrect) cls = 'bg-emerald-400 text-white';
+        else if (reveal && selected) cls = 'bg-red-400 text-white';
+        else if (selected) cls = `${BRAND_TONES[idx % BRAND_TONES.length]} ring-4 ring-white/40`;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange({ kind: 'option', value: option.id })}
+            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-semibold transition-all ${cls} opacity-${disabled && !selected ? '70' : '100'}`}
+          >
+            {cleanOptionText(option.text)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── True/False Variants ──────────────────────────────────────────────────────
+
+// Variant A: Big buttons
+function TFBigButtons({ answer, disabled, onChange, reveal, correctOptionId, options }: {
+  answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+  reveal: boolean; correctOptionId: string; options: QuizQuestion['options'];
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {options.map((option) => {
+        const selected = answer?.kind === 'option' && answer.value === option.id;
+        const isCorrect = option.id === correctOptionId;
+        const isTrue = /^true$/i.test(cleanOptionText(option.text));
+        let cls = isTrue
+          ? 'border-2 border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+          : 'border-2 border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 hover:bg-red-100 dark:hover:bg-red-900/40';
+        if (selected) cls += ' ring-4 ring-[var(--accent-brand)]/40';
+        if (reveal && isCorrect) cls = 'border-2 border-emerald-500 bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100';
+        if (reveal && selected && !isCorrect) cls = 'border-2 border-red-500 bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100';
+        return (
+          <button
+            key={option.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onChange({ kind: 'option', value: option.id })}
+            className={`flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl text-[22px] font-bold transition-all ${cls}`}
+          >
+            <span className="text-3xl">{isTrue ? '○' : '✕'}</span>
+            <span className="text-[15px]">{cleanOptionText(option.text)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Ordering Variants ────────────────────────────────────────────────────────
+
+// Variant A: Drag handles (sortable list)
+function OrderingDragHandles({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const items = question.orderingItems || [];
+  const current: string[] = answer?.kind === 'ordering' && answer.value.length === items.length
+    ? answer.value
+    : [...items].sort(() => 0); // keep original order as initial display
+
+  const dragIdx = useRef<number | null>(null);
+
+  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx.current === null || dragIdx.current === dropIdx) return;
+    const next = [...current];
+    const [moved] = next.splice(dragIdx.current, 1);
+    next.splice(dropIdx, 0, moved);
+    onChange({ kind: 'ordering', value: next });
+    dragIdx.current = null;
+  };
+
+  return (
+    <div className="space-y-2">
+      {current.map((item, idx) => (
+        <div
+          key={item}
+          draggable={!disabled}
+          onDragStart={() => handleDragStart(idx)}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={() => handleDrop(idx)}
+          className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 cursor-grab active:cursor-grabbing select-none"
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] font-semibold text-[var(--accent-brand)]">
+            {idx + 1}
+          </span>
+          <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+          </svg>
+          <span className="text-[13px] text-foreground">{item}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Variant B: Click to number
+function OrderingClickNumber({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const items = question.orderingItems || [];
+  const assignedOrder: (string | null)[] = answer?.kind === 'ordering' ? answer.value : [];
+  const positionMap: Record<string, number> = {};
+  assignedOrder.forEach((item, idx) => { if (item) positionMap[item] = idx + 1; });
+
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const handleClick = (item: string) => {
+    if (disabled) return;
+    if (selected === item) { setSelected(null); return; }
+    if (selected === null) { setSelected(item); return; }
+    // Swap selected and clicked
+    const nextMap = { ...positionMap };
+    const a = nextMap[selected], b = nextMap[item];
+    if (a) nextMap[item] = a; else delete nextMap[item];
+    if (b) nextMap[selected] = b; else delete nextMap[selected];
+    const next = items.map((i) => (positionMap[i] ? i : '')).sort((a2, b2) => (positionMap[a2] || 99) - (positionMap[b2] || 99));
+    onChange({ kind: 'ordering', value: next });
+    setSelected(null);
+  };
+
+  const nextPosition = Object.keys(positionMap).length + 1;
+  const assign = (item: string) => {
+    if (disabled || positionMap[item]) return;
+    const next: string[] = [];
+    for (let i = 1; i <= items.length; i++) {
+      const found = items.find((it) => positionMap[it] === i);
+      next.push(found || (i === nextPosition ? item : ''));
+    }
+    onChange({ kind: 'ordering', value: next });
+  };
+
+  return (
+    <div className="space-y-2">
+      {items.map((item) => {
+        const pos = positionMap[item];
+        return (
+          <button
+            key={item}
+            type="button"
+            disabled={disabled}
+            onClick={() => pos ? undefined : assign(item)}
+            className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition-all ${
+              pos ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8' : 'border-border bg-background hover:border-[var(--accent-brand)]/30'
+            }`}
+          >
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-all ${
+              pos ? 'bg-[var(--accent-brand)] text-white' : 'border-2 border-dashed border-muted-foreground/30 text-muted-foreground'
+            }`}>
+              {pos || '?'}
+            </span>
+            <span className="text-[13px] text-foreground">{item}</span>
+          </button>
+        );
+      })}
+      {Object.keys(positionMap).length > 0 && (
+        <button
+          type="button"
+          onClick={() => onChange({ kind: 'ordering', value: [] })}
+          className="mt-1 text-[11px] text-muted-foreground underline underline-offset-2"
+        >
+          Reset
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Click-Pair Matching (Variant C — color-coded pairing) ────────────────────
+function MatchingClickPairs({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const pairs = question.matchingPairs || [];
+  const mapping: Record<string, string> = answer?.kind === 'matching' ? answer.value : {};
+  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+
+  // Color palette for pairs (using muted tones)
+  const pairColors = [
+    'bg-[var(--accent-brand)]/25 border-[var(--accent-brand)]/50 text-[var(--accent-brand)]',
+    'bg-blue-500/15 border-blue-400/50 text-blue-700 dark:text-blue-300',
+    'bg-purple-500/15 border-purple-400/50 text-purple-700 dark:text-purple-300',
+    'bg-orange-500/15 border-orange-400/50 text-orange-700 dark:text-orange-300',
+    'bg-teal-500/15 border-teal-400/50 text-teal-700 dark:text-teal-300',
+  ];
+
+  // Build reverse mapping: right value → left key → color index
+  const leftOrder = pairs.map((p) => p.left);
+  const rightValues = pairs.map((p) => p.right);
+  const getColorForLeft = (left: string) => {
+    const idx = leftOrder.indexOf(left);
+    return pairColors[idx % pairColors.length];
+  };
+  const getColorForRight = (right: string) => {
+    const leftKey = Object.entries(mapping).find(([, v]) => v === right)?.[0];
+    if (!leftKey) return '';
+    return getColorForLeft(leftKey);
+  };
+
+  const handleLeftClick = (left: string) => {
+    if (disabled) return;
+    setSelectedLeft((prev) => (prev === left ? null : left));
+  };
+  const handleRightClick = (right: string) => {
+    if (disabled) return;
+    if (!selectedLeft) return;
+    const next = { ...mapping };
+    // Clear old assignment of this right value
+    for (const k of Object.keys(next)) if (next[k] === right) delete next[k];
+    // Assign
+    next[selectedLeft] = right;
+    onChange({ kind: 'matching', value: next });
+    setSelectedLeft(null);
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-2">
+        <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Match from</p>
+        {leftOrder.map((left) => {
+          const isMatched = !!mapping[left];
+          const isSelected = selectedLeft === left;
+          const colorCls = isMatched ? getColorForLeft(left) : '';
+          return (
+            <button
+              key={left}
+              type="button"
+              onClick={() => handleLeftClick(left)}
+              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-[13px] transition-all ${
+                isSelected
+                  ? 'border-[var(--accent-brand)] ring-2 ring-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                  : isMatched
+                  ? `border ${colorCls}`
+                  : 'border-border bg-background hover:border-[var(--accent-brand)]/30'
+              }`}
+            >
+              {left}
+            </button>
+          );
+        })}
+      </div>
+      <div className="space-y-2">
+        <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Match to</p>
+        {rightValues.map((right) => {
+          const isMatched = !!getColorForRight(right);
+          const colorCls = getColorForRight(right);
+          return (
+            <button
+              key={right}
+              type="button"
+              onClick={() => handleRightClick(right)}
+              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-[13px] transition-all ${
+                selectedLeft
+                  ? 'border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/10 cursor-pointer'
+                  : isMatched
+                  ? `border ${colorCls}`
+                  : 'border-border bg-background'
+              }`}
+            >
+              {right}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export type QuizMode = 'classic' | 'assisted' | 'adaptive' | 'practice';
 type QuizRuntimeSettings = {
@@ -240,34 +623,57 @@ function QuestionView({
   disabled,
   onChange,
   reveal,
+  knowledgeScore,
 }: {
   question: QuizQuestion;
   answer: AnswerValue | undefined;
   disabled: boolean;
   onChange: (next: AnswerValue) => void;
   reveal: boolean;
+  knowledgeScore?: number;
 }) {
   const type = question.type || 'multiple-choice';
-  const blank = type === 'fill-blank' ? question.question.match(/_{3,}/) : null;
-  if (type === 'fill-blank' && blank) {
-    const [before, after] = question.question.split(blank[0], 2);
-    return (
-      <div className="rounded-xl border border-border bg-background p-3 text-sm leading-relaxed">
-        {before}
-        <Input
-          autoFocus
-          value={answer?.kind === 'text' ? answer.value : ''}
-          onFocus={(e) => e.currentTarget.select()}
-          onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
-          disabled={disabled}
-          className="mx-2 inline-flex h-9 w-52 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-[14px] text-[12px] text-[#333] align-middle md:text-[13px] lg:text-[14px] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd]"
-          placeholder="..."
-        />
-        {after}
-      </div>
-    );
+  const ks = knowledgeScore ?? 50;
+
+  const correctOptionId =
+    question.options.find((option) => option.isCorrect)?.id ||
+    question.correctOptionId ||
+    '';
+
+  // ─── MCQ / True-False / timeline / media types (option-based) ───────────────
+  if (['multiple-choice', 'image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment', 'timeline'].includes(type)) {
+    const variant = selectVariant(question.id, ks, 3);
+    if (variant === 2) return <MCQColorBlocks question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
+    if (variant === 1) return <MCQRadioList question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
+    return <MCQCardGrid question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
   }
-  if (type === 'fill-blank' || type === 'short-answer')
+
+  // ─── True/False ──────────────────────────────────────────────────────────────
+  if (type === 'true-false') {
+    return <TFBigButtons answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} options={question.options} />;
+  }
+
+  // ─── Fill in the Blank ───────────────────────────────────────────────────────
+  if (type === 'fill-blank') {
+    const blank = question.question.match(/_{3,}/);
+    if (blank) {
+      const [before, after] = question.question.split(blank[0], 2);
+      return (
+        <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-loose text-foreground">
+          {before}
+          <Input
+            autoFocus
+            value={answer?.kind === 'text' ? answer.value : ''}
+            onFocus={(e) => e.currentTarget.select()}
+            onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
+            disabled={disabled}
+            className="mx-2 inline-flex h-9 w-48 rounded-md border border-border bg-background px-3 align-middle text-[13px]"
+            placeholder="..."
+          />
+          {after}
+        </div>
+      );
+    }
     return (
       <Input
         autoFocus
@@ -275,88 +681,66 @@ function QuestionView({
         onFocus={(e) => e.currentTarget.select()}
         onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
         disabled={disabled}
-        className="h-10 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-[14px] text-[12px] text-[#333] md:text-[13px] lg:text-[14px] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd]"
-        placeholder={type === 'fill-blank' ? 'Fill in the blank...' : 'Type your answer...'}
+        className="h-11 rounded-lg border border-border bg-background px-4 text-[14px] text-foreground"
+        placeholder="Fill in the blank..."
       />
     );
-  if (type === 'matching') return <MatchingBoard question={question} answer={answer} disabled={disabled} onChange={onChange} />;
-  if (type === 'ordering') {
-    const items = question.orderingItems || [];
-    const selected = answer?.kind === 'ordering' ? answer.value : Array.from({ length: items.length }, () => '');
+  }
+
+  // ─── Short Answer ────────────────────────────────────────────────────────────
+  if (type === 'short-answer') {
+    const hint = question.hint?.trim();
     return (
-      <div className="space-y-2">
-        {items.map((_, idx) => (
-          <div key={idx} className="grid grid-cols-[90px_minmax(0,1fr)] items-center gap-2">
-            <Label className="text-xs text-muted-foreground">Position {idx + 1}</Label>
-            <select
-              value={selected[idx] || ''}
-              onChange={(event) => {
-                const next = [...selected];
-                next[idx] = event.target.value;
-                onChange({ kind: 'ordering', value: next });
-              }}
-              disabled={disabled}
-              className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
-            >
-              <option value="">Select item</option>
-              {items.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+      <div className="space-y-3">
+        {hint ? (
+          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-[12px] text-muted-foreground">
+            <span className="font-medium text-foreground">Include: </span>{hint}
           </div>
-        ))}
+        ) : null}
+        <textarea
+          autoFocus
+          value={answer?.kind === 'text' ? answer.value : ''}
+          onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
+          disabled={disabled}
+          rows={3}
+          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
+          placeholder="Type your answer..."
+        />
       </div>
     );
   }
-  const correctOptionId =
-    question.options.find((option) => option.isCorrect)?.id ||
-    question.correctOptionId ||
-    '';
-  return (
-    <div className={type === 'true-false' ? 'grid gap-3 sm:grid-cols-2' : 'space-y-3'}>
-      {question.options.map((option) => {
-        const selected = answer?.kind === 'option' && answer.value === option.id;
-        const isCorrect = option.id === correctOptionId;
-        const showCorrect = reveal && isCorrect;
-        const showWrongSelected = reveal && selected && !isCorrect;
-        let rowClass = 'border-[0.5px] border-[#d0d0d0] bg-[#f8f8f8] hover:bg-white hover:border-[#7f8962] dark:border-[#444] dark:bg-[#222] dark:hover:bg-[#1a1a1a]';
-        let textClass = 'text-[#333] dark:text-[#ddd]';
-        let prefix = '';
-        if (showWrongSelected) {
-          rowClass = 'border-2 border-[#f44336] bg-[#ffebee] dark:border-[#ef5350] dark:bg-[#b71c1c]';
-          textClass = 'text-[#c62828] dark:text-[#ef5350]';
-          prefix = '❌';
-        } else if (showCorrect && selected) {
-          rowClass = 'border-2 border-[#4caf50] bg-[#e8f5e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
-          textClass = 'text-[#2e7d32] dark:text-[#81c784]';
-          prefix = '✅';
-        } else if (showCorrect && !selected) {
-          rowClass = 'border-2 border-[#9ccc65] bg-[#f1f8e9] dark:border-[#81c784] dark:bg-[#1b5e20]';
-          textClass = 'text-[#558b2f] dark:text-[#81c784]';
-          prefix = '✅';
-        } else if (selected) {
-          rowClass = 'border-2 border-[#7f8962] bg-white dark:bg-[#1a1a1a]';
-        }
-        return (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => {
-              if (disabled) return;
-              onChange({ kind: 'option', value: option.id });
-            }}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-[14px] text-left transition ${rowClass}`}
-          >
-            <input type="radio" checked={selected} readOnly className="h-4 w-4 accent-[var(--accent-brand)]" />
-            {prefix ? <span className={textClass}>{prefix}</span> : null}
-            <span className={`text-[12px] font-normal md:text-[13px] lg:text-[14px] ${textClass}`}>{cleanOptionText(option.text)}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
+
+  // ─── Matching ────────────────────────────────────────────────────────────────
+  if (type === 'matching') {
+    const variant = selectVariant(question.id, ks, 2);
+    if (variant === 0) return <MatchingClickPairs question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    return <MatchingBoard question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Ordering ────────────────────────────────────────────────────────────────
+  if (type === 'ordering') {
+    const variant = selectVariant(question.id, ks, 2);
+    if (variant === 0) return <OrderingClickNumber question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    return <OrderingDragHandles question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Numeric input ───────────────────────────────────────────────────────────
+  if (type === 'numeric') {
+    return (
+      <Input
+        autoFocus
+        type="number"
+        value={answer?.kind === 'text' ? answer.value : ''}
+        onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
+        disabled={disabled}
+        className="h-11 w-40 rounded-lg border border-border bg-background px-4 text-[14px] text-foreground"
+        placeholder="0"
+      />
+    );
+  }
+
+  // ─── Fallback: MCQ Radio List ─────────────────────────────────────────────────
+  return <MCQRadioList question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
 }
 function MediaPrompt({ question }: { question: QuizQuestion }) {
   const media = question.media;
@@ -599,7 +983,7 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
   );
 }
 
-export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings }) {
+export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string }) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -616,6 +1000,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
   const [whyIncorrectLoading, setWhyIncorrectLoading] = useState(false);
   const [finalizedMap, setFinalizedMap] = useState<Record<string, boolean>>({});
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
+  const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
   const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
@@ -808,80 +1193,209 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings }
 
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
   const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
+  const isLastQuestion = effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1;
+
+  const handleNext = () => {
+    if (effectiveMode === 'assisted' && !isAnswered) {
+      if (canAdvance) handleAnswerPress();
+      else advanceQuestion();
+      return;
+    }
+    if (!isAnswered && canAdvance) {
+      handleAnswerPress();
+      if (shouldHideCorrectnessUntilEnd) advanceQuestion();
+      return;
+    }
+    advanceQuestion();
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex <= 0) return;
+    const prevIdx = currentIndex - 1;
+    setCurrentIndex(prevIdx);
+    setIsAnswered(Boolean(finalizedMap[questions[prevIdx]?.id || '']));
+    setIsCurrentCorrect(null);
+  };
+
+  const handleJumpTo = (idx: number) => {
+    setCurrentIndex(idx);
+    setIsAnswered(Boolean(finalizedMap[questions[idx]?.id || '']));
+    setIsCurrentCorrect(null);
+  };
+
+  // Circle state per question
+  const getCircleState = (idx: number): 'current' | 'answered' | 'unanswered' => {
+    if (idx === currentIndex) return 'current';
+    const q = questions[idx];
+    if (q && finalizedMap[q.id]) return 'answered';
+    return 'unanswered';
+  };
+
   return (
-    <div className="h-full w-full overflow-hidden bg-white px-0 py-5 dark:bg-[#1a1a1a]">
-      <div className="mb-10 flex h-[60px] items-center justify-between px-0">
-        <div className="text-[13px] font-medium text-[#7f8962]">Dashboard &gt; Quiz &gt; Question</div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-[#666] dark:text-[#999]">{currentIndex + 1} of {questions.length}</span>
-          <div className="h-1 w-[150px] overflow-hidden rounded bg-[#f0f0f0] md:w-[200px] dark:bg-[#333]">
-            <div className="h-full bg-[var(--accent-brand)] transition-all duration-300" style={{ width: `${progressPct}%` }} />
-          </div>
+    <div className="flex h-full flex-col bg-background">
+      {/* Top bar: breadcrumb left | nav right */}
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-3">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <span className="font-medium text-foreground">Quiz</span>
+          {quizTitle ? (
+            <>
+              <span>/</span>
+              <span className="max-w-[200px] truncate">{quizTitle}</span>
+            </>
+          ) : null}
+        </div>
+
+        {/* Right: circles or progress bar + toggle */}
+        <div className="flex items-center gap-3">
+          {navMode === 'circles' ? (
+            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[360px]">
+              {questions.map((_, idx) => {
+                const state = getCircleState(idx);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleJumpTo(idx)}
+                    title={`Question ${idx + 1}`}
+                    className={[
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium transition-all',
+                      state === 'current'
+                        ? 'bg-[var(--accent-brand)] text-white ring-2 ring-[var(--accent-brand)] ring-offset-1 ring-offset-background'
+                        : state === 'answered'
+                        ? 'bg-[var(--accent-brand)]/20 text-[var(--accent-brand)] border border-[var(--accent-brand)]/40'
+                        : 'border border-border bg-muted text-muted-foreground hover:border-[var(--accent-brand)]/50',
+                    ].join(' ')}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <span className="text-[13px] text-muted-foreground">
+              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {questions.length}
+            </span>
+          )}
+
+          {/* Toggle button */}
+          <button
+            type="button"
+            onClick={() => setNavMode((prev) => (prev === 'circles' ? 'progress' : 'circles'))}
+            title={navMode === 'circles' ? 'Switch to progress view' : 'Switch to circle view'}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+          >
+            {navMode === 'circles' ? (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="6" width="12" height="2" rx="1" fill="currentColor" />
+                <rect x="1" y="2" width="8" height="2" rx="1" fill="currentColor" opacity="0.5" />
+                <rect x="1" y="10" width="5" height="2" rx="1" fill="currentColor" opacity="0.3" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="3" cy="7" r="2" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="7" cy="7" r="2" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="11" cy="7" r="2" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
 
-      <div className="max-w-[800px]">
-        <p className="mb-10 text-[16px] font-semibold leading-[1.5] text-black md:text-[18px] lg:text-[20px] dark:text-white">{currentQuestion.question.replace(/_{3,}/g, '____')}</p>
+      {/* Progress bar (slim, always visible) */}
+      <div className="h-[2px] w-full shrink-0 bg-muted">
+        <div
+          className="h-full bg-[var(--accent-brand)] transition-all duration-300"
+          style={{ width: `${progressPct}%` }}
+        />
       </div>
 
-      <div className="mb-10 max-w-[800px]">
-        <MediaPrompt question={currentQuestion} />
-        <QuestionView question={currentQuestion} answer={currentAnswer} disabled={effectiveMode !== 'classic' && isAnswered} onChange={handleSetAnswer} reveal={revealCurrent} />
-      </div>
+      {/* Scrollable question area */}
+      <div className="flex-1 overflow-auto px-6 py-8">
+        <div className="mx-auto max-w-[760px]">
+          {/* Question text */}
+          <p className="mb-8 text-[17px] font-semibold leading-[1.6] text-foreground md:text-[19px]">
+            {currentQuestion.question.replace(/_{3,}/g, '____')}
+          </p>
 
-      {(effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id) ? (
-        <div className="mb-6 max-w-[800px] rounded-md border-l-4 border-[var(--accent-brand)] bg-[#f5f5f5] p-4 dark:bg-[#222]">
-          <div className="mb-2 text-sm">
-            Your answer: {formatAnswer(currentQuestion, currentAnswer)} {isCurrentCorrect ? '✅' : '❌'}
+          {/* Media */}
+          <MediaPrompt question={currentQuestion} />
+
+          {/* Answer area */}
+          <div className="mb-8">
+            <QuestionView
+              question={currentQuestion}
+              answer={currentAnswer}
+              disabled={effectiveMode !== 'classic' && isAnswered}
+              onChange={handleSetAnswer}
+              reveal={revealCurrent}
+              knowledgeScore={runtimeSettings?.knowledgeScore ?? 50}
+            />
           </div>
-          <div className="mb-2 text-sm">Correct answer: {getCorrectAnswerText(currentQuestion)} ✅</div>
-          {showWhy ? <div className="text-[13px] text-[#333] dark:text-[#ddd]">{currentQuestion.explanation?.trim() || 'Explanation unavailable.'}</div> : null}
-          {whyIncorrect ? <div className="mt-2 text-[13px] text-[#333] dark:text-[#ddd]">{whyIncorrect}</div> : null}
-          <div className="mt-3 flex gap-2">
-            <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setShowWhy((prev) => !prev)}><HelpCircle className="mr-1.5 h-3.5 w-3.5" />Explanation</Button>
-            {isCurrentCorrect === false ? <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => void loadWhyIncorrect()} disabled={whyIncorrectLoading}>{whyIncorrectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}Why incorrect?</Button> : null}
-          </div>
+
+          {/* Feedback panel (assisted mode) */}
+          {effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
+            <div className="mb-6 rounded-xl border-l-4 border-[var(--accent-brand)] bg-muted/60 p-4">
+              <div className="mb-1.5 text-sm">
+                Your answer: <span className="font-medium">{formatAnswer(currentQuestion, currentAnswer)}</span>{' '}
+                {isCurrentCorrect ? '✓' : '✗'}
+              </div>
+              <div className="mb-1.5 text-sm">
+                Correct answer: <span className="font-medium">{getCorrectAnswerText(currentQuestion)}</span>
+              </div>
+              {showWhy ? (
+                <div className="mt-2 text-[13px] text-muted-foreground">
+                  {currentQuestion.explanation?.trim() || 'Explanation unavailable.'}
+                </div>
+              ) : null}
+              {whyIncorrect ? (
+                <div className="mt-2 text-[13px] text-muted-foreground">{whyIncorrect}</div>
+              ) : null}
+              <div className="mt-3 flex gap-2">
+                <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setShowWhy((prev) => !prev)}>
+                  <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+                  Explanation
+                </Button>
+                {isCurrentCorrect === false ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    onClick={() => void loadWhyIncorrect()}
+                    disabled={whyIncorrectLoading}
+                  >
+                    {whyIncorrectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
+                    Why incorrect?
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
 
-      <div className="mt-0 flex items-center justify-between border-t border-t-[0.5px] border-[#d0d0d0] pt-10 dark:border-[#444]">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 rounded-md border-[0.5px] border-[#d0d0d0] bg-white px-5 text-[13px] text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#f8f8f8] dark:border-[#444] dark:bg-[#1a1a1a] dark:text-[#ddd] dark:hover:bg-[#222]"
-          onClick={() => {
-            if (currentIndex > 0) {
-              setCurrentIndex((prev) => Math.max(0, prev - 1));
-              setIsAnswered(Boolean(finalizedMap[questions[Math.max(0, currentIndex - 1)]?.id || '']));
-            }
-          }}
-          disabled={currentIndex === 0}
-        >
-          {'← Back'}
-        </Button>
-        <div />
-        <Button
-          type="button"
-          onClick={() => {
-            if (effectiveMode === 'assisted' && !isAnswered) {
-              handleAnswerPress();
-              return;
-            }
-            if (!canAdvance) return;
-            if (!isAnswered) {
-              handleAnswerPress();
-              if (shouldHideCorrectnessUntilEnd) {
-                advanceQuestion();
-              }
-              return;
-            }
-            advanceQuestion();
-          }}
-          disabled={effectiveMode === 'assisted' ? (!canAdvance && !isAnswered) : !canAdvance}
-          className="h-10 rounded-md bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
-        >
-          {effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1 ? 'Finish Quiz' : 'Next →'}
-        </Button>
+      {/* Bottom nav bar */}
+      <div className="shrink-0 border-t border-border px-6 py-4">
+        <div className="mx-auto flex max-w-[760px] items-center justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 px-5 text-[13px]"
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+          >
+            ← Previous
+          </Button>
+
+          <Button
+            type="button"
+            onClick={handleNext}
+            className="h-10 bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
+          >
+            {isLastQuestion ? 'Finish Quiz' : 'Next →'}
+          </Button>
+        </div>
       </div>
     </div>
   );

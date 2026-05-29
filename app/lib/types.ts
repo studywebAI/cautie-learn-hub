@@ -91,6 +91,7 @@ export const QuizQuestionTypeSchema = z.enum([
   'short-answer',
   'matching',
   'ordering',
+  'numeric',
   'internet-photo',
   'video-fragment',
   'timeline',

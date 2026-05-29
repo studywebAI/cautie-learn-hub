@@ -1231,8 +1231,6 @@ export function AppSidebar() {
     <Sidebar
       className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300 rounded-r-2xl")}
       collapsible="icon"
-      onMouseEnter={() => { if (sidebarState === 'collapsed') setOpen(true); }}
-      onMouseLeave={() => { if (sidebarState === 'expanded') setOpen(false); }}
     >
       <SidebarContent className="px-2 py-2 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
         {renderTeacherClassSwitcher()}
