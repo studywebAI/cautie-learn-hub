@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cautie — Question Type Mockups</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#e5e5e5;min-height:100vh}
+.layout{display:flex;gap:0;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:#111;border-right:1px solid #1c1c1c;padding:24px 16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h1{font-size:15px;font-weight:700;margin-bottom:4px;color:#e5e5e5}
+.sidebar p{font-size:11px;color:#555;margin-bottom:24px}
+.nav-section{font-size:10px;font-weight:600;color:#444;letter-spacing:.1em;text-transform:uppercase;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:#666;transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:#1a1a1a;color:#ccc}
+.nav-item.active{background:rgba(127,137,98,.15);color:#7f8962}
+.nav-num{font-size:10px;color:#444;min-width:18px}
+.main{flex:1;padding:40px 48px;max-width:1100px}
+.page-header{margin-bottom:56px}
+.page-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.page-header p{font-size:14px;color:#666;max-width:600px;line-height:1.6}
+.section{margin-bottom:80px;scroll-margin-top:40px}
+.section-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.section-badge{display:inline-block;font-size:11px;font-weight:600;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 10px;border-radius:4px;margin-bottom:10px}
+.section-desc{font-size:13px;color:#555;margin-bottom:28px;line-height:1.6}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.variant{background:#141414;border:1px solid #1c1c1c;border-radius:14px;overflow:hidden}
+.vhead{padding:14px 18px 12px;border-bottom:1px solid #191919;display:flex;align-items:center;justify-content:space-between}
+.vname{font-size:12px;font-weight:600;color:#888}
+.vtag{font-size:10px;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px}
+.vbody{padding:22px 18px}
+.qlabel{font-size:10px;font-weight:600;color:#444;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.qtext{font-size:14px;font-weight:500;color:#ddd;line-height:1.65;margin-bottom:18px}
+
+/* NAV CIRCLES (State 3 preview) */
+.qnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.qndot{width:30px;height:30px;border-radius:50%;border:1.5px solid #222;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#555;cursor:pointer;transition:all .15s}
+.qndot:hover{border-color:#7f8962;color:#7f8962}
+.qndot.cur{background:#7f8962;border-color:#7f8962;color:#fff}
+.qndot.ans{background:#1d2b18;border-color:#4a6030;color:#7f8962}
+.qbottom{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid #191919}
+.qbtn{padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #222;background:#1a1a1a;color:#888}
+.qbtn.primary{background:#7f8962;border-color:#7f8962;color:#fff}
+.qbtn.skip{background:transparent;border:none;color:#444;font-size:11px}
+
+/* ─── 1. MULTIPLE CHOICE ─── */
+.mcq-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mc{padding:13px 14px;background:#1a1a1a;border:1.5px solid #222;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:all .15s}
+.mc:hover{border-color:#7f8962;background:rgba(127,137,98,.05)}
+.mc.sel{border-color:#7f8962;background:rgba(127,137,98,.09)}
+.mc.cor{border-color:#4ade80;background:rgba(74,222,128,.07)}
+.mc.wrg{border-color:#f87171;background:rgba(248,113,113,.07)}
+.mcltr{width:26px;height:26px;background:#252525;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#555;flex-shrink:0}
+.mc.sel .mcltr{background:#7f8962;color:#fff}
+.mctext{font-size:12px;color:#bbb;line-height:1.4}
+
+.radio-list{display:flex;flex-direction:column;gap:7px}
+.ri{padding:13px 14px;border:1.5px solid #1e1e1e;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:11px;transition:all .15s}
+.ri:hover{border-color:#2a2a2a}
+.ri.sel{border-color:#7f8962;background:rgba(127,137,98,.06)}
+.rc{width:17px;height:17px;border:2px solid #2c2c2c;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ri.sel .rc{border-color:#7f8962}
+.rd{width:7px;height:7px;background:#7f8962;border-radius:50%;opacity:0}
+.ri.sel .rd{opacity:1}
+.rtext{font-size:12px;color:#bbb}
+
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.kcard{padding:16px;border-radius:9px;cursor:pointer;font-size:12px;font-weight:600;color:#fff;min-height:56px;display:flex;align-items:center;gap:8px;transition:opacity .15s}
+.kcard:hover{opacity:.85}
+.kcard:nth-child(1){background:#e74c3c}
+.kcard:nth-child(2){background:#2980b9}
+.kcard:nth-child(3){background:#e67e22}
+.kcard:nth-child(4){background:#27ae60}
+.kico{font-size:18px}
+
+/* ─── 2. FILL IN THE BLANK ─── */
+.fitb-sent{font-size:14px;line-height:2.4;color:#bbb}
+.fitb-input{display:inline-block;border:none;border-bottom:2px solid #7f8962;background:transparent;color:#e5e5e5;font-size:14px;width:110px;text-align:center;outline:none;padding:0 4px;font-family:inherit}
+.word-bank{display:flex;flex-wrap:wrap;gap:7px;padding:14px;background:#1a1a1a;border-radius:9px;margin-bottom:14px;min-height:52px}
+.wchip{padding:5px 13px;background:#222;border:1px solid #2e2e2e;border-radius:20px;font-size:12px;color:#bbb;cursor:grab;transition:all .15s}
+.wchip:hover{border-color:#7f8962;color:#e5e5e5}
+.wchip.used{opacity:.3;cursor:not-allowed}
+.fitb-sent2{font-size:14px;line-height:2.6;color:#bbb}
+.blank{display:inline-block;min-width:90px;border-bottom:2px dashed #333;height:22px;margin:0 3px;vertical-align:bottom}
+.blank.filled{border-bottom:2px solid #7f8962;background:rgba(127,137,98,.1);border-radius:3px 3px 0 0;padding:0 6px;color:#7f8962;font-size:12px}
+.drop-sel{display:inline-block;margin:0 3px;background:#1e1e1e;border:1.5px solid #7f8962;border-radius:6px;padding:2px 10px;font-size:12px;color:#7f8962;cursor:pointer}
+
+/* ─── 3. MATCHING ─── */
+.match-cols{display:flex;gap:10px;align-items:stretch}
+.mcol{flex:1;display:flex;flex-direction:column;gap:7px}
+.mitem{padding:9px 12px;border:1.5px solid #222;border-radius:8px;font-size:11px;color:#aaa;background:#1a1a1a;cursor:pointer;transition:all .15s;min-height:38px;display:flex;align-items:center}
+.mitem:hover{border-color:#7f8962}
+.mitem.ma{border-color:#60a5fa;background:rgba(96,165,250,.07);color:#ccc}
+.mitem.mb{border-color:#f472b6;background:rgba(244,114,182,.07);color:#ccc}
+.mitem.mc{border-color:#34d399;background:rgba(52,211,153,.07);color:#ccc}
+.mitem.md{border-color:#a78bfa;background:rgba(167,139,250,.07);color:#ccc}
+.mcenter{width:32px;flex-shrink:0;display:flex;flex-direction:column;gap:7px;justify-content:space-around}
+.mline{height:38px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#333}
+.mline.la{color:#60a5fa}
+.mline.lb{color:#f472b6}
+.mline.lc{color:#34d399}
+
+.match-slots{display:flex;flex-direction:column;gap:8px}
+.mrow{display:flex;align-items:center;gap:8px}
+.mlabel{flex:1;padding:9px 12px;background:#1a1a1a;border-radius:8px;font-size:11px;color:#aaa;min-height:38px;display:flex;align-items:center}
+.marrow{color:#333;font-size:14px;flex-shrink:0}
+.mslot{flex:1;padding:9px 12px;border:1.5px dashed #222;border-radius:8px;font-size:11px;color:#444;min-height:38px;display:flex;align-items:center;transition:all .15s}
+.mslot.f1{border-style:solid;border-color:#7f8962;color:#7f8962;background:rgba(127,137,98,.07)}
+.mslot.f2{border-style:solid;border-color:#60a5fa;color:#60a5fa;background:rgba(96,165,250,.07)}
+.mslot.f3{border-style:solid;border-color:#f472b6;color:#f472b6;background:rgba(244,114,182,.07)}
+.mbank{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+
+/* Matching variant 3: Click pairs */
+.cpairs{display:flex;gap:10px}
+.cpair-col{flex:1;display:flex;flex-direction:column;gap:6px}
+.cpitem{padding:9px 12px;border:1.5px solid #222;border-radius:8px;font-size:11px;color:#aaa;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px}
+.cpitem:hover{border-color:#7f8962}
+.cpitem.sel{border-color:#7f8962;background:rgba(127,137,98,.1);color:#e5e5e5}
+.cpitem.paired-a{border-color:#60a5fa;background:rgba(96,165,250,.07)}
+.cpitem.paired-b{border-color:#f472b6;background:rgba(244,114,182,.07)}
+.cpdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.cpdot-a{background:#60a5fa}
+.cpdot-b{background:#f472b6}
+
+/* ─── 4. TRUE / FALSE ─── */
+.tf-btns{display:flex;gap:10px}
+.tfbtn{flex:1;padding:22px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;border:1.5px solid;transition:all .15s}
+.tf-t{background:rgba(74,222,128,.08);color:#4ade80;border-color:rgba(74,222,128,.25)}
+.tf-t:hover{background:rgba(74,222,128,.15)}
+.tf-f{background:rgba(248,113,113,.08);color:#f87171;border-color:rgba(248,113,113,.25)}
+.tf-f:hover{background:rgba(248,113,113,.15)}
+.tfico{font-size:26px;margin-bottom:7px;display:block}
+
+.swipe-wrap{position:relative;text-align:center}
+.scard{background:#1a1a1a;border:1px solid #222;border-radius:16px;padding:28px 22px;margin:0 auto;max-width:240px;position:relative}
+.sctext{font-size:13px;color:#ddd;line-height:1.6;margin-bottom:18px}
+.shints{display:flex;justify-content:space-between;font-size:10px;color:#444}
+.sh-t{color:#4ade80}
+.sh-f{color:#f87171}
+.shint-arrow{font-size:18px}
+
+/* ─── 5. ORDERING ─── */
+.order-list{display:flex;flex-direction:column;gap:7px}
+.oitem{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#1a1a1a;border:1.5px solid #1e1e1e;border-radius:9px;cursor:grab}
+.onum{width:22px;height:22px;background:#7f8962;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.otext{font-size:12px;color:#bbb;flex:1}
+.odrag{color:#2e2e2e;font-size:18px;letter-spacing:-2px}
+
+.click-nums{display:flex;flex-direction:column;gap:7px}
+.cnum-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#1a1a1a;border:1.5px solid #222;border-radius:9px;cursor:pointer;transition:all .15s}
+.cnum-item:hover{border-color:#7f8962}
+.cnum-item.n1{border-color:#7f8962;background:rgba(127,137,98,.09)}
+.cnum-item.n3{border-color:#60a5fa;background:rgba(96,165,250,.07)}
+.cnumbadge{width:22px;height:22px;border-radius:50%;background:#1f1f1f;border:1.5px solid #2e2e2e;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#555;flex-shrink:0;transition:all .15s}
+.cnum-item.n1 .cnumbadge{background:#7f8962;border-color:#7f8962;color:#fff}
+.cnum-item.n3 .cnumbadge{background:#60a5fa;border-color:#60a5fa;color:#fff}
+.cnum-text{font-size:12px;color:#bbb}
+
+/* ─── 6. TIMELINE ─── */
+.tl-events-pool{display:flex;flex-wrap:wrap;gap:7px;padding:12px;background:#1a1a1a;border-radius:9px;margin-bottom:16px}
+.tl-chip{padding:5px 12px;background:#222;border:1px solid #2c2c2c;border-radius:20px;font-size:11px;color:#aaa;cursor:grab}
+.timeline-track{position:relative;padding:36px 0 16px;margin:0 4px}
+.tl-line{height:2px;background:linear-gradient(to right,#7f8962,#3a4a2c);border-radius:2px;position:relative}
+.tl-placed{position:absolute;top:-28px;transform:translateX(-50%);text-align:center}
+.tl-placed-chip{background:rgba(127,137,98,.15);border:1px solid rgba(127,137,98,.4);color:#7f8962;padding:3px 9px;border-radius:12px;font-size:10px;white-space:nowrap}
+.tl-dot{width:10px;height:10px;background:#7f8962;border-radius:50%;position:absolute;top:-4px;transform:translateX(-50%);border:2px solid #0d0d0d}
+.tl-year-labels{display:flex;justify-content:space-between;margin-top:6px}
+.tl-year{font-size:10px;color:#444}
+
+.tl-sort{display:flex;flex-direction:column;gap:6px}
+.tls-item{display:flex;align-items:center;gap:10px;padding:9px 13px;background:#1a1a1a;border:1.5px solid #1e1e1e;border-radius:8px;cursor:grab}
+.tls-handle{color:#2e2e2e;font-size:16px}
+.tls-num{width:20px;height:20px;background:#7f8962;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.tls-text{font-size:11px;color:#bbb}
+
+/* ─── 7. DRAG & DROP CATEGORIZATION ─── */
+.drag-bank{display:flex;flex-wrap:wrap;gap:7px;padding:13px;background:#1a1a1a;border-radius:9px;margin-bottom:14px;min-height:52px}
+.ditem{padding:5px 13px;background:#222;border:1px solid #2c2c2c;border-radius:20px;font-size:12px;color:#bbb;cursor:grab;transition:all .15s}
+.ditem:hover{border-color:#7f8962}
+.dbuckets{display:flex;gap:10px}
+.dbucket{flex:1;border:1.5px dashed #222;border-radius:10px;padding:11px;min-height:80px}
+.dbucket-label{font-size:10px;font-weight:700;color:#555;margin-bottom:7px;text-transform:uppercase;letter-spacing:.07em}
+.dbucket-item{padding:4px 10px;background:rgba(127,137,98,.1);border:1px solid rgba(127,137,98,.25);border-radius:6px;font-size:11px;color:#7f8962;margin-bottom:5px}
+.dbucket-item.b2{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.25);color:#60a5fa}
+.dbucket-item.b3{background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.25);color:#f472b6}
+
+/* ─── 8. SHORT ANSWER ─── */
+.sa-ta{width:100%;background:#1a1a1a;border:1.5px solid #222;border-radius:10px;color:#bbb;font-size:13px;padding:13px;resize:none;min-height:90px;outline:none;font-family:inherit;transition:border-color .15s;line-height:1.6}
+.sa-ta:focus{border-color:#7f8962}
+.sa-counter{font-size:11px;color:#333;text-align:right;margin-top:6px}
+.sa-hints{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.sa-hint{padding:4px 10px;background:#1a1a1a;border:1px solid #222;border-radius:6px;font-size:11px;color:#555;cursor:pointer}
+.sa-hint:hover{border-color:#7f8962;color:#7f8962}
+
+/* ─── 9. CLOZE ─── */
+.cloze-p{font-size:13px;line-height:2.2;color:#bbb;padding:16px;background:#1a1a1a;border-radius:10px}
+.cb{display:inline-block;border-bottom:2px solid #7f8962;min-width:80px;height:20px;margin:0 2px;vertical-align:bottom;background:rgba(127,137,98,.06);border-radius:3px 3px 0 0;padding:0 6px;color:#7f8962;font-size:12px}
+.cb.empty{color:transparent;border-bottom:2px dashed #333;background:transparent}
+.cloze-bank{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+
+/* ─── 10. NUMERIC ─── */
+.num-wrap{display:flex;align-items:center;gap:10px;justify-content:center;padding:10px 0}
+.num-btn{width:40px;height:40px;background:#1c1c1c;border:1px solid #222;border-radius:8px;font-size:20px;color:#888;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.num-btn:hover{border-color:#7f8962;color:#7f8962}
+.num-in{flex:1;background:#1a1a1a;border:2px solid #7f8962;border-radius:10px;color:#e5e5e5;font-size:28px;font-weight:700;text-align:center;padding:10px;outline:none;max-width:120px}
+.num-unit{font-size:12px;color:#555}
+
+/* ─── 11. RANKING ─── */
+.rank-list{display:flex;flex-direction:column;gap:7px}
+.ritem{display:flex;align-items:center;gap:11px;padding:11px 14px;background:#1a1a1a;border:1.5px solid #1e1e1e;border-radius:9px}
+.rpos{font-size:18px;font-weight:700;color:#7f8962;min-width:24px}
+.rtext{font-size:12px;color:#bbb;flex:1}
+.rhandle{color:#2e2e2e;font-size:18px;cursor:grab}
+
+/* ─── 12. VENN ─── */
+.venn-wrap{position:relative;height:130px;margin:12px 0}
+.vcircle{position:absolute;width:110px;height:110px;border-radius:50%;border:2px solid}
+.va{left:20px;top:10px;border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.04)}
+.vb{left:80px;top:10px;border-color:rgba(244,114,182,.4);background:rgba(244,114,182,.04)}
+.vlabel{font-size:10px;font-weight:600;color:#666;text-align:center;position:absolute}
+.vla{left:26px;top:50px}
+.vlb{left:150px;top:50px}
+.vlc{left:90px;top:50px;color:#aaa;font-size:9px}
+.vchip-placed{position:absolute;font-size:10px;background:#1f1f1f;border:1px solid #333;padding:2px 7px;border-radius:10px;color:#aaa}
+.vbank{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.vchip{padding:4px 11px;background:#1a1a1a;border:1px solid #222;border-radius:20px;font-size:11px;color:#888;cursor:grab}
+
+/* ─── 13. SPOTTING ERRORS ─── */
+.spot-p{font-size:13px;line-height:2;color:#bbb;padding:16px;background:#1a1a1a;border-radius:10px}
+.sword{cursor:pointer;padding:1px 2px;border-radius:3px;transition:all .15s}
+.sword:hover{background:rgba(255,255,255,.07)}
+.sword.hi{background:rgba(248,113,113,.2);color:#f87171;text-decoration:underline wavy #f87171}
+.spot-hint{font-size:11px;color:#444;margin-top:10px}
+
+/* ─── 14. HOTSPOT ─── */
+.hs-img{position:relative;background:#1a1a1a;border-radius:10px;overflow:hidden;height:150px;display:flex;align-items:center;justify-content:center}
+.hs-bg{font-size:12px;color:#333;text-align:center;line-height:1.8}
+.hs-zone{position:absolute;width:36px;height:36px;border-radius:50%;border:2px solid rgba(127,137,98,.5);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.hs-zone:hover{background:rgba(127,137,98,.2)}
+.hs-zone.clicked{background:rgba(127,137,98,.4);border-color:#7f8962}
+.hs-dot{width:9px;height:9px;background:#7f8962;border-radius:50%}
+
+/* ─── 15. COMPARISON MATRIX ─── */
+.ctbl{width:100%;border-collapse:collapse;font-size:11px}
+.ctbl th{padding:8px 11px;background:#1a1a1a;color:#555;font-weight:600;text-align:left;border-bottom:1px solid #1e1e1e}
+.ctbl td{padding:8px 11px;border-bottom:1px solid #181818;color:#bbb;vertical-align:middle}
+.cbox{width:17px;height:17px;border:1.5px solid #2e2e2e;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cbox:hover{border-color:#7f8962}
+.cbox.chk{background:#7f8962;border-color:#7f8962}
+.ccheck{font-size:10px;color:#fff}
+
+/* ─── 16. ARGUMENT ANALYSIS ─── */
+.arg-stmts{display:flex;flex-direction:column;gap:8px}
+.astmt{padding:11px 13px;border-radius:8px;border:1px solid #1e1e1e;font-size:12px;color:#aaa;display:flex;align-items:flex-start;gap:9px}
+.atag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px}
+.atag.claim{background:rgba(96,165,250,.1);color:#60a5fa}
+.atag.support{background:rgba(52,211,153,.1);color:#34d399}
+.atag.fallacy{background:rgba(248,113,113,.1);color:#f87171}
+.arg-opts{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.aopt{padding:8px 12px;border:1px solid #1e1e1e;border-radius:7px;font-size:12px;color:#666;cursor:pointer;transition:all .15s}
+.aopt:hover{border-color:#7f8962;color:#aaa}
+
+/* ─── SCENARIO ─── */
+.scenario-box{background:#1a1a1a;border-left:3px solid #7f8962;border-radius:0 8px 8px 0;padding:14px;margin-bottom:14px;font-size:12px;color:#aaa;line-height:1.7}
+.scenario-label{font-size:10px;font-weight:600;color:#7f8962;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+
+/* Divider */
+.divider{border:none;border-top:1px solid #1a1a1a;margin:56px 0}
+
+/* Category note */
+.cat-note{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.ccat{padding:3px 9px;background:#1a1a1a;border:1px solid #222;border-radius:5px;font-size:10px;color:#555}
+.ccat.active{border-color:rgba(127,137,98,.4);color:#7f8962;background:rgba(127,137,98,.07)}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <h1>Cautie</h1>
+  <p>Question Type Mockups</p>
+  <div class="nav-section">General Types</div>
+  <a class="nav-item active" href="#mcq"><span class="nav-num">01</span> Multiple Choice</a>
+  <a class="nav-item" href="#fitb"><span class="nav-num">02</span> Fill in the Blank</a>
+  <a class="nav-item" href="#matching"><span class="nav-num">03</span> Matching</a>
+  <a class="nav-item" href="#tf"><span class="nav-num">04</span> True / False</a>
+  <a class="nav-item" href="#ordering"><span class="nav-num">05</span> Ordering</a>
+  <a class="nav-item" href="#timeline"><span class="nav-num">06</span> Timeline</a>
+  <a class="nav-item" href="#dragcat"><span class="nav-num">07</span> Drag &amp; Drop Sort</a>
+  <a class="nav-item" href="#shortans"><span class="nav-num">08</span> Short Answer</a>
+  <a class="nav-item" href="#cloze"><span class="nav-num">09</span> Cloze Test</a>
+  <a class="nav-item" href="#numeric"><span class="nav-num">10</span> Numeric Input</a>
+  <a class="nav-item" href="#ranking"><span class="nav-num">11</span> Ranking</a>
+  <a class="nav-item" href="#venn"><span class="nav-num">12</span> Venn Diagram</a>
+  <a class="nav-item" href="#spot"><span class="nav-num">13</span> Spot the Error</a>
+  <a class="nav-item" href="#hotspot"><span class="nav-num">14</span> Hotspot</a>
+  <a class="nav-item" href="#matrix"><span class="nav-num">15</span> Comparison Matrix</a>
+  <a class="nav-item" href="#argument"><span class="nav-num">16</span> Argument Analysis</a>
+  <a class="nav-item" href="#scenario"><span class="nav-num">17</span> Scenario / Case</a>
+  <div class="nav-section" style="margin-top:20px">State 3 Layout</div>
+  <a class="nav-item" href="#state3"><span class="nav-num">↗</span> Quiz Navigation</a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<div class="page-header">
+  <h2>Question Type Mockups</h2>
+  <p>Multiple layout variants per question type. Each shows a different interaction model — pick what works best, mix and match per specific variation.</p>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- 01. MULTIPLE CHOICE -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="mcq">
+  <div class="section-badge">01</div>
+  <div class="section-title">Multiple Choice</div>
+  <div class="section-desc">Most universal type. Three layout variants — cards, radio list, and Kahoot-style color blocks. Cards and radio list are best for serious academic use; color blocks add energy for fast-paced review.</div>
+  <div class="cat-note">
+    <span class="ccat active">Events</span><span class="ccat active">Terms</span><span class="ccat active">Causes & Effects</span><span class="ccat active">People</span><span class="ccat active">Locations</span><span class="ccat">+ any other active category</span>
+  </div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Card Grid (2×2)</span><span class="vtag">Most popular</span></div>
+      <div class="vbody">
+        <div class="qlabel">Question</div>
+        <div class="qtext">Which year did the Netherlands officially declare independence from Spain?</div>
+        <div class="mcq-cards">
+          <div class="mc sel"><span class="mcltr">A</span><span class="mctext">1581</span></div>
+          <div class="mc"><span class="mcltr">B</span><span class="mctext">1648</span></div>
+          <div class="mc"><span class="mcltr">C</span><span class="mctext">1492</span></div>
+          <div class="mc"><span class="mcltr">D</span><span class="mctext">1618</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Radio List</span><span class="vtag">Clean / Linear style</span></div>
+      <div class="vbody">
+        <div class="qlabel">Question</div>
+        <div class="qtext">What was the primary cause of World War I?</div>
+        <div class="radio-list">
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">Economic rivalry between European empires</span></div>
+          <div class="ri sel"><div class="rc"><div class="rd"></div></div><span class="rtext">Assassination of Archduke Franz Ferdinand</span></div>
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">The fall of the Ottoman Empire</span></div>
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">Napoleon's military campaigns</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant C — Color Blocks</span><span class="vtag">High energy / Kahoot</span></div>
+      <div class="vbody">
+        <div class="qlabel">Question</div>
+        <div class="qtext">Who led the French Revolution's Reign of Terror?</div>
+        <div class="kgrid">
+          <div class="kcard"><span class="kico">▲</span>Robespierre</div>
+          <div class="kcard"><span class="kico">◆</span>Napoleon</div>
+          <div class="kcard"><span class="kico">●</span>Louis XVI</div>
+          <div class="kcard"><span class="kico">■</span>Danton</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 02. FILL IN THE BLANK -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="fitb">
+  <div class="section-badge">02</div>
+  <div class="section-title">Fill in the Blank</div>
+  <div class="section-desc">Three variants: inline typing (most natural), word bank drag-and-drop (reduces guessing but more interactive), and dropdown select (structured, no freeform). Best for terms, dates, names.</div>
+  <div class="cat-note">
+    <span class="ccat active">Terms</span><span class="ccat active">Dates</span><span class="ccat active">People</span><span class="ccat active">Locations</span><span class="ccat active">Numbered Data</span>
+  </div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Inline Type</span><span class="vtag">Most natural</span></div>
+      <div class="vbody">
+        <div class="qlabel">Fill in the blank</div>
+        <div class="fitb-sent">
+          The Netherlands declared independence in <input class="fitb-input" value="1581" />, forming the <input class="fitb-input" placeholder="..." style="width:160px" /> Republic.
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Word Bank Drag</span><span class="vtag">Most interactive</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag words into the blanks</div>
+        <div class="word-bank">
+          <div class="wchip used">1581</div>
+          <div class="wchip">1648</div>
+          <div class="wchip">Dutch</div>
+          <div class="wchip">Spanish</div>
+          <div class="wchip used">Republic</div>
+        </div>
+        <div class="fitb-sent2">
+          The Netherlands declared independence in <span class="blank filled">1581</span>, forming the <span class="blank filled">Republic</span> of the United Provinces.
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant C — Inline Dropdown</span><span class="vtag">Structured</span></div>
+      <div class="vbody">
+        <div class="qlabel">Select the correct word</div>
+        <div class="fitb-sent2">
+          The <span class="drop-sel">Dutch ▾</span> War of Independence lasted until the Peace of <span class="drop-sel">Westphalia ▾</span> in 1648.
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 03. MATCHING -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="matching">
+  <div class="section-badge">03</div>
+  <div class="section-title">Matching</div>
+  <div class="section-desc">Four distinct interaction models. Connect-lines feels most intuitive on desktop. Drag-to-slot is cleanest for long text. Click-pairs works great on mobile. All support 20 variation types (term→def, year→event, cause→effect, etc.).</div>
+  <div class="cat-note">
+    <span class="ccat active">Terms</span><span class="ccat active">Events</span><span class="ccat active">Dates</span><span class="ccat active">People</span><span class="ccat active">Causes & Effects</span><span class="ccat active">Locations</span>
+  </div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Connect Lines</span><span class="vtag">Most intuitive</span></div>
+      <div class="vbody">
+        <div class="qlabel">Match term → definition</div>
+        <div class="match-cols" style="margin-bottom:16px">
+          <div class="mcol">
+            <div class="mitem ma">Treaty of Westphalia</div>
+            <div class="mitem mb">Eighty Years' War</div>
+            <div class="mitem mc">William of Orange</div>
+            <div class="mitem" style="color:#555;border-style:dashed">???</div>
+          </div>
+          <div class="mcenter">
+            <div class="mline la">—</div>
+            <div class="mline lb">—</div>
+            <div class="mline lc">—</div>
+            <div class="mline" style="color:#222">—</div>
+          </div>
+          <div class="mcol">
+            <div class="mitem mc">Dutch independence leader</div>
+            <div class="mitem" style="color:#555;border-style:dashed">Drop here...</div>
+            <div class="mitem ma">Ended Thirty Years' War 1648</div>
+            <div class="mitem mb">Dutch revolt vs Spain</div>
+          </div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Drag to Slot</span><span class="vtag">Clean for long text</span></div>
+      <div class="vbody">
+        <div class="qlabel">Year → Event matching</div>
+        <div class="match-slots">
+          <div class="mrow">
+            <div class="mlabel">1568</div>
+            <div class="marrow">→</div>
+            <div class="mslot f1">Eighty Years' War begins</div>
+          </div>
+          <div class="mrow">
+            <div class="mlabel">1581</div>
+            <div class="marrow">→</div>
+            <div class="mslot f2">Act of Abjuration signed</div>
+          </div>
+          <div class="mrow">
+            <div class="mlabel">1648</div>
+            <div class="marrow">→</div>
+            <div class="mslot" style="color:#444">Drop here...</div>
+          </div>
+        </div>
+        <div class="mbank">
+          <div class="wchip">Peace of Westphalia</div>
+          <div class="wchip used">Eighty Years' War begins</div>
+          <div class="wchip used">Act of Abjuration</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant C — Click Pairs</span><span class="vtag">Best for mobile</span></div>
+      <div class="vbody">
+        <div class="qlabel">Click item on left, then match on right</div>
+        <div class="cpairs" style="margin-bottom:16px">
+          <div class="cpair-col">
+            <div class="cpitem sel"><div class="cpdot" style="background:#7f8962"></div>William of Orange</div>
+            <div class="cpitem paired-a"><div class="cpdot cpdot-a"></div>Treaty of Westphalia</div>
+            <div class="cpitem paired-b"><div class="cpdot cpdot-b"></div>Philip II of Spain</div>
+          </div>
+          <div class="cpair-col">
+            <div class="cpitem paired-a"><div class="cpdot cpdot-a"></div>1648 peace treaty</div>
+            <div class="cpitem" style="border-color:#7f8962;background:rgba(127,137,98,.1)"><div class="cpdot" style="background:#7f8962"></div>Dutch revolt leader</div>
+            <div class="cpitem paired-b"><div class="cpdot cpdot-b"></div>Spanish king opponent</div>
+          </div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 04. TRUE / FALSE -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="tf">
+  <div class="section-badge">04</div>
+  <div class="section-title">True / False</div>
+  <div class="section-desc">Two layouts. Big buttons are clear and decisive. Swipe card mimics flashcard muscle memory and works great for rapid-fire review mode.</div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Big Buttons</span><span class="vtag">Clear / decisive</span></div>
+      <div class="vbody">
+        <div class="qlabel">True or False?</div>
+        <div class="qtext">The Act of Abjuration was signed in 1648, officially ending Spanish rule over the Netherlands.</div>
+        <div class="tf-btns">
+          <div class="tfbtn tf-t"><span class="tfico">✓</span>True</div>
+          <div class="tfbtn tf-f"><span class="tfico">✗</span>False</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Swipe Card</span><span class="vtag">Flashcard feel</span></div>
+      <div class="vbody">
+        <div class="qlabel">Swipe right for True, left for False</div>
+        <div class="swipe-wrap">
+          <div class="scard">
+            <div class="sctext">The Peace of Westphalia in 1648 officially recognized Dutch independence from Spain.</div>
+            <div class="shints">
+              <span class="sh-f"><span class="shint-arrow">←</span> False</span>
+              <span class="sh-t">True <span class="shint-arrow">→</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 05. ORDERING / SEQUENCING -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="ordering">
+  <div class="section-badge">05</div>
+  <div class="section-title">Ordering / Sequencing</div>
+  <div class="section-desc">Two models: drag-handle reordering (most natural, like Notion list) and click-to-number (faster, no drag required, works well on touch).</div>
+  <div class="cat-note">
+    <span class="ccat active">Sequences</span><span class="ccat active">Processes</span><span class="ccat active">Causes & Effects</span>
+  </div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Drag Handles</span><span class="vtag">Most natural</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag to put in correct order</div>
+        <div class="qtext" style="margin-bottom:14px">Order the steps of the Dutch revolt:</div>
+        <div class="order-list">
+          <div class="oitem"><span class="onum">1</span><span class="otext">Spanish rule over the Netherlands begins</span><span class="odrag">⠿</span></div>
+          <div class="oitem"><span class="onum">2</span><span class="otext">Eighty Years' War starts (1568)</span><span class="odrag">⠿</span></div>
+          <div class="oitem"><span class="onum">3</span><span class="otext">Act of Abjuration signed (1581)</span><span class="odrag">⠿</span></div>
+          <div class="oitem"><span class="onum">4</span><span class="otext">Peace of Westphalia (1648)</span><span class="odrag">⠿</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Click to Number</span><span class="vtag">Fast / touch-friendly</span></div>
+      <div class="vbody">
+        <div class="qlabel">Click items in the correct order</div>
+        <div class="qtext" style="margin-bottom:14px">Order these events chronologically:</div>
+        <div class="click-nums">
+          <div class="cnum-item n1"><div class="cnumbadge">1</div><span class="cnum-text">Spanish rule begins over Netherlands</span></div>
+          <div class="cnum-item"><div class="cnumbadge">?</div><span class="cnum-text">Peace of Westphalia signed</span></div>
+          <div class="cnum-item n3"><div class="cnumbadge">3</div><span class="cnum-text">Act of Abjuration declared</span></div>
+          <div class="cnum-item"><div class="cnumbadge">?</div><span class="cnum-text">Eighty Years' War begins</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 06. TIMELINE -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="timeline">
+  <div class="section-badge">06</div>
+  <div class="section-title">Timeline Placement</div>
+  <div class="section-desc">Two formats: horizontal track (visual, immersive — you actually place events on a line) and vertical sort (faster, simpler, better for many events).</div>
+  <div class="cat-note">
+    <span class="ccat active">Dates & Time Periods</span><span class="ccat active">Events</span><span class="ccat active">People</span>
+  </div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Horizontal Track</span><span class="vtag">Most visual</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag events onto the timeline</div>
+        <div class="tl-events-pool">
+          <div class="tl-chip">Act of Abjuration</div>
+          <div class="tl-chip" style="opacity:.35;cursor:not-allowed">Eighty Years' War ✓</div>
+          <div class="tl-chip">Peace of Westphalia</div>
+        </div>
+        <div class="timeline-track">
+          <div class="tl-line">
+            <div class="tl-placed" style="left:18%">
+              <div class="tl-placed-chip">Eighty Years' War</div>
+              <div class="tl-dot"></div>
+            </div>
+          </div>
+          <div class="tl-year-labels">
+            <span class="tl-year">1550</span>
+            <span class="tl-year">1580</span>
+            <span class="tl-year">1610</span>
+            <span class="tl-year">1640</span>
+            <span class="tl-year">1680</span>
+          </div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Vertical Sort</span><span class="vtag">Simple / scalable</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag to sort chronologically (oldest first)</div>
+        <div class="tl-sort">
+          <div class="tls-item"><span class="tls-handle">⠿</span><div class="tls-num">1</div><span class="tls-text">Spanish rule over Netherlands begins (1556)</span></div>
+          <div class="tls-item"><span class="tls-handle">⠿</span><div class="tls-num">2</div><span class="tls-text">Eighty Years' War starts (1568)</span></div>
+          <div class="tls-item"><span class="tls-handle">⠿</span><div class="tls-num">3</div><span class="tls-text">Act of Abjuration (1581)</span></div>
+          <div class="tls-item"><span class="tls-handle">⠿</span><div class="tls-num">4</div><span class="tls-text">Peace of Westphalia (1648)</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 07. DRAG & DROP CATEGORIZATION -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="dragcat">
+  <div class="section-badge">07</div>
+  <div class="section-title">Drag &amp; Drop Categorization</div>
+  <div class="section-desc">Sort items into buckets. Top bank + bottom buckets is the classic format. Two or three buckets works best; beyond that, use a table instead.</div>
+  <div class="cat-note"><span class="ccat active">Classifications</span><span class="ccat active">Comparisons</span><span class="ccat active">Causes & Effects</span></div>
+  <div class="variants">
+
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Bank → Buckets</span><span class="vtag">Classic</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag each item to the correct category</div>
+        <div class="qtext" style="margin-bottom:14px">Classify these as cause or effect of the Dutch revolt:</div>
+        <div class="drag-bank">
+          <div class="ditem">Heavy taxation</div>
+          <div class="ditem">William of Orange leads resistance</div>
+          <div class="ditem" style="opacity:.3">Eighty Years' War ✓</div>
+          <div class="ditem">Religious oppression</div>
+          <div class="ditem" style="opacity:.3">Act of Abjuration ✓</div>
+        </div>
+        <div class="dbuckets">
+          <div class="dbucket">
+            <div class="dbucket-label">⚡ Cause</div>
+            <div class="dbucket-item">Heavy taxation</div>
+            <div class="dbucket-item">Religious oppression</div>
+          </div>
+          <div class="dbucket">
+            <div class="dbucket-label">→ Effect</div>
+            <div class="dbucket-item b2">Eighty Years' War</div>
+            <div class="dbucket-item b2">Act of Abjuration</div>
+          </div>
+          <div class="dbucket">
+            <div class="dbucket-label">👤 People</div>
+            <div class="dbucket-item b3">William of Orange</div>
+          </div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 08. SHORT ANSWER -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="shortans">
+  <div class="section-badge">08</div>
+  <div class="section-title">Short Answer</div>
+  <div class="section-desc">Free text with optional guided hints. Hints are clickable scaffolds that expand the question context without giving away the answer. Char counter adds accountability.</div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Plain Textarea</span><span class="vtag">Clean</span></div>
+      <div class="vbody">
+        <div class="qlabel">Short answer</div>
+        <div class="qtext">Why did the Dutch provinces decide to formally declare independence in 1581 rather than earlier?</div>
+        <textarea class="sa-ta" placeholder="Write your answer here..."></textarea>
+        <div class="sa-counter">0 / 300 words</div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Submit →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — With Guided Hints</span><span class="vtag">Scaffolded</span></div>
+      <div class="vbody">
+        <div class="qlabel">Short answer</div>
+        <div class="qtext">Explain the significance of the Act of Abjuration.</div>
+        <div class="sa-hints">
+          <div class="sa-hint">💡 When was it signed?</div>
+          <div class="sa-hint">💡 What did it declare?</div>
+          <div class="sa-hint">💡 Who did it affect?</div>
+        </div>
+        <textarea class="sa-ta" placeholder="Write your answer here..."></textarea>
+        <div class="sa-counter">0 / 300 words</div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Submit →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 09. CLOZE TEST -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="cloze">
+  <div class="section-badge">09</div>
+  <div class="section-title">Cloze Test</div>
+  <div class="section-desc">Paragraph with multiple blanks. Two modes: word bank chips (structured, less frustrating) and open blanks (harder, tests recall). Word bank recommended by default.</div>
+  <div class="variants">
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — With Word Bank</span><span class="vtag">Recommended</span></div>
+      <div class="vbody">
+        <div class="qlabel">Fill in all blanks using the word bank</div>
+        <div class="cloze-p">
+          The <span class="cb">Eighty Years' War</span> began in <span class="cb">1568</span> as a revolt of the <span class="cb empty">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> provinces against <span class="cb empty">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> rule. The revolt was led by <span class="cb">William of Orange</span>, who sought both religious and political freedom.
+        </div>
+        <div class="cloze-bank">
+          <div class="wchip used">Eighty Years' War</div>
+          <div class="wchip used">1568</div>
+          <div class="wchip">Dutch</div>
+          <div class="wchip">Spanish</div>
+          <div class="wchip used">William of Orange</div>
+          <div class="wchip">French</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant B — Open Blanks</span><span class="vtag">Harder / pure recall</span></div>
+      <div class="vbody">
+        <div class="qlabel">Type in each blank</div>
+        <div class="fitb-sent" style="padding:16px;background:#1a1a1a;border-radius:10px;line-height:2.4">
+          The Peace of <input class="fitb-input" placeholder="..." style="width:100px"/> in <input class="fitb-input" placeholder="year" style="width:70px"/> finally recognized Dutch independence, ending over <input class="fitb-input" placeholder="??" style="width:50px"/> years of conflict with Spain.
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 10. NUMERIC INPUT -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="numeric">
+  <div class="section-badge">10</div>
+  <div class="section-title">Numeric Input</div>
+  <div class="section-desc">For dates, statistics, measurements. Large readable input with ± stepper buttons and unit label. Clean and focused.</div>
+  <div class="cat-note"><span class="ccat active">Numbered Data</span><span class="ccat active">Dates</span></div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Stepper Input</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Enter the year</div>
+        <div class="qtext">In what year did the Eighty Years' War begin?</div>
+        <div class="num-wrap">
+          <div class="num-btn">−</div>
+          <input class="num-in" value="1568" />
+          <div class="num-btn">+</div>
+          <span class="num-unit">AD</span>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 11. RANKING -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="ranking">
+  <div class="section-badge">11</div>
+  <div class="section-title">Ranking</div>
+  <div class="section-desc">Drag-to-rank with numbered positions. Ideal for importance, impact, or scale questions.</div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Variant A — Drag to Rank</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Rank from most to least significant</div>
+        <div class="qtext" style="margin-bottom:14px">Rank causes of the Dutch revolt by significance:</div>
+        <div class="rank-list">
+          <div class="ritem"><span class="rpos">1</span><span class="rtext">Religious persecution (Calvinism vs Catholicism)</span><span class="rhandle">⠿</span></div>
+          <div class="ritem"><span class="rpos">2</span><span class="rtext">Heavy taxation and economic exploitation</span><span class="rhandle">⠿</span></div>
+          <div class="ritem"><span class="rpos">3</span><span class="rtext">Resentment of Spanish military presence</span><span class="rhandle">⠿</span></div>
+          <div class="ritem"><span class="rpos">4</span><span class="rtext">Influence of Renaissance humanism</span><span class="rhandle">⠿</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 12. VENN DIAGRAM -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="venn">
+  <div class="section-badge">12</div>
+  <div class="section-title">Venn Diagram</div>
+  <div class="section-desc">Drag items into the correct Venn zone. Works well for comparison/contrast questions. Keep to 2 circles max for usability.</div>
+  <div class="cat-note"><span class="ccat active">Comparisons</span><span class="ccat active">Classifications</span></div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Two Circle Drag</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Drag items to the correct zone</div>
+        <div class="qtext" style="margin-bottom:8px">Compare the Northern and Southern Netherlands provinces:</div>
+        <div class="venn-wrap">
+          <div class="vcircle va">
+            <div class="vlabel" style="position:relative">North</div>
+          </div>
+          <div class="vcircle vb">
+            <div class="vlabel" style="position:relative">South</div>
+          </div>
+          <div class="vlabel vla">North only</div>
+          <div class="vlabel vlb">South only</div>
+          <div class="vlabel vlc">Both</div>
+          <div class="vchip-placed" style="left:30px;top:60px">Calvinist majority</div>
+          <div class="vchip-placed" style="left:88px;top:55px;font-size:9px">Dutch language</div>
+          <div class="vchip-placed" style="left:148px;top:60px">Catholic majority</div>
+        </div>
+        <div class="vbank">
+          <div class="vchip">Maritime trade</div>
+          <div class="vchip">Habsburg rule (pre-revolt)</div>
+          <div class="vchip">Remained with Spain</div>
+          <div class="vchip">Declared independence</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 13. SPOT THE ERROR -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="spot">
+  <div class="section-badge">13</div>
+  <div class="section-title">Spot the Error</div>
+  <div class="section-desc">Click on the incorrect word or phrase in a passage. Great for testing precision of knowledge. Visual highlight confirms selection.</div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Click to Highlight</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Click on the incorrect word or phrase</div>
+        <div class="spot-p">
+          The <span class="sword">Eighty</span> <span class="sword">Years'</span> <span class="sword">War</span> began in <span class="sword hi">1548</span> when the <span class="sword">Dutch</span> <span class="sword">provinces</span> revolted against <span class="sword">Spanish</span> rule. The revolt was led by <span class="sword">William</span> of <span class="sword">Orange</span>, a prominent <span class="sword">Protestant</span> nobleman who opposed <span class="sword">Philip</span> <span class="sword">II</span>'s policies.
+        </div>
+        <div class="spot-hint">1 error selected — click another to change your answer</div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 14. HOTSPOT -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="hotspot">
+  <div class="section-badge">14</div>
+  <div class="section-title">Hotspot (Click on Image)</div>
+  <div class="section-desc">Click a region on an image or map. Pulsing dot zones show clickable areas. Works for geography, anatomy, diagrams, labeled artwork.</div>
+  <div class="cat-note"><span class="ccat active">Locations</span><span class="ccat active">Visual/Spatial Content</span></div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Zone Click</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Click on the map</div>
+        <div class="qtext" style="margin-bottom:14px">Click the region that declared independence as the Dutch Republic in 1581.</div>
+        <div class="hs-img">
+          <div class="hs-bg">[ Map of the Low Countries — 1580 ]<br><span style="font-size:10px;color:#2a2a2a">Image loads here in production</span></div>
+          <div class="hs-zone clicked" style="left:30%;top:20%"><div class="hs-dot"></div></div>
+          <div class="hs-zone" style="left:55%;top:50%"><div class="hs-dot" style="background:#444"></div></div>
+          <div class="hs-zone" style="left:70%;top:30%"><div class="hs-dot" style="background:#444"></div></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 15. COMPARISON MATRIX -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="matrix">
+  <div class="section-badge">15</div>
+  <div class="section-title">Comparison Matrix</div>
+  <div class="section-desc">Table with checkboxes or fill-in cells. Best for comparing multiple items across shared properties. Keep columns under 5 for readability.</div>
+  <div class="cat-note"><span class="ccat active">Comparisons</span><span class="ccat active">Classifications</span></div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Checkbox Grid</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Mark all that apply for each</div>
+        <div class="qtext" style="margin-bottom:14px">Which characteristics apply to Northern vs Southern Netherlands?</div>
+        <table class="ctbl">
+          <tr>
+            <th>Characteristic</th>
+            <th>Northern Provinces</th>
+            <th>Southern Provinces</th>
+          </tr>
+          <tr>
+            <td>Calvinist majority</td>
+            <td><div class="cbox chk"><span class="ccheck">✓</span></div></td>
+            <td><div class="cbox"></div></td>
+          </tr>
+          <tr>
+            <td>Remained under Spain</td>
+            <td><div class="cbox"></div></td>
+            <td><div class="cbox chk"><span class="ccheck">✓</span></div></td>
+          </tr>
+          <tr>
+            <td>Signed Act of Abjuration</td>
+            <td><div class="cbox chk"><span class="ccheck">✓</span></div></td>
+            <td><div class="cbox"></div></td>
+          </tr>
+          <tr>
+            <td>Major maritime trade</td>
+            <td><div class="cbox chk"><span class="ccheck">✓</span></div></td>
+            <td><div class="cbox"></div></td>
+          </tr>
+        </table>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 16. ARGUMENT ANALYSIS -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="argument">
+  <div class="section-badge">16</div>
+  <div class="section-title">Argument Analysis</div>
+  <div class="section-desc">Classify statements as claim, evidence, or fallacy. Good for critical thinking, debates, philosophy, law.</div>
+  <div class="cat-note"><span class="ccat active">Arguments & Evidence</span></div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Tag the Statements</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Identify the role of each statement</div>
+        <div class="qtext" style="margin-bottom:14px">Classify each statement in the following argument:</div>
+        <div class="arg-stmts">
+          <div class="astmt"><span class="atag claim">CLAIM</span>"The Dutch revolt was primarily a religious conflict."</div>
+          <div class="astmt"><span class="atag support">EVIDENCE</span>"The northern provinces were overwhelmingly Calvinist and opposed Catholic Spanish rule."</div>
+          <div class="astmt"><span class="atag fallacy">FALLACY</span>"Since Philip II was Catholic, everything he did was religiously motivated."</div>
+          <div class="astmt" style="cursor:pointer;border-color:#7f8962;background:rgba(127,137,98,.04)">"Economic taxes affected all provinces equally, regardless of religion." <span style="color:#555;font-size:11px;margin-left:auto">← tag this</span></div>
+        </div>
+        <div class="arg-opts">
+          <div class="aopt">📌 Main Claim</div>
+          <div class="aopt">📎 Supporting Evidence</div>
+          <div class="aopt">⚠️ Logical Fallacy</div>
+          <div class="aopt">↔️ Counter-argument</div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 17. SCENARIO / CASE STUDY -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="scenario">
+  <div class="section-badge">17</div>
+  <div class="section-title">Scenario / Case Study</div>
+  <div class="section-desc">Context block + question. Scenario is shown prominently in a callout, then MCQ or short answer follows. Great for applying knowledge to new situations.</div>
+  <div class="cat-note"><span class="ccat active">Processes</span><span class="ccat active">Problems & Solutions</span></div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Variant A — Context + MCQ</span><span class="vtag">Standard</span></div>
+      <div class="vbody">
+        <div class="qlabel">Read the scenario, then answer</div>
+        <div class="scenario-box">
+          <div class="scenario-label">📋 Scenario</div>
+          It is 1576. You are an advisor to the States-General of the Netherlands. The Spanish king has just imposed new taxes and stationed 20,000 troops in the provinces. Several nobles are pushing for armed revolt, while others urge diplomatic negotiation.
+        </div>
+        <div class="qtext">Based on the historical outcome, which approach did the Dutch provinces ultimately take?</div>
+        <div class="radio-list">
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">Accepted Spanish rule in exchange for tax relief</span></div>
+          <div class="ri sel"><div class="rc"><div class="rd"></div></div><span class="rtext">Organized armed revolt, leading to the Eighty Years' War</span></div>
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">Appealed to France for military intervention</span></div>
+          <div class="ri"><div class="rc"><div class="rd"></div></div><span class="rtext">Formed a peaceful trade union and ignored Spanish authority</span></div>
+        </div>
+        <div class="qbottom">
+          <button class="qbtn">Previous</button>
+          <button class="qbtn skip">Skip</button>
+          <button class="qbtn primary">Confirm →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- STATE 3 — QUIZ NAVIGATION LAYOUT -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="state3">
+  <div class="section-badge">State 3</div>
+  <div class="section-title">Quiz Navigation Layout</div>
+  <div class="section-desc">Proposed State 3 layout: numbered circle navigation, proper breadcrumb with auto-title, Previous/Next without forcing answer, Research mode "Not Relevant" button.</div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Proposed State 3 Navigation</span><span class="vtag">New layout</span></div>
+      <div class="vbody">
+        <div style="font-size:11px;color:#555;margin-bottom:4px">Dashboard → Quiz → <span style="color:#7f8962">Dutch Independence Study</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div style="font-size:10px;color:#444">Literal mode · 11 questions</div>
+          <div style="font-size:10px;padding:3px 10px;background:rgba(127,137,98,.1);border:1px solid rgba(127,137,98,.2);border-radius:5px;color:#7f8962">⚡ Research mode</div>
+        </div>
+        <div class="qnav">
+          <div class="qndot ans">1</div>
+          <div class="qndot ans">2</div>
+          <div class="qndot ans">3</div>
+          <div class="qndot cur">4</div>
+          <div class="qndot">5</div>
+          <div class="qndot">6</div>
+          <div class="qndot">7</div>
+          <div class="qndot">8</div>
+          <div class="qndot">9</div>
+          <div class="qndot">10</div>
+          <div class="qndot">11</div>
+        </div>
+        <div class="qlabel">Question 4 of 11</div>
+        <div class="qtext">The Netherlands became independent from the Spanish-Habsburg Empire in the year ____.</div>
+        <input class="fitb-input" placeholder="Type year..." style="width:120px;border:1.5px solid #7f8962;border-radius:8px;padding:8px 12px;font-size:16px" />
+        <div class="qbottom">
+          <button class="qbtn">← Previous</button>
+          <div style="display:flex;gap:8px">
+            <button class="qbtn skip">Not Relevant</button>
+            <button class="qbtn skip">Skip</button>
+          </div>
+          <button class="qbtn primary">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// Highlight active nav item on scroll
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) cur = s.id;
+  });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + cur);
+  });
+});
+// Basic MC interaction
+document.querySelectorAll('.mc').forEach(el => {
+  el.addEventListener('click', () => {
+    el.closest('.mcq-cards').querySelectorAll('.mc').forEach(e => e.classList.remove('sel'));
+    el.classList.add('sel');
+  });
+});
+document.querySelectorAll('.ri').forEach(el => {
+  el.addEventListener('click', () => {
+    el.closest('.radio-list').querySelectorAll('.ri').forEach(e => e.classList.remove('sel'));
+    el.classList.add('sel');
+  });
+});
+// Spot the error
+document.querySelectorAll('.sword').forEach(el => {
+  el.addEventListener('click', () => {
+    el.closest('.spot-p').querySelectorAll('.sword').forEach(e => e.classList.remove('hi'));
+    el.classList.add('hi');
+  });
+});
+// Hotspot
+document.querySelectorAll('.hs-zone').forEach(el => {
+  el.addEventListener('click', () => {
+    el.closest('.hs-img').querySelectorAll('.hs-zone').forEach(e => e.classList.remove('clicked'));
+    el.classList.add('clicked');
+  });
+});
+// Checkboxes
+document.querySelectorAll('.cbox').forEach(el => {
+  el.addEventListener('click', () => {
+    el.classList.toggle('chk');
+    el.innerHTML = el.classList.contains('chk') ? '<span class="ccheck">✓</span>' : '';
+  });
+});
+</script>
+</body>
+</html>

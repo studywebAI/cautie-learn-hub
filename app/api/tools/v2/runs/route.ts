@@ -156,8 +156,8 @@ async function writeAIErrorLog(
     userId: string;
     toolId: string;
     flowName: string;
-    providerPreference: "openai";
-    providerAttempted: "openai";
+    providerPreference: "openrouter" | "openai";
+    providerAttempted: "openrouter" | "openai";
     stage: "primary_error" | "fallback_error" | "run_failed";
     fallbackAttempted: boolean;
     fallbackSucceeded: boolean;
@@ -499,7 +499,7 @@ export async function POST(request: NextRequest) {
       const runtimeOptions = await readUserAIRuntimeOptions(supabase, user.id).catch(() => ({ providerPreference: OPENROUTER_PROVIDER_PREFERENCE }));
       const normalizedMessage = String(err?.message || "").toLowerCase();
       const hasCauseOpenAI = Boolean(err?.cause?.openai);
-      const inferredProvider: "openai" = "openai";
+      const inferredProvider: "openrouter" | "openai" = runtimeOptions.providerPreference || "openrouter";
       const fallbackAttempted =
         hasCauseOpenAI ||
         normalizedMessage.includes("fallback") ||
