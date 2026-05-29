@@ -91,13 +91,83 @@ const QUIZ_TYPE_DEFINITIONS: QuizTypeDefinition[] = [
     requiresFlag: 'processes',
   },
   {
+    value: 'cloze',
+    label: 'Cloze Test',
+    description: 'Fill in the blanks within a passage',
+    variants: [
+      { id: 'word-bank', label: 'Word Bank', difficulty: 'easy' },
+      { id: 'open', label: 'Open Type', difficulty: 'hard' },
+    ],
+  },
+  {
+    value: 'comparison-matrix',
+    label: 'Comparison Matrix',
+    description: 'Check which attributes apply to which items',
+    variants: [
+      { id: 'checkbox-grid', label: 'Checkbox Grid', difficulty: 'medium' },
+    ],
+  },
+  {
+    value: 'argument-analysis',
+    label: 'Argument Analysis',
+    description: 'Tag statements with their role (claim, evidence…)',
+    variants: [
+      { id: 'tag-statements', label: 'Tag Statements', difficulty: 'hard' },
+    ],
+  },
+  {
+    value: 'scenario',
+    label: 'Scenario / Case Study',
+    description: 'Read a scenario and answer the best-option question',
+    variants: [
+      { id: 'mcq', label: 'Multiple Choice', difficulty: 'medium' },
+    ],
+  },
+  {
     value: 'timeline',
     label: 'Timeline',
     description: 'Place events on a chronological timeline',
     variants: [
       { id: 'multiple-choice', label: 'Timeline MCQ', difficulty: 'easy' },
+      { id: 'sort', label: 'Sort Events', difficulty: 'medium' },
     ],
     requiresFlag: 'timeline',
+  },
+  {
+    value: 'ranking',
+    label: 'Ranking',
+    description: 'Rank items from first to last by a given criterion',
+    variants: [
+      { id: 'drag-rank', label: 'Drag to Rank', difficulty: 'hard' },
+    ],
+    requiresFlag: 'processes',
+  },
+  {
+    value: 'drag-drop',
+    label: 'Drag & Drop',
+    description: 'Sort items into the correct categories (or cause → effect)',
+    variants: [
+      { id: 'categorize', label: 'Categorize', difficulty: 'medium' },
+      { id: 'cause-effect', label: 'Cause & Effect', difficulty: 'hard' },
+    ],
+    requiresFlag: 'processes',
+  },
+  {
+    value: 'venn',
+    label: 'Venn Diagram',
+    description: 'Place items in the correct regions of overlapping circles',
+    variants: [
+      { id: 'zones', label: 'Zone Assignment', difficulty: 'hard' },
+    ],
+    requiresFlag: 'diagrams',
+  },
+  {
+    value: 'spot-error',
+    label: 'Spot the Error',
+    description: 'Click on the part of the statement that contains an error',
+    variants: [
+      { id: 'click-segment', label: 'Click the Error', difficulty: 'hard' },
+    ],
   },
 ];
 
@@ -131,14 +201,18 @@ function QuizPageContent() {
   const [gradingModes, setGradingModes] = useState<GradingMode[]>(['accuracy', 'speed', 'progression']);
 
 
+  const [inputMode, setInputMode] = useState<'literal' | 'research'>('literal');
+
   // Content classification — drives which question types are shown
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
+  const [aiCategories, setAiCategories] = useState<Record<string, string> | null>(null);
+  const [aiCategoryLoading, setAiCategoryLoading] = useState(false);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
 
-  // Classify source text after user stops typing (800 ms debounce)
+  // Classify source text after user stops typing (800 ms debounce — instant regex)
   useEffect(() => {
     if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
     classifyTimerRef.current = setTimeout(() => {
@@ -150,14 +224,31 @@ function QuizPageContent() {
     };
   }, [sourceText]);
 
+  // Triggered once when user clicks Next in State 1 — runs in background while user sees State 2
+  const triggerAiCategoryEval = useCallback((text: string) => {
+    if (!text || text.trim().length < 150) return;
+    setAiCategoryLoading(true);
+    setAiCategories(null);
+    fetch('/api/ai/handle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ flowName: 'evaluateContentCategories', input: { sourceText: text.slice(0, 4000) } }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data && typeof data === 'object') setAiCategories(data); })
+      .catch(() => { /* non-fatal — regex fallback stays active */ })
+      .finally(() => setAiCategoryLoading(false));
+  }, []);
+
   // When classification changes, drop any question types that are no longer applicable
   useEffect(() => {
-    if (!contentClass) return;
+    if (!mergedContentClass) return;
     setQuestionTypes((prev) => {
-      const next = prev.filter((t) => isQuizTypeAvailable(t, contentClass));
+      const next = prev.filter((t) => isQuizTypeAvailable(t, mergedContentClass));
       return next.length > 0 ? next : ['multiple-choice'];
     });
-  }, [contentClass]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contentClass, aiCategories]);
 
   useEffect(() => {
     try {
@@ -371,9 +462,36 @@ function QuizPageContent() {
   const toggleExpanded = (value: string) =>
     setExpandedTypes((prev) => { const next = new Set(prev); next.has(value) ? next.delete(value) : next.add(value); return next; });
 
-  // Content category labels from classifier flags
+  // Merge AI categories into ContentClassification-compatible object for isQuizTypeAvailable
+  const mergedContentClass: ContentClassification | null = contentClass
+    ? {
+        ...contentClass,
+        timeline: contentClass.timeline === 'y' || aiCategories?.events === 'y' || aiCategories?.dates === 'y' ? 'y' : 'n',
+        dates: contentClass.dates === 'y' || aiCategories?.dates === 'y' ? 'y' : 'n',
+        people: contentClass.people === 'y' || aiCategories?.people === 'y' ? 'y' : 'n',
+        processes: contentClass.processes === 'y' || aiCategories?.processes === 'y' || aiCategories?.causeEffect === 'y' ? 'y' : 'n',
+        diagrams: contentClass.diagrams === 'y' || aiCategories?.visual === 'y' || aiCategories?.classifications === 'y' ? 'y' : 'n',
+        vocabulary: contentClass.vocabulary === 'y' || aiCategories?.definitions === 'y' ? 'y' : 'n',
+      }
+    : null;
+
+  // Detailed category labels — prefer AI result when available
   const contentCategories: string[] = [];
-  if (contentClass) {
+  if (aiCategories) {
+    if (aiCategories.events === 'y' || aiCategories.dates === 'y') contentCategories.push('Events & Dates');
+    if (aiCategories.people === 'y') contentCategories.push('People & Entities');
+    if (aiCategories.locations === 'y') contentCategories.push('Locations');
+    if (aiCategories.definitions === 'y') contentCategories.push('Definitions & Terms');
+    if (aiCategories.causeEffect === 'y') contentCategories.push('Cause & Effect');
+    if (aiCategories.processes === 'y') contentCategories.push('Processes & Steps');
+    if (aiCategories.classifications === 'y') contentCategories.push('Classifications');
+    if (aiCategories.comparisons === 'y') contentCategories.push('Comparisons');
+    if (aiCategories.arguments === 'y') contentCategories.push('Arguments');
+    if (aiCategories.numberedData === 'y') contentCategories.push('Numerical Data');
+    if (aiCategories.visual === 'y') contentCategories.push('Visual & Spatial');
+    if (aiCategories.formulas === 'y') contentCategories.push('Formulas & Equations');
+    if (aiCategories.problems === 'y') contentCategories.push('Problems & Scenarios');
+  } else if (contentClass) {
     if (contentClass.timeline === 'y' || contentClass.dates === 'y') contentCategories.push('Timeline & Dates');
     if (contentClass.people === 'y') contentCategories.push('People & Entities');
     if (contentClass.processes === 'y') contentCategories.push('Processes & Steps');
@@ -406,9 +524,20 @@ function QuizPageContent() {
         <div className="max-w-3xl mx-auto px-6 py-6 space-y-8">
 
           {/* Detected content categories */}
-          {contentCategories.length > 0 && (
+          {(contentCategories.length > 0 || aiCategoryLoading) && (
             <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Detected in your content</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Detected in your content</p>
+                {aiCategoryLoading && (
+                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
+                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                    Analysing…
+                  </span>
+                )}
+                {aiCategories && !aiCategoryLoading && (
+                  <span className="text-[10px] text-muted-foreground/60">AI-enhanced</span>
+                )}
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {contentCategories.map((cat) => (
                   <span key={cat} className="inline-flex items-center rounded-full border border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/8 px-2.5 py-0.5 text-[11px] font-medium text-[var(--accent-brand)]">
@@ -427,7 +556,7 @@ function QuizPageContent() {
             </div>
             <div className="space-y-1.5">
               {QUIZ_TYPE_DEFINITIONS.map((typeDef) => {
-                const available = isQuizTypeAvailable(typeDef.value, contentClass);
+                const available = isQuizTypeAvailable(typeDef.value, mergedContentClass);
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
 
@@ -665,12 +794,37 @@ function QuizPageContent() {
               onSubmit={(compiledText) => {
                 setSourceText(compiledText);
                 setPhase('options');
+                // Fire AI category evaluation once in the background while user sees State 2
+                triggerAiCategoryEval(compiledText);
               }}
               isLoading={false}
               submitLabel="Next"
               speechLanguage={language}
               hideToolSwitcher
             />
+            {/* Literal / Research mode toggle */}
+            <div className="flex items-center justify-center gap-1 pt-1">
+              <p className="text-[11px] text-muted-foreground mr-1">Mode:</p>
+              {(['literal', 'research'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setInputMode(m)}
+                  title={
+                    m === 'literal'
+                      ? 'Questions test exactly what is in your text'
+                      : 'Questions may require knowledge beyond the text — you can skip irrelevant ones'
+                  }
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                    inputMode === m
+                      ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  {m === 'literal' ? 'Literal' : 'Research'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </WorkbenchShell>
@@ -690,6 +844,7 @@ function QuizPageContent() {
           mode={mode}
           sourceText={sourceText}
           quizTitle={title.trim() || undefined}
+          inputMode={inputMode}
           onRestart={() => {
             setQuiz(null);
             setPhase('options');

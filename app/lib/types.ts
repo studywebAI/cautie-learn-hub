@@ -92,12 +92,21 @@ export const QuizQuestionTypeSchema = z.enum([
   'matching',
   'ordering',
   'numeric',
+  'cloze',
+  'hotspot',
+  'comparison-matrix',
+  'argument-analysis',
+  'scenario',
   'internet-photo',
   'video-fragment',
   'timeline',
   'image-analysis',
   'video-analysis',
   'drawing-analysis',
+  'ranking',
+  'drag-drop',
+  'venn',
+  'spot-error',
 ]);
 
 export const QuizQuestionMediaSchema = z.object({
@@ -126,6 +135,57 @@ export const QuizQuestionSchema = z.object({
   orderingItems: z.array(z.string()).optional(),
   hint: z.string().optional(),
   explanation: z.string().optional(),
+  // Cloze test
+  clozeWordBank: z.array(z.string()).optional().describe('Word pool for cloze word-bank variant (correct answers + distractors).'),
+  // Hotspot
+  hotspotZones: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+    x: z.number().describe('Left offset as % of image width (0-100).'),
+    y: z.number().describe('Top offset as % of image height (0-100).'),
+    width: z.number().describe('Width as % of image width (0-100).'),
+    height: z.number().describe('Height as % of image height (0-100).'),
+    isCorrect: z.boolean(),
+  })).optional(),
+  // Comparison matrix
+  comparisonRows: z.array(z.string()).optional().describe('Items being compared (rows).'),
+  comparisonColumns: z.array(z.string()).optional().describe('Attributes being compared (columns).'),
+  comparisonCorrect: z.record(z.array(z.string())).optional().describe('Map of rowName → list of column names that apply.'),
+  // Argument analysis
+  argumentStatements: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+  })).optional(),
+  argumentTags: z.array(z.string()).optional().describe('Tag options the user assigns to each statement.'),
+  argumentCorrect: z.record(z.string()).optional().describe('Map of statement id → correct tag.'),
+  // Scenario / case study
+  scenarioContext: z.string().optional().describe('Scenario or case study text shown above the question.'),
+  // Ranking
+  rankingCriteria: z.string().optional().describe('Criterion for ranking (e.g., chronological, by importance, by size).'),
+  // Drag & Drop Categorization
+  dragDropCategories: z.array(z.string()).optional().describe('Category labels (2-4) for drag-drop categorization.'),
+  dragDropItems: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    correctCategory: z.string(),
+  })).optional().describe('Items to sort into categories.'),
+  dragDropVariant: z.enum(['categorize', 'cause-effect']).optional().describe('UI variant: categorize (default) or cause-effect.'),
+  // Venn Diagram
+  vennCircles: z.array(z.object({
+    id: z.string(),
+    label: z.string(),
+  })).optional().describe('Circles in the Venn diagram (2-3), e.g. [{id:"A",label:"Mammals"},{id:"B",label:"Marine animals"}].'),
+  vennItems: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    correctZone: z.string().describe('Zone id: "A", "B", "C", "AB", "BC", "AC", "ABC", or "outside".'),
+  })).optional().describe('Items to place in Venn zones.'),
+  // Spot the Error
+  spotErrorSegments: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    isError: z.boolean(),
+  })).optional().describe('Sentence broken into 3-6 clickable segments; exactly one has isError: true.'),
 });
 
 export const QuizSchema = z.object({

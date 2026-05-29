@@ -88,6 +88,8 @@ const flowMap: Record<string, () => Promise<FlowHandler>> = {
     import("@/ai/flows/modify-content").then((m) => m.modifyContent),
   explainAnswer: () =>
     import("@/ai/flows/explain-answer").then((m) => m.explainAnswer),
+  evaluateContentCategories: () =>
+    import("@/ai/flows/evaluate-content-categories").then((m) => m.evaluateContentCategories),
   extractTimelineEvents: () =>
     import("@/ai/flows/extract-timeline-events").then((m) => m.extractTimelineEvents),
   buildTimelineQuizContext: () =>

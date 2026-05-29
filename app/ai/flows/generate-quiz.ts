@@ -22,12 +22,21 @@ const SUPPORTED_TYPES = new Set([
   'short-answer',
   'matching',
   'ordering',
+  'cloze',
+  'hotspot',
+  'comparison-matrix',
+  'argument-analysis',
+  'scenario',
   'internet-photo',
   'video-fragment',
   'timeline',
   'image-analysis',
   'video-analysis',
   'drawing-analysis',
+  'ranking',
+  'drag-drop',
+  'venn',
+  'spot-error',
 ]);
 
 function clamp(value: number, min: number, max: number) {
@@ -126,13 +135,83 @@ function normalizeQuestionShape(
     explanation: typeof question?.explanation === 'string' ? question.explanation.trim() : undefined,
   };
 
-  if (type === 'fill-blank' || type === 'short-answer') {
+  if (type === 'fill-blank' || type === 'short-answer' || type === 'numeric') {
     const acceptableAnswers = Array.isArray(question?.acceptableAnswers)
       ? question.acceptableAnswers.map((entry: any) => String(entry || '').trim()).filter(Boolean)
       : [];
     normalized.acceptableAnswers = acceptableAnswers.length ? acceptableAnswers : ['Not available from source'];
     normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
     return normalized;
+  }
+
+  if (type === 'cloze') {
+    const acceptableAnswers = Array.isArray(question?.acceptableAnswers)
+      ? question.acceptableAnswers.map((entry: any) => String(entry || '').trim()).filter(Boolean)
+      : [];
+    normalized.acceptableAnswers = acceptableAnswers.length ? acceptableAnswers : [];
+    const wordBank = Array.isArray(question?.clozeWordBank)
+      ? question.clozeWordBank.map((w: any) => String(w || '').trim()).filter(Boolean)
+      : [];
+    normalized.clozeWordBank = wordBank;
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    return normalized;
+  }
+
+  if (type === 'comparison-matrix') {
+    normalized.comparisonRows = Array.isArray(question?.comparisonRows)
+      ? question.comparisonRows.map((r: any) => String(r || '').trim()).filter(Boolean)
+      : [];
+    normalized.comparisonColumns = Array.isArray(question?.comparisonColumns)
+      ? question.comparisonColumns.map((c: any) => String(c || '').trim()).filter(Boolean)
+      : [];
+    normalized.comparisonCorrect = question?.comparisonCorrect && typeof question.comparisonCorrect === 'object'
+      ? question.comparisonCorrect
+      : {};
+    return normalized;
+  }
+
+  if (type === 'argument-analysis') {
+    normalized.argumentStatements = Array.isArray(question?.argumentStatements)
+      ? question.argumentStatements.map((s: any, i: number) => ({
+          id: String(s?.id || `stmt-${i}`),
+          text: String(s?.text || '').trim(),
+        })).filter((s: any) => s.text)
+      : [];
+    normalized.argumentTags = Array.isArray(question?.argumentTags)
+      ? question.argumentTags.map((t: any) => String(t || '').trim()).filter(Boolean)
+      : ['Claim', 'Evidence', 'Counterargument', 'Conclusion'];
+    normalized.argumentCorrect = question?.argumentCorrect && typeof question.argumentCorrect === 'object'
+      ? question.argumentCorrect
+      : {};
+    return normalized;
+  }
+
+  if (type === 'hotspot') {
+    normalized.hotspotZones = Array.isArray(question?.hotspotZones)
+      ? question.hotspotZones.map((z: any, i: number) => ({
+          id: String(z?.id || `zone-${i}`),
+          label: String(z?.label || `Area ${i + 1}`),
+          x: Number(z?.x ?? 0),
+          y: Number(z?.y ?? 0),
+          width: Number(z?.width ?? 20),
+          height: Number(z?.height ?? 20),
+          isCorrect: Boolean(z?.isCorrect),
+        }))
+      : [];
+    // Hotspot needs a media image
+    const mediaUrl = String(question?.media?.url || '').trim();
+    if (mediaUrl) {
+      normalized.media = { kind: 'image', url: mediaUrl, title: question?.media?.title };
+    } else {
+      normalized.type = 'multiple-choice';
+    }
+    return normalized;
+  }
+
+  if (type === 'scenario') {
+    normalized.scenarioContext = typeof question?.scenarioContext === 'string' ? question.scenarioContext.trim() : '';
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    // Fall through to options normalization below
   }
 
   if (type === 'matching') {
@@ -156,6 +235,96 @@ function normalizeQuestionShape(
     normalized.orderingItems = items.length >= 2 ? items : ['Step 1', 'Step 2', 'Step 3'];
     normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
     return normalized;
+  }
+
+  if (type === 'ranking') {
+    const items = Array.isArray(question?.orderingItems)
+      ? question.orderingItems.map((entry: any) => String(entry || '').trim()).filter(Boolean)
+      : [];
+    normalized.orderingItems = items.length >= 2 ? items : ['Item 1', 'Item 2', 'Item 3'];
+    normalized.rankingCriteria = typeof question?.rankingCriteria === 'string' ? question.rankingCriteria.trim() : '';
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    return normalized;
+  }
+
+  if (type === 'drag-drop') {
+    const cats = Array.isArray(question?.dragDropCategories)
+      ? question.dragDropCategories.map((c: any) => String(c || '').trim()).filter(Boolean)
+      : [];
+    normalized.dragDropCategories = cats.length >= 2 ? cats : ['Category A', 'Category B'];
+    normalized.dragDropItems = Array.isArray(question?.dragDropItems)
+      ? question.dragDropItems
+          .map((item: any, i: number) => ({
+            id: String(item?.id || `item-${i}`),
+            text: String(item?.text || '').trim(),
+            correctCategory: String(item?.correctCategory || '').trim(),
+          }))
+          .filter((item: any) => item.text && item.correctCategory)
+      : [];
+    normalized.dragDropVariant = question?.dragDropVariant === 'cause-effect' ? 'cause-effect' : 'categorize';
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    return normalized;
+  }
+
+  if (type === 'venn') {
+    const circles = Array.isArray(question?.vennCircles)
+      ? question.vennCircles.slice(0, 3).map((c: any, i: number) => ({
+          id: String(c?.id || String.fromCharCode(65 + i)),
+          label: String(c?.label || `Circle ${i + 1}`),
+        }))
+      : [];
+    normalized.vennCircles = circles.length >= 2 ? circles : [
+      { id: 'A', label: 'Circle A' },
+      { id: 'B', label: 'Circle B' },
+    ];
+    normalized.vennItems = Array.isArray(question?.vennItems)
+      ? question.vennItems
+          .map((item: any, i: number) => ({
+            id: String(item?.id || `vitem-${i}`),
+            text: String(item?.text || '').trim(),
+            correctZone: String(item?.correctZone || 'outside'),
+          }))
+          .filter((item: any) => item.text)
+      : [];
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    return normalized;
+  }
+
+  if (type === 'spot-error') {
+    const segments = Array.isArray(question?.spotErrorSegments)
+      ? question.spotErrorSegments
+          .map((s: any, i: number) => ({
+            id: String(s?.id || `seg-${i}`),
+            text: String(s?.text || '').trim(),
+            isError: Boolean(s?.isError),
+          }))
+          .filter((s: any) => s.text)
+      : [];
+    // Ensure exactly one error segment
+    const errorCount = segments.filter((s: any) => s.isError).length;
+    if (segments.length > 0 && errorCount !== 1) {
+      const firstErrorIdx = segments.findIndex((s: any) => s.isError);
+      normalized.spotErrorSegments = segments.map((s: any, i: number) => ({
+        ...s,
+        isError: firstErrorIdx >= 0 ? i === firstErrorIdx : i === 0,
+      }));
+    } else {
+      normalized.spotErrorSegments = segments.length > 0 ? segments : [
+        { id: 'seg-0', text: 'Error not defined', isError: true },
+      ];
+    }
+    normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+    return normalized;
+  }
+
+  // Special: timeline with ordering items → chronological sort variant
+  if (type === 'timeline' && Array.isArray(question?.orderingItems) && question.orderingItems.length >= 2) {
+    const items = question.orderingItems.map((i: any) => String(i || '').trim()).filter(Boolean);
+    if (items.length >= 2) {
+      normalized.orderingItems = items;
+      normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+      return normalized;
+    }
   }
 
   const rawOptions = Array.isArray(question?.options) ? question.options : [];
@@ -391,14 +560,22 @@ Your task is to generate a high-quality quiz from the provided source text.
 The quiz should have a concise and relevant title (without phrases like "a comprehensive quiz") and a brief description.
 Create exactly {{{questionCount}}} questions.
 Each question must include:
-- type (one of: multiple-choice, true-false, fill-blank, short-answer, matching, ordering, timeline, internet-photo, video-fragment, image-analysis, video-analysis, drawing-analysis)
+- type (one of: multiple-choice, true-false, fill-blank, short-answer, matching, ordering, cloze, comparison-matrix, argument-analysis, scenario, timeline, internet-photo, video-fragment, image-analysis, video-analysis, drawing-analysis, ranking, drag-drop, venn, spot-error)
 - category (short topic label, e.g. "start-of-ww1")
 - difficulty (integer 1-10)
 - explanation (1-2 short lines on why the correct answer is correct, strictly from source text)
-If type is multiple-choice/true-false/image-analysis/video-analysis/drawing-analysis, include 3-4 options and exactly one correct answer.
+If type is multiple-choice/true-false/scenario/image-analysis/video-analysis/drawing-analysis, include 3-4 options and exactly one correct answer.
+If type is scenario, also include scenarioContext (1-3 sentence case/scenario text that sets up the question).
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
-If type is matching, include matchingPairs as array of {left,right}.
+If type is matching, include matchingPairs as array of {left,right} (4-6 pairs).
 If type is ordering, include orderingItems as array of strings in correct order.
+If type is ranking, include orderingItems (3-6 items in correct ranked order, first = highest/most) and rankingCriteria (brief label for the ranking criterion, e.g. "from most influential to least" or "chronological").
+If type is drag-drop, include dragDropCategories (2-4 category names), and dragDropItems (each: {id, text, correctCategory}). For cause-effect chains set dragDropVariant: "cause-effect" and use categories "Cause" and "Effect".
+If type is venn, include vennCircles (2-3 circles, each: {id, label}) and vennItems (each: {id, text, correctZone} where zone is a circle id "A", combination "AB", or "outside").
+If type is spot-error, write question as a normal sentence in spotErrorSegments: split the sentence into 3-6 meaningful chunks, set isError:true on EXACTLY ONE segment that contains a subtle factual error. Keep the question text field short (e.g. "Find the error in this statement about X:").
+If type is cloze, write question text with ___ for each blank (2-4 blanks), include acceptableAnswers in order of blanks, and include clozeWordBank with correct answers plus 3-4 plausible distractors (all same approximate length so box size doesn't reveal answer).
+If type is comparison-matrix, include comparisonRows (3-5 items), comparisonColumns (3-5 attributes), and comparisonCorrect as a map of {row: [applicable columns]}.
+If type is argument-analysis, include argumentStatements (3-5 statements from the source text), argumentTags (3-5 context-specific labels like "Claim", "Evidence", "Counterexample", "Conclusion" — no emojis, plain text only), and argumentCorrect as {statementId: tag}.
 For media analysis types, include media {kind,url,title,source,startSec,endSec}. If valid media is unavailable, do NOT emit media-analysis question types.
 For video-analysis media URLs, use only channels from the provided whitelist list below.
 Media mode policy:

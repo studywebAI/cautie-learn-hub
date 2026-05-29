@@ -103,7 +103,10 @@ export function isQuizTypeAvailable(
   cls: ContentClassification | null
 ): boolean {
   if (!cls) return true;
-  if (typeValue === 'timeline' && cls.timeline === 'n') return false;
+  if (typeValue === 'timeline' && cls.timeline === 'n' && cls.dates === 'n') return false;
   if (typeValue === 'ordering' && cls.processes === 'n' && cls.sequential_plot === 'n') return false;
+  if (typeValue === 'ranking' && cls.processes === 'n' && cls.sequential_plot === 'n' && cls.timeline === 'n') return false;
+  if (typeValue === 'drag-drop' && cls.processes === 'n' && cls.diagrams === 'n') return false;
+  if (typeValue === 'venn' && cls.diagrams === 'n' && cls.people === 'n') return false;
   return true;
 }

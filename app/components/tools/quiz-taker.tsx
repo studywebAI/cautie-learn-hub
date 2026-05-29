@@ -404,7 +404,9 @@ type AnswerValue =
   | { kind: 'option'; value: string }
   | { kind: 'text'; value: string }
   | { kind: 'matching'; value: Record<string, string> }
-  | { kind: 'ordering'; value: string[] };
+  | { kind: 'ordering'; value: string[] }
+  | { kind: 'cloze'; value: string[] }
+  | { kind: 'comparison'; value: Record<string, string[]> };
 type AnswerMap = Record<string, AnswerValue>;
 type AdaptivePerformanceSignal = { category: string; isCorrect: boolean; difficulty?: number; responseMs?: number };
 
@@ -441,11 +443,38 @@ function scoreSpeed(signals: AdaptivePerformanceSignal[]) {
 function getCorrectAnswerText(question: QuizQuestion) {
   const type = question.type || 'multiple-choice';
   if (type === 'fill-blank' || type === 'short-answer') return (question.acceptableAnswers || []).join(' / ') || '-';
-  if (type === 'matching') return (question.matchingPairs || []).map((pair) => `${pair.left} -> ${pair.right}`).join(' | ') || '-';
-  if (type === 'ordering') return (question.orderingItems || []).join(' -> ') || '-';
+  if (type === 'cloze') return (question.acceptableAnswers || []).join(', ') || '-';
+  if (type === 'ranking') return (question.orderingItems || []).map((item, i) => `${i + 1}. ${item}`).join(' → ') || '-';
+  if (type === 'drag-drop') {
+    const items = (question as any).dragDropItems as Array<{ id: string; text: string; correctCategory: string }> || [];
+    return items.map((item) => `${item.text} → ${item.correctCategory}`).join(' | ') || '-';
+  }
+  if (type === 'venn') {
+    const items = (question as any).vennItems as Array<{ id: string; text: string; correctZone: string }> || [];
+    return items.map((item) => `${item.text} → ${item.correctZone}`).join(' | ') || '-';
+  }
+  if (type === 'spot-error') {
+    const segs = (question as any).spotErrorSegments as Array<{ id: string; text: string; isError: boolean }> || [];
+    return segs.find((s) => s.isError)?.text || '-';
+  }
+  if (type === 'matching') return (question.matchingPairs || []).map((pair) => `${pair.left} → ${pair.right}`).join(' | ') || '-';
+  if (type === 'argument-analysis') {
+    return Object.entries(question.argumentCorrect || {}).map(([id, tag]) => {
+      const stmt = (question.argumentStatements || []).find((s) => s.id === id);
+      return `"${(stmt?.text || id).slice(0, 40)}…" → ${tag}`;
+    }).join(' | ') || '-';
+  }
+  if (type === 'ordering') return (question.orderingItems || []).join(' → ') || '-';
+  if (type === 'comparison-matrix') {
+    return Object.entries(question.comparisonCorrect || {}).map(([r, cs]) => `${r}: ${cs.join(', ')}`).join(' | ') || '-';
+  }
+  if (type === 'hotspot') return question.hotspotZones?.find((z) => z.isCorrect)?.label || '-';
+  if (type === 'scenario') {
+    return question.options?.find((o) => o.isCorrect)?.text || question.options?.find((o) => o.id === question.correctOptionId)?.text || '-';
+  }
   return (
-    question.options.find((option) => option.isCorrect)?.text ||
-    question.options.find((option) => option.id === question.correctOptionId)?.text ||
+    question.options?.find((option) => option.isCorrect)?.text ||
+    question.options?.find((option) => option.id === question.correctOptionId)?.text ||
     '-'
   );
 }
@@ -453,22 +482,55 @@ function getCorrectAnswerText(question: QuizQuestion) {
 function evaluateQuestionAnswer(question: QuizQuestion, answer?: AnswerValue | null): boolean {
   if (!question || !answer) return false;
   const type = question.type || 'multiple-choice';
-  if (['multiple-choice', 'true-false', 'image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment', 'timeline'].includes(type)) {
+  if (type === 'ranking') {
+    if (answer.kind !== 'ordering') return false;
+    const expected = (question.orderingItems || []).map(normalizeText);
+    const actual = answer.value.map(normalizeText);
+    return expected.length > 0 && expected.length === actual.length && expected.every((e, i) => e === actual[i]);
+  }
+  if (type === 'drag-drop') {
+    if (answer.kind !== 'matching') return false;
+    const items = (question as any).dragDropItems as Array<{ id: string; text: string; correctCategory: string }> || [];
+    return items.length > 0 && items.every((item) => normalizeText(answer.value[item.id] || '') === normalizeText(item.correctCategory));
+  }
+  if (type === 'venn') {
+    if (answer.kind !== 'matching') return false;
+    const items = (question as any).vennItems as Array<{ id: string; text: string; correctZone: string }> || [];
+    return items.length > 0 && items.every((item) => normalizeText(answer.value[item.id] || '') === normalizeText(item.correctZone));
+  }
+  if (type === 'spot-error') {
     if (answer.kind !== 'option') return false;
+    const segs = (question as any).spotErrorSegments as Array<{ id: string; text: string; isError: boolean }> || [];
+    return Boolean(segs.find((s) => s.id === answer.value && s.isError));
+  }
+  if (['multiple-choice', 'true-false', 'image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment', 'timeline', 'scenario', 'hotspot'].includes(type)) {
+    if (answer.kind !== 'option') return false;
+    if (type === 'hotspot') return Boolean(question.hotspotZones?.find((z) => z.id === answer.value && z.isCorrect));
     const correctOption =
-      question.options.find((option) => option.isCorrect) ||
-      (question.correctOptionId ? question.options.find((option) => option.id === question.correctOptionId) : undefined);
+      question.options?.find((option) => option.isCorrect) ||
+      (question.correctOptionId ? question.options?.find((option) => option.id === question.correctOptionId) : undefined);
     return Boolean(correctOption && correctOption.id === answer.value);
   }
-  if (type === 'fill-blank' || type === 'short-answer') {
+  if (type === 'fill-blank' || type === 'short-answer' || type === 'numeric') {
     if (answer.kind !== 'text') return false;
     const targetAnswers = (question.acceptableAnswers || []).map(normalizeText).filter(Boolean);
     return targetAnswers.includes(normalizeText(answer.value));
+  }
+  if (type === 'cloze') {
+    if (answer.kind !== 'cloze') return false;
+    const correct = question.acceptableAnswers || [];
+    return correct.length > 0 && correct.every((c, i) => normalizeText(answer.value[i] || '') === normalizeText(c));
   }
   if (type === 'matching') {
     if (answer.kind !== 'matching') return false;
     const pairs = question.matchingPairs || [];
     return pairs.length > 0 && pairs.every((pair) => normalizeText(answer.value[pair.left] || '') === normalizeText(pair.right));
+  }
+  if (type === 'argument-analysis') {
+    if (answer.kind !== 'matching') return false;
+    const correct = question.argumentCorrect || {};
+    const stmts = question.argumentStatements || [];
+    return stmts.length > 0 && stmts.every((s) => normalizeText(answer.value[s.id] || '') === normalizeText(correct[s.id] || ''));
   }
   if (type === 'ordering') {
     if (answer.kind !== 'ordering') return false;
@@ -476,12 +538,43 @@ function evaluateQuestionAnswer(question: QuizQuestion, answer?: AnswerValue | n
     const actual = answer.value.map(normalizeText);
     return expected.length > 0 && expected.length === actual.length && expected.every((entry, index) => entry === actual[index]);
   }
+  if (type === 'comparison-matrix') {
+    if (answer.kind !== 'comparison') return false;
+    const correct = question.comparisonCorrect || {};
+    const rows = question.comparisonRows || [];
+    return rows.length > 0 && rows.every((row) => {
+      const correctCols = (correct[row] || []).map(normalizeText).sort().join(',');
+      const userCols = (answer.value[row] || []).map(normalizeText).sort().join(',');
+      return correctCols === userCols;
+    });
+  }
   return false;
 }
 
 function getQuestionAccuracy(question: QuizQuestion, answer?: AnswerValue | null) {
   const type = question.type || 'multiple-choice';
   if (!answer) return { accuracy: 0, partsCorrect: 0, partsTotal: 1, correct: false };
+  if (type === 'ranking') {
+    const expected = (question.orderingItems || []).map(normalizeText);
+    const actual = answer.kind === 'ordering' ? answer.value.map(normalizeText) : [];
+    const total = Math.max(1, expected.length);
+    const ok = expected.reduce((acc, e, i) => acc + (actual[i] === e ? 1 : 0), 0);
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total && expected.length === actual.length };
+  }
+  if (type === 'drag-drop') {
+    const items = (question as any).dragDropItems as Array<{ id: string; text: string; correctCategory: string }> || [];
+    const total = Math.max(1, items.length);
+    const mapping = answer.kind === 'matching' ? answer.value : {};
+    const ok = items.reduce((acc, item) => acc + (normalizeText(mapping[item.id] || '') === normalizeText(item.correctCategory) ? 1 : 0), 0);
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
+  }
+  if (type === 'venn') {
+    const items = (question as any).vennItems as Array<{ id: string; text: string; correctZone: string }> || [];
+    const total = Math.max(1, items.length);
+    const mapping = answer.kind === 'matching' ? answer.value : {};
+    const ok = items.reduce((acc, item) => acc + (normalizeText(mapping[item.id] || '') === normalizeText(item.correctZone) ? 1 : 0), 0);
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
+  }
   if (type === 'matching') {
     const pairs = question.matchingPairs || [];
     const total = Math.max(1, pairs.length);
@@ -490,6 +583,33 @@ function getQuestionAccuracy(question: QuizQuestion, answer?: AnswerValue | null
       (acc, pair) => acc + (normalizeText(mapping[pair.left] || '') === normalizeText(pair.right) ? 1 : 0),
       0
     );
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
+  }
+  if (type === 'argument-analysis') {
+    const stmts = question.argumentStatements || [];
+    const correct = question.argumentCorrect || {};
+    const total = Math.max(1, stmts.length);
+    const mapping = answer.kind === 'matching' ? answer.value : {};
+    const ok = stmts.reduce((acc, s) => acc + (normalizeText(mapping[s.id] || '') === normalizeText(correct[s.id] || '') ? 1 : 0), 0);
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
+  }
+  if (type === 'cloze') {
+    const correct = question.acceptableAnswers || [];
+    const total = Math.max(1, correct.length);
+    const vals = answer.kind === 'cloze' ? answer.value : [];
+    const ok = correct.reduce((acc, c, i) => acc + (normalizeText(vals[i] || '') === normalizeText(c) ? 1 : 0), 0);
+    return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
+  }
+  if (type === 'comparison-matrix') {
+    const rows = question.comparisonRows || [];
+    const correct = question.comparisonCorrect || {};
+    const total = Math.max(1, rows.length);
+    const userMap = answer.kind === 'comparison' ? answer.value : {};
+    const ok = rows.reduce((acc, row) => {
+      const cCols = (correct[row] || []).map(normalizeText).sort().join(',');
+      const uCols = (userMap[row] || []).map(normalizeText).sort().join(',');
+      return acc + (cCols === uCols ? 1 : 0);
+    }, 0);
     return { accuracy: Math.round((ok / total) * 100), partsCorrect: ok, partsTotal: total, correct: ok === total };
   }
   if (type === 'ordering') {
@@ -511,9 +631,34 @@ function getQuestionAccuracy(question: QuizQuestion, answer?: AnswerValue | null
 function formatAnswer(question: QuizQuestion, answer?: AnswerValue) {
   if (!answer) return '-';
   if (answer.kind === 'text') return answer.value || '-';
-  if (answer.kind === 'option') return question.options.find((opt) => opt.id === answer.value)?.text || '-';
-  if (answer.kind === 'ordering') return answer.value.join(' -> ');
-  if (answer.kind === 'matching') return Object.entries(answer.value).map(([k, v]) => `${k} -> ${v}`).join(' | ');
+  if (answer.kind === 'option') {
+    if (question.type === 'hotspot') return question.hotspotZones?.find((z) => z.id === answer.value)?.label || answer.value;
+    if (question.type === 'spot-error') {
+      const segs = (question as any).spotErrorSegments as Array<{ id: string; text: string }> || [];
+      return segs.find((s) => s.id === answer.value)?.text || answer.value;
+    }
+    return question.options?.find((opt) => opt.id === answer.value)?.text || '-';
+  }
+  if (answer.kind === 'ordering') return answer.value.join(' → ');
+  if (answer.kind === 'matching') {
+    if (question.type === 'drag-drop') {
+      const items = (question as any).dragDropItems as Array<{ id: string; text: string }> || [];
+      return Object.entries(answer.value).map(([id, cat]) => {
+        const item = items.find((i) => i.id === id);
+        return `${item?.text ?? id} → ${cat}`;
+      }).join(' | ') || '-';
+    }
+    if (question.type === 'venn') {
+      const items = (question as any).vennItems as Array<{ id: string; text: string }> || [];
+      return Object.entries(answer.value).map(([id, zone]) => {
+        const item = items.find((i) => i.id === id);
+        return `${item?.text ?? id} → ${zone}`;
+      }).join(' | ') || '-';
+    }
+    return Object.entries(answer.value).map(([k, v]) => `${k} → ${v}`).join(' | ');
+  }
+  if (answer.kind === 'cloze') return answer.value.join(', ');
+  if (answer.kind === 'comparison') return Object.entries(answer.value).map(([r, cs]) => `${r}: ${cs.join(', ')}`).join(' | ');
   return '-';
 }
 
@@ -617,6 +762,720 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
   );
 }
 
+// ─── Cloze Test ───────────────────────────────────────────────────────────────
+// Extracts blank positions from question text (___) and renders them inline.
+function parseCloze(text: string): Array<{ type: 'text' | 'blank'; content: string; index: number }> {
+  const parts: Array<{ type: 'text' | 'blank'; content: string; index: number }> = [];
+  const regex = /_{3,}/g;
+  let lastEnd = 0;
+  let blankIdx = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastEnd) parts.push({ type: 'text', content: text.slice(lastEnd, match.index), index: -1 });
+    parts.push({ type: 'blank', content: '', index: blankIdx++ });
+    lastEnd = match.index + match[0].length;
+  }
+  if (lastEnd < text.length) parts.push({ type: 'text', content: text.slice(lastEnd), index: -1 });
+  return parts;
+}
+
+function ClozeOpen({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const parts = parseCloze(question.question);
+  const values: string[] = answer?.kind === 'cloze' ? answer.value : [];
+  const blankCount = parts.filter((p) => p.type === 'blank').length;
+
+  const update = (idx: number, val: string) => {
+    const next = Array.from({ length: blankCount }, (_, i) => values[i] ?? '');
+    next[idx] = val;
+    onChange({ kind: 'cloze', value: next });
+  };
+
+  return (
+    <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-[2.2] text-foreground">
+      {parts.map((part, i) =>
+        part.type === 'text' ? (
+          <span key={i}>{part.content}</span>
+        ) : (
+          <input
+            key={i}
+            type="text"
+            value={values[part.index] ?? ''}
+            onChange={(e) => update(part.index, e.target.value)}
+            disabled={disabled}
+            className="mx-1.5 inline-block h-8 w-32 rounded-md border border-border bg-background px-2 text-[13px] text-foreground align-middle focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
+            placeholder={`(${part.index + 1})`}
+          />
+        )
+      )}
+    </div>
+  );
+}
+
+function ClozeWordBank({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const parts = parseCloze(question.question);
+  const values: string[] = answer?.kind === 'cloze' ? answer.value : [];
+  const wordBank: string[] = question.clozeWordBank || question.acceptableAnswers || [];
+  const blankCount = parts.filter((p) => p.type === 'blank').length;
+
+  const update = (idx: number, val: string) => {
+    const next = Array.from({ length: blankCount }, (_, i) => values[i] ?? '');
+    next[idx] = val;
+    onChange({ kind: 'cloze', value: next });
+  };
+
+  // Track which words are used and in which slot
+  const usedSlotMap: Record<string, number> = {};
+  values.forEach((v, i) => { if (v) usedSlotMap[v] = i; });
+
+  const [dragWord, setDragWord] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-5">
+      {/* Text with drop targets */}
+      <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-[2.4] text-foreground">
+        {parts.map((part, i) =>
+          part.type === 'text' ? (
+            <span key={i}>{part.content}</span>
+          ) : (
+            <span
+              key={i}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const word = e.dataTransfer.getData('text/plain') || dragWord;
+                if (word) update(part.index, word);
+                setDragWord(null);
+              }}
+              onClick={() => {
+                // Clear this slot
+                if (values[part.index]) update(part.index, '');
+              }}
+              className={[
+                'mx-1.5 inline-flex min-w-[80px] items-center justify-center rounded-md border px-2 py-0.5 align-middle text-[13px] transition-all cursor-pointer',
+                values[part.index]
+                  ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium'
+                  : 'border-dashed border-muted-foreground/40 bg-background text-muted-foreground',
+              ].join(' ')}
+            >
+              {values[part.index] || `(${part.index + 1})`}
+            </span>
+          )
+        )}
+      </div>
+
+      {/* Word bank */}
+      <div className="space-y-2">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Word bank — drag or click to place</p>
+        <div className="flex flex-wrap gap-2">
+          {wordBank.map((word) => {
+            const usedInSlot = usedSlotMap[word] !== undefined;
+            return (
+              <button
+                key={word}
+                type="button"
+                draggable={!disabled && !usedInSlot}
+                onDragStart={(e) => { e.dataTransfer.setData('text/plain', word); setDragWord(word); }}
+                onClick={() => {
+                  if (disabled || usedInSlot) return;
+                  // Fill the first empty slot
+                  const emptyIdx = Array.from({ length: blankCount }, (_, i) => i).find((i) => !values[i]);
+                  if (emptyIdx !== undefined) update(emptyIdx, word);
+                }}
+                disabled={disabled}
+                className={[
+                  'rounded-lg border px-3 py-1.5 text-[13px] transition-all',
+                  usedInSlot
+                    ? 'border-border bg-muted/40 text-muted-foreground/40 line-through cursor-default'
+                    : 'border-border bg-background text-foreground hover:border-[var(--accent-brand)]/50 cursor-grab active:cursor-grabbing',
+                ].join(' ')}
+              >
+                {word}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Hotspot ──────────────────────────────────────────────────────────────────
+function HotspotQuestion({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const imageUrl = question.media?.url || '';
+  const zones = question.hotspotZones || [];
+  const selected = answer?.kind === 'option' ? answer.value : '';
+  const [revealed, setRevealed] = useState(false);
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const update = () => setImgSize({ w: img.clientWidth, h: img.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(img);
+    return () => ro.disconnect();
+  }, [imageUrl]);
+
+  if (!imageUrl) {
+    return <p className="text-sm text-muted-foreground">No image provided for this hotspot question.</p>;
+  }
+
+  const correctZone = zones.find((z) => z.isCorrect);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[12px] text-muted-foreground">Click on the correct area in the image.</p>
+      <div className="relative inline-block w-full overflow-hidden rounded-xl border border-border bg-muted/20">
+        <img
+          ref={imgRef}
+          src={imageUrl}
+          alt={question.media?.title || 'Hotspot image'}
+          className="w-full rounded-xl object-contain"
+          style={{ maxHeight: 420 }}
+          draggable={false}
+        />
+        {/* Clickable zones — invisible until answered */}
+        {zones.map((zone) => {
+          const isSelected = selected === zone.id;
+          const showCorrect = revealed && zone.isCorrect;
+          const showWrong = revealed && isSelected && !zone.isCorrect;
+          return (
+            <button
+              key={zone.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return;
+                onChange({ kind: 'option', value: zone.id });
+                setRevealed(true);
+              }}
+              style={{
+                position: 'absolute',
+                left: `${zone.x}%`,
+                top: `${zone.y}%`,
+                width: `${zone.width}%`,
+                height: `${zone.height}%`,
+              }}
+              className={[
+                'rounded transition-all duration-200',
+                isSelected && !revealed ? 'ring-2 ring-[var(--accent-brand)] bg-[var(--accent-brand)]/20' : '',
+                showCorrect ? 'ring-2 ring-emerald-500 bg-emerald-400/25' : '',
+                showWrong ? 'ring-2 ring-red-500 bg-red-400/25' : '',
+                !isSelected && !revealed ? 'hover:bg-white/10' : '',
+              ].join(' ')}
+              title={revealed ? zone.label : ''}
+            />
+          );
+        })}
+        {/* Label overlay after reveal */}
+        {revealed && correctZone && (
+          <div
+            style={{
+              position: 'absolute',
+              left: `${correctZone.x + correctZone.width / 2}%`,
+              top: `${correctZone.y}%`,
+              transform: 'translateX(-50%) translateY(-110%)',
+            }}
+            className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow"
+          >
+            {correctZone.label}
+          </div>
+        )}
+      </div>
+      {revealed && selected && (
+        <p className={`text-[13px] font-medium ${zones.find((z) => z.id === selected)?.isCorrect ? 'text-emerald-600' : 'text-red-500'}`}>
+          {zones.find((z) => z.id === selected)?.isCorrect ? `Correct — ${zones.find((z) => z.id === selected)?.label}` : `Incorrect — correct answer: ${correctZone?.label}`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Comparison Matrix ────────────────────────────────────────────────────────
+function ComparisonMatrix({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const rows = question.comparisonRows || [];
+  const cols = question.comparisonColumns || [];
+  const correct = question.comparisonCorrect || {};
+  const userMap: Record<string, string[]> = answer?.kind === 'comparison' ? answer.value : {};
+
+  const toggle = (row: string, col: string) => {
+    if (disabled) return;
+    const current = userMap[row] || [];
+    const next = current.includes(col) ? current.filter((c) => c !== col) : [...current, col];
+    onChange({ kind: 'comparison', value: { ...userMap, [row]: next } });
+  };
+
+  if (!rows.length || !cols.length) {
+    return <p className="text-sm text-muted-foreground">Comparison data not available.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="border-b border-border bg-muted/40">
+            <th className="px-3 py-2.5 text-left font-medium text-muted-foreground" />
+            {cols.map((col) => (
+              <th key={col} className="px-3 py-2.5 text-center text-[12px] font-semibold text-foreground">
+                {col}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIdx) => (
+            <tr key={row} className={rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+              <td className="px-3 py-2.5 font-medium text-foreground">{row}</td>
+              {cols.map((col) => {
+                const checked = (userMap[row] || []).includes(col);
+                const isCorrect = (correct[row] || []).includes(col);
+                return (
+                  <td key={col} className="px-3 py-2.5 text-center">
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => toggle(row, col)}
+                      className={[
+                        'mx-auto flex h-6 w-6 items-center justify-center rounded border-2 transition-all',
+                        checked
+                          ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
+                          : 'border-muted-foreground/30 bg-background hover:border-[var(--accent-brand)]/60',
+                      ].join(' ')}
+                    >
+                      {checked && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Argument Analysis ────────────────────────────────────────────────────────
+function ArgumentAnalysis({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const statements = question.argumentStatements || [];
+  const tags = question.argumentTags || ['Claim', 'Evidence', 'Counterargument', 'Conclusion'];
+  const userMap: Record<string, string> = answer?.kind === 'matching' ? answer.value : {};
+
+  const assign = (statementId: string, tag: string) => {
+    if (disabled) return;
+    const next = { ...userMap };
+    next[statementId] = next[statementId] === tag ? '' : tag;
+    onChange({ kind: 'matching', value: next });
+  };
+
+  if (!statements.length) {
+    return <p className="text-sm text-muted-foreground">No statements provided for analysis.</p>;
+  }
+
+  // Gentle tag colors — rotated, no harsh colors
+  const tagColors: Record<string, string> = {};
+  const palette = [
+    'bg-[var(--accent-brand)]/15 text-[var(--accent-brand)] border-[var(--accent-brand)]/40',
+    'bg-blue-500/12 text-blue-700 dark:text-blue-300 border-blue-400/40',
+    'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-400/40',
+    'bg-purple-500/12 text-purple-700 dark:text-purple-300 border-purple-400/40',
+    'bg-teal-500/12 text-teal-700 dark:text-teal-300 border-teal-400/40',
+  ];
+  tags.forEach((tag, i) => { tagColors[tag] = palette[i % palette.length]; });
+
+  return (
+    <div className="space-y-3">
+      {statements.map((stmt) => {
+        const assigned = userMap[stmt.id] || '';
+        return (
+          <div key={stmt.id} className="rounded-xl border border-border bg-muted/20 p-3.5 space-y-2.5">
+            <p className="text-[13px] text-foreground leading-relaxed">{stmt.text}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => {
+                const active = assigned === tag;
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => assign(stmt.id, tag)}
+                    className={[
+                      'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all',
+                      active ? tagColors[tag] : 'border-border bg-background text-muted-foreground hover:bg-muted/60',
+                    ].join(' ')}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Ranking ─────────────────────────────────────────────────────────────────
+// Like ordering but shows rank criterion and uses #1 / #2 badges.
+function RankingQuestion({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const items = question.orderingItems || [];
+  const criteria = (question as any).rankingCriteria as string | undefined;
+  const current: string[] = answer?.kind === 'ordering' && answer.value.length === items.length
+    ? answer.value
+    : [...items];
+
+  const dragIdx = useRef<number | null>(null);
+
+  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx.current === null || dragIdx.current === dropIdx) return;
+    const next = [...current];
+    const [moved] = next.splice(dragIdx.current, 1);
+    next.splice(dropIdx, 0, moved);
+    onChange({ kind: 'ordering', value: next });
+    dragIdx.current = null;
+  };
+
+  return (
+    <div className="space-y-3">
+      {criteria ? (
+        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px] text-muted-foreground">
+          <span className="font-semibold text-foreground">Rank by: </span>{criteria}
+        </div>
+      ) : null}
+      <p className="text-[11px] text-muted-foreground">Drag to reorder from #1 (top) to last (bottom).</p>
+      <div className="space-y-2">
+        {current.map((item, idx) => (
+          <div
+            key={item}
+            draggable={!disabled}
+            onDragStart={() => handleDragStart(idx)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => handleDrop(idx)}
+            className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 cursor-grab active:cursor-grabbing select-none"
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] font-bold text-[var(--accent-brand)]">
+              #{idx + 1}
+            </span>
+            <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+            </svg>
+            <span className="text-[13px] text-foreground">{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Drag & Drop Categorize ───────────────────────────────────────────────────
+// Click-based categorization (or cause→effect variant).
+function DragDropCategorize({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const categories = (question as any).dragDropCategories as string[] || [];
+  const items = (question as any).dragDropItems as Array<{ id: string; text: string; correctCategory: string }> || [];
+  const isCauseEffect = (question as any).dragDropVariant === 'cause-effect';
+  const userMap: Record<string, string> = answer?.kind === 'matching' ? answer.value : {};
+
+  const catColors = [
+    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]',
+    'border-blue-400/50 bg-blue-500/10 text-blue-700 dark:text-blue-300',
+    'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    'border-purple-400/50 bg-purple-500/10 text-purple-700 dark:text-purple-300',
+  ];
+  const catColorMap: Record<string, string> = {};
+  categories.forEach((cat, i) => { catColorMap[cat] = catColors[i % catColors.length]; });
+
+  const assign = (itemId: string, cat: string) => {
+    if (disabled) return;
+    const next = { ...userMap };
+    if (next[itemId] === cat) { delete next[itemId]; }
+    else { next[itemId] = cat; }
+    onChange({ kind: 'matching', value: next });
+  };
+
+  if (!items.length || !categories.length) {
+    return <p className="text-sm text-muted-foreground">Categorization data not available.</p>;
+  }
+
+  return (
+    <div className="space-y-2.5">
+      {isCauseEffect ? (
+        <p className="text-[12px] text-muted-foreground">Classify each item as a Cause or an Effect in this chain.</p>
+      ) : (
+        <p className="text-[12px] text-muted-foreground">Assign each item to the correct category.</p>
+      )}
+      {items.map((item) => {
+        const assigned = userMap[item.id];
+        return (
+          <div
+            key={item.id}
+            className={`rounded-xl border px-3 py-2.5 transition-all ${
+              assigned ? `${catColorMap[assigned] ?? 'border-border bg-muted/20'} border` : 'border-border bg-muted/20'
+            }`}
+          >
+            <p className="mb-2 text-[13px] text-foreground leading-snug">{item.text}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((cat, catIdx) => {
+                const label = isCauseEffect
+                  ? (catIdx === 0 ? `⟶ ${cat}` : `${cat} ⟶`)
+                  : cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => assign(item.id, cat)}
+                    className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${
+                      assigned === cat
+                        ? catColorMap[cat] ?? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted/60'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Venn Diagram ─────────────────────────────────────────────────────────────
+// Click-to-assign items to Venn zones.
+function VennQuestion({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const circles = (question as any).vennCircles as Array<{ id: string; label: string }> || [];
+  const items = (question as any).vennItems as Array<{ id: string; text: string; correctZone: string }> || [];
+  const userMap: Record<string, string> = answer?.kind === 'matching' ? answer.value : {};
+
+  // Build zone list from circles
+  const zones: { id: string; label: string }[] = [];
+  if (circles.length === 2) {
+    const [A, B] = circles;
+    zones.push(
+      { id: A.id, label: `Only ${A.label}` },
+      { id: B.id, label: `Only ${B.label}` },
+      { id: `${A.id}${B.id}`, label: `${A.label} & ${B.label}` },
+      { id: 'outside', label: 'Neither' },
+    );
+  } else if (circles.length >= 3) {
+    const [A, B, C] = circles;
+    zones.push(
+      { id: A.id, label: `Only ${A.label}` },
+      { id: B.id, label: `Only ${B.label}` },
+      { id: C.id, label: `Only ${C.label}` },
+      { id: `${A.id}${B.id}`, label: `${A.label} & ${B.label}` },
+      { id: `${B.id}${C.id}`, label: `${B.label} & ${C.label}` },
+      { id: `${A.id}${C.id}`, label: `${A.label} & ${C.label}` },
+      { id: `${A.id}${B.id}${C.id}`, label: 'All three' },
+      { id: 'outside', label: 'Outside all' },
+    );
+  }
+
+  const circleStyle = [
+    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/8 text-[var(--accent-brand)]',
+    'border-blue-400/50 bg-blue-500/8 text-blue-700 dark:text-blue-300',
+    'border-amber-400/50 bg-amber-500/8 text-amber-700 dark:text-amber-300',
+  ];
+  const zoneColors = [
+    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]',
+    'border-blue-400/50 bg-blue-500/10 text-blue-700 dark:text-blue-300',
+    'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    'border-purple-400/40 bg-purple-500/8 text-purple-700 dark:text-purple-300',
+    'border-teal-400/40 bg-teal-500/8 text-teal-700 dark:text-teal-300',
+    'border-rose-400/40 bg-rose-500/8 text-rose-700 dark:text-rose-300',
+    'border-indigo-400/40 bg-indigo-500/8 text-indigo-700 dark:text-indigo-300',
+    'border-border bg-muted/30 text-muted-foreground',
+  ];
+  const zoneColorMap: Record<string, string> = {};
+  zones.forEach((z, i) => { zoneColorMap[z.id] = zoneColors[i % zoneColors.length]; });
+
+  const assign = (itemId: string, zoneId: string) => {
+    if (disabled) return;
+    const next = { ...userMap };
+    if (next[itemId] === zoneId) { delete next[itemId]; } else { next[itemId] = zoneId; }
+    onChange({ kind: 'matching', value: next });
+  };
+
+  if (!circles.length || !items.length) {
+    return <p className="text-sm text-muted-foreground">Venn diagram data not available.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Decorative Venn visual */}
+      <div className="flex items-center justify-center py-1">
+        {circles.slice(0, 3).map((circle, i) => (
+          <div
+            key={circle.id}
+            className={`flex h-20 w-20 items-center justify-center rounded-full border-2 text-center ${
+              i > 0 ? '-ml-5' : ''
+            } ${circleStyle[i % circleStyle.length]}`}
+          >
+            <span className="px-1 text-[10px] font-semibold leading-tight">
+              {circle.label.length > 8 ? circle.label.slice(0, 7) + '…' : circle.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Item assignment */}
+      <div className="space-y-2.5">
+        {items.map((item) => {
+          const assignedZone = userMap[item.id];
+          return (
+            <div
+              key={item.id}
+              className={`rounded-xl border px-3 py-2.5 transition-all ${
+                assignedZone ? `${zoneColorMap[assignedZone] ?? 'border-border bg-muted/20'} border` : 'border-border bg-muted/20'
+              }`}
+            >
+              <p className="mb-2 text-[13px] text-foreground">{item.text}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {zones.map((zone) => (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => assign(item.id, zone.id)}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-all ${
+                      assignedZone === zone.id
+                        ? zoneColorMap[zone.id] ?? 'border-border bg-muted text-foreground'
+                        : 'border-border bg-background text-muted-foreground hover:bg-muted/60'
+                    }`}
+                  >
+                    {zone.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Spot the Error ───────────────────────────────────────────────────────────
+// Clickable text segments — user clicks on the incorrect one.
+function SpotErrorQuestion({ question, answer, disabled, onChange, reveal }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void; reveal: boolean;
+}) {
+  const segments = (question as any).spotErrorSegments as Array<{ id: string; text: string; isError: boolean }> || [];
+  const selected = answer?.kind === 'option' ? answer.value : '';
+
+  if (!segments.length) {
+    return <p className="text-sm text-muted-foreground">No segments provided for this question.</p>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[12px] text-muted-foreground">Click on the part of the statement that contains an error.</p>
+      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-muted/20 px-4 py-4">
+        {segments.map((seg) => {
+          const isSelected = selected === seg.id;
+          let cls = 'rounded-lg border px-3 py-2 text-[13.5px] leading-snug cursor-pointer transition-all ';
+          if (reveal) {
+            if (seg.isError) cls += 'border-red-400 bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200 font-medium ring-2 ring-red-300/50';
+            else if (isSelected && !seg.isError) cls += 'border-amber-300 bg-amber-50 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 opacity-70';
+            else cls += 'border-transparent bg-transparent text-foreground opacity-50';
+          } else if (isSelected) {
+            cls += 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-foreground ring-2 ring-[var(--accent-brand)]/30';
+          } else {
+            cls += 'border-border bg-background text-foreground hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/5';
+          }
+          return (
+            <button
+              key={seg.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange({ kind: 'option', value: seg.id })}
+              className={cls}
+            >
+              {seg.text}
+            </button>
+          );
+        })}
+      </div>
+      {reveal && selected && (
+        <p className={`text-[13px] font-medium ${segments.find((s) => s.id === selected)?.isError ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+          {segments.find((s) => s.id === selected)?.isError
+            ? 'Correct — you found the error!'
+            : `Incorrect. The error was: "${segments.find((s) => s.isError)?.text}"`}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Scenario / Case Study ────────────────────────────────────────────────────
+// Renders a scenario context block, then MCQ below it.
+function ScenarioQuestion({ question, answer, disabled, onChange, reveal, correctOptionId }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean;
+  onChange: (v: AnswerValue) => void; reveal: boolean; correctOptionId: string;
+}) {
+  const [showFull, setShowFull] = useState(false);
+  const context = question.scenarioContext || '';
+  const truncated = context.length > 320 && !showFull;
+
+  return (
+    <div className="space-y-4">
+      {/* Scenario context */}
+      {context ? (
+        <div className="rounded-xl border border-border bg-muted/30 px-4 py-3.5 space-y-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scenario</p>
+          <p className="text-[13px] leading-relaxed text-foreground">
+            {truncated ? `${context.slice(0, 320)}…` : context}
+          </p>
+          {context.length > 320 && (
+            <button
+              type="button"
+              onClick={() => setShowFull((p) => !p)}
+              className="text-[11px] text-[var(--accent-brand)] underline underline-offset-2"
+            >
+              {showFull ? 'Show less' : 'Read full scenario'}
+            </button>
+          )}
+        </div>
+      ) : null}
+      {/* MCQ options */}
+      <MCQRadioList
+        question={question}
+        answer={answer}
+        disabled={disabled}
+        onChange={onChange}
+        reveal={reveal}
+        correctOptionId={correctOptionId}
+      />
+    </div>
+  );
+}
+
 function QuestionView({
   question,
   answer,
@@ -639,6 +1498,13 @@ function QuestionView({
     question.options.find((option) => option.isCorrect)?.id ||
     question.correctOptionId ||
     '';
+
+  // ─── Timeline (ordering sort variant when orderingItems present) ─────────────
+  if (type === 'timeline' && (question.orderingItems?.length ?? 0) >= 2) {
+    const variant = selectVariant(question.id, ks, 2);
+    if (variant === 0) return <OrderingClickNumber question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    return <OrderingDragHandles question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
 
   // ─── MCQ / True-False / timeline / media types (option-based) ───────────────
   if (['multiple-choice', 'image-analysis', 'video-analysis', 'drawing-analysis', 'internet-photo', 'video-fragment', 'timeline'].includes(type)) {
@@ -739,6 +1605,53 @@ function QuestionView({
     );
   }
 
+  // ─── Cloze test ──────────────────────────────────────────────────────────────
+  if (type === 'cloze') {
+    const hasWordBank = (question.clozeWordBank?.length ?? 0) > 0 || (question.acceptableAnswers?.length ?? 0) > 0;
+    if (hasWordBank) return <ClozeWordBank question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    return <ClozeOpen question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Hotspot ─────────────────────────────────────────────────────────────────
+  if (type === 'hotspot') {
+    return <HotspotQuestion question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Comparison Matrix ────────────────────────────────────────────────────────
+  if (type === 'comparison-matrix') {
+    return <ComparisonMatrix question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Argument Analysis ────────────────────────────────────────────────────────
+  if (type === 'argument-analysis') {
+    return <ArgumentAnalysis question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Scenario / Case Study ────────────────────────────────────────────────────
+  if (type === 'scenario') {
+    return <ScenarioQuestion question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
+  }
+
+  // ─── Ranking ──────────────────────────────────────────────────────────────────
+  if (type === 'ranking') {
+    return <RankingQuestion question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Drag & Drop ──────────────────────────────────────────────────────────────
+  if (type === 'drag-drop') {
+    return <DragDropCategorize question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Venn Diagram ─────────────────────────────────────────────────────────────
+  if (type === 'venn') {
+    return <VennQuestion question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  }
+
+  // ─── Spot the Error ───────────────────────────────────────────────────────────
+  if (type === 'spot-error') {
+    return <SpotErrorQuestion question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} />;
+  }
+
   // ─── Fallback: MCQ Radio List ─────────────────────────────────────────────────
   return <MCQRadioList question={question} answer={answer} disabled={disabled} onChange={onChange} reveal={reveal} correctOptionId={correctOptionId} />;
 }
@@ -813,7 +1726,7 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
   );
 }
 
-function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string }) {
+function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string> }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [practiceCategory, setPracticeCategory] = useState<string | null>(null);
   const gradeStorageKey = `quiz.grade.format::${normalizeText(sourceText).slice(0, 96)}`;
@@ -847,6 +1760,7 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
       quiz.questions.map((question, index) => {
         const answer = answers[question.id];
         const acc = getQuestionAccuracy(question, answer);
+        const isNotRelevant = notRelevantIds?.has(question.id) ?? false;
         return {
           idx: index,
           id: question.id,
@@ -862,13 +1776,17 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
           partsTotal: acc.partsTotal,
           correct: acc.correct,
           responseMs: Number(signals[index]?.responseMs || 0),
+          isNotRelevant,
         };
       }),
-    [answers, quiz.questions, signals]
+    [answers, notRelevantIds, quiz.questions, signals]
   );
 
+  // Exclude not-relevant questions from scoring
+  const scoredRows = rows.filter((row) => !row.isNotRelevant);
+
   const selected = rows[Math.min(selectedIdx, Math.max(0, rows.length - 1))] || rows[0];
-  const grouped = rows.reduce<Record<string, { total: number; scoreSum: number }>>((acc, row) => {
+  const grouped = scoredRows.reduce<Record<string, { total: number; scoreSum: number }>>((acc, row) => {
     acc[row.category] = acc[row.category] || { total: 0, scoreSum: 0 };
     acc[row.category].total += 1;
     acc[row.category].scoreSum += row.accuracy;
@@ -877,11 +1795,12 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
   const categoryScores = Object.entries(grouped).map(([category, stat]) => ({ category, score: Math.round(stat.scoreSum / Math.max(1, stat.total)) }));
   const weak = [...categoryScores].sort((a, b) => a.score - b.score).slice(0, 3);
   const strong = [...categoryScores].sort((a, b) => b.score - a.score).slice(0, 3);
-  const accuracyPct = rows.length ? Math.round(rows.reduce((acc, row) => acc + row.accuracy, 0) / rows.length) : 0;
+  const accuracyPct = scoredRows.length ? Math.round(scoredRows.reduce((acc, row) => acc + row.accuracy, 0) / scoredRows.length) : 0;
   const speedPct = scoreSpeed(signals);
   const progressionPct = scoreProgression(signals);
   const avgMs = signals.length ? Math.round(signals.reduce((acc, signal) => acc + Number(signal.responseMs || 0), 0) / signals.length) : 0;
-  const notes = buildLearningNotes(rows.map((row) => ({ category: row.category, accuracy: row.accuracy })), accuracyPct, speedPct);
+  const notes = buildLearningNotes(scoredRows.map((row) => ({ category: row.category, accuracy: row.accuracy })), accuracyPct, speedPct);
+  const notRelevantCount = rows.length - scoredRows.length;
   const gradeLabel = gradeFormat === 'percent' ? `${accuracyPct}%` : gradeFormat === 'eu10' ? (accuracyPct / 10).toFixed(1) : accuracyPct >= 90 ? 'A' : accuracyPct >= 80 ? 'B' : accuracyPct >= 70 ? 'C' : accuracyPct >= 60 ? 'D' : accuracyPct >= 50 ? 'E' : 'F';
 
   const openPracticeTool = (tool: 'quiz' | 'flashcards' | 'notes' | 'mindmap', category: string) => {
@@ -899,6 +1818,11 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
       <CardContent>
         <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-2.5">
+            {notRelevantCount > 0 && (
+              <p className="text-[12px] text-muted-foreground rounded-lg border border-border bg-muted/30 px-3 py-2">
+                {notRelevantCount} question{notRelevantCount > 1 ? 's were' : ' was'} marked as Not Relevant and excluded from scoring.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               <div className="rounded-lg border border-border bg-background p-3">
                 <p className="text-xs text-muted-foreground">Grade</p>
@@ -983,7 +1907,7 @@ function QuizResults({ quiz, answers, signals, sourceText }: { quiz: Quiz; answe
   );
 }
 
-export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string }) {
+export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle, inputMode }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string; inputMode?: 'literal' | 'research' }) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -1001,6 +1925,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [finalizedMap, setFinalizedMap] = useState<Record<string, boolean>>({});
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
+  const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
   const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
@@ -1188,7 +2113,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     setIsCurrentCorrect(null);
   };
 
-  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} />;
+  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} />;
   if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
@@ -1224,11 +2149,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   };
 
   // Circle state per question
-  const getCircleState = (idx: number): 'current' | 'answered' | 'unanswered' => {
+  const getCircleState = (idx: number): 'current' | 'answered' | 'not-relevant' | 'unanswered' => {
     if (idx === currentIndex) return 'current';
     const q = questions[idx];
+    if (q && notRelevantIds.has(q.id)) return 'not-relevant';
     if (q && finalizedMap[q.id]) return 'answered';
     return 'unanswered';
+  };
+
+  const handleNotRelevant = () => {
+    if (!currentQuestion) return;
+    setNotRelevantIds((prev) => { const next = new Set(prev); next.add(currentQuestion.id); return next; });
+    advanceQuestion();
   };
 
   return (
@@ -1264,6 +2196,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                         ? 'bg-[var(--accent-brand)] text-white ring-2 ring-[var(--accent-brand)] ring-offset-1 ring-offset-background'
                         : state === 'answered'
                         ? 'bg-[var(--accent-brand)]/20 text-[var(--accent-brand)] border border-[var(--accent-brand)]/40'
+                        : state === 'not-relevant'
+                        ? 'border border-border bg-muted text-muted-foreground/30 line-through'
                         : 'border border-border bg-muted text-muted-foreground hover:border-[var(--accent-brand)]/50',
                     ].join(' ')}
                   >
@@ -1377,7 +2311,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
 
       {/* Bottom nav bar */}
       <div className="shrink-0 border-t border-border px-6 py-4">
-        <div className="mx-auto flex max-w-[760px] items-center justify-between">
+        <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
           <Button
             type="button"
             variant="outline"
@@ -1388,13 +2322,26 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             ← Previous
           </Button>
 
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="h-10 bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
-          >
-            {isLastQuestion ? 'Finish Quiz' : 'Next →'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {inputMode === 'research' && !notRelevantIds.has(currentQuestion.id) && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-10 px-4 text-[12px] text-muted-foreground hover:text-foreground"
+                onClick={handleNotRelevant}
+                title="Mark this question as not relevant to your research — it won't affect your score"
+              >
+                Not Relevant
+              </Button>
+            )}
+            <Button
+              type="button"
+              onClick={handleNext}
+              className="h-10 bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
+            >
+              {isLastQuestion ? 'Finish Quiz' : 'Next →'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
