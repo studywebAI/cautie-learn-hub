@@ -1,26 +1,13 @@
 type FlowHandler = (input: any) => Promise<any> | any;
 import {
-  canUseOpenAIFallback,
-  executeOpenAIFallbackFlow,
-} from "@/lib/ai/openai-fallback";
-import {
   OPENROUTER_LOCKED_MODEL,
   OPENROUTER_PROVIDER_PREFERENCE,
-  normalizeOpenRouterProviderPreference,
   resolveOpenRouterApiKey,
 } from "@/lib/ai/openrouter-policy";
 
 export type AIExecutionOptions = {
-  providerPreference?: "openai";
-  openaiApiKey?: string;
-  openaiModel?: string;
-  onEvent?: (event: {
-    type: "primary_error" | "fallback_attempt" | "fallback_success" | "fallback_error" | "fallback_skipped";
-    provider: "openai";
-    flowName: string;
-    message?: string;
-    code?: string;
-  }) => void;
+  // Currently OpenRouter is the only provider (locked by policy)
+  // This type is kept for backwards compatibility
 };
 
 const SOURCE_GROUNDED_FLOWS = new Set(["generateNotes", "generateQuiz", "generateFlashcards"]);
@@ -135,27 +122,21 @@ export async function executeAIFlow(
       ? { ...input, groundingInstruction: SOURCE_GROUNDING_INSTRUCTION }
       : input;
 
-  const providerPreference = normalizeOpenRouterProviderPreference(options?.providerPreference);
-  const openaiApiKey = options?.openaiApiKey || resolveOpenRouterApiKey();
-  const openaiModel = options?.openaiModel || process.env.OPENAI_FALLBACK_MODEL || OPENROUTER_LOCKED_MODEL;
-  const canFallback = canUseOpenAIFallback(flowName) && !!openaiApiKey;
-  if (providerPreference === "openai" && canFallback) {
-    console.info(`[AI_FLOW] ${flowName} provider=openrouter model=${openaiModel} fallback=disabled lock=enforced policy=${OPENROUTER_PROVIDER_PREFERENCE}`);
-    return executeOpenAIFallbackFlow(flowName, enrichedInput, openaiApiKey, openaiModel);
-  }
-  if (providerPreference === "openai" && !canFallback) {
+  // OpenRouter is the only provider (locked by policy)
+  const openRouterApiKey = resolveOpenRouterApiKey();
+  const openRouterModel = OPENROUTER_LOCKED_MODEL;
+
+  if (!openRouterApiKey) {
     const error = new Error(
-      canUseOpenAIFallback(flowName)
-        ? "OpenAI provider selected but no OpenAI API key is available"
-        : `OpenAI provider selected but flow '${flowName}' is not supported by OpenAI fallback`
+      `OpenRouter API key is required for flow '${flowName}'`
     ) as Error & { code?: string };
-    error.code = "OPENAI_PROVIDER_UNAVAILABLE";
+    error.code = "OPENROUTER_API_KEY_MISSING";
     throw error;
   }
 
-  const unavailable = new Error(
-    `OpenRouter lock is enabled but no key is configured for flow '${flowName}'`
-  ) as Error & { code?: string };
-  unavailable.code = "OPENROUTER_PROVIDER_UNAVAILABLE";
-  throw unavailable;
+  console.info(
+    `[AI_FLOW] ${flowName} provider=openrouter model=${openRouterModel} policy=${OPENROUTER_PROVIDER_PREFERENCE}`
+  );
+
+  return flow(enrichedInput);
 }

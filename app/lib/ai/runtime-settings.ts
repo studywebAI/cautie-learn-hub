@@ -6,7 +6,7 @@ import {
   resolveOpenRouterApiKey,
 } from "@/lib/ai/openrouter-policy";
 
-export type AIProviderPreference = "openai";
+export type AIProviderPreference = "openrouter" | "openai";
 
 export type AIRuntimeOptions = {
   providerPreference: AIProviderPreference;
@@ -20,7 +20,7 @@ type UserAISettingsRow = {
   encrypted_openai_key: string | null;
 };
 
-const DEFAULT_PROVIDER: AIProviderPreference = "openai";
+const DEFAULT_PROVIDER: AIProviderPreference = "openrouter";
 const DEFAULT_OPENAI_MODEL: string = OPENROUTER_LOCKED_MODEL;
 const DEFAULT_STT_PROVIDER_STRATEGY: AIRuntimeOptions["sttProviderStrategy"] = "groq_with_openai_fallback";
 
