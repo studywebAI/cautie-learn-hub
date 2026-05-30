@@ -26,10 +26,11 @@ import {
   Menu,
   ArrowUpRight,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
   FolderOpen,
   Loader2,
-  PanelLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
@@ -67,8 +68,7 @@ export function AppSidebar() {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
-  const { setOpenMobile, openMobile, state: sidebarState, setOpen, toggleSidebar } = useSidebar();
-  const expandSidebar = () => { if (sidebarState === 'collapsed') setOpen(true); };
+  const { setOpenMobile, openMobile, state: sidebarState, toggleSidebar } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didWarmTeacherResourcesRef = useRef(false);
@@ -1260,7 +1260,7 @@ export function AppSidebar() {
                       tooltip={item.label}
                       className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
                     >
-                      <Link prefetch={false} href={item.href} onClick={expandSidebar}>
+                      <Link prefetch={false} href={item.href}>
                         <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
@@ -1284,7 +1284,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link prefetch={false} href={item.href} onClick={expandSidebar}>
+                    <Link prefetch={false} href={item.href}>
                       <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
@@ -1307,7 +1307,7 @@ export function AppSidebar() {
                     isActive={isMenuItemActive(item.href)}
                     tooltip={item.label}
                   >
-                    <Link prefetch={false} href={item.href} onClick={expandSidebar}>
+                    <Link prefetch={false} href={item.href}>
                       <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
@@ -1330,21 +1330,15 @@ export function AppSidebar() {
           onClick={toggleSidebar}
           title={sidebarState === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            "flex h-9 w-full items-center gap-2.5 rounded-xl px-2.5",
-            "text-[13px] font-medium text-sidebar-foreground/55",
+            "flex h-9 w-full items-center gap-0.5 rounded-xl px-2.5",
+            "text-sidebar-foreground/45",
             "transition-colors duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.7)] hover:text-sidebar-foreground",
-            "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+            // In collapsed rail: center the button and shrink to icon size
+            "group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
           )}
         >
-          <PanelLeft
-            className={cn(
-              "h-4 w-4 shrink-0 transition-transform duration-300 ease-in-out",
-              sidebarState === 'collapsed' && "rotate-180"
-            )}
-          />
-          <span className="transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">
-            Collapse
-          </span>
+          <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
         </button>
         <SidebarProfile />
       </SidebarFooter>

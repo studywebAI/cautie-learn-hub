@@ -517,13 +517,20 @@ export function ToolInputBox({
   }, [capture]);
 
   // ---------------------------------------------------------------------------
-  // Link import
+  // Link import (shared between manual input and auto-detect-on-space)
   // ---------------------------------------------------------------------------
-  const handleLinkSubmit = useCallback(async () => {
-    const url = linkValue.trim();
-    if (!url) return;
-    setLinkLoading(true);
+  const importUrl = useCallback(async (url: string) => {
     const attachmentId = uniqueId();
+    // Add a loading placeholder immediately so the user sees instant feedback
+    setAttachments((prev) => [
+      ...prev,
+      {
+        id: attachmentId,
+        kind: 'url',
+        label: (() => { try { return new URL(url).hostname; } catch { return url; } })(),
+        previewText: 'Importing…',
+      },
+    ]);
     try {
       const res = await fetch('/api/tools/extract-url', {
         method: 'POST',
@@ -535,25 +542,56 @@ export function ToolInputBox({
       const extracted: string = data?.text?.trim() ?? '';
       if (!extracted) throw new Error('No text extracted');
       const hostname = (() => { try { return new URL(url).hostname; } catch { return url; } })();
-      setAttachments((prev) => [
-        ...prev,
-        {
-          id: attachmentId,
-          kind: 'url',
-          label: hostname,
-          previewText: extracted.slice(0, 180),
-          compiledText: extracted,
-        },
-      ]);
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === attachmentId
+            ? { ...a, label: hostname, previewText: extracted.slice(0, 180), compiledText: extracted }
+            : a
+        )
+      );
+    } catch {
+      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      toast({ variant: 'destructive', title: 'Could not import link' });
+    }
+  }, [toast]);
+
+  const handleLinkSubmit = useCallback(async () => {
+    const url = linkValue.trim();
+    if (!url) return;
+    setLinkLoading(true);
+    try {
+      await importUrl(url);
       setLinkValue('');
       setShowLinkInput(false);
       setShowPlusMenu(false);
-    } catch {
-      toast({ variant: 'destructive', title: 'Could not import link' });
     } finally {
       setLinkLoading(false);
     }
-  }, [linkValue, toast]);
+  }, [importUrl, linkValue]);
+
+  // Detect URL typed into the textarea followed by a space → convert to link card
+  const URL_PATTERN = /https?:\/\/[^\s]{4,}/i;
+
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newVal = e.target.value;
+
+    // Only check when a space was just added at the end
+    if (newVal.endsWith(' ') && newVal.length > sourceText.length) {
+      const trimmed = newVal.trimEnd();
+      const lastSpaceIndex = trimmed.lastIndexOf(' ');
+      const lastWord = lastSpaceIndex === -1 ? trimmed : trimmed.slice(lastSpaceIndex + 1);
+
+      if (lastWord && URL_PATTERN.test(lastWord)) {
+        // Strip the URL from the textarea, keep everything before it
+        const before = trimmed.slice(0, trimmed.length - lastWord.length).trimEnd();
+        setSourceText(before);
+        void importUrl(lastWord);
+        return;
+      }
+    }
+
+    setSourceText(newVal);
+  }, [importUrl, sourceText]);
 
   // ---------------------------------------------------------------------------
   // Tool switching
@@ -599,7 +637,7 @@ export function ToolInputBox({
         <textarea
           ref={textareaRef}
           value={sourceText}
-          onChange={(e) => setSourceText(e.target.value)}
+          onChange={handleTextChange}
           onPaste={handlePaste}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {

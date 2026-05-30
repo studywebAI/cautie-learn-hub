@@ -505,7 +505,12 @@ const SidebarMenuItem = React.forwardRef<
   <li
     ref={ref}
     data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
+    className={cn(
+      "group/menu-item relative",
+      // Center the icon button within the icon rail when collapsed
+      "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center",
+      className
+    )}
     {...props}
   />
 ))
@@ -583,7 +588,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          hidden={true}
           {...tooltip}
         />
       </Tooltip>
