@@ -591,10 +591,10 @@ function QuizPageContent() {
         </div>
 
         {/* Body: question types (left) + settings rail (right) */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 overflow-hidden bg-muted/12">
 
           {/* ── Left: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto bg-muted/12">
+          <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg">
             <div className="p-4 pb-2">
               <div className="flex items-center justify-between mb-2.5">
                 <p className={S}>Question Types</p>
@@ -683,7 +683,7 @@ function QuizPageContent() {
           </div>
 
           {/* ── Right rail: Settings ── */}
-          <div className="w-[280px] shrink-0 border-l border-border/20 bg-muted/12 overflow-y-auto">
+          <div className="w-[280px] shrink-0 bg-background m-3 ml-0 rounded-lg overflow-y-auto">
             <div className="p-3 space-y-3">
 
               {/* Title */}
