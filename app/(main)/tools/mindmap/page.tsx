@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Loader2, Copy } from 'lucide-react';
+import { ChevronLeft, Copy, Loader2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -206,6 +206,7 @@ function MindmapPageContent() {
         <div className="border-t border-border p-4 flex justify-between gap-2">
           <Button
             variant="outline"
+            className="relative ps-10 pe-4"
             onClick={() => {
               setPhase('input');
               setSourceText('');
@@ -213,6 +214,9 @@ function MindmapPageContent() {
             }}
           >
             Back
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+              <ChevronLeft size={14} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+            </span>
           </Button>
           <Button
             onClick={() => void handleGenerate(sourceText)}
@@ -257,12 +261,16 @@ function MindmapPageContent() {
         <div className="border-t border-border p-4 flex justify-between gap-2">
           <Button
             variant="outline"
+            className="relative ps-10 pe-4"
             onClick={() => {
               handleRestart();
               setPhase('options');
             }}
           >
             Back
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+              <ChevronLeft size={14} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+            </span>
           </Button>
         </div>
       </div>

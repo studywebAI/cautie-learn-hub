@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
-import { Copy, Loader2 } from 'lucide-react';
+import { ChevronLeft, Copy, Loader2 } from 'lucide-react';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
@@ -634,6 +634,7 @@ function FlashcardsPageContent() {
         <div className="border-t border-border p-4 flex justify-between gap-2">
           <Button
             variant="outline"
+            className="relative ps-10 pe-4"
             onClick={() => {
               setPhase('input');
               setSourceText('');
@@ -641,6 +642,9 @@ function FlashcardsPageContent() {
             }}
           >
             Back
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+              <ChevronLeft size={14} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+            </span>
           </Button>
           <Button
             onClick={() => {

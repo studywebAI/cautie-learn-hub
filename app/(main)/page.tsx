@@ -13,7 +13,7 @@ import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
-import { NotificationCenter } from "@/components/notifications/notification-center";
+import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
 import { RecentActivityFeed } from "@/components/dashboard/teacher/recent-activity-feed";
@@ -144,7 +144,7 @@ function StudentDashboard() {
               )}
             </p>
           </div>
-          <NotificationCenter />
+          <NotificationPopover />
         </div>
 
         {/* Main column */}
@@ -239,7 +239,7 @@ function TeacherSummaryDashboard() {
                 <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
                 <p className="page-subtitle mt-0.5">{getDayLabel()} · {teacherClasses.length} {teacherClasses.length === 1 ? 'class' : 'classes'}</p>
               </div>
-              <NotificationCenter />
+              <NotificationPopover />
             </div>
 
             {/* Stat row */}

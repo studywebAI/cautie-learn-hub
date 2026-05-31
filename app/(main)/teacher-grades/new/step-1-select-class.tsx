@@ -3,6 +3,7 @@
 import { useState, useContext } from 'react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -73,8 +74,11 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
 
       {/* Navigation */}
       <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
-        <Button onClick={handleNext}>
-          {isDutch ? 'Volgende' : 'Next'} →
+        <Button className="relative ps-4 pe-10" onClick={handleNext}>
+          {isDutch ? 'Volgende' : 'Next'}
+          <span className="pointer-events-none absolute inset-y-0 end-0 flex w-8 items-center justify-center rounded-r-lg bg-primary-foreground/15">
+            <ChevronRight size={14} strokeWidth={2} className="opacity-60" aria-hidden="true" />
+          </span>
         </Button>
       </div>
     </div>

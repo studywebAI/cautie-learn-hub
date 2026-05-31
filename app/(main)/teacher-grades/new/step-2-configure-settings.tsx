@@ -5,7 +5,7 @@ import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type StepTwoProps = {
   onBack: () => void;
@@ -134,9 +134,13 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
               <Button
                 size="sm"
                 variant="ghost"
+                className="relative ps-9 pe-3"
                 onClick={() => setSelectedClassId('')}
               >
-                ← {isDutch ? 'Terug' : 'Back'}
+                {isDutch ? 'Terug' : 'Back'}
+                <span className="pointer-events-none absolute inset-y-0 start-0 flex w-7 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+                  <ChevronLeft size={13} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+                </span>
               </Button>
             </div>
             <div className="p-3 rounded-lg border border-[var(--accent-brand)] bg-[var(--accent-brand)]/5">

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, HelpCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
 
@@ -1907,6 +1907,40 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds }: { q
   );
 }
 
+// ─── Question type helpers ────────────────────────────────────────────────────
+function getTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    'multiple-choice': 'Multiple Choice', 'true-false': 'True / False',
+    'fill-blank': 'Fill in the Blank', 'short-answer': 'Short Answer',
+    'matching': 'Matching', 'ordering': 'Ordering', 'cloze': 'Cloze Test',
+    'comparison-matrix': 'Comparison', 'argument-analysis': 'Analysis',
+    'scenario': 'Scenario', 'timeline': 'Timeline', 'ranking': 'Ranking',
+    'drag-drop': 'Drag & Drop', 'venn': 'Venn Diagram', 'spot-error': 'Spot the Error',
+  };
+  return labels[type] || type.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function getTypePrompt(type: string): string {
+  const prompts: Record<string, string> = {
+    'multiple-choice': 'Select the correct answer.',
+    'true-false': 'Is this statement true or false?',
+    'fill-blank': 'Fill in the missing word or phrase.',
+    'short-answer': 'Write your answer in your own words.',
+    'matching': 'Match each item on the left with its correct pair on the right.',
+    'ordering': 'Arrange the items in the correct order.',
+    'cloze': 'Fill in the blanks in the passage below.',
+    'comparison-matrix': 'Check which attributes apply to each item.',
+    'argument-analysis': 'Tag each statement with its role in the argument.',
+    'scenario': 'Read the scenario, then select the best answer.',
+    'timeline': 'Place the events in chronological order.',
+    'ranking': 'Rank the items from first to last based on the given criterion.',
+    'drag-drop': 'Drag each item into the correct category.',
+    'venn': 'Assign each item to the correct region of the diagram.',
+    'spot-error': 'Click on the segment that contains the error.',
+  };
+  return prompts[type] || 'Answer the question below.';
+}
+
 export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle, inputMode }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string; inputMode?: 'literal' | 'research' }) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
@@ -2245,18 +2279,35 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       </div>
 
       {/* Scrollable question area */}
-      <div className="flex-1 overflow-auto px-6 py-8">
-        <div className="mx-auto max-w-[760px]">
+      <div className="flex-1 overflow-auto">
+        <div className="mx-auto max-w-[680px] px-8 pt-8 pb-24">
+
+          {/* Question header: number + type badge */}
+          <div className="mb-3 flex items-center gap-2">
+            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
+              Question {currentIndex + 1}
+            </span>
+            <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+            <span className="rounded-full bg-[var(--accent-brand)]/12 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+              {getTypeLabel(currentQuestion.type)}
+            </span>
+          </div>
+
           {/* Question text */}
-          <p className="mb-8 text-[17px] font-semibold leading-[1.6] text-foreground md:text-[19px]">
+          <p className="mb-3 text-[15.5px] font-semibold leading-[1.7] text-foreground">
             {currentQuestion.question.replace(/_{3,}/g, '____')}
+          </p>
+
+          {/* Sub-prompt */}
+          <p className="mb-6 text-[12px] text-muted-foreground">
+            {getTypePrompt(currentQuestion.type)}
           </p>
 
           {/* Media */}
           <MediaPrompt question={currentQuestion} />
 
           {/* Answer area */}
-          <div className="mb-8">
+          <div className="mb-6">
             <QuestionView
               question={currentQuestion}
               answer={currentAnswer}
@@ -2267,81 +2318,116 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             />
           </div>
 
-          {/* Feedback panel (assisted mode) */}
+          {/* ── Feedback panel ── */}
           {effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
-            <div className="mb-6 rounded-xl border-l-4 border-[var(--accent-brand)] bg-muted/60 p-4">
-              <div className="mb-1.5 text-sm">
-                Your answer: <span className="font-medium">{formatAnswer(currentQuestion, currentAnswer)}</span>{' '}
-                {isCurrentCorrect ? '✓' : '✗'}
+            <div className={`rounded-xl border overflow-hidden ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
+              {/* Header strip */}
+              <div className={`flex items-center gap-2 px-4 py-2 ${isCurrentCorrect ? 'bg-emerald-50 dark:bg-emerald-900/25' : 'bg-red-50 dark:bg-red-900/25'}`}>
+                <span className={`text-[12.5px] font-semibold ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
+                  {isCurrentCorrect ? '✓ Correct' : '✗ Incorrect'}
+                </span>
               </div>
-              <div className="mb-1.5 text-sm">
-                Correct answer: <span className="font-medium">{getCorrectAnswerText(currentQuestion)}</span>
-              </div>
-              {showWhy ? (
-                <div className="mt-2 text-[13px] text-muted-foreground">
-                  {currentQuestion.explanation?.trim() || 'Explanation unavailable.'}
+
+              {/* Answer comparison */}
+              <div className="px-4 py-3 bg-background/50">
+                <div className={`grid gap-3 ${isCurrentCorrect ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  <div>
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Your answer</p>
+                    <p className={`text-[13px] font-medium ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
+                      {formatAnswer(currentQuestion, currentAnswer)}
+                    </p>
+                  </div>
+                  {!isCurrentCorrect && (
+                    <div>
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Correct answer</p>
+                      <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-300">
+                        {getCorrectAnswerText(currentQuestion)}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : null}
-              {whyIncorrect ? (
-                <div className="mt-2 text-[13px] text-muted-foreground">{whyIncorrect}</div>
-              ) : null}
-              <div className="mt-3 flex gap-2">
-                <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => setShowWhy((prev) => !prev)}>
-                  <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
-                  Explanation
-                </Button>
-                {isCurrentCorrect === false ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8"
-                    onClick={() => void loadWhyIncorrect()}
-                    disabled={whyIncorrectLoading}
-                  >
-                    {whyIncorrectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : null}
-                    Why incorrect?
-                  </Button>
+
+                {/* Explanation body */}
+                {showWhy ? (
+                  <div className="mt-3 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+                    {whyIncorrectLoading && !whyIncorrect && !currentQuestion.explanation?.trim() ? (
+                      <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Generating explanation…
+                      </div>
+                    ) : (
+                      <p className="text-[12.5px] leading-relaxed text-foreground/80">
+                        {currentQuestion.explanation?.trim() || whyIncorrect || ''}
+                      </p>
+                    )}
+                  </div>
                 ) : null}
+
+                {/* Explain button */}
+                <button
+                  type="button"
+                  className="mt-3 text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2 transition-colors"
+                  onClick={() => {
+                    const next = !showWhy;
+                    setShowWhy(next);
+                    if (next && !currentQuestion.explanation?.trim() && !whyIncorrect && !whyIncorrectLoading) {
+                      void loadWhyIncorrect();
+                    }
+                  }}
+                >
+                  {showWhy ? 'Hide explanation' : 'Show explanation'}
+                </button>
               </div>
             </div>
           ) : null}
         </div>
       </div>
 
-      {/* Bottom nav bar */}
-      <div className="shrink-0 border-t border-border px-6 py-4">
-        <div className="mx-auto flex max-w-[760px] items-center justify-between gap-3">
+      {/* ── Bottom nav ── full width, buttons at edges */}
+      <div className="shrink-0 border-t border-border bg-background px-5 py-3.5">
+        <div className="flex items-center justify-between gap-3">
+
+          {/* Previous */}
           <Button
             type="button"
             variant="outline"
-            className="h-10 px-5 text-[13px]"
+            className="relative h-10 ps-11 pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
-            ← Previous
+            Previous
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+              <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+            </span>
           </Button>
 
+          {/* Center: not-relevant */}
           <div className="flex items-center gap-2">
             {inputMode === 'research' && !notRelevantIds.has(currentQuestion.id) && (
               <Button
                 type="button"
                 variant="ghost"
-                className="h-10 px-4 text-[12px] text-muted-foreground hover:text-foreground"
+                className="h-9 px-3 text-[12px] text-muted-foreground hover:text-foreground"
                 onClick={handleNotRelevant}
-                title="Mark this question as not relevant to your research — it won't affect your score"
+                title="Mark as not relevant to your research"
               >
-                Not Relevant
+                Not relevant
               </Button>
             )}
-            <Button
-              type="button"
-              onClick={handleNext}
-              className="h-10 bg-[var(--accent-brand)] px-5 text-[13px] font-medium text-white hover:opacity-90"
-            >
-              {isLastQuestion ? 'Finish Quiz' : 'Next →'}
-            </Button>
           </div>
+
+          {/* Next / Finish */}
+          <Button
+            type="button"
+            onClick={handleNext}
+            className="relative h-10 ps-5 pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
+          >
+            {isLastQuestion ? 'Finish Quiz' : 'Next'}
+            <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
+              <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
+            </span>
+          </Button>
+
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BrainCircuit, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -634,13 +634,15 @@ function QuizPageContent() {
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-lg border border-black/[0.08] overflow-hidden bg-card">
-              {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef) => {
+            <div className="mx-4 mb-4 rounded-lg border border-black/[0.08] overflow-visible bg-card">
+              {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef, idx, arr) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
+                const isFirst = idx === 0;
+                const isLast = idx === arr.length - 1;
 
                 return (
-                  <div key={typeDef.value}>
+                  <div key={typeDef.value} className={`${isFirst ? 'rounded-t-lg' : ''} ${isLast && !isExpanded ? 'rounded-b-lg overflow-hidden' : ''}`}>
                     {/* Full-row click toggles the type */}
                     <div
                       role="button"
@@ -690,7 +692,7 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className="border-t border-black/[0.06]">
+                      <div className={`border-t border-black/[0.06] ${isLast ? 'rounded-b-lg overflow-hidden' : ''}`}>
                         {typeDef.variants.map((v) => {
                           const isVariantSelected = isSelected && (selectedVariants[typeDef.value] || []).includes(v.id);
                           return (
@@ -869,7 +871,7 @@ function QuizPageContent() {
         <div className="shrink-0 border-t border-black/[0.08] bg-background px-5 py-3.5 flex justify-between items-center gap-3">
           <Button
             variant="outline"
-            className="h-9 px-5 text-[13px]"
+            className="relative h-9 ps-10 pe-4 text-[13px]"
             onClick={() => {
               setPhase('input');
               setSourceText('');
@@ -878,7 +880,10 @@ function QuizPageContent() {
               setImageDataUri(null);
             }}
           >
-            ← Back
+            Back
+            <span className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+              <ChevronLeft size={14} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+            </span>
           </Button>
           <Button
             className="h-9 bg-[var(--accent-brand)] px-5 text-[13px] text-white hover:opacity-90"

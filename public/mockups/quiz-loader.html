@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz Loader Mockups</title>
+<style>
+:root {
+  --accent: #7f8962;
+  --accent-10: rgba(127,137,98,.10);
+  --accent-20: rgba(127,137,98,.20);
+  --bg: #ededed;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,.08);
+  --text: #1c1c1a;
+  --sub: #6b6b68;
+  --muted: #9e9e99;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#dddcda;color:var(--text);font-size:13px}
+
+/* tab bar */
+.tabs{position:fixed;top:0;left:0;right:0;z-index:200;height:44px;background:#fff;border-bottom:1px solid rgba(0,0,0,.1);display:flex;align-items:center;gap:6px;padding:0 16px}
+.tabs strong{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:4px}
+.tab{padding:5px 14px;border-radius:20px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-weight:500;cursor:pointer;color:var(--sub);font-family:inherit}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* shell */
+.shell{display:none;padding-top:44px;height:100vh;align-items:center;justify-content:center;background:var(--bg)}
+.shell.on{display:flex}
+
+/* ── L1: Minimal Pulse ── */
+#l1 .loader{display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center}
+#l1 .pulse-ring{width:72px;height:72px;border-radius:50%;border:2px solid var(--accent-20);display:flex;align-items:center;justify-content:center;position:relative;animation:ring-pulse 2s ease-in-out infinite}
+#l1 .pulse-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid var(--accent-20);animation:ring-pulse 2s ease-in-out infinite .4s;opacity:.5}
+#l1 .pulse-ring::after{content:'';position:absolute;inset:-16px;border-radius:50%;border:1.5px solid var(--accent-20);animation:ring-pulse 2s ease-in-out infinite .8s;opacity:.3}
+#l1 .pulse-inner{width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center}
+#l1 .pulse-inner svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#l1 .title{font-size:17px;font-weight:600;color:var(--text)}
+#l1 .sub{font-size:13px;color:var(--muted);max-width:240px;line-height:1.5}
+#l1 .dots{display:flex;gap:6px;margin-top:4px}
+#l1 .dot{width:6px;height:6px;border-radius:50%;background:var(--accent-20)}
+#l1 .dot:nth-child(1){animation:dot-bounce .9s ease-in-out infinite 0s}
+#l1 .dot:nth-child(2){animation:dot-bounce .9s ease-in-out infinite .15s}
+#l1 .dot:nth-child(3){animation:dot-bounce .9s ease-in-out infinite .30s}
+
+/* ── L2: Single Step Spotlight ── */
+#l2 .loader{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center}
+#l2 .step-label{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.3px;animation:fade-up .5s ease}
+#l2 .step-sub{font-size:13px;color:var(--muted);margin-top:-16px}
+#l2 .breadcrumb{display:flex;gap:8px;align-items:center}
+#l2 .bc-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-20);transition:all .3s}
+#l2 .bc-dot.on{background:var(--accent);width:24px;border-radius:4px}
+#l2 .bc-dot.done{background:var(--accent)}
+#l2 .spinner{width:36px;height:36px;border:2.5px solid var(--accent-20);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+
+/* ── L3: Timeline ── */
+#l3 .loader{display:flex;flex-direction:column;gap:0;width:320px}
+#l3 .tl-header{font-size:14px;font-weight:600;color:var(--text);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+#l3 .tl-spinner{width:20px;height:20px;border:2px solid var(--accent-20);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+#l3 .tl-item{display:flex;gap:14px;align-items:flex-start;padding-bottom:20px;position:relative}
+#l3 .tl-item:last-child{padding-bottom:0}
+#l3 .tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:16px}
+#l3 .tl-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.12);background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .4s;z-index:1}
+#l3 .tl-dot.done{border-color:var(--accent);background:var(--accent)}
+#l3 .tl-dot.active{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-20)}
+#l3 .tl-dot.done svg{display:block}
+#l3 .tl-dot svg{width:8px;height:8px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none}
+#l3 .tl-line{width:2px;flex:1;min-height:16px;margin-top:2px;background:rgba(0,0,0,.07);border-radius:1px}
+#l3 .tl-item.done .tl-line{background:var(--accent-20)}
+#l3 .tl-label{font-size:13px;padding-top:0px;line-height:1;margin-top:1px;transition:all .3s}
+#l3 .tl-label.done{color:var(--sub)}
+#l3 .tl-label.active{color:var(--text);font-weight:600}
+#l3 .tl-label.pending{color:var(--muted)}
+#l3 .tl-active-bar{height:2px;background:linear-gradient(90deg,var(--accent),transparent);width:60px;margin-top:4px;border-radius:1px;animation:shimmer 1.2s ease-in-out infinite}
+
+/* ── L4: Fact Card ── */
+#l4 .loader{width:360px;background:var(--surface);border-radius:16px;border:1px solid var(--border);overflow:hidden}
+#l4 .fact-top{padding:24px 24px 20px;background:var(--accent);position:relative;overflow:hidden}
+#l4 .fact-top::before{content:'';position:absolute;inset:-40px;background:radial-gradient(circle at 70% 50%,rgba(255,255,255,.12),transparent 60%)}
+#l4 .fact-icon{font-size:32px;margin-bottom:12px;display:block}
+#l4 .fact-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:4px}
+#l4 .fact-text{font-size:15px;font-weight:600;color:#fff;line-height:1.4;max-width:280px}
+#l4 .fact-bottom{padding:16px 24px}
+#l4 .fact-status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+#l4 .fact-spinner{width:14px;height:14px;border:1.5px solid var(--accent-20);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+#l4 .fact-progress{margin-top:12px;height:3px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden}
+#l4 .fact-progress-fill{height:100%;background:var(--accent);border-radius:2px;width:55%;transition:width .7s ease}
+#l4 .fact-dots{display:flex;gap:5px;margin-top:12px}
+#l4 .fdot{width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.1);transition:all .3s}
+#l4 .fdot.on{background:var(--accent)}
+
+/* ── L5: Full screen minimal ── */
+#l5 .loader{display:flex;flex-direction:column;align-items:center;gap:32px;text-align:center}
+#l5 .big-text{font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#l5 .step-big{font-size:28px;font-weight:700;color:var(--text);letter-spacing:-.5px;animation:fade-up .4s ease}
+#l5 .progress-bar{width:200px;height:2px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden}
+#l5 .progress-fill{height:100%;background:var(--accent);border-radius:2px;width:55%;transition:width .8s ease}
+#l5 .hint{font-size:12px;color:var(--muted)}
+
+/* keyframes */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes dot-bounce{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-5px);opacity:1;background:var(--accent)}}
+@keyframes ring-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.7}}
+@keyframes fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%,100%{opacity:.5;width:40px}50%{opacity:1;width:80px}}
+</style>
+</head>
+<body>
+
+<!-- Tab bar -->
+<div class="tabs">
+  <strong>Loader</strong>
+  <button class="tab on" onclick="show('l1')">1 · Pulse</button>
+  <button class="tab" onclick="show('l2')">2 · Spotlight</button>
+  <button class="tab" onclick="show('l3')">3 · Timeline</button>
+  <button class="tab" onclick="show('l4')">4 · Fact card</button>
+  <button class="tab" onclick="show('l5')">5 · Fullscreen minimal</button>
+</div>
+
+<!-- ══════════ L1: Minimal Pulse ══════════ -->
+<div class="shell on" id="l1">
+  <div class="loader">
+    <div class="pulse-ring">
+      <div class="pulse-inner">
+        <!-- brain/quiz icon -->
+        <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/></svg>
+      </div>
+    </div>
+    <div>
+      <p class="title">Generating your quiz</p>
+      <p class="sub">This takes a few seconds</p>
+    </div>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ L2: Single Step Spotlight ══════════ -->
+<div class="shell" id="l2">
+  <div class="loader">
+    <div class="spinner"></div>
+    <p class="step-label">Generating questions</p>
+    <p class="step-sub">Step 4 of 5</p>
+    <div class="breadcrumb">
+      <div class="bc-dot done"></div>
+      <div class="bc-dot done"></div>
+      <div class="bc-dot done"></div>
+      <div class="bc-dot on"></div>
+      <div class="bc-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ L3: Timeline ══════════ -->
+<div class="shell" id="l3">
+  <div class="loader">
+    <div class="tl-header">
+      <div class="tl-spinner"></div>
+      Generating quiz
+    </div>
+    <!-- step 1: done -->
+    <div class="tl-item done">
+      <div class="tl-left">
+        <div class="tl-dot done"><svg viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3"/></svg></div>
+        <div class="tl-line"></div>
+      </div>
+      <span class="tl-label done">Opening study task</span>
+    </div>
+    <!-- step 2: done -->
+    <div class="tl-item done">
+      <div class="tl-left">
+        <div class="tl-dot done"><svg viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3"/></svg></div>
+        <div class="tl-line"></div>
+      </div>
+      <span class="tl-label done">Retrieving source content</span>
+    </div>
+    <!-- step 3: done -->
+    <div class="tl-item done">
+      <div class="tl-left">
+        <div class="tl-dot done"><svg viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3"/></svg></div>
+        <div class="tl-line"></div>
+      </div>
+      <span class="tl-label done">Preparing question blueprint</span>
+    </div>
+    <!-- step 4: active -->
+    <div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot active"></div>
+        <div class="tl-line"></div>
+      </div>
+      <div>
+        <span class="tl-label active">Generating questions</span>
+        <div class="tl-active-bar"></div>
+      </div>
+    </div>
+    <!-- step 5: pending -->
+    <div class="tl-item">
+      <div class="tl-left">
+        <div class="tl-dot"></div>
+      </div>
+      <span class="tl-label pending">Finalizing workspace</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ L4: Fact Card ══════════ -->
+<div class="shell" id="l4">
+  <div class="loader">
+    <div class="fact-top">
+      <span class="fact-icon">🧠</span>
+      <p class="fact-label">Did you know?</p>
+      <p class="fact-text">Spaced repetition can improve long-term recall by up to 200%</p>
+    </div>
+    <div class="fact-bottom">
+      <div class="fact-status">
+        <div class="fact-spinner"></div>
+        Generating questions…
+      </div>
+      <div class="fact-progress">
+        <div class="fact-progress-fill"></div>
+      </div>
+      <div class="fact-dots">
+        <div class="fdot on"></div>
+        <div class="fdot on"></div>
+        <div class="fdot on"></div>
+        <div class="fdot on"></div>
+        <div class="fdot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ L5: Fullscreen Minimal ══════════ -->
+<div class="shell" id="l5">
+  <div class="loader">
+    <p class="big-text">Generating quiz</p>
+    <p class="step-big">Generating questions</p>
+    <div class="progress-bar">
+      <div class="progress-fill"></div>
+    </div>
+    <p class="hint">4 of 5 steps</p>
+  </div>
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.shell').forEach(el => el.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  event.target.classList.add('on');
+}
+</script>
+</body>
+</html>

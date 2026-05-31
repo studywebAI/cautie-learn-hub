@@ -1695,12 +1695,14 @@ function PresentationPageContent() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-6">
                 <Button
                   variant="outline"
-                  className="h-10 px-4"
+                  className="relative h-10 ps-11 pe-4"
                   onClick={() => goToPhase('input')}
                   disabled={isBuilding || isPlanning}
                 >
-                  <ChevronLeft className="mr-2 h-4 w-4" />
                   Back
+                  <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+                    <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+                  </span>
                 </Button>
                 <Button
                   className="h-10 px-6"
