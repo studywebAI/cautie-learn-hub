@@ -594,15 +594,15 @@ function QuizPageContent() {
         <div className="flex flex-1 overflow-hidden">
 
           {/* ── Left: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 pb-2">
-              <div className="flex items-center justify-between mb-3">
+          <div className="flex-1 overflow-y-auto bg-muted/20">
+            <div className="p-5 pb-3">
+              <div className="flex items-center justify-between mb-4">
                 <p className={S}>Question Types</p>
                 <span className="text-[11px] text-muted-foreground">{questionTypes.length} selected</span>
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-xl border border-border/60 overflow-hidden bg-background">
+            <div className="px-5 mb-6 rounded-lg border border-border/50 overflow-hidden bg-background">
               {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef, idx, arr) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
@@ -616,7 +616,7 @@ function QuizPageContent() {
                       tabIndex={0}
                       onClick={() => toggleQuestionType(typeDef.value)}
                       onKeyDown={(e) => e.key === 'Enter' && toggleQuestionType(typeDef.value)}
-                      className={`flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer rounded-lg m-1.5 transition-all ${isSelected ? 'bg-[var(--accent-brand)]/12 border border-[var(--accent-brand)]/30' : 'hover:bg-muted/40 border border-transparent'}`}
+                      className={`flex items-center gap-2.5 px-3.5 py-2 cursor-pointer rounded-lg border transition-all ${isSelected ? 'bg-[var(--accent-brand)]/12 border-[var(--accent-brand)]/30' : 'hover:bg-muted/40 border-border/20'}`}
                     >
                       {/* Circle — visual indicator only, clicking row handles toggle */}
                       <div
@@ -659,7 +659,7 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-3.5 py-3 bg-muted/15 border-t border-border/40 mx-1.5 mb-1.5 rounded-lg">
+                      <div className="px-3.5 py-3 bg-muted/10 border-t border-border/20 rounded-lg">
                         <p className="text-[11px] text-muted-foreground mb-3">{typeDef.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {typeDef.variants.map((v) => (
@@ -683,12 +683,12 @@ function QuizPageContent() {
           </div>
 
           {/* ── Right rail: Settings ── */}
-          <div className="w-[264px] shrink-0 border-l border-border bg-sidebar overflow-y-auto">
-            <div className="py-3">
+          <div className="w-[280px] shrink-0 border-l border-border/20 bg-muted/10 overflow-y-auto">
+            <div className="p-3 space-y-3">
 
               {/* Title */}
-              <div className="px-4 py-3 border-b border-border/40">
-                <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
                   <p className={S}>Quiz title (optional)</p>
                   <div className="relative group">
                     <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
@@ -700,14 +700,14 @@ function QuizPageContent() {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-8 text-[13px] border-border/40"
+                  className="h-8 text-[13px] border-border/30"
                   placeholder=""
                   disabled={loading}
                 />
               </div>
 
               {/* Knowledge Level */}
-              <div className="px-4 py-3 border-b border-border/40 space-y-2.5">
+              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How much do you already know?</p>
                   <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
@@ -724,8 +724,8 @@ function QuizPageContent() {
               </div>
 
               {/* Mode */}
-              <div className="px-4 py-3 border-b border-border/40">
-                <div className="flex items-center justify-between mb-2 gap-1">
+              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-1">
                   <p className={S}>What mode do you want?</p>
                   <div className="relative group">
                     <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
@@ -749,7 +749,7 @@ function QuizPageContent() {
                       className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] ${
                         mode === e.value
                           ? 'bg-[var(--accent-brand)]/10 text-foreground'
-                          : 'text-muted-foreground hover:bg-sidebar-accent/40'
+                          : 'text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
@@ -760,8 +760,8 @@ function QuizPageContent() {
               </div>
 
               {/* Answer Feedback */}
-              <div className="px-4 py-3 border-b border-border/40">
-                <div className="flex items-center justify-between mb-2 gap-1">
+              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-1">
                   <p className={S}>When do you want feedback?</p>
                   <div className="relative group">
                     <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
@@ -786,7 +786,7 @@ function QuizPageContent() {
                       className={`flex-1 rounded-lg border px-2 py-1.5 text-[12px] transition-colors ${
                         answerFeedback === e.value
                           ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
-                          : 'border-border/40 bg-transparent text-muted-foreground hover:bg-sidebar-accent/50'
+                          : 'border-border/30 bg-transparent text-muted-foreground hover:bg-muted/40'
                       }`}
                     >
                       {e.label}
@@ -796,8 +796,8 @@ function QuizPageContent() {
               </div>
 
               {/* Questions */}
-              <div className="px-4 py-3">
-                <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
                   <p className={S}>How many questions?</p>
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-medium text-[var(--accent-brand)]">
