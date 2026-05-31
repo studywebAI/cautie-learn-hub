@@ -40,9 +40,9 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   return (
     <div className="relative h-full w-full">
       <div className="flex h-full w-full flex-col">
-        {/* Breadcrumb — same bg as sidebar so they read as one surface;
-            rounded-bl-2xl creates the corner notch where sidebar ends */}
-        <div className="w-full bg-sidebar rounded-bl-2xl">
+        {/* Breadcrumb — same bg as sidebar, forms an L-shape with it.
+            rounded-b-2xl gives equal smooth corners on both bottom edges. */}
+        <div className="w-full bg-sidebar rounded-b-2xl">
           <div className="flex min-h-9 items-center justify-between px-3">
             <div className="flex items-center text-[13px] font-medium leading-none text-sidebar-foreground">
               <button
