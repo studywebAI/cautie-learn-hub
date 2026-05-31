@@ -42,7 +42,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, [pathname]);
 
     return (
-        <SidebarProvider defaultOpen={isPhone ? false : sidebarDefaultOpen}>
+        <SidebarProvider
+            defaultOpen={isPhone ? false : sidebarDefaultOpen}
+            style={{ "--sidebar-width": isTablet ? "15rem" : "16.5rem" } as React.CSSProperties}
+        >
             <FirstTimeSetupGate />
             <GlobalCommandPalette />
             {routePulseVisible && (
