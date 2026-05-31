@@ -40,21 +40,22 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   return (
     <div className="relative h-full w-full">
       <div className="flex h-full w-full flex-col">
-        {/* Breadcrumb bar — flush with sidebar, soft separator */}
-        <div className="w-full bg-sidebar/60 backdrop-blur-sm border-b border-sidebar-border/40">
-          <div className="flex min-h-9 items-center justify-between px-3.5">
-            <div className="flex items-center gap-0 text-[12px] font-medium leading-none">
+        {/* Breadcrumb — same bg as sidebar so they read as one surface;
+            rounded-bl-2xl creates the corner notch where sidebar ends */}
+        <div className="w-full bg-sidebar rounded-bl-2xl">
+          <div className="flex min-h-9 items-center justify-between px-3">
+            <div className="flex items-center text-[13px] font-medium leading-none text-sidebar-foreground">
               <button
                 type="button"
-                className="text-muted-foreground/70 hover:text-[var(--accent-brand)] transition-colors"
+                className="text-sidebar-foreground/55 hover:text-[var(--accent-brand)] transition-colors"
                 onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
               >
                 {profileName}
               </button>
-              <span className="mx-1.5 text-muted-foreground/30 select-none">/</span>
-              <span className="inline-flex items-center gap-1.5 text-foreground/80 font-medium">
+              <span className="mx-2 text-sidebar-foreground/25 select-none">/</span>
+              <span className="inline-flex items-center gap-1.5 text-sidebar-foreground">
                 {breadcrumbIcon ? (
-                  <span className="text-muted-foreground/60 [&>svg]:h-3.5 [&>svg]:w-3.5">{breadcrumbIcon}</span>
+                  <span className="text-sidebar-foreground/60 [&>svg]:h-3.5 [&>svg]:w-3.5">{breadcrumbIcon}</span>
                 ) : null}
                 <span>{title}</span>
               </span>
@@ -66,7 +67,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
               </Button>
             )}
           </div>
-          {description && <p className="px-3.5 pb-1.5 text-[11px] text-muted-foreground">{description}</p>}
+          {description && <p className="px-3 pb-2 text-[11px] text-sidebar-foreground/50">{description}</p>}
         </div>
 
         <div className="flex min-h-0 flex-1 gap-2 px-0 py-1">
