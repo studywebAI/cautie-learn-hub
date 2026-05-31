@@ -144,9 +144,11 @@ function AttachmentCard({
 
   // Text / file / url card
   return (
-    <div className="relative flex-shrink-0 group w-[120px] h-[72px] rounded-lg border border-border bg-card p-2 flex flex-col justify-between overflow-hidden">
+    <div className={`relative flex-shrink-0 group w-[120px] h-[72px] rounded-lg border border-muted/40 p-2 flex flex-col justify-between overflow-hidden transition-colors ${
+      attachment.kind === 'url' ? 'bg-muted/20' : 'bg-muted/10'
+    }`}>
       <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3 flex-1">
-        {attachment.previewText || attachment.label}
+        {attachment.kind === 'url' ? attachment.compiledText?.slice(0, 50) : (attachment.previewText || attachment.label)}
       </p>
       <div className="flex items-center gap-1 mt-1">
         {attachment.kind === 'file' && <FileText className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />}
@@ -210,10 +212,8 @@ export function ToolInputBox({
 
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState(false);
   const [showPhotosSubmenu, setShowPhotosSubmenu] = useState(false);
-  const [linkValue, setLinkValue] = useState('');
-  const [linkLoading, setLinkLoading] = useState(false);
+  const [showImportSubmenu, setShowImportSubmenu] = useState(false);
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -558,19 +558,6 @@ export function ToolInputBox({
     }
   }, [toast]);
 
-  const handleLinkSubmit = useCallback(async () => {
-    const url = linkValue.trim();
-    if (!url) return;
-    setLinkLoading(true);
-    try {
-      await importUrl(url);
-      setLinkValue('');
-      setShowLinkInput(false);
-      setShowPlusMenu(false);
-    } finally {
-      setLinkLoading(false);
-    }
-  }, [importUrl, linkValue]);
 
   // Detect URL typed into the textarea followed by a space → convert to link card
   const URL_PATTERN = /https?:\/\/[^\s]{4,}/i;
@@ -654,32 +641,6 @@ export function ToolInputBox({
         />
       </div>
 
-      {/* Link input (inline, shown when user picks "Add a link") */}
-      {showLinkInput && (
-        <div className="px-3 pb-2 flex gap-2 items-center border-t border-border pt-2">
-          <input
-            type="url"
-            value={linkValue}
-            onChange={(e) => setLinkValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void handleLinkSubmit(); if (e.key === 'Escape') { setShowLinkInput(false); setLinkValue(''); } }}
-            placeholder="https://example.com"
-            autoFocus
-            className="flex-1 text-sm bg-muted/40 border border-border rounded-lg px-3 py-1.5 outline-none focus:border-[var(--accent-brand)] transition-colors text-foreground placeholder:text-muted-foreground"
-          />
-          <button
-            type="button"
-            onClick={() => void handleLinkSubmit()}
-            disabled={linkLoading || !linkValue.trim()}
-            className="px-3 py-1.5 bg-[var(--accent-brand)] text-white rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5"
-          >
-            {linkLoading && <Loader2 className="h-3 w-3 animate-spin" />}
-            Add
-          </button>
-          <button type="button" onClick={() => { setShowLinkInput(false); setLinkValue(''); }} className="text-muted-foreground hover:text-foreground">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       {/* Bottom bar */}
       <div className="flex items-center gap-1.5 px-2 pb-2 pt-0">
@@ -709,19 +670,24 @@ export function ToolInputBox({
                 onChange={handleFileChange}
                 className="hidden"
               />
+
+              {/* Photos submenu */}
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
+                className="w-full flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
                 onClick={() => { setShowPhotosSubmenu(!showPhotosSubmenu); }}
               >
-                <Image className="h-4 w-4 text-muted-foreground" />
-                Photos
+                <div className="flex items-center gap-2.5">
+                  <Image className="h-4 w-4 text-muted-foreground" />
+                  Photos
+                </div>
+                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showPhotosSubmenu ? 'rotate-180' : ''}`} />
               </button>
               {showPhotosSubmenu && (
                 <>
                   <button
                     type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
                     onClick={() => {
                       void handleScreenshot();
                       setShowPhotosSubmenu(false);
@@ -733,15 +699,15 @@ export function ToolInputBox({
                   </button>
                   <button
                     type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
-                    onClick={() => { alert('Camera feature coming soon'); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
+                    onClick={() => { fileInputRef.current?.click(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
                   >
                     <Camera className="h-4 w-4 text-muted-foreground" />
                     Take photo
                   </button>
                   <button
                     type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Image className="h-4 w-4 text-muted-foreground" />
@@ -749,41 +715,49 @@ export function ToolInputBox({
                   </button>
                 </>
               )}
-              <div className="h-px bg-border my-1" />
+
+              {/* Files */}
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
-                Add files
+                Files
               </button>
-              <div className="h-px bg-border my-1" />
+
+              {/* Import from submenu */}
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground"
-                onClick={() => { setShowLinkInput(true); setShowPlusMenu(false); }}
+                className="w-full flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
+                onClick={() => { setShowImportSubmenu(!showImportSubmenu); }}
               >
-                <Link className="h-4 w-4 text-muted-foreground" />
-                Add a link
+                <div className="flex items-center gap-2.5">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  Import from
+                </div>
+                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showImportSubmenu ? 'rotate-180' : ''}`} />
               </button>
-              <div className="h-px bg-border my-1" />
-              <button
-                type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm"
-                onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
-              >
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Import from recents
-              </button>
-              <button
-                type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm"
-                onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
-              >
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Microsoft 365
-              </button>
+              {showImportSubmenu && (
+                <>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
+                    onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Recents
+                  </button>
+                  <button
+                    type="button"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50"
+                    onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Microsoft 365
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

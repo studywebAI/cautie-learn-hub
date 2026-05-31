@@ -599,7 +599,15 @@ function QuizPageContent() {
 
               {/* Title */}
               <div className="px-4 py-3 border-b border-border/60">
-                <p className={`${S} mb-2`}>Title</p>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className={S}>Quiz title (optional)</p>
+                  <div className="relative group">
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] text-muted-foreground">Give your quiz a name. This appears in your results.</p>
+                    </div>
+                  </div>
+                </div>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -611,9 +619,9 @@ function QuizPageContent() {
 
               {/* Knowledge Level */}
               <div className="px-4 py-3 border-b border-border/60 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <p className={S}>Knowledge Level</p>
-                  <span className="text-[13px] font-semibold text-[var(--accent-brand)]">{knowledgeScore}%</span>
+                <div className="flex items-center justify-between gap-2">
+                  <p className={S}>How much do you already know?</p>
+                  <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
                 </div>
                 <Slider
                   value={[knowledgeScore]}
@@ -628,7 +636,20 @@ function QuizPageContent() {
 
               {/* Mode */}
               <div className="px-4 py-3 border-b border-border/60">
-                <p className={`${S} mb-2`}>Mode</p>
+                <div className="flex items-center justify-between mb-2 gap-1">
+                  <p className={S}>What mode do you want?</p>
+                  <div className="relative group">
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] font-medium text-foreground mb-1">Classic</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">All answers shown at the end.</p>
+                      <p className="text-[11px] font-medium text-foreground mb-1">Assisted</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">Feedback after each question.</p>
+                      <p className="text-[11px] font-medium text-foreground mb-1">Adaptive</p>
+                      <p className="text-[10px] text-muted-foreground">Difficulty adjusts automatically.</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-1">
                   {modeEntries.map((e) => (
                     <button
@@ -636,17 +657,14 @@ function QuizPageContent() {
                       type="button"
                       onClick={() => setMode(e.value)}
                       disabled={loading}
-                      className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] ${
                         mode === e.value
-                          ? 'bg-[var(--accent-brand)]/10 text-sidebar-foreground'
-                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/40'
+                          ? 'bg-[var(--accent-brand)]/10 text-foreground'
+                          : 'text-muted-foreground hover:bg-sidebar-accent/40'
                       }`}
                     >
-                      <span className={`mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
-                      <div className="min-w-0">
-                        <span className="text-[13px] font-medium leading-none">{e.label}</span>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{e.desc}</p>
-                      </div>
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                      <span className="font-medium">{e.label}</span>
                     </button>
                   ))}
                 </div>
@@ -654,7 +672,18 @@ function QuizPageContent() {
 
               {/* Answer Feedback */}
               <div className="px-4 py-3 border-b border-border/60">
-                <p className={`${S} mb-2`}>Answer Feedback</p>
+                <div className="flex items-center justify-between mb-2 gap-1">
+                  <p className={S}>When do you want feedback?</p>
+                  <div className="relative group">
+                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] font-medium text-foreground mb-1">At the end</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">See all answers after finishing.</p>
+                      <p className="text-[11px] font-medium text-foreground mb-1">Immediately</p>
+                      <p className="text-[10px] text-muted-foreground">Know if you're right after each question.</p>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex gap-1.5">
                   {([
                     { value: 'end',       label: 'At the end' },
@@ -678,12 +707,20 @@ function QuizPageContent() {
               </div>
 
               {/* Questions */}
-              <div className="px-4 py-3 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <p className={S}>Questions</p>
-                  <span className="text-[13px] font-semibold text-[var(--accent-brand)]">
-                    {mode === 'adaptive' ? '∞' : questionCount}
-                  </span>
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <p className={S}>How many questions?</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-[var(--accent-brand)]">
+                      {mode === 'adaptive' ? '∞' : questionCount}
+                    </span>
+                    <div className="relative group">
+                      <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
+                      <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                        <p className="text-[11px] text-muted-foreground">{mode === 'adaptive' ? 'Unlimited in adaptive mode.' : 'Minimum 3, maximum 25. Adaptive mode overrides this to unlimited.'}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <Slider
                   value={[mode === 'adaptive' ? 12 : questionCount]}
@@ -691,10 +728,6 @@ function QuizPageContent() {
                   min={3} max={25} step={1}
                   disabled={loading || mode === 'adaptive'}
                 />
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>3</span>
-                  <span>{mode === 'adaptive' ? '∞ adaptive' : '25'}</span>
-                </div>
               </div>
 
             </div>
@@ -709,7 +742,7 @@ function QuizPageContent() {
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-xl border border-border overflow-hidden bg-card">
+            <div className="mx-4 mb-4 rounded-xl border border-border/60 overflow-hidden bg-background">
               {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef, idx, arr) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
@@ -723,7 +756,7 @@ function QuizPageContent() {
                       tabIndex={0}
                       onClick={() => toggleQuestionType(typeDef.value)}
                       onKeyDown={(e) => e.key === 'Enter' && toggleQuestionType(typeDef.value)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer ${!isLast || isExpanded ? 'border-b border-border' : ''} transition-colors ${isSelected ? 'bg-[var(--accent-brand)]/10' : 'hover:bg-muted/30'}`}
+                      className={`flex items-center gap-2.5 px-3.5 py-2.5 cursor-pointer rounded-lg m-1.5 transition-all ${isSelected ? 'bg-[var(--accent-brand)]/12 border border-[var(--accent-brand)]/30' : 'hover:bg-muted/40 border border-transparent'}`}
                     >
                       {/* Circle — visual indicator only, clicking row handles toggle */}
                       <div
@@ -736,17 +769,26 @@ function QuizPageContent() {
                         {isSelected && <span className="block h-[6px] w-[6px] rounded-full bg-white" />}
                       </div>
 
-                      {/* Label + description inline */}
-                      <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                        <span className={`text-[13px] font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {typeDef.label}
-                        </span>
-                        {!isExpanded && (
-                          <span className="text-[11px] text-muted-foreground truncate">{typeDef.description}</span>
-                        )}
+                      {/* Label only (description in info circle) */}
+                      <span className={`text-[13px] flex-1 ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {typeDef.label}
+                      </span>
+
+                      {/* Info circle — shows description on hover */}
+                      <div className="relative group flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); }}
+                          className="flex h-5 w-5 items-center justify-center rounded-full border border-muted-foreground/25 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors"
+                        >
+                          <Info className="h-2.5 w-2.5" />
+                        </button>
+                        <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                          <p className="text-[11px] text-muted-foreground">{typeDef.description}</p>
+                        </div>
                       </div>
 
-                      {/* Expand chevron — stops propagation so row click doesn't fire */}
+                      {/* Expand chevron — for variants, not description */}
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); toggleExpanded(typeDef.value); }}
@@ -757,11 +799,11 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className={`px-3.5 py-3 bg-muted/20 ${!isLast ? 'border-b border-border' : ''}`}>
-                        <p className="text-[11px] text-muted-foreground mb-2.5">{typeDef.description}</p>
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="px-3.5 py-3 bg-muted/15 border-t border-border/40 mx-1.5 mb-1.5 rounded-lg">
+                        <p className="text-[11px] text-muted-foreground mb-3">{typeDef.description}</p>
+                        <div className="flex flex-wrap gap-2">
                           {typeDef.variants.map((v) => (
-                            <div key={v.id} className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1">
+                            <div key={v.id} className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2.5 py-1">
                               <span className="text-[12px] text-foreground">{v.label}</span>
                               <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${DIFFICULTY_COLOR[v.difficulty]}`}>
                                 {DIFFICULTY_LABEL[v.difficulty]}
@@ -769,7 +811,7 @@ function QuizPageContent() {
                             </div>
                           ))}
                         </div>
-                        <p className="mt-2 text-[10px] text-muted-foreground/70">
+                        <p className="mt-2.5 text-[10px] text-muted-foreground/60">
                           Variant is chosen per question based on your knowledge level.
                         </p>
                       </div>
