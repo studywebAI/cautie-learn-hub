@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz Settings — Layout Mockups v2</title>
+<style>
+:root {
+  --accent: #7f8962;
+  --accent-10: rgba(127,137,98,.10);
+  --accent-18: rgba(127,137,98,.18);
+  --accent-30: rgba(127,137,98,.30);
+  --bg: #ebebea;
+  --sidebar: #f2f2f0;
+  --surface: #ffffff;
+  --surface2: #f7f7f5;
+  --border: rgba(0,0,0,.08);
+  --border2: rgba(0,0,0,.13);
+  --text: #1c1c1a;
+  --sub: #6b6b68;
+  --muted: #9e9e99;
+  --r: 13px;
+  --r-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#dddcda;color:var(--text);font-size:13px;line-height:1.45}
+
+/* ── Tab bar ── */
+.tabs{position:fixed;top:0;left:0;right:0;z-index:200;height:44px;background:#fff;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:4px;padding:0 16px}
+.tabs strong{font-size:11px;font-weight:700;color:var(--muted);margin-right:6px;text-transform:uppercase;letter-spacing:.05em}
+.tab{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;font-size:12px;font-weight:500;cursor:pointer;color:var(--sub);transition:all .15s;font-family:inherit}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab:hover:not(.on){background:var(--surface2)}
+
+/* ── Chrome shell ── */
+.shell{display:none;padding-top:44px;height:100vh}
+.shell.on{display:flex;flex-direction:column;height:100vh}
+.chrome{display:flex;flex:1;overflow:hidden;background:var(--bg)}
+
+/* sidebar */
+.sb{width:190px;flex-shrink:0;background:var(--sidebar);border-radius:0 18px 18px 0;display:flex;flex-direction:column;overflow:hidden}
+.sb-body{flex:1;padding:8px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;font-size:13px;font-weight:500;color:var(--sub);cursor:pointer}
+.sb-item.on{background:rgba(0,0,0,.07);color:var(--text)}
+.sb-foot{padding:10px 8px;display:flex;flex-direction:column;gap:6px;margin-top:auto}
+.upgrade{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;width:100%}
+.collapse-row{display:flex;align-items:center;gap:6px;padding:5px 8px;font-size:12px;color:var(--muted);cursor:pointer}
+
+/* breadcrumb */
+.bc{height:36px;background:var(--sidebar);border-radius:0 0 16px 16px;flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:5px;font-size:13px;font-weight:500}
+.bc-u{color:rgba(50,50,45,.5)}
+.bc-s{color:rgba(50,50,45,.2)}
+
+/* main area */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.page{flex:1;overflow-y:auto;padding:20px 22px}
+.foot{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:12px 22px;display:flex;justify-content:space-between;align-items:center}
+.btn-back{border:1px solid var(--border2);background:transparent;border-radius:9px;padding:8px 16px;font-size:13px;cursor:pointer;color:var(--sub);font-family:inherit}
+.btn-gen{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit}
+
+/* atoms */
+.label{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;border:1px solid var(--accent-30);background:var(--accent-10);color:var(--accent);font-size:11px;font-weight:600}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px}
+
+/* slider visual */
+.sl-wrap{position:relative;height:16px;display:flex;align-items:center}
+.sl-track{width:100%;height:4px;background:#e0e0db;border-radius:2px;position:relative}
+.sl-fill{height:100%;border-radius:2px;background:var(--accent)}
+.sl-thumb{width:14px;height:14px;background:#fff;border:2px solid var(--accent);border-radius:50%;position:absolute;top:-5px;margin-left:-7px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.card-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+
+/* radio pill button */
+.r-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s;border:1.5px solid transparent}
+.r-opt.on{border-color:var(--accent-30);background:var(--accent-10)}
+.r-dot{width:14px;height:14px;border-radius:50%;border:2px solid #ccc;flex-shrink:0}
+.r-opt.on .r-dot{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 2.5px #fff}
+.r-name{font-size:13px;font-weight:500}
+.r-desc{font-size:11px;color:var(--muted)}
+
+/* toggle buttons */
+.tog{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;font-weight:500;cursor:pointer;color:var(--sub);transition:all .12s}
+.tog.on{border-color:var(--accent-30);background:var(--accent-10);color:var(--accent)}
+.tog-dot{width:6px;height:6px;border-radius:50%;background:#ccc;flex-shrink:0}
+.tog.on .tog-dot{background:var(--accent)}
+
+/* question type row */
+.qt-row{display:flex;align-items:center;gap:9px;padding:9px 13px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.qt-row:last-child{border-bottom:none}
+.qt-row:hover{background:var(--surface2)}
+.qt-row.dim{opacity:.35;pointer-events:none}
+.qt-circle{width:17px;height:17px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qt-circle.on{border-color:var(--accent);background:var(--accent)}
+.qt-circle.on::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff;display:block}
+.qt-label{font-size:13px;font-weight:500;flex:1}
+.qt-row.on .qt-label{color:var(--text)}
+.qt-row:not(.on) .qt-label{color:var(--sub)}
+.qt-arrow{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.qt-arrow.open{transform:rotate(180deg)}
+
+/* expanded variants */
+.qt-variants{border-top:1px solid var(--border);padding:10px 13px 11px 39px;background:var(--surface2);display:none}
+.qt-variants.show{display:block}
+.qt-v-hint{font-size:10px;color:var(--muted);margin-bottom:7px}
+.qt-v-pills{display:flex;flex-wrap:wrap;gap:5px}
+.qt-v-pill{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:12px}
+.badge-e{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:#d1fae5;color:#065f46}
+.badge-m{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:#fef3c7;color:#92400e}
+.badge-h{font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px;background:#fee2e2;color:#991b1b}
+
+/* input */
+.inp{width:100%;padding:8px 11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:13px;color:var(--text);outline:none;font-family:inherit}
+.inp:focus{border-color:var(--accent);background:#fff}
+
+/* ─── HELPERS ─── */
+.gap4{height:4px} .gap8{height:8px} .gap10{height:10px} .gap14{height:14px} .gap18{height:18px}
+.row{display:flex;align-items:center;gap:8px}
+.row.jb{justify-content:space-between}
+.col{display:flex;flex-direction:column;gap:6px}
+.accent-num{font-size:15px;font-weight:700;color:var(--accent)}
+
+/* ═══════════════════ LAYOUT-SPECIFIC ═══════════════════ */
+
+/* L1: Tight top grid + bottom accordion */
+#l1 .top-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+#l1 .settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+#l1 .setting-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 13px}
+
+/* L2: Left column settings + right accordion */
+#l2 .split{display:grid;grid-template-columns:260px 1fr;gap:14px}
+#l2 .s-panel{display:flex;flex-direction:column;gap:8px}
+#l2 .sp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 13px}
+#l2 .seg-row{display:flex;gap:4px;flex-wrap:wrap}
+
+/* L3: Full-width sections with strong visual hierarchy */
+#l3 .hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:12px}
+#l3 .hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start}
+#l3 .big-num{font-size:28px;font-weight:800;color:var(--accent);line-height:1}
+#l3 .section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+
+/* L4: Dashboard-style card mosaic */
+#l4 .mosaic{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto;gap:10px;align-items:start}
+#l4 .m-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+#l4 .m-card.span2{grid-column:span 2}
+#l4 .m-card.span3{grid-column:span 3}
+#l4 .ks-arc{display:flex;align-items:center;gap:10px}
+#l4 .ks-circle{width:52px;height:52px;border-radius:50%;border:3.5px solid var(--accent-30);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#l4 .ks-circle span{font-size:14px;font-weight:800;color:var(--accent)}
+
+/* L5: Tabbed sections */
+#l5 .stab-row{display:flex;gap:2px;margin-bottom:14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:3px}
+#l5 .stab{flex:1;padding:6px 8px;border-radius:8px;text-align:center;font-size:12px;font-weight:500;cursor:pointer;color:var(--sub);transition:all .12s}
+#l5 .stab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#l5 .stab-content{display:none}
+#l5 .stab-content.on{display:block}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <strong>Quiz Settings</strong>
+  <button class="tab on" onclick="show(1)">① Grid + Accordion</button>
+  <button class="tab" onclick="show(2)">② Settings Rail</button>
+  <button class="tab" onclick="show(3)">③ Hero Settings</button>
+  <button class="tab" onclick="show(4)">④ Card Mosaic</button>
+  <button class="tab" onclick="show(5)">⑤ Tabbed Sections</button>
+</div>
+
+<!-- shared sidebar helper -->
+<template id="sb-tmpl">
+  <div class="sb">
+    <div class="sb-body">
+      <div class="sb-item">Dashboard</div>
+      <div class="sb-item">Subjects</div>
+      <div class="sb-item">Manage</div>
+      <div class="sb-item">Grades</div>
+      <div class="sb-item">Agenda</div>
+      <div style="height:6px"></div>
+      <div class="sb-item">Studyset</div>
+      <div class="sb-item on">Quiz</div>
+      <div class="sb-item">Flashcards</div>
+      <div class="sb-item">Notes</div>
+      <div class="sb-item">Mindmap</div>
+    </div>
+    <div class="sb-foot">
+      <div class="collapse-row">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="5" height="12" rx="1.5"/><path d="M10 8h4M12 6l2 2-2 2"/></svg>
+        Collapse
+      </div>
+      <button class="upgrade">↗ Upgrade</button>
+      <div style="padding:3px 6px;font-size:12px;color:var(--sub)">loper <span style="opacity:.5">Pro</span></div>
+    </div>
+  </div>
+</template>
+
+<!-- ═════════════════════════════ L1 ═════════════════════════════ -->
+<div id="l1" class="shell on">
+  <div class="chrome">
+    <div class="sb"><div class="sb-body"><div class="sb-item">Dashboard</div><div class="sb-item">Subjects</div><div class="sb-item">Manage</div><div class="sb-item">Grades</div><div class="sb-item">Agenda</div><div style="height:4px"></div><div class="sb-item">Studyset</div><div class="sb-item on">Quiz</div><div class="sb-item">Flashcards</div><div class="sb-item">Notes</div><div class="sb-item">Mindmap</div></div><div class="sb-foot"><div class="collapse-row"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="5" height="12" rx="1.5"/><path d="M10 8h4M12 6l2 2-2 2"/></svg>Collapse</div><button class="upgrade">↗ Upgrade</button><div style="padding:3px 6px;font-size:12px;color:var(--sub)">loper <span style="opacity:.5">Pro</span></div></div></div>
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity:.5"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8l2 2 3-3.5"/></svg><span>Quiz</span></div>
+      <div class="page">
+
+        <!-- detected + title row -->
+        <div id="l1" class="top-grid">
+          <div class="card" style="padding:12px 14px">
+            <div class="row jb" style="margin-bottom:7px">
+              <span class="label">Detected in content</span>
+              <span style="font-size:10px;color:var(--accent);font-weight:600">✦ AI</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Timeline & Dates</span>
+              <span class="chip">Definitions & Terms</span>
+              <span class="chip">People & Entities</span>
+            </div>
+          </div>
+          <div class="card" style="padding:12px 14px">
+            <div class="label" style="margin-bottom:7px">Title (optional)</div>
+            <input class="inp" placeholder="e.g. WW2 Overview, Cell Division…" />
+          </div>
+        </div>
+
+        <!-- main settings grid: knowledge | mode + feedback | count + focus -->
+        <div id="l1" class="settings-grid">
+
+          <!-- Knowledge -->
+          <div class="setting-block">
+            <div class="row jb" style="margin-bottom:2px">
+              <span class="label">Knowledge Level</span>
+              <span class="accent-num">38%</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:9px">How well do you already know this?</div>
+            <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:38%"></div><div class="sl-thumb" style="left:38%"></div></div></div>
+            <div class="row jb" style="margin-top:5px"><span style="font-size:10.5px;color:var(--muted)">Beginner</span><span style="font-size:10.5px;color:var(--muted)">Expert</span></div>
+          </div>
+
+          <!-- Mode + Feedback -->
+          <div class="setting-block">
+            <div class="label" style="margin-bottom:8px">Mode</div>
+            <div class="col" style="gap:4px;margin-bottom:10px">
+              <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Classic</div></div></div>
+              <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Assisted</div></div></div>
+              <div class="r-opt on"><div class="r-dot"></div><div><div class="r-name">Adaptive</div><div class="r-desc">Automatically adjust difficulty</div></div></div>
+            </div>
+            <div class="label" style="margin-bottom:6px">Answer Feedback</div>
+            <div style="display:flex;gap:5px">
+              <div class="tog on"><div class="tog-dot"></div>At the end</div>
+              <div class="tog"><div class="tog-dot"></div>Immediately</div>
+            </div>
+          </div>
+
+          <!-- Count + Focus -->
+          <div class="setting-block">
+            <div class="row jb" style="margin-bottom:2px">
+              <span class="label">Questions</span>
+              <span class="accent-num">11</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:9px">Adaptive mode: unlimited</div>
+            <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:40%"></div><div class="sl-thumb" style="left:40%"></div></div></div>
+            <div class="row jb" style="margin-top:5px"><span style="font-size:10.5px;color:var(--muted)">3</span><span style="font-size:10.5px;color:var(--muted)">25</span></div>
+            <div style="height:10px"></div>
+            <div class="label" style="margin-bottom:6px">Focus</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <div class="tog on"><div class="tog-dot"></div>Accuracy</div>
+              <div class="tog on"><div class="tog-dot"></div>Speed</div>
+              <div class="tog on"><div class="tog-dot"></div>Progression</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Types accordion -->
+        <div class="card">
+          <div class="card-head">
+            <span class="label">Question Types</span>
+            <span style="font-size:11px;color:var(--accent);font-weight:600">5 of 12 selected</span>
+          </div>
+          <div id="l1-types"></div>
+        </div>
+
+      </div>
+      <div class="foot">
+        <button class="btn-back">← Back</button>
+        <button class="btn-gen"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="8" cy="8" r="6.5"/><path d="M5.5 8l2 2 3-3.5"/></svg>Generate Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════ L2 ═════════════════════════════ -->
+<div id="l2" class="shell">
+  <div class="chrome">
+    <div class="sb"><div class="sb-body"><div class="sb-item on">Quiz</div><div class="sb-item">Flashcards</div><div class="sb-item">Notes</div></div><div class="sb-foot"><button class="upgrade">↗ Upgrade</button></div></div>
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span><span>Quiz</span></div>
+      <div class="page">
+        <div id="l2" class="split">
+
+          <!-- Left: all settings -->
+          <div class="s-panel">
+            <div class="sp-card">
+              <div class="label" style="margin-bottom:5px">Detected Content</div>
+              <div class="chip-row">
+                <span class="chip">Timeline</span><span class="chip">Definitions</span><span class="chip">People</span>
+              </div>
+            </div>
+
+            <div class="sp-card">
+              <div class="row jb" style="margin-bottom:2px"><span class="label">Knowledge Level</span><span class="accent-num">38%</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:8px">How well do you already know this?</div>
+              <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:38%"></div><div class="sl-thumb" style="left:38%"></div></div></div>
+              <div class="row jb" style="margin-top:4px"><span style="font-size:10.5px;color:var(--muted)">Beginner</span><span style="font-size:10.5px;color:var(--muted)">Expert</span></div>
+            </div>
+
+            <div class="sp-card">
+              <div class="label" style="margin-bottom:7px">Mode</div>
+              <div class="col" style="gap:4px">
+                <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Classic</div><div class="r-desc">All answers shown at the end</div></div></div>
+                <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Assisted</div><div class="r-desc">Feedback after each question</div></div></div>
+                <div class="r-opt on"><div class="r-dot"></div><div><div class="r-name">Adaptive</div><div class="r-desc">Automatically adjust difficulty</div></div></div>
+              </div>
+            </div>
+
+            <div class="sp-card">
+              <div class="label" style="margin-bottom:6px">Answer Feedback</div>
+              <div class="seg-row">
+                <div class="tog on"><div class="tog-dot"></div>Show at end</div>
+                <div class="tog"><div class="tog-dot"></div>Immediate</div>
+              </div>
+            </div>
+
+            <div class="sp-card">
+              <div class="row jb" style="margin-bottom:8px"><span class="label">Questions</span><span class="accent-num">11</span></div>
+              <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:40%"></div><div class="sl-thumb" style="left:40%"></div></div></div>
+              <div class="row jb" style="margin-top:4px"><span style="font-size:10.5px;color:var(--muted)">3</span><span style="font-size:10.5px;color:var(--muted)">25 · ∞ adaptive</span></div>
+            </div>
+
+            <div class="sp-card">
+              <div class="label" style="margin-bottom:6px">Focus</div>
+              <div class="seg-row">
+                <div class="tog on"><div class="tog-dot"></div>Accuracy</div>
+                <div class="tog on"><div class="tog-dot"></div>Speed</div>
+                <div class="tog on"><div class="tog-dot"></div>Progression</div>
+              </div>
+            </div>
+
+            <div class="sp-card">
+              <div class="label" style="margin-bottom:6px">Title (optional)</div>
+              <input class="inp" placeholder="e.g. WW2, Cell Division…" style="font-size:12px;padding:7px 10px"/>
+            </div>
+          </div>
+
+          <!-- Right: question types accordion -->
+          <div>
+            <div class="row jb" style="margin-bottom:8px">
+              <span class="label">Question Types</span>
+              <span style="font-size:11px;color:var(--accent);font-weight:600">5 of 12 selected</span>
+            </div>
+            <div class="card" id="l2-types"></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn-back">← Back</button>
+        <button class="btn-gen">Generate Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════ L3 ═════════════════════════════ -->
+<div id="l3" class="shell">
+  <div class="chrome">
+    <div class="sb"><div class="sb-body"><div class="sb-item on">Quiz</div><div class="sb-item">Flashcards</div><div class="sb-item">Notes</div></div><div class="sb-foot"><button class="upgrade">↗ Upgrade</button></div></div>
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span><span>Quiz</span></div>
+      <div class="page">
+
+        <!-- Hero: the 3 most impactful settings big and clear -->
+        <div id="l3" class="hero">
+          <div class="label" style="margin-bottom:12px">Quiz Settings</div>
+          <div class="hero-grid">
+            <!-- Knowledge -->
+            <div>
+              <div class="row jb" style="margin-bottom:4px">
+                <span style="font-size:13px;font-weight:600">Knowledge Level</span>
+                <span class="big-num">38%</span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Controls question difficulty and variant selection</div>
+              <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:38%"></div><div class="sl-thumb" style="left:38%"></div></div></div>
+              <div class="row jb" style="margin-top:5px"><span style="font-size:10.5px;color:var(--muted)">Beginner</span><span style="font-size:10.5px;color:var(--muted)">Expert</span></div>
+            </div>
+            <!-- Mode -->
+            <div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px">Mode</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">How answers and difficulty behave</div>
+              <div class="col" style="gap:4px">
+                <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Classic</div><div class="r-desc">Answers at end</div></div></div>
+                <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Assisted</div><div class="r-desc">Feedback per question</div></div></div>
+                <div class="r-opt on"><div class="r-dot"></div><div><div class="r-name">Adaptive</div><div class="r-desc">Automatically adjust difficulty</div></div></div>
+              </div>
+            </div>
+            <!-- Count + Feedback -->
+            <div>
+              <div class="row jb" style="margin-bottom:4px">
+                <span style="font-size:13px;font-weight:600">Questions</span>
+                <span class="big-num" style="font-size:22px">11</span>
+              </div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Adaptive = unlimited</div>
+              <div class="sl-wrap" style="margin-bottom:12px"><div class="sl-track"><div class="sl-fill" style="width:40%"></div><div class="sl-thumb" style="left:40%"></div></div></div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Answer Feedback</div>
+              <div style="display:flex;gap:5px">
+                <div class="tog on"><div class="tog-dot"></div>At the end</div>
+                <div class="tog"><div class="tog-dot"></div>Immediately</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secondary row: focus + title -->
+        <div id="l3" class="section-card">
+          <div class="card-head">
+            <span class="label">Focus & Title</span>
+          </div>
+          <div style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div class="label" style="margin-bottom:7px">Focus Areas</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                <div class="tog on"><div class="tog-dot"></div>Accuracy</div>
+                <div class="tog on"><div class="tog-dot"></div>Speed</div>
+                <div class="tog on"><div class="tog-dot"></div>Progression</div>
+              </div>
+            </div>
+            <div>
+              <div class="label" style="margin-bottom:7px">Title (optional)</div>
+              <input class="inp" placeholder="e.g. WW2 Overview…"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detected + Types -->
+        <div id="l3" class="section-card">
+          <div class="card-head">
+            <div class="row" style="gap:8px">
+              <span class="label">Question Types</span>
+              <span style="font-size:11px;color:var(--accent);font-weight:600">5 selected</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Timeline & Dates</span>
+              <span class="chip">Definitions & Terms</span>
+            </div>
+          </div>
+          <div id="l3-types"></div>
+        </div>
+
+      </div>
+      <div class="foot">
+        <button class="btn-back">← Back</button>
+        <button class="btn-gen">Generate Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════ L4 ═════════════════════════════ -->
+<div id="l4" class="shell">
+  <div class="chrome">
+    <div class="sb"><div class="sb-body"><div class="sb-item on">Quiz</div><div class="sb-item">Flashcards</div><div class="sb-item">Notes</div></div><div class="sb-foot"><button class="upgrade">↗ Upgrade</button></div></div>
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span><span>Quiz</span></div>
+      <div class="page">
+        <div id="l4" class="mosaic">
+
+          <!-- Knowledge — big visual -->
+          <div class="m-card">
+            <div class="label" style="margin-bottom:8px">Knowledge Level</div>
+            <div class="ks-arc">
+              <div class="ks-circle"><span>38%</span></div>
+              <div style="flex:1">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Affects variant difficulty</div>
+                <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:38%"></div><div class="sl-thumb" style="left:38%"></div></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questions count -->
+          <div class="m-card" style="text-align:center">
+            <div class="label" style="margin-bottom:4px">Questions</div>
+            <div style="font-size:36px;font-weight:800;color:var(--accent);line-height:1.1">11</div>
+            <div style="font-size:10.5px;color:var(--muted);margin:4px 0 8px">3 – 25 · ∞ adaptive</div>
+            <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:40%"></div><div class="sl-thumb" style="left:40%"></div></div></div>
+          </div>
+
+          <!-- Mode -->
+          <div class="m-card">
+            <div class="label" style="margin-bottom:7px">Mode</div>
+            <div class="col" style="gap:3px">
+              <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Classic</div><div class="r-desc">Answers at end</div></div></div>
+              <div class="r-opt"><div class="r-dot"></div><div><div class="r-name">Assisted</div><div class="r-desc">Per-question feedback</div></div></div>
+              <div class="r-opt on"><div class="r-dot"></div><div><div class="r-name">Adaptive</div><div class="r-desc">Automatically adjust difficulty</div></div></div>
+            </div>
+          </div>
+
+          <!-- Feedback + Focus -->
+          <div class="m-card">
+            <div class="label" style="margin-bottom:7px">Answer Feedback</div>
+            <div style="display:flex;gap:5px;margin-bottom:12px">
+              <div class="tog on"><div class="tog-dot"></div>At the end</div>
+              <div class="tog"><div class="tog-dot"></div>Immediately</div>
+            </div>
+            <div class="label" style="margin-bottom:7px">Focus</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              <div class="tog on"><div class="tog-dot"></div>Accuracy</div>
+              <div class="tog on"><div class="tog-dot"></div>Speed</div>
+              <div class="tog on"><div class="tog-dot"></div>Progression</div>
+            </div>
+          </div>
+
+          <!-- Detected + Title -->
+          <div class="m-card">
+            <div class="label" style="margin-bottom:7px">Detected</div>
+            <div class="chip-row" style="margin-bottom:10px">
+              <span class="chip">Timeline</span><span class="chip">Definitions</span>
+            </div>
+            <div class="label" style="margin-bottom:6px">Title (optional)</div>
+            <input class="inp" placeholder="Quiz title…" style="font-size:12px;padding:7px 9px"/>
+          </div>
+
+          <!-- Types — spans full width -->
+          <div class="m-card span3">
+            <div class="row jb" style="margin-bottom:8px">
+              <span class="label">Question Types</span>
+              <span style="font-size:11px;color:var(--accent);font-weight:600">5 of 12 selected · click ▾ to see variants</span>
+            </div>
+            <div id="l4-types" style="border:1px solid var(--border);border-radius:9px;overflow:hidden"></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="foot">
+        <button class="btn-back">← Back</button>
+        <button class="btn-gen">Generate Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════ L5 ═════════════════════════════ -->
+<div id="l5" class="shell">
+  <div class="chrome">
+    <div class="sb"><div class="sb-body"><div class="sb-item on">Quiz</div><div class="sb-item">Flashcards</div><div class="sb-item">Notes</div></div><div class="sb-foot"><button class="upgrade">↗ Upgrade</button></div></div>
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span><span>Quiz</span></div>
+      <div class="page">
+
+        <div id="l5" class="stab-row">
+          <div class="stab on" onclick="stab(1)">Difficulty</div>
+          <div class="stab" onclick="stab(2)">Mode & Feedback</div>
+          <div class="stab" onclick="stab(3)">Question Types</div>
+          <div class="stab" onclick="stab(4)">Focus & Title</div>
+        </div>
+
+        <!-- Tab 1: Difficulty -->
+        <div class="stab-content on" id="l5t1">
+          <div class="card" style="padding:18px;margin-bottom:10px">
+            <div class="row jb" style="margin-bottom:4px">
+              <div><div style="font-size:15px;font-weight:700">Knowledge Level</div><div style="font-size:11px;color:var(--muted);margin-top:2px">The single most impactful setting — controls difficulty, variant selection, and question depth</div></div>
+              <span style="font-size:28px;font-weight:800;color:var(--accent)">38%</span>
+            </div>
+            <div style="height:12px"></div>
+            <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:38%"></div><div class="sl-thumb" style="left:38%"></div></div></div>
+            <div class="row jb" style="margin-top:7px">
+              <span style="font-size:11px;color:var(--muted)">I know nothing about this</span>
+              <span style="font-size:11px;color:var(--muted)">I know almost everything</span>
+            </div>
+          </div>
+          <div class="card" style="padding:14px 18px">
+            <div class="row jb" style="margin-bottom:10px">
+              <div><div style="font-size:14px;font-weight:600">Number of Questions</div><div style="font-size:11px;color:var(--muted)">Adaptive mode overrides this to unlimited</div></div>
+              <span style="font-size:24px;font-weight:800;color:var(--accent)">11</span>
+            </div>
+            <div class="sl-wrap"><div class="sl-track"><div class="sl-fill" style="width:40%"></div><div class="sl-thumb" style="left:40%"></div></div></div>
+            <div class="row jb" style="margin-top:6px"><span style="font-size:11px;color:var(--muted)">3 min</span><span style="font-size:11px;color:var(--muted)">25 max</span></div>
+          </div>
+          <!-- Detected content -->
+          <div style="margin-top:10px">
+            <div class="row" style="gap:6px;margin-bottom:6px">
+              <span class="label">Detected in your content</span>
+              <span style="font-size:10px;color:var(--accent);font-weight:600">✦ AI-enhanced</span>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Timeline & Dates</span><span class="chip">Definitions & Terms</span><span class="chip">People & Entities</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Mode & Feedback -->
+        <div class="stab-content" id="l5t2">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="card" style="padding:14px 16px">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px">Quiz Mode</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Controls how the quiz progresses and when you see results</div>
+              <div class="col" style="gap:5px">
+                <div class="r-opt" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Classic</div><div class="r-desc">Go through all questions, see results at the end</div></div></div>
+                <div class="r-opt" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Assisted</div><div class="r-desc">Get feedback after each question to learn as you go</div></div></div>
+                <div class="r-opt on" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Adaptive</div><div class="r-desc">Automatically adjust difficulty based on your answers</div></div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:14px 16px">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px">Answer Feedback</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:12px">When to reveal correct answers</div>
+              <div class="col" style="gap:5px">
+                <div class="r-opt on" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">At the end</div><div class="r-desc">Reveals all answers on the results screen</div></div></div>
+                <div class="r-opt" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Immediately</div><div class="r-desc">Shows the correct answer right after each submission</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Question types -->
+        <div class="stab-content" id="l5t3">
+          <div class="row jb" style="margin-bottom:8px">
+            <span class="label">Select types · click ▾ to see layout variants</span>
+            <span style="font-size:11px;color:var(--accent);font-weight:600">5 of 12 selected</span>
+          </div>
+          <div class="card" id="l5-types"></div>
+        </div>
+
+        <!-- Tab 4: Focus & Title -->
+        <div class="stab-content" id="l5t4">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="card" style="padding:14px 16px">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px">Focus Areas</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:12px">What the results screen measures and emphasizes</div>
+              <div class="col" style="gap:5px">
+                <div class="r-opt on" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Accuracy</div><div class="r-desc">% of questions answered correctly</div></div></div>
+                <div class="r-opt on" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Speed</div><div class="r-desc">Time taken per question</div></div></div>
+                <div class="r-opt on" style="padding:10px 12px"><div class="r-dot"></div><div><div class="r-name">Progression</div><div class="r-desc">Improvement vs. previous attempts</div></div></div>
+              </div>
+            </div>
+            <div class="card" style="padding:14px 16px">
+              <div style="font-size:14px;font-weight:600;margin-bottom:4px">Quiz Title</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Saved with results for easy identification</div>
+              <input class="inp" placeholder="e.g. WW2 Overview, Cell Division…" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="foot">
+        <button class="btn-back">← Back</button>
+        <button class="btn-gen">Generate Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──
+function show(n) {
+  document.querySelectorAll('.shell').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('l' + n).classList.add('on');
+  document.querySelectorAll('.tab')[n - 1].classList.add('on');
+}
+function stab(n) {
+  document.querySelectorAll('.stab').forEach((t,i) => t.classList.toggle('on', i===n-1));
+  document.querySelectorAll('.stab-content').forEach((c,i) => c.classList.toggle('on', i===n-1));
+}
+
+// ── Question type data ──
+const types = [
+  { id:'mc',    label:'Multiple Choice',    sel:true,  dim:false, variants:[{l:'Card Grid',e:'E'},{l:'Radio List',e:'M'},{l:'Color Blocks',e:'E'}] },
+  { id:'tf',    label:'True / False',       sel:true,  dim:false, variants:[{l:'Big Buttons',e:'E'}] },
+  { id:'fill',  label:'Fill in the Blank',  sel:true,  dim:false, variants:[{l:'Type Answer',e:'H'}] },
+  { id:'sa',    label:'Short Answer',       sel:true,  dim:false, variants:[{l:'Open Answer',e:'H'},{l:'With Hints',e:'M'}] },
+  { id:'match', label:'Matching',           sel:true,  dim:false, variants:[{l:'Click Pairs',e:'E'},{l:'Drag to Slot',e:'M'}] },
+  { id:'ord',   label:'Ordering',           sel:false, dim:true,  variants:[{l:'Click to Number',e:'E'},{l:'Drag to Order',e:'M'}] },
+  { id:'cloze', label:'Cloze Test',         sel:false, dim:false, variants:[{l:'Word Bank',e:'E'},{l:'Open Type',e:'H'}] },
+  { id:'comp',  label:'Comparison Matrix',  sel:false, dim:false, variants:[{l:'Checkbox Grid',e:'M'}] },
+  { id:'arg',   label:'Argument Analysis',  sel:false, dim:false, variants:[{l:'Tag Statements',e:'H'}] },
+  { id:'scen',  label:'Scenario / Case',    sel:false, dim:false, variants:[{l:'Multiple Choice',e:'M'}] },
+  { id:'tl',    label:'Timeline',           sel:false, dim:false, variants:[{l:'Timeline MCQ',e:'E'},{l:'Sort Events',e:'M'}] },
+  { id:'rank',  label:'Ranking',            sel:false, dim:true,  variants:[{l:'Drag to Rank',e:'H'}] },
+  { id:'dd',    label:'Drag & Drop',        sel:false, dim:true,  variants:[{l:'Categorize',e:'M'},{l:'Cause & Effect',e:'H'}] },
+  { id:'venn',  label:'Venn Diagram',       sel:false, dim:true,  variants:[{l:'Zone Assignment',e:'H'}] },
+  { id:'spot',  label:'Spot the Error',     sel:false, dim:false, variants:[{l:'Click the Error',e:'H'}] },
+];
+
+const badgeClass = {E:'badge-e',M:'badge-m',H:'badge-h'};
+const badgeLabel = {E:'Easy',M:'Med',H:'Hard'};
+
+function buildTypes(containerId, prefix) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  types.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'qt-row' + (t.sel ? ' on' : '') + (t.dim ? ' dim' : '');
+
+    const circle = document.createElement('div');
+    circle.className = 'qt-circle' + (t.sel ? ' on' : '');
+
+    const label = document.createElement('span');
+    label.className = 'qt-label';
+    label.textContent = t.label;
+
+    const arrow = document.createElement('div');
+    arrow.className = 'qt-arrow';
+    arrow.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4l4 4 4-4"/></svg>`;
+
+    const variantsDiv = document.createElement('div');
+    variantsDiv.className = 'qt-variants';
+    const hint = document.createElement('div');
+    hint.className = 'qt-v-hint';
+    hint.textContent = 'Layout variants — chosen by chance based on knowledge level';
+    variantsDiv.appendChild(hint);
+    const pills = document.createElement('div');
+    pills.className = 'qt-v-pills';
+    t.variants.forEach(v => {
+      const p = document.createElement('div');
+      p.className = 'qt-v-pill';
+      p.innerHTML = `<span>${v.l}</span><span class="${badgeClass[v.e]}">${badgeLabel[v.e]}</span>`;
+      pills.appendChild(p);
+    });
+    variantsDiv.appendChild(pills);
+
+    let expanded = false;
+    const toggleFn = () => {
+      expanded = !expanded;
+      arrow.classList.toggle('open', expanded);
+      variantsDiv.classList.toggle('show', expanded);
+      // close others in same container
+      el.querySelectorAll('.qt-arrow.open').forEach(a => {
+        if (a !== arrow) { a.classList.remove('open'); a.closest('.qt-row').nextElementSibling.classList.remove('show'); }
+      });
+      if (expanded) arrow.classList.add('open');
+    };
+
+    arrow.addEventListener('click', e => { e.stopPropagation(); toggleFn(); });
+    circle.addEventListener('click', e => { e.stopPropagation(); circle.classList.toggle('on'); row.classList.toggle('on'); });
+
+    row.appendChild(circle);
+    row.appendChild(label);
+    row.appendChild(arrow);
+    el.appendChild(row);
+    el.appendChild(variantsDiv);
+  });
+}
+
+buildTypes('l1-types', 'l1');
+buildTypes('l2-types', 'l2');
+buildTypes('l3-types', 'l3');
+buildTypes('l4-types', 'l4');
+buildTypes('l5-types', 'l5');
+</script>
+</body>
+</html>

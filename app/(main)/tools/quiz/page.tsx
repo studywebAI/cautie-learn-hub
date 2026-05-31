@@ -493,10 +493,15 @@ function QuizPageContent() {
     }
   }, []);
 
-  // Track which question type rows are expanded (showing variants)
+  // Accordion — only one type expanded at a time
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
   const toggleExpanded = (value: string) =>
-    setExpandedTypes((prev) => { const next = new Set(prev); next.has(value) ? next.delete(value) : next.add(value); return next; });
+    setExpandedTypes((prev) => {
+      const isOpen = prev.has(value);
+      const next = new Set<string>();
+      if (!isOpen) next.add(value);
+      return next;
+    });
 
   // Merge AI categories into ContentClassification-compatible object for isQuizTypeAvailable
   const mergedContentClass: ContentClassification | null = contentClass
@@ -543,269 +548,283 @@ function QuizPageContent() {
     hard: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
   };
 
-  // OPTIONS PHASE - Settings panel (State 2)
-  const renderOptions = () => (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="shrink-0 border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-[15px] font-semibold text-foreground">Quiz Settings</h2>
-            <p className="text-[12px] text-muted-foreground mt-0.5">Configure what your quiz focuses on</p>
-          </div>
+  // OPTIONS PHASE — Settings Rail layout (State 2)
+  const renderOptions = () => {
+    const settingCard = 'rounded-xl border border-border bg-card p-4 space-y-3';
+    const secLabel = 'text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground';
+    const modeEntries = [
+      { value: 'classic',  label: 'Classic',  desc: 'Answers revealed at the end' },
+      { value: 'assisted', label: 'Assisted', desc: 'Feedback after each question' },
+      { value: 'adaptive', label: 'Adaptive', desc: 'Automatically adjust difficulty' },
+    ] as const;
+
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="shrink-0 border-b border-border px-6 py-4">
+          <h2 className="text-[15px] font-semibold text-foreground">Quiz Settings</h2>
+          <p className="text-[12px] text-muted-foreground mt-0.5">Configure what your quiz focuses on</p>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-auto">
-        <div className="max-w-3xl mx-auto px-6 py-6 space-y-8">
+        <div className="flex-1 overflow-auto">
+          {/* Settings Rail: left panel + right types list */}
+          <div className="flex min-h-full gap-0">
 
-          {/* Detected content categories */}
-          {(contentCategories.length > 0 || aiCategoryLoading) && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Detected in your content</p>
-                {aiCategoryLoading && (
-                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
-                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                    Analysing…
-                  </span>
-                )}
-                {aiCategories && !aiCategoryLoading && (
-                  <span className="text-[10px] text-muted-foreground/60">AI-enhanced</span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {contentCategories.map((cat) => (
-                  <span key={cat} className="inline-flex items-center rounded-full border border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/8 px-2.5 py-0.5 text-[11px] font-medium text-[var(--accent-brand)]">
-                    {cat}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            {/* ── Left rail: all settings ── */}
+            <div className="w-[272px] shrink-0 border-r border-border overflow-y-auto">
+              <div className="p-4 space-y-3">
 
-          {/* Question types — hierarchical */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Question Types</p>
-              <span className="text-[11px] text-muted-foreground">{questionTypes.length} selected</span>
-            </div>
-            <div className="space-y-1.5">
-              {QUIZ_TYPE_DEFINITIONS.map((typeDef) => {
-                const available = isQuizTypeAvailable(typeDef.value, mergedContentClass);
-                const isSelected = questionTypes.includes(typeDef.value);
-                const isExpanded = expandedTypes.has(typeDef.value);
+                {/* Title */}
+                <div className={settingCard}>
+                  <p className={secLabel}>Title (optional)</p>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder=""
+                    disabled={loading}
+                  />
+                </div>
 
-                return (
-                  <div key={typeDef.value} className={`rounded-xl border transition-all ${!available ? 'opacity-40' : isSelected ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/5' : 'border-border bg-muted/20'}`}>
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                      {/* Circle toggle — select/deselect entire type */}
+                {/* Knowledge Level */}
+                <div className={settingCard}>
+                  <div className="flex items-center justify-between">
+                    <p className={secLabel}>Knowledge Level</p>
+                    <span className="text-[14px] font-bold text-[var(--accent-brand)]">{knowledgeScore}%</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground -mt-1">How well do you already know this?</p>
+                  <Slider
+                    value={[knowledgeScore]}
+                    onValueChange={([v]) => setKnowledgeScore(v)}
+                    min={0} max={100} step={5}
+                    disabled={loading}
+                  />
+                  <div className="flex justify-between text-[10.5px] text-muted-foreground -mt-1">
+                    <span>Beginner</span><span>Expert</span>
+                  </div>
+                </div>
+
+                {/* Mode */}
+                <div className={settingCard}>
+                  <p className={secLabel}>Mode</p>
+                  <div className="space-y-1.5">
+                    {modeEntries.map((e) => (
                       <button
+                        key={e.value}
                         type="button"
-                        disabled={!available}
-                        onClick={() => toggleQuestionType(typeDef.value)}
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-                          isSelected
-                            ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
-                            : 'border-muted-foreground/30 bg-transparent hover:border-[var(--accent-brand)]/60'
+                        onClick={() => setMode(e.value)}
+                        disabled={loading}
+                        className={`w-full flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors ${
+                          mode === e.value
+                            ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8'
+                            : 'border-transparent bg-muted/50 hover:bg-muted'
                         }`}
                       >
-                        {isSelected && <span className="block h-2 w-2 rounded-full bg-white" />}
-                      </button>
-
-                      {/* Label + description */}
-                      <div className="flex-1 min-w-0">
-                        <span className={`text-[13px] font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {typeDef.label}
-                        </span>
-                        <span className="ml-2 text-[11px] text-muted-foreground">{typeDef.description}</span>
-                      </div>
-
-                      {/* Expand/collapse variants */}
-                      {typeDef.variants.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpanded(typeDef.value)}
-                          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                          title="Show layout variants"
-                        >
-                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Expanded variants */}
-                    {isExpanded && typeDef.variants.length > 1 && (
-                      <div className="border-t border-border/60 px-3 py-2.5">
-                        <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Layout variants — selected by weighted chance based on your knowledge level</p>
-                        <div className="flex flex-wrap gap-2">
-                          {typeDef.variants.map((v) => (
-                            <div key={v.id} className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5">
-                              <span className="text-[12px] text-foreground">{v.label}</span>
-                              <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${DIFFICULTY_COLOR[v.difficulty]}`}>
-                                {DIFFICULTY_LABEL[v.difficulty]}
-                              </span>
-                            </div>
-                          ))}
+                        <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                        <div>
+                          <span className={`text-[13px] font-medium ${mode === e.value ? 'text-foreground' : 'text-muted-foreground'}`}>{e.label}</span>
+                          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{e.desc}</p>
                         </div>
-                        <p className="mt-2 text-[10px] text-muted-foreground">
-                          Lower knowledge level → higher chance of easier variants. Variants are picked randomly per question.
-                        </p>
-                      </div>
-                    )}
+                      </button>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
 
-          {/* Knowledge level */}
-          <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[13px] font-medium text-foreground">Knowledge Level</p>
-                <p className="text-[11px] text-muted-foreground">How much do you already know about this topic?</p>
-              </div>
-              <span className="text-[13px] font-semibold text-[var(--accent-brand)]">{knowledgeScore}%</span>
-            </div>
-            <Slider
-              value={[knowledgeScore]}
-              onValueChange={([value]) => setKnowledgeScore(value)}
-              min={0}
-              max={100}
-              step={5}
-              disabled={loading}
-            />
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-              <span>Nothing at all</span>
-              <span>Almost everything</span>
-            </div>
-          </div>
+                {/* Answer Feedback */}
+                <div className={settingCard}>
+                  <p className={secLabel}>Answer Feedback</p>
+                  <div className="flex gap-2">
+                    {([
+                      { value: 'end',       label: 'At the end' },
+                      { value: 'immediate', label: 'Immediately' },
+                    ] as const).map((e) => (
+                      <button
+                        key={e.value}
+                        type="button"
+                        onClick={() => setAnswerFeedback(e.value)}
+                        disabled={loading}
+                        className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg border py-2 text-[12px] font-medium transition-colors ${
+                          answerFeedback === e.value
+                            ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8 text-[var(--accent-brand)]'
+                            : 'border-border bg-muted/50 text-muted-foreground hover:bg-muted'
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${answerFeedback === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                        {e.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          {/* Settings row */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {/* Mode */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Mode</p>
-              <div className="flex flex-col gap-1.5">
-                {[
-                  { value: 'classic', label: 'Classic', desc: 'Answers revealed at end' },
-                  { value: 'assisted', label: 'Assisted', desc: 'Immediate feedback' },
-                  { value: 'adaptive', label: 'Adaptive', desc: 'AI adjusts difficulty' },
-                ].map((entry) => (
-                  <button
-                    key={entry.value}
-                    type="button"
-                    onClick={() => setMode(entry.value as QuizMode)}
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors ${
-                      mode === entry.value
-                        ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8 text-foreground'
-                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${mode === entry.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/40'}`} />
-                    {entry.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                {/* Questions */}
+                <div className={settingCard}>
+                  <div className="flex items-center justify-between">
+                    <p className={secLabel}>Questions</p>
+                    <span className="text-[14px] font-bold text-[var(--accent-brand)]">
+                      {mode === 'adaptive' ? '∞' : questionCount}
+                    </span>
+                  </div>
+                  <Slider
+                    value={[mode === 'adaptive' ? 12 : questionCount]}
+                    onValueChange={([v]) => mode !== 'adaptive' && setQuestionCount(v)}
+                    min={3} max={25} step={1}
+                    disabled={loading || mode === 'adaptive'}
+                  />
+                  <div className="flex justify-between text-[10.5px] text-muted-foreground -mt-1">
+                    <span>3</span>
+                    <span>{mode === 'adaptive' ? 'Unlimited in adaptive' : '25'}</span>
+                  </div>
+                </div>
 
-            {/* Question count */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Questions</p>
-                <span className="text-[11px] font-mono text-muted-foreground">{mode === 'adaptive' ? '∞' : questionCount}</span>
-              </div>
-              <Slider
-                value={[mode === 'adaptive' ? 12 : questionCount]}
-                onValueChange={([value]) => mode !== 'adaptive' && setQuestionCount(value)}
-                min={3}
-                max={25}
-                step={1}
-                disabled={loading || mode === 'adaptive'}
-              />
-            </div>
+                {/* Focus */}
+                <div className={settingCard}>
+                  <p className={secLabel}>Focus</p>
+                  <div className="space-y-1.5">
+                    {([
+                      { value: 'accuracy',    label: 'Accuracy',    desc: '% answered correctly' },
+                      { value: 'speed',       label: 'Speed',       desc: 'Time per question' },
+                      { value: 'progression', label: 'Progression', desc: 'Improvement over time' },
+                    ] as const).map((e) => (
+                      <button
+                        key={e.value}
+                        type="button"
+                        onClick={() => toggleGrading(e.value)}
+                        disabled={loading}
+                        className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2 text-left transition-colors ${
+                          gradingModes.includes(e.value)
+                            ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8'
+                            : 'border-transparent bg-muted/50 hover:bg-muted'
+                        }`}
+                      >
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${gradingModes.includes(e.value) ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                        <div>
+                          <span className={`text-[13px] font-medium ${gradingModes.includes(e.value) ? 'text-foreground' : 'text-muted-foreground'}`}>{e.label}</span>
+                          <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{e.desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Focus */}
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Focus</p>
-              <div className="flex flex-col gap-1.5">
-                {[
-                  { value: 'accuracy', label: 'Accuracy' },
-                  { value: 'speed', label: 'Speed' },
-                  { value: 'progression', label: 'Progression' },
-                ].map((entry) => (
-                  <button
-                    key={entry.value}
-                    type="button"
-                    onClick={() => toggleGrading(entry.value as GradingMode)}
-                    className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors ${
-                      gradingModes.includes(entry.value as GradingMode)
-                        ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8 text-foreground'
-                        : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 rounded-full ${gradingModes.includes(entry.value as GradingMode) ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/40'}`} />
-                    {entry.label}
-                  </button>
-                ))}
               </div>
             </div>
-          </div>
 
-          {/* Title (optional) */}
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title (optional)</p>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="h-9 text-sm"
-              placeholder="e.g. WW2 Overview, Cell Division..."
-              disabled={loading}
-            />
+            {/* ── Right: Question Types accordion ── */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground">Question Types</p>
+                  <span className="text-[11px] text-muted-foreground">{questionTypes.length} selected</span>
+                </div>
+
+                <div className="rounded-xl border border-border overflow-hidden">
+                  {QUIZ_TYPE_DEFINITIONS.map((typeDef, idx) => {
+                    const available = isQuizTypeAvailable(typeDef.value, mergedContentClass);
+                    const isSelected = questionTypes.includes(typeDef.value);
+                    const isExpanded = expandedTypes.has(typeDef.value);
+                    const isLast = idx === QUIZ_TYPE_DEFINITIONS.length - 1;
+
+                    return (
+                      <div key={typeDef.value} className={!available ? 'opacity-35' : ''}>
+                        {/* Type row */}
+                        <div className={`flex items-center gap-3 px-4 py-3 ${!isLast || isExpanded ? 'border-b border-border' : ''} ${isSelected ? 'bg-[var(--accent-brand)]/4' : 'bg-card hover:bg-muted/30'} transition-colors`}>
+                          {/* Circle select toggle */}
+                          <button
+                            type="button"
+                            disabled={!available}
+                            onClick={() => toggleQuestionType(typeDef.value)}
+                            className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                              isSelected
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
+                                : 'border-muted-foreground/25 hover:border-[var(--accent-brand)]/50'
+                            }`}
+                          >
+                            {isSelected && <span className="block h-[7px] w-[7px] rounded-full bg-white" />}
+                          </button>
+
+                          {/* Label */}
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-[13px] font-medium ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              {typeDef.label}
+                            </span>
+                            {!isExpanded && (
+                              <span className="ml-2 text-[11px] text-muted-foreground">{typeDef.description}</span>
+                            )}
+                          </div>
+
+                          {/* Chevron — always shown, expands variant details */}
+                          <button
+                            type="button"
+                            onClick={() => toggleExpanded(typeDef.value)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          >
+                            <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </button>
+                        </div>
+
+                        {/* Expanded variants */}
+                        {isExpanded && (
+                          <div className={`px-4 py-3 bg-muted/20 ${!isLast ? 'border-b border-border' : ''}`}>
+                            <p className="text-[11px] text-muted-foreground mb-2">{typeDef.description}</p>
+                            <div className="flex flex-wrap gap-2">
+                              {typeDef.variants.map((v) => (
+                                <div key={v.id} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5">
+                                  <span className="text-[12px] text-foreground">{v.label}</span>
+                                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${DIFFICULTY_COLOR[v.difficulty]}`}>
+                                    {DIFFICULTY_LABEL[v.difficulty]}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-2 text-[10px] text-muted-foreground">
+                              Variants are chosen per question based on your knowledge level.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
-      </div>
 
-      {/* Footer actions */}
-      <div className="shrink-0 border-t border-border px-6 py-4 flex justify-between gap-3">
-        <Button
-          variant="outline"
-          className="h-10 px-5"
-          onClick={() => {
-            setPhase('input');
-            setSourceText('');
-            setTitle('');
-            setImageDescription(null);
-            setImageDataUri(null);
-          }}
-        >
-          ← Back
-        </Button>
-        <Button
-          className="h-10 bg-[var(--accent-brand)] px-6 text-white hover:opacity-90"
-          onClick={() => {
-            setLoading(true);
-            handleGenerate(sourceText);
-            setPhase('study');
-          }}
-          disabled={loading || !sourceText.trim()}
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <BrainCircuit className="mr-2 h-4 w-4" />
-              Generate Quiz
-            </>
-          )}
-        </Button>
+        {/* Footer */}
+        <div className="shrink-0 border-t border-border px-6 py-4 flex justify-between gap-3">
+          <Button
+            variant="outline"
+            className="h-10 px-5"
+            onClick={() => {
+              setPhase('input');
+              setSourceText('');
+              setTitle('');
+              setImageDescription(null);
+              setImageDataUri(null);
+            }}
+          >
+            ← Back
+          </Button>
+          <Button
+            className="h-10 bg-[var(--accent-brand)] px-6 text-white hover:opacity-90"
+            onClick={() => {
+              setLoading(true);
+              handleGenerate(sourceText);
+              setPhase('study');
+            }}
+            disabled={loading || !sourceText.trim()}
+          >
+            {loading ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating...</>
+            ) : (
+              <><BrainCircuit className="mr-2 h-4 w-4" />Generate Quiz</>
+            )}
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // INPUT PHASE - Clean input without sidebar (State 1)
   if (phase === 'input') {
