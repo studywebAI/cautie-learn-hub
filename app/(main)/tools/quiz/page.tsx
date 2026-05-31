@@ -200,6 +200,13 @@ function QuizPageContent() {
   const [questionCount, setQuestionCount] = useState(12);
   const [gradingModes, setGradingModes] = useState<GradingMode[]>(['accuracy', 'speed', 'progression']);
 
+  // Selected variants per question type — initialized with all variants for every type
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string[]>>(() => {
+    const init: Record<string, string[]> = {};
+    QUIZ_TYPE_DEFINITIONS.forEach((t) => { init[t.value] = t.variants.map((v) => v.id); });
+    return init;
+  });
+
 
   const [inputMode, setInputMode] = useState<'literal' | 'research'>('literal');
 
@@ -300,6 +307,9 @@ function QuizPageContent() {
         const next = parsed.gradingModes.filter((entry: string) => ['accuracy', 'speed', 'progression'].includes(entry)) as GradingMode[];
         setGradingModes(next.length > 0 ? next : ['accuracy', 'speed', 'progression']);
       }
+      if (parsed?.selectedVariants && typeof parsed.selectedVariants === 'object') {
+        setSelectedVariants((prev) => ({ ...prev, ...parsed.selectedVariants }));
+      }
     } catch {
       // ignore broken saved settings
     }
@@ -325,6 +335,9 @@ function QuizPageContent() {
         setGradingModes(next.length > 0 ? next : ['accuracy', 'speed', 'progression']);
       }
       if (parsed?.quiz && Array.isArray(parsed.quiz?.questions)) setQuiz(parsed.quiz as Quiz);
+      if (parsed?.selectedVariants && typeof parsed.selectedVariants === 'object') {
+        setSelectedVariants((prev) => ({ ...prev, ...parsed.selectedVariants }));
+      }
     } catch {
       // ignore broken session state
     }
@@ -342,12 +355,13 @@ function QuizPageContent() {
           knowledgeScore,
           questionCount,
           gradingModes,
+          selectedVariants,
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, title]);
+  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, selectedVariants, title]);
 
   useEffect(() => {
     try {
@@ -362,13 +376,14 @@ function QuizPageContent() {
           knowledgeScore,
           questionCount,
           gradingModes,
+          selectedVariants,
           quiz,
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, quiz, sourceText, title]);
+  }, [answerFeedback, gradingModes, knowledgeScore, mode, questionCount, questionTypes, quiz, selectedVariants, sourceText, title]);
 
   useEffect(() => {
     if (mode === 'classic') {
@@ -388,7 +403,24 @@ function QuizPageContent() {
         const next = prev.filter((entry) => entry !== value);
         return next.length ? next : ['multiple-choice'];
       }
+      // Auto-select all variants when enabling a type for the first time
+      setSelectedVariants((sv) => {
+        if (sv[value]?.length) return sv;
+        const typeDef = QUIZ_TYPE_DEFINITIONS.find((t) => t.value === value);
+        return { ...sv, [value]: typeDef?.variants.map((v) => v.id) || [] };
+      });
       return [...prev, value];
+    });
+  };
+
+  const toggleVariant = (typeValue: string, variantId: string) => {
+    setSelectedVariants((prev) => {
+      const current = prev[typeValue] || [];
+      if (current.includes(variantId)) {
+        const next = current.filter((id) => id !== variantId);
+        return { ...prev, [typeValue]: next.length > 0 ? next : current }; // keep at least one
+      }
+      return { ...prev, [typeValue]: [...current, variantId] };
     });
   };
 
@@ -594,7 +626,7 @@ function QuizPageContent() {
         <div className="flex flex-1 overflow-hidden bg-background">
 
           {/* ── Left: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto bg-white m-3 rounded-lg border border-black/[0.08]">
+          <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg">
             <div className="p-4 pb-2">
               <div className="flex items-center justify-between mb-2.5">
                 <p className={S}>Question Types</p>
@@ -602,15 +634,13 @@ function QuizPageContent() {
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-lg border border-black/[0.08] overflow-hidden bg-white">
-              {QUIZ_TYPE_DEFINITIONS.map((typeDef, idx, arr) => {
-                const isAvailable = isQuizTypeAvailable(typeDef.value, mergedContentClass);
+            <div className="mx-4 mb-4 rounded-lg border border-black/[0.08] overflow-hidden bg-card">
+              {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
-                const isLast = idx === arr.length - 1;
 
                 return (
-                  <div key={typeDef.value} className={!isAvailable ? 'opacity-35 pointer-events-none' : ''}>
+                  <div key={typeDef.value}>
                     {/* Full-row click toggles the type */}
                     <div
                       role="button"
@@ -660,19 +690,29 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-3 py-2.5 bg-black/[0.02] border-t border-black/[0.06]">
-                        <p className="text-[11px] text-muted-foreground mb-3">{typeDef.description}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {typeDef.variants.map((v) => (
-                            <div key={v.id} className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-muted/20 px-2.5 py-1">
-                              <span className="text-[12px] text-foreground">{v.label}</span>
+                      <div className="border-t border-black/[0.06]">
+                        {typeDef.variants.map((v) => {
+                          const isVariantSelected = isSelected && (selectedVariants[typeDef.value] || []).includes(v.id);
+                          return (
+                            <div
+                              key={v.id}
+                              role="button"
+                              tabIndex={isSelected ? 0 : -1}
+                              onClick={(e) => { e.stopPropagation(); if (isSelected) toggleVariant(typeDef.value, v.id); }}
+                              onKeyDown={(e) => e.key === 'Enter' && isSelected && toggleVariant(typeDef.value, v.id)}
+                              className={`flex items-center gap-2.5 pl-9 pr-3 py-2 border-b last:border-b-0 border-black/[0.04] transition-all ${isSelected ? 'cursor-pointer' : 'opacity-40'} ${isVariantSelected ? 'bg-[var(--accent-brand)]/[0.06]' : isSelected ? 'hover:bg-black/[0.02]' : ''}`}
+                            >
+                              <div className={`flex h-[14px] w-[14px] shrink-0 rounded border-2 transition-all ${isVariantSelected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/30'}`}>
+                                {isVariantSelected && <span className="m-auto block h-[5px] w-[5px] rounded-sm bg-white" />}
+                              </div>
+                              <span className={`text-[12px] flex-1 ${isVariantSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{v.label}</span>
                               <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${DIFFICULTY_COLOR[v.difficulty]}`}>
                                 {DIFFICULTY_LABEL[v.difficulty]}
                               </span>
                             </div>
-                          ))}
-                        </div>
-                        <p className="mt-2.5 text-[10px] text-muted-foreground/60">
+                          );
+                        })}
+                        <p className="px-3 py-2 text-[10px] text-muted-foreground/50">
                           Variant is chosen per question based on your knowledge level.
                         </p>
                       </div>
@@ -826,7 +866,7 @@ function QuizPageContent() {
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-black/[0.08] bg-white px-5 py-3.5 flex justify-between items-center gap-3">
+        <div className="shrink-0 border-t border-black/[0.08] bg-background px-5 py-3.5 flex justify-between items-center gap-3">
           <Button
             variant="outline"
             className="h-9 px-5 text-[13px]"
