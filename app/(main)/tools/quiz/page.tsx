@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BrainCircuit, ChevronDown, ChevronRight, Info, Loader2 } from 'lucide-react';
+import { BrainCircuit, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -590,150 +590,10 @@ function QuizPageContent() {
           </div>
         </div>
 
-        {/* Body: settings rail (left) + question types (right) */}
+        {/* Body: question types (left) + settings rail (right) */}
         <div className="flex flex-1 overflow-hidden">
 
-          {/* ── Left rail ── */}
-          <div className="w-[264px] shrink-0 border-r border-border bg-sidebar overflow-y-auto">
-            <div className="py-3">
-
-              {/* Title */}
-              <div className="px-4 py-3 border-b border-border/60">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className={S}>Quiz title (optional)</p>
-                  <div className="relative group">
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] text-muted-foreground">Give your quiz a name. This appears in your results.</p>
-                    </div>
-                  </div>
-                </div>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-8 text-[13px] border-border/60"
-                  placeholder=""
-                  disabled={loading}
-                />
-              </div>
-
-              {/* Knowledge Level */}
-              <div className="px-4 py-3 border-b border-border/60 space-y-2.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className={S}>How much do you already know?</p>
-                  <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
-                </div>
-                <Slider
-                  value={[knowledgeScore]}
-                  onValueChange={([v]) => setKnowledgeScore(v)}
-                  min={0} max={100} step={5}
-                  disabled={loading}
-                />
-                <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>Nothing</span><span>A lot</span>
-                </div>
-              </div>
-
-              {/* Mode */}
-              <div className="px-4 py-3 border-b border-border/60">
-                <div className="flex items-center justify-between mb-2 gap-1">
-                  <p className={S}>What mode do you want?</p>
-                  <div className="relative group">
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] font-medium text-foreground mb-1">Classic</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">All answers shown at the end.</p>
-                      <p className="text-[11px] font-medium text-foreground mb-1">Assisted</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">Feedback after each question.</p>
-                      <p className="text-[11px] font-medium text-foreground mb-1">Adaptive</p>
-                      <p className="text-[10px] text-muted-foreground">Difficulty adjusts automatically.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  {modeEntries.map((e) => (
-                    <button
-                      key={e.value}
-                      type="button"
-                      onClick={() => setMode(e.value)}
-                      disabled={loading}
-                      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] ${
-                        mode === e.value
-                          ? 'bg-[var(--accent-brand)]/10 text-foreground'
-                          : 'text-muted-foreground hover:bg-sidebar-accent/40'
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
-                      <span className="font-medium">{e.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Answer Feedback */}
-              <div className="px-4 py-3 border-b border-border/60">
-                <div className="flex items-center justify-between mb-2 gap-1">
-                  <p className={S}>When do you want feedback?</p>
-                  <div className="relative group">
-                    <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] font-medium text-foreground mb-1">At the end</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">See all answers after finishing.</p>
-                      <p className="text-[11px] font-medium text-foreground mb-1">Immediately</p>
-                      <p className="text-[10px] text-muted-foreground">Know if you're right after each question.</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-1.5">
-                  {([
-                    { value: 'end',       label: 'At the end' },
-                    { value: 'immediate', label: 'Immediately' },
-                  ] as const).map((e) => (
-                    <button
-                      key={e.value}
-                      type="button"
-                      onClick={() => setAnswerFeedback(e.value)}
-                      disabled={loading}
-                      className={`flex-1 rounded-lg border px-2 py-1.5 text-[12px] font-medium transition-colors ${
-                        answerFeedback === e.value
-                          ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
-                          : 'border-border/60 bg-transparent text-muted-foreground hover:bg-sidebar-accent/50'
-                      }`}
-                    >
-                      {e.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Questions */}
-              <div className="px-4 py-3">
-                <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <p className={S}>How many questions?</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-[var(--accent-brand)]">
-                      {mode === 'adaptive' ? '∞' : questionCount}
-                    </span>
-                    <div className="relative group">
-                      <Info className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors flex-shrink-0" />
-                      <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                        <p className="text-[11px] text-muted-foreground">{mode === 'adaptive' ? 'Unlimited in adaptive mode.' : 'Minimum 3, maximum 25. Adaptive mode overrides this to unlimited.'}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <Slider
-                  value={[mode === 'adaptive' ? 12 : questionCount]}
-                  onValueChange={([v]) => mode !== 'adaptive' && setQuestionCount(v)}
-                  min={3} max={25} step={1}
-                  disabled={loading || mode === 'adaptive'}
-                />
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── Right: Question Types accordion ── */}
+          {/* ── Left: Question Types accordion ── */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-4 pb-2">
               <div className="flex items-center justify-between mb-3">
@@ -779,9 +639,9 @@ function QuizPageContent() {
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); }}
-                          className="flex h-5 w-5 items-center justify-center rounded-full border border-muted-foreground/25 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors"
+                          className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
                         >
-                          <Info className="h-2.5 w-2.5" />
+                          i
                         </button>
                         <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
                           <p className="text-[11px] text-muted-foreground">{typeDef.description}</p>
@@ -819,6 +679,146 @@ function QuizPageContent() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ── Right rail: Settings ── */}
+          <div className="w-[264px] shrink-0 border-l border-border bg-sidebar overflow-y-auto">
+            <div className="py-3">
+
+              {/* Title */}
+              <div className="px-4 py-3 border-b border-border/40">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className={S}>Quiz title (optional)</p>
+                  <div className="relative group">
+                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] text-muted-foreground">Give your quiz a name. This appears in your results.</p>
+                    </div>
+                  </div>
+                </div>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-8 text-[13px] border-border/40"
+                  placeholder=""
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Knowledge Level */}
+              <div className="px-4 py-3 border-b border-border/40 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className={S}>How much do you already know?</p>
+                  <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
+                </div>
+                <Slider
+                  value={[knowledgeScore]}
+                  onValueChange={([v]) => setKnowledgeScore(v)}
+                  min={0} max={100} step={5}
+                  disabled={loading}
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>Nothing</span><span>A lot</span>
+                </div>
+              </div>
+
+              {/* Mode */}
+              <div className="px-4 py-3 border-b border-border/40">
+                <div className="flex items-center justify-between mb-2 gap-1">
+                  <p className={S}>What mode do you want?</p>
+                  <div className="relative group">
+                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] text-foreground mb-1">Classic</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">All answers shown at the end.</p>
+                      <p className="text-[11px] text-foreground mb-1">Assisted</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">Feedback after each question.</p>
+                      <p className="text-[11px] text-foreground mb-1">Adaptive</p>
+                      <p className="text-[10px] text-muted-foreground">Difficulty adjusts automatically.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {modeEntries.map((e) => (
+                    <button
+                      key={e.value}
+                      type="button"
+                      onClick={() => setMode(e.value)}
+                      disabled={loading}
+                      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] ${
+                        mode === e.value
+                          ? 'bg-[var(--accent-brand)]/10 text-foreground'
+                          : 'text-muted-foreground hover:bg-sidebar-accent/40'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${mode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                      <span>{e.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Answer Feedback */}
+              <div className="px-4 py-3 border-b border-border/40">
+                <div className="flex items-center justify-between mb-2 gap-1">
+                  <p className={S}>When do you want feedback?</p>
+                  <div className="relative group">
+                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
+                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                      <p className="text-[11px] text-foreground mb-1">At the end</p>
+                      <p className="text-[10px] text-muted-foreground mb-2">See all answers after finishing.</p>
+                      <p className="text-[11px] text-foreground mb-1">Immediately</p>
+                      <p className="text-[10px] text-muted-foreground">Know if you're right after each question.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-1.5">
+                  {([
+                    { value: 'end',       label: 'At the end' },
+                    { value: 'immediate', label: 'Immediately' },
+                  ] as const).map((e) => (
+                    <button
+                      key={e.value}
+                      type="button"
+                      onClick={() => setAnswerFeedback(e.value)}
+                      disabled={loading}
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-[12px] transition-colors ${
+                        answerFeedback === e.value
+                          ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                          : 'border-border/40 bg-transparent text-muted-foreground hover:bg-sidebar-accent/50'
+                      }`}
+                    >
+                      {e.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Questions */}
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between gap-2 mb-2.5">
+                  <p className={S}>How many questions?</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-[var(--accent-brand)]">
+                      {mode === 'adaptive' ? '∞' : questionCount}
+                    </span>
+                    <div className="relative group">
+                      <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
+                      <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                        <p className="text-[11px] text-muted-foreground">{mode === 'adaptive' ? 'Unlimited in adaptive mode.' : 'Minimum 3, maximum 25. Adaptive mode overrides this to unlimited.'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Slider
+                  value={[mode === 'adaptive' ? 12 : questionCount]}
+                  onValueChange={([v]) => mode !== 'adaptive' && setQuestionCount(v)}
+                  min={3} max={25} step={1}
+                  disabled={loading || mode === 'adaptive'}
+                />
+              </div>
+
             </div>
           </div>
 
@@ -881,9 +881,9 @@ function QuizPageContent() {
         <div className="relative group">
           <button
             type="button"
-            className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/25 text-muted-foreground/40 hover:border-[var(--accent-brand)]/50 hover:text-[var(--accent-brand)] transition-colors"
+            className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
           >
-            <Info className="h-2.5 w-2.5" />
+            i
           </button>
           <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-60 -translate-x-1/2 rounded-xl border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
             <p className="text-[12px] font-medium text-foreground mb-1">Literal</p>
