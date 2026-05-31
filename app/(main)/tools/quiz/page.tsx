@@ -809,9 +809,33 @@ function QuizPageContent() {
 
   // INPUT PHASE - Clean input without sidebar (State 1)
   if (phase === 'input') {
+    const modeToggle = (
+      <>
+        {(['literal', 'research'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setInputMode(m)}
+            title={
+              m === 'literal'
+                ? 'Questions test exactly what is in your text'
+                : 'Questions may require knowledge beyond the text — you can skip irrelevant ones'
+            }
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+              inputMode === m
+                ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/15 text-[var(--accent-brand)]'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {m === 'literal' ? 'Literal' : 'Research'}
+          </button>
+        ))}
+      </>
+    );
+
     return (
       <WorkbenchShell
-        title="Quiz Generator"
+        title="Quiz"
         sidebar={<div />}
         hideSidebar={true}
         breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
@@ -832,14 +856,13 @@ function QuizPageContent() {
               onSubmit={(compiledText) => {
                 setSourceText(compiledText);
                 setPhase('options');
-                // Fire AI category evaluation once in the background while user sees State 2
-                // Pass image description so image content is factored into category detection
                 triggerAiCategoryEval(compiledText, imageDescription);
               }}
               isLoading={false}
               submitLabel="Next"
               speechLanguage={language}
               hideToolSwitcher
+              bottomSlot={modeToggle}
             />
             {/* Image analysis indicator */}
             {imageDescLoading && (
@@ -854,29 +877,6 @@ function QuizPageContent() {
                 Image analysed — will be used as context
               </div>
             )}
-            {/* Literal / Research mode toggle */}
-            <div className="flex items-center justify-center gap-1 pt-1">
-              <p className="text-[11px] text-muted-foreground mr-1">Mode:</p>
-              {(['literal', 'research'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setInputMode(m)}
-                  title={
-                    m === 'literal'
-                      ? 'Questions test exactly what is in your text'
-                      : 'Questions may require knowledge beyond the text — you can skip irrelevant ones'
-                  }
-                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
-                    inputMode === m
-                      ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
-                      : 'border-border bg-background text-muted-foreground hover:bg-muted/60'
-                  }`}
-                >
-                  {m === 'literal' ? 'Literal' : 'Research'}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </WorkbenchShell>

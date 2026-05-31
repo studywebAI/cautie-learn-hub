@@ -26,11 +26,11 @@ import {
   Menu,
   ArrowUpRight,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Check,
   FolderOpen,
   Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
@@ -1325,20 +1325,26 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="px-2 pt-1 pb-2 flex flex-col gap-2">
-        {/* Collapse / expand toggle button */}
+        {/* Collapse / expand toggle — 21st.dev pill style */}
         <button
           onClick={toggleSidebar}
           title={sidebarState === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            "flex h-9 w-full items-center gap-0.5 rounded-xl px-2.5",
-            "text-sidebar-foreground/45",
-            "transition-colors duration-150 hover:bg-[hsl(var(--sidebar-accent)/0.7)] hover:text-sidebar-foreground",
-            // In collapsed rail: center the button and shrink to icon size
-            "group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0",
+            "flex h-8 w-full items-center gap-2 rounded-lg px-2.5",
+            "text-sidebar-foreground/40 hover:text-sidebar-foreground",
+            "transition-all duration-150",
+            "hover:bg-[hsl(var(--sidebar-accent)/0.6)]",
+            // Collapsed rail: shrink to icon-only centered button
+            "group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:rounded-xl",
           )}
         >
-          <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
-          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          {sidebarState === 'collapsed'
+            ? <PanelLeftOpen className="h-4 w-4 shrink-0" />
+            : <PanelLeftClose className="h-4 w-4 shrink-0" />
+          }
+          <span className="text-[12px] font-medium transition-[opacity] duration-150 group-data-[collapsible=icon]:hidden">
+            Collapse
+          </span>
         </button>
         <SidebarProfile />
       </SidebarFooter>

@@ -41,6 +41,8 @@ type ToolInputBoxProps = {
   speechLanguage?: string;
   /** Hide the tool switcher (e.g. on pages that are not tool pages) */
   hideToolSwitcher?: boolean;
+  /** Optional slot rendered in the bottom bar between the + button and the spacer */
+  bottomSlot?: React.ReactNode;
 };
 
 // ---------------------------------------------------------------------------
@@ -178,6 +180,7 @@ export function ToolInputBox({
   submitLabel,
   speechLanguage = 'en',
   hideToolSwitcher = false,
+  bottomSlot,
 }: ToolInputBoxProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -682,6 +685,7 @@ export function ToolInputBox({
       <div className="flex items-center gap-1.5 px-2 pb-2 pt-0">
         {/* + button */}
         <div ref={plusMenuRef}>
+
           <button
             ref={plusButtonRef}
             type="button"
@@ -783,6 +787,9 @@ export function ToolInputBox({
             </div>
           )}
         </div>
+
+        {/* Bottom slot — optional content from parent (e.g. mode toggle) */}
+        {bottomSlot && <div className="flex items-center gap-1">{bottomSlot}</div>}
 
         {/* Spacer */}
         <div className="flex-1" />

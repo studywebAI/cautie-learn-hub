@@ -40,32 +40,33 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   return (
     <div className="relative h-full w-full">
       <div className="flex h-full w-full flex-col">
-        <div className="w-full border-b border-sidebar-border bg-sidebar">
-          <div className="flex min-h-9 items-center justify-between px-3">
-            <div>
-              <div className="mb-0.5 flex items-center gap-1.5 text-[13px] font-normal leading-none text-[hsl(var(--sidebar-foreground))]">
-                <button
-                  type="button"
-                  className="text-[var(--accent-brand)] hover:underline"
-                  onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
-                >
-                  {profileName}
-                </button>
-                <span className="text-[hsl(var(--sidebar-foreground))]">&gt;</span>
-                <span className="inline-flex items-center gap-1.5 text-[hsl(var(--sidebar-foreground))]">
-                  {breadcrumbIcon ? <span className="text-[hsl(var(--sidebar-foreground))]">{breadcrumbIcon}</span> : null}
-                  <span>{title}</span>
-                </span>
-              </div>
-              <h1 className="sr-only">{title}</h1>
-              {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        {/* Breadcrumb bar — flush with sidebar, soft separator */}
+        <div className="w-full bg-sidebar/60 backdrop-blur-sm border-b border-sidebar-border/40">
+          <div className="flex min-h-9 items-center justify-between px-3.5">
+            <div className="flex items-center gap-0 text-[12px] font-medium leading-none">
+              <button
+                type="button"
+                className="text-muted-foreground/70 hover:text-[var(--accent-brand)] transition-colors"
+                onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
+              >
+                {profileName}
+              </button>
+              <span className="mx-1.5 text-muted-foreground/30 select-none">/</span>
+              <span className="inline-flex items-center gap-1.5 text-foreground/80 font-medium">
+                {breadcrumbIcon ? (
+                  <span className="text-muted-foreground/60 [&>svg]:h-3.5 [&>svg]:w-3.5">{breadcrumbIcon}</span>
+                ) : null}
+                <span>{title}</span>
+              </span>
             </div>
+            <h1 className="sr-only">{title}</h1>
             {isPhone && !hideSidebar && (
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setSidebarOpen(true)}>
-                <Settings2 className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(true)}>
+                <Settings2 className="h-3.5 w-3.5" />
               </Button>
             )}
           </div>
+          {description && <p className="px-3.5 pb-1.5 text-[11px] text-muted-foreground">{description}</p>}
         </div>
 
         <div className="flex min-h-0 flex-1 gap-2 px-0 py-1">
