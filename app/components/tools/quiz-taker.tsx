@@ -45,7 +45,7 @@ function MCQCardGrid({ question, answer, disabled, onChange, reveal, correctOpti
       {question.options.map((option) => {
         const selected = answer?.kind === 'option' && answer.value === option.id;
         const isCorrect = option.id === correctOptionId;
-        let cls = 'border border-border bg-muted/40 hover:bg-muted/70 text-foreground';
+        let cls = 'border border-black/[0.08] bg-white hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/[0.04] text-foreground';
         if (reveal && isCorrect && selected) cls = 'border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200';
         else if (reveal && isCorrect) cls = 'border-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300';
         else if (reveal && selected) cls = 'border-2 border-red-400 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200';
@@ -76,7 +76,7 @@ function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOpt
       {question.options.map((option) => {
         const selected = answer?.kind === 'option' && answer.value === option.id;
         const isCorrect = option.id === correctOptionId;
-        let cls = 'border border-border bg-background hover:border-[var(--accent-brand)]/50 hover:bg-muted/30';
+        let cls = 'border border-black/[0.08] bg-white hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/[0.04]';
         if (reveal && isCorrect && selected) cls = 'border-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30';
         else if (reveal && isCorrect) cls = 'border-2 border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/20';
         else if (reveal && selected) cls = 'border-2 border-red-400 bg-red-50 dark:bg-red-900/30';
@@ -657,7 +657,7 @@ function formatAnswer(question: QuizQuestion, answer?: AnswerValue) {
     }
     return Object.entries(answer.value).map(([k, v]) => `${k} → ${v}`).join(' | ');
   }
-  if (answer.kind === 'cloze') return answer.value.join(', ');
+  if (answer.kind === 'cloze') return answer.value.map((v) => v?.trim() || '—').join(', ');
   if (answer.kind === 'comparison') return Object.entries(answer.value).map(([r, cs]) => `${r}: ${cs.join(', ')}`).join(' | ');
   return '-';
 }
@@ -738,7 +738,7 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
           </div>
         ))}
       </div>
-      <div className="rounded-lg surface-interactive p-2.5">
+      <div className="rounded-lg border border-black/[0.06] bg-white p-2.5">
         <p className="mb-2 text-xs text-muted-foreground">Drag options</p>
         <div className="flex flex-wrap gap-2">
           {pool.map((right) => (
@@ -751,7 +751,7 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
                 const unassigned = pairs.find((pair) => !mapping[pair.left]);
                 if (unassigned) onDrop(unassigned.left, right);
               }}
-              className="rounded-full border border-border bg-background px-3 py-1.5 text-xs"
+              className="rounded-full border border-black/[0.08] bg-background px-3 py-1.5 text-xs hover:border-[var(--accent-brand)]/50"
             >
               {right}
             </button>
@@ -793,7 +793,7 @@ function ClozeOpen({ question, answer, disabled, onChange }: {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-[2.2] text-foreground">
+    <div className="rounded-xl border border-black/[0.08] bg-white px-4 py-4 text-[14px] leading-[2.2] text-foreground">
       {parts.map((part, i) =>
         part.type === 'text' ? (
           <span key={i}>{part.content}</span>
@@ -836,7 +836,7 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
   return (
     <div className="space-y-5">
       {/* Text with drop targets */}
-      <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-[2.4] text-foreground">
+      <div className="rounded-xl border border-black/[0.08] bg-white px-4 py-4 text-[14px] leading-[2.4] text-foreground">
         {parts.map((part, i) =>
           part.type === 'text' ? (
             <span key={i}>{part.content}</span>
@@ -889,8 +889,8 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
                 className={[
                   'rounded-lg border px-3 py-1.5 text-[13px] transition-all',
                   usedInSlot
-                    ? 'border-border bg-muted/40 text-muted-foreground/40 line-through cursor-default'
-                    : 'border-border bg-background text-foreground hover:border-[var(--accent-brand)]/50 cursor-grab active:cursor-grabbing',
+                    ? 'border-black/[0.06] bg-muted/20 text-muted-foreground/40 line-through cursor-default'
+                    : 'border-black/[0.08] bg-white text-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/[0.04] cursor-grab active:cursor-grabbing',
                 ].join(' ')}
               >
                 {word}
@@ -1104,7 +1104,7 @@ function ArgumentAnalysis({ question, answer, disabled, onChange }: {
       {statements.map((stmt) => {
         const assigned = userMap[stmt.id] || '';
         return (
-          <div key={stmt.id} className="rounded-xl border border-border bg-muted/20 p-3.5 space-y-2.5">
+          <div key={stmt.id} className="rounded-xl border border-black/[0.08] bg-white p-3.5 space-y-2.5">
             <p className="text-[13px] text-foreground leading-relaxed">{stmt.text}</p>
             <div className="flex flex-wrap gap-1.5">
               {tags.map((tag) => {
@@ -1352,7 +1352,7 @@ function VennQuestion({ question, answer, disabled, onChange }: {
             <div
               key={item.id}
               className={`rounded-xl border px-3 py-2.5 transition-all ${
-                assignedZone ? `${zoneColorMap[assignedZone] ?? 'border-border bg-muted/20'} border` : 'border-border bg-muted/20'
+                assignedZone ? `${zoneColorMap[assignedZone] ?? 'border-black/[0.08] bg-white'} border` : 'border-black/[0.08] bg-white'
               }`}
             >
               <p className="mb-2 text-[13px] text-foreground">{item.text}</p>
@@ -1396,7 +1396,7 @@ function SpotErrorQuestion({ question, answer, disabled, onChange, reveal }: {
   return (
     <div className="space-y-3">
       <p className="text-[12px] text-muted-foreground">Click on the part of the statement that contains an error.</p>
-      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-muted/20 px-4 py-4">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-black/[0.08] bg-white px-4 py-4">
         {segments.map((seg) => {
           const isSelected = selected === seg.id;
           let cls = 'rounded-lg border px-3 py-2 text-[13.5px] leading-snug cursor-pointer transition-all ';
@@ -1447,7 +1447,7 @@ function ScenarioQuestion({ question, answer, disabled, onChange, reveal, correc
     <div className="space-y-4">
       {/* Scenario context */}
       {context ? (
-        <div className="rounded-xl border border-border bg-muted/30 px-4 py-3.5 space-y-2">
+        <div className="rounded-xl border border-black/[0.08] bg-white px-4 py-3.5 space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scenario</p>
           <p className="text-[13px] leading-relaxed text-foreground">
             {truncated ? `${context.slice(0, 320)}…` : context}
@@ -1525,7 +1525,7 @@ function QuestionView({
     if (blank) {
       const [before, after] = question.question.split(blank[0], 2);
       return (
-        <div className="rounded-xl border border-border bg-muted/30 px-4 py-4 text-[14px] leading-loose text-foreground">
+        <div className="rounded-xl border border-black/[0.08] bg-white px-4 py-4 text-[14px] leading-loose text-foreground">
           {before}
           <Input
             autoFocus
@@ -1559,7 +1559,7 @@ function QuestionView({
     return (
       <div className="space-y-3">
         {hint ? (
-          <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-[12px] text-muted-foreground">
+          <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-2.5 text-[12px] text-muted-foreground">
             <span className="font-medium text-foreground">Include: </span>{hint}
           </div>
         ) : null}
@@ -1569,7 +1569,7 @@ function QuestionView({
           onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
           disabled={disabled}
           rows={3}
-          className="w-full rounded-lg border border-border bg-background px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
+          className="w-full rounded-lg border border-black/[0.08] bg-white px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
           placeholder="Type your answer..."
         />
       </div>
