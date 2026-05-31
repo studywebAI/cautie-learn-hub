@@ -594,15 +594,15 @@ function QuizPageContent() {
         <div className="flex flex-1 overflow-hidden">
 
           {/* ── Left: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto bg-muted/20">
-            <div className="p-5 pb-3">
-              <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 overflow-y-auto bg-muted/12">
+            <div className="p-4 pb-2">
+              <div className="flex items-center justify-between mb-2.5">
                 <p className={S}>Question Types</p>
                 <span className="text-[11px] text-muted-foreground">{questionTypes.length} selected</span>
               </div>
             </div>
 
-            <div className="px-5 mb-6 rounded-lg border border-border/50 overflow-hidden bg-background">
+            <div className="mx-4 mb-4 rounded-lg border border-border/20 overflow-hidden bg-background">
               {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef, idx, arr) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
@@ -616,7 +616,7 @@ function QuizPageContent() {
                       tabIndex={0}
                       onClick={() => toggleQuestionType(typeDef.value)}
                       onKeyDown={(e) => e.key === 'Enter' && toggleQuestionType(typeDef.value)}
-                      className={`flex items-center gap-2.5 px-3.5 py-2 cursor-pointer rounded-lg border transition-all ${isSelected ? 'bg-[var(--accent-brand)]/12 border-[var(--accent-brand)]/30' : 'hover:bg-muted/40 border-border/20'}`}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b last:border-b-0 transition-all ${isSelected ? 'bg-[var(--accent-brand)]/8 border-b-border/20' : 'hover:bg-muted/30 border-b-border/10'}`}
                     >
                       {/* Circle — visual indicator only, clicking row handles toggle */}
                       <div
@@ -659,7 +659,7 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-3.5 py-3 bg-muted/10 border-t border-border/20 rounded-lg">
+                      <div className="px-3 py-2.5 bg-muted/20 border-t border-border/20">
                         <p className="text-[11px] text-muted-foreground mb-3">{typeDef.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {typeDef.variants.map((v) => (
@@ -683,11 +683,11 @@ function QuizPageContent() {
           </div>
 
           {/* ── Right rail: Settings ── */}
-          <div className="w-[280px] shrink-0 border-l border-border/20 bg-muted/10 overflow-y-auto">
+          <div className="w-[280px] shrink-0 border-l border-border/20 bg-muted/12 overflow-y-auto">
             <div className="p-3 space-y-3">
 
               {/* Title */}
-              <div className="rounded-lg border border-border/30 bg-background px-4 py-3.5 space-y-2.5">
+              <div className="rounded-lg border border-border/25 bg-background px-4 py-3.5 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>Quiz title (optional)</p>
                   <div className="relative group">
