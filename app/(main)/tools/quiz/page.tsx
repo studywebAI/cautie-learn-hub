@@ -591,10 +591,10 @@ function QuizPageContent() {
         </div>
 
         {/* Body: question types (left) + settings rail (right) */}
-        <div className="flex flex-1 overflow-hidden bg-muted/30">
+        <div className="flex flex-1 overflow-hidden bg-background">
 
           {/* ── Left: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg border border-border/40">
+          <div className="flex-1 overflow-y-auto bg-white m-3 rounded-lg border border-black/[0.08]">
             <div className="p-4 pb-2">
               <div className="flex items-center justify-between mb-2.5">
                 <p className={S}>Question Types</p>
@@ -602,7 +602,7 @@ function QuizPageContent() {
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-lg border border-border/40 overflow-hidden bg-background">
+            <div className="mx-4 mb-4 rounded-lg border border-black/[0.08] overflow-hidden bg-white">
               {QUIZ_TYPE_DEFINITIONS.map((typeDef, idx, arr) => {
                 const isAvailable = isQuizTypeAvailable(typeDef.value, mergedContentClass);
                 const isSelected = questionTypes.includes(typeDef.value);
@@ -617,7 +617,7 @@ function QuizPageContent() {
                       tabIndex={0}
                       onClick={() => toggleQuestionType(typeDef.value)}
                       onKeyDown={(e) => e.key === 'Enter' && toggleQuestionType(typeDef.value)}
-                      className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b last:border-b-0 transition-all ${isSelected ? 'bg-[var(--accent-brand)]/10 border-b-border/20' : 'hover:bg-muted/30 border-b-border/10'}`}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-black/[0.06] last:border-b-0 transition-all ${isSelected ? 'bg-[var(--accent-brand)]/10' : 'hover:bg-black/[0.02]'}`}
                     >
                       {/* Circle — visual indicator only, clicking row handles toggle */}
                       <div
@@ -660,7 +660,7 @@ function QuizPageContent() {
                     </div>
 
                     {isExpanded && (
-                      <div className="px-3 py-2.5 bg-muted/20 border-t border-border/20">
+                      <div className="px-3 py-2.5 bg-black/[0.02] border-t border-black/[0.06]">
                         <p className="text-[11px] text-muted-foreground mb-3">{typeDef.description}</p>
                         <div className="flex flex-wrap gap-2">
                           {typeDef.variants.map((v) => (
@@ -684,11 +684,11 @@ function QuizPageContent() {
           </div>
 
           {/* ── Right rail: Settings ── */}
-          <div className="w-[280px] shrink-0 bg-background m-3 ml-0 rounded-lg border border-border/40 overflow-y-auto">
+          <div className="w-[280px] shrink-0 bg-background m-3 ml-0 rounded-lg overflow-y-auto">
             <div className="p-3 space-y-3">
 
               {/* Title */}
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>Quiz title (optional)</p>
                   <div className="relative group">
@@ -708,7 +708,7 @@ function QuizPageContent() {
               </div>
 
               {/* Knowledge Level */}
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How much do you already know?</p>
                   <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
@@ -725,7 +725,7 @@ function QuizPageContent() {
               </div>
 
               {/* Mode */}
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>What mode do you want?</p>
                   <div className="relative group">
@@ -761,7 +761,7 @@ function QuizPageContent() {
               </div>
 
               {/* Answer Feedback */}
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>When do you want feedback?</p>
                   <div className="relative group">
@@ -797,7 +797,7 @@ function QuizPageContent() {
               </div>
 
               {/* Questions */}
-              <div className="rounded-lg border border-border/50 bg-background px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How many questions?</p>
                   <div className="flex items-center gap-2">
@@ -826,7 +826,7 @@ function QuizPageContent() {
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-border bg-background px-5 py-3.5 flex justify-between items-center gap-3">
+        <div className="shrink-0 border-t border-black/[0.08] bg-white px-5 py-3.5 flex justify-between items-center gap-3">
           <Button
             variant="outline"
             className="h-9 px-5 text-[13px]"
