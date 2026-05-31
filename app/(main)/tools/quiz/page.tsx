@@ -603,7 +603,7 @@ function QuizPageContent() {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-8 text-[13px] bg-background border-border"
+                  className="h-8 text-[13px] border-border/60"
                   placeholder=""
                   disabled={loading}
                 />
@@ -665,10 +665,10 @@ function QuizPageContent() {
                       type="button"
                       onClick={() => setAnswerFeedback(e.value)}
                       disabled={loading}
-                      className={`flex-1 rounded-lg px-2 py-1.5 text-[12px] font-medium transition-colors ${
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-[12px] font-medium transition-colors ${
                         answerFeedback === e.value
-                          ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
-                          : 'bg-sidebar-accent/30 text-muted-foreground hover:bg-sidebar-accent/50'
+                          ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                          : 'border-border/60 bg-transparent text-muted-foreground hover:bg-sidebar-accent/50'
                       }`}
                     >
                       {e.label}
@@ -701,7 +701,7 @@ function QuizPageContent() {
           </div>
 
           {/* ── Right: Question Types accordion ── */}
-          <div className="flex-1 overflow-y-auto bg-background">
+          <div className="flex-1 overflow-y-auto">
             <div className="p-4 pb-2">
               <div className="flex items-center justify-between mb-3">
                 <p className={S}>Question Types</p>
@@ -709,20 +709,24 @@ function QuizPageContent() {
               </div>
             </div>
 
-            <div className="mx-4 mb-4 rounded-xl border border-border overflow-hidden">
-              {QUIZ_TYPE_DEFINITIONS.map((typeDef, idx) => {
-                const available = isQuizTypeAvailable(typeDef.value, mergedContentClass);
+            <div className="mx-4 mb-4 rounded-xl border border-border overflow-hidden bg-card">
+              {QUIZ_TYPE_DEFINITIONS.filter((t) => isQuizTypeAvailable(t.value, mergedContentClass)).map((typeDef, idx, arr) => {
                 const isSelected = questionTypes.includes(typeDef.value);
                 const isExpanded = expandedTypes.has(typeDef.value);
-                const isLast = idx === QUIZ_TYPE_DEFINITIONS.length - 1;
+                const isLast = idx === arr.length - 1;
 
                 return (
-                  <div key={typeDef.value} className={!available ? 'opacity-35 pointer-events-none' : ''}>
-                    <div className={`flex items-center gap-3 px-3.5 py-2.5 ${!isLast || isExpanded ? 'border-b border-border' : ''} transition-colors ${isSelected ? 'bg-[var(--accent-brand)]/[0.04]' : 'bg-background hover:bg-muted/20'}`}>
-                      {/* Circle toggle */}
-                      <button
-                        type="button"
-                        onClick={() => toggleQuestionType(typeDef.value)}
+                  <div key={typeDef.value}>
+                    {/* Full-row click toggles the type */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleQuestionType(typeDef.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && toggleQuestionType(typeDef.value)}
+                      className={`flex items-center gap-3 px-3.5 py-2.5 cursor-pointer ${!isLast || isExpanded ? 'border-b border-border' : ''} transition-colors ${isSelected ? 'bg-[var(--accent-brand)]/10' : 'hover:bg-muted/30'}`}
+                    >
+                      {/* Circle — visual indicator only, clicking row handles toggle */}
+                      <div
                         className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-all ${
                           isSelected
                             ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
@@ -730,7 +734,7 @@ function QuizPageContent() {
                         }`}
                       >
                         {isSelected && <span className="block h-[6px] w-[6px] rounded-full bg-white" />}
-                      </button>
+                      </div>
 
                       {/* Label + description inline */}
                       <div className="flex-1 min-w-0 flex items-baseline gap-2">
@@ -742,10 +746,10 @@ function QuizPageContent() {
                         )}
                       </div>
 
-                      {/* Expand chevron */}
+                      {/* Expand chevron — stops propagation so row click doesn't fire */}
                       <button
                         type="button"
-                        onClick={() => toggleExpanded(typeDef.value)}
+                        onClick={(e) => { e.stopPropagation(); toggleExpanded(typeDef.value); }}
                         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                       >
                         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />

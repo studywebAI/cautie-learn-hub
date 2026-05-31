@@ -1229,7 +1229,7 @@ export function AppSidebar() {
   // Tablet + desktop: regular sidebar with trigger
   return (
     <Sidebar
-      className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300 rounded-r-2xl")}
+      className={cn(isTablet ? "w-[15rem]" : "w-[16.5rem]", "overflow-hidden transition-all duration-300 rounded-br-2xl")}
       collapsible="icon"
     >
       <SidebarContent className="px-2 py-2 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
