@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { BrainCircuit, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { BrainCircuit, ChevronDown, ChevronRight, Info, Loader2 } from 'lucide-react';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -572,10 +572,9 @@ function QuizPageContent() {
     return (
       <div className="h-full flex flex-col">
 
-        {/* Breadcrumb — compact tab matching sidebar corner */}
-        <div className="shrink-0">
-          <div className="w-fit bg-sidebar rounded-br-2xl">
-          <div className="flex min-h-9 items-center gap-0 px-3 text-[13px] font-medium leading-none text-sidebar-foreground">
+        {/* Breadcrumb — full-width, height = collapsed sidebar width (3.5rem), rounded-b-2xl */}
+        <div className="shrink-0 w-full bg-sidebar rounded-b-2xl">
+          <div className="flex min-h-[3.5rem] items-center gap-0 px-3 text-[13px] font-medium leading-none text-sidebar-foreground">
             <button
               type="button"
               className="text-sidebar-foreground/55 hover:text-[var(--accent-brand)] transition-colors"
@@ -589,8 +588,7 @@ function QuizPageContent() {
               Quiz
             </span>
           </div>
-          </div>{/* w-fit bg-sidebar */}
-        </div>{/* shrink-0 */}
+        </div>
 
         {/* Body: settings rail (left) + question types (right) */}
         <div className="flex flex-1 overflow-hidden">
@@ -822,27 +820,37 @@ function QuizPageContent() {
   // INPUT PHASE - Clean input without sidebar (State 1)
   if (phase === 'input') {
     const modeToggle = (
-      <>
+      <div className="flex items-center gap-1">
         {(['literal', 'research'] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => setInputMode(m)}
-            title={
-              m === 'literal'
-                ? 'Questions test exactly what is in your text'
-                : 'Questions may require knowledge beyond the text — you can skip irrelevant ones'
-            }
-            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
               inputMode === m
-                ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/15 text-[var(--accent-brand)]'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'bg-[var(--accent-brand)] text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {m === 'literal' ? 'Literal' : 'Research'}
           </button>
         ))}
-      </>
+        {/* Info tooltip */}
+        <div className="relative group">
+          <button
+            type="button"
+            className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/25 text-muted-foreground/40 hover:border-[var(--accent-brand)]/50 hover:text-[var(--accent-brand)] transition-colors"
+          >
+            <Info className="h-2.5 w-2.5" />
+          </button>
+          <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-60 -translate-x-1/2 rounded-xl border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+            <p className="text-[12px] font-medium text-foreground mb-1">Literal</p>
+            <p className="text-[11px] text-muted-foreground mb-2 leading-snug">Questions only test what's explicitly in your text.</p>
+            <p className="text-[12px] font-medium text-foreground mb-1">Research</p>
+            <p className="text-[11px] text-muted-foreground leading-snug">Questions may go beyond your text. You can skip irrelevant ones.</p>
+          </div>
+        </div>
+      </div>
     );
 
     return (

@@ -189,7 +189,7 @@ export const QuizQuestionSchema = z.object({
 });
 
 export const QuizSchema = z.object({
-  title: z.string().describe('A suitable title for the quiz, based on the source text.'),
+  title: z.string().describe('Topic-only title based on the source text — just the subject matter, e.g. "Start of WW1" or "Cell Division". Never include the word "Quiz", "Test", "Flashcard", or any tool name.'),
   description: z.string().describe('A brief description of the quiz content.'),
   questions: z.array(QuizQuestionSchema).describe('An array of questions.'),
 });
