@@ -665,6 +665,9 @@
 
   .app-main-shell.app-main-shell--tool > * {
     padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
   }
   @media (min-width: 768px) {
     .app-main-shell {
