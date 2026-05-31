@@ -572,8 +572,9 @@ function QuizPageContent() {
     return (
       <div className="h-full flex flex-col">
 
-        {/* Breadcrumb — same style as WorkbenchShell, connects flush to sidebar */}
-        <div className="shrink-0 bg-sidebar rounded-b-2xl">
+        {/* Breadcrumb — compact tab matching sidebar corner */}
+        <div className="shrink-0">
+          <div className="w-fit bg-sidebar rounded-br-2xl">
           <div className="flex min-h-9 items-center gap-0 px-3 text-[13px] font-medium leading-none text-sidebar-foreground">
             <button
               type="button"
@@ -588,7 +589,8 @@ function QuizPageContent() {
               Quiz
             </span>
           </div>
-        </div>
+          </div>{/* w-fit bg-sidebar */}
+        </div>{/* shrink-0 */}
 
         {/* Body: settings rail (left) + question types (right) */}
         <div className="flex flex-1 overflow-hidden">

@@ -40,9 +40,9 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
   return (
     <div className="relative h-full w-full">
       <div className="flex h-full w-full flex-col">
-        {/* Breadcrumb — same bg as sidebar, forms an L-shape with it.
-            rounded-b-2xl gives equal smooth corners on both bottom edges. */}
-        <div className="w-full bg-sidebar rounded-b-2xl">
+        {/* Breadcrumb — compact tab, same bg as sidebar, rounded-br-2xl matches sidebar corner */}
+        <div className="shrink-0">
+          <div className="w-fit bg-sidebar rounded-br-2xl">
           <div className="flex min-h-9 items-center justify-between px-3">
             <div className="flex items-center text-[13px] font-medium leading-none text-sidebar-foreground">
               <button
@@ -68,7 +68,8 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
             )}
           </div>
           {description && <p className="px-3 pb-2 text-[11px] text-sidebar-foreground/50">{description}</p>}
-        </div>
+          </div>{/* w-fit bg-sidebar */}
+        </div>{/* shrink-0 */}
 
         <div className="flex min-h-0 flex-1 gap-2 px-0 py-1">
           <div className="flex min-w-0 flex-1 flex-col">
