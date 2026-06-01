@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
@@ -56,7 +55,7 @@ function MCQCardGrid({ question, answer, disabled, onChange, reveal, correctOpti
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-medium transition-all ${cls}`}
+            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-medium ${cls}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -87,7 +86,7 @@ function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOpt
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left transition-all ${cls}`}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left ${cls}`}
           >
             <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/40'}`}>
               {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
@@ -128,7 +127,7 @@ function MCQColorBlocks({ question, answer, disabled, onChange, reveal, correctO
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-semibold transition-all ${cls} opacity-${disabled && !selected ? '70' : '100'}`}
+            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-semibold ${cls} ${disabled && !selected ? 'opacity-70' : 'opacity-100'}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -163,7 +162,7 @@ function TFBigButtons({ answer, disabled, onChange, reveal, correctOptionId, opt
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl text-[22px] font-bold transition-all ${cls}`}
+            className={`flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl text-[22px] font-bold ${cls}`}
           >
             <span className="text-3xl">{isTrue ? '○' : '✕'}</span>
             <span className="text-[15px]">{cleanOptionText(option.text)}</span>
@@ -843,21 +842,40 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
           ) : (
             <span
               key={i}
+              draggable={!disabled && Boolean(values[part.index])}
+              onDragStart={(e) => {
+                if (values[part.index]) {
+                  e.dataTransfer.setData('text/plain', `__RETURN__:${part.index}`);
+                  setDragWord(values[part.index]);
+                }
+              }}
+              onDragEnd={() => setDragWord(null)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
-                const word = e.dataTransfer.getData('text/plain') || dragWord;
-                if (word) update(part.index, word);
+                const raw = e.dataTransfer.getData('text/plain') || dragWord || '';
+                if (raw.startsWith('__RETURN__:')) {
+                  // Another slot dragged here — swap
+                  const fromIdx = Number(raw.split(':')[1]);
+                  if (!Number.isNaN(fromIdx) && fromIdx !== part.index) {
+                    const next = Array.from({ length: blankCount }, (_, i) => values[i] ?? '');
+                    const tmp = next[fromIdx];
+                    next[fromIdx] = next[part.index] || '';
+                    next[part.index] = tmp;
+                    onChange({ kind: 'cloze', value: next });
+                  }
+                } else if (raw) {
+                  update(part.index, raw);
+                }
                 setDragWord(null);
               }}
               onClick={() => {
-                // Clear this slot
                 if (values[part.index]) update(part.index, '');
               }}
               className={[
-                'mx-1.5 inline-flex min-w-[80px] items-center justify-center rounded-md border px-2 py-0.5 align-middle text-[13px] transition-all cursor-pointer',
+                'mx-1.5 inline-flex min-w-[80px] items-center justify-center rounded-md border px-2 py-0.5 align-middle text-[13px] cursor-pointer',
                 values[part.index]
-                  ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium'
+                  ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium cursor-grab active:cursor-grabbing'
                   : 'border-dashed border-muted-foreground/40 bg-background text-muted-foreground',
               ].join(' ')}
             >
@@ -869,8 +887,19 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
 
       {/* Word bank */}
       <div className="space-y-2">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Word bank — drag or click to place</p>
-        <div className="flex flex-wrap gap-2">
+        <div
+          className="flex flex-wrap gap-2 min-h-[36px] rounded-lg p-1"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const raw = e.dataTransfer.getData('text/plain') || dragWord || '';
+            if (raw.startsWith('__RETURN__:')) {
+              const fromIdx = Number(raw.split(':')[1]);
+              if (!Number.isNaN(fromIdx)) update(fromIdx, '');
+            }
+            setDragWord(null);
+          }}
+        >
           {wordBank.map((word) => {
             const usedInSlot = usedSlotMap[word] !== undefined;
             return (
@@ -881,13 +910,12 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
                 onDragStart={(e) => { e.dataTransfer.setData('text/plain', word); setDragWord(word); }}
                 onClick={() => {
                   if (disabled || usedInSlot) return;
-                  // Fill the first empty slot
                   const emptyIdx = Array.from({ length: blankCount }, (_, i) => i).find((i) => !values[i]);
                   if (emptyIdx !== undefined) update(emptyIdx, word);
                 }}
                 disabled={disabled}
                 className={[
-                  'rounded-lg border px-3 py-1.5 text-[13px] transition-all',
+                  'rounded-lg border px-3 py-1.5 text-[13px]',
                   usedInSlot
                     ? 'border-black/[0.06] bg-muted/20 text-muted-foreground/40 line-through cursor-default'
                     : 'border-black/[0.08] bg-white text-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/[0.04] cursor-grab active:cursor-grabbing',
@@ -1006,13 +1034,20 @@ function ComparisonMatrix({ question, answer, disabled, onChange }: {
   const rows = question.comparisonRows || [];
   const cols = question.comparisonColumns || [];
   const correct = question.comparisonCorrect || {};
+  const singleSelect = question.comparisonSingleSelect ?? false;
   const userMap: Record<string, string[]> = answer?.kind === 'comparison' ? answer.value : {};
 
   const toggle = (row: string, col: string) => {
     if (disabled) return;
-    const current = userMap[row] || [];
-    const next = current.includes(col) ? current.filter((c) => c !== col) : [...current, col];
-    onChange({ kind: 'comparison', value: { ...userMap, [row]: next } });
+    if (singleSelect) {
+      const current = userMap[row] || [];
+      const already = current.includes(col);
+      onChange({ kind: 'comparison', value: { ...userMap, [row]: already ? [] : [col] } });
+    } else {
+      const current = userMap[row] || [];
+      const next = current.includes(col) ? current.filter((c) => c !== col) : [...current, col];
+      onChange({ kind: 'comparison', value: { ...userMap, [row]: next } });
+    }
   };
 
   if (!rows.length || !cols.length) {
@@ -1020,51 +1055,58 @@ function ComparisonMatrix({ question, answer, disabled, onChange }: {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border">
-      <table className="w-full text-[13px]">
-        <thead>
-          <tr className="border-b border-border bg-muted/40">
-            <th className="px-3 py-2.5 text-left font-medium text-muted-foreground" />
-            {cols.map((col) => (
-              <th key={col} className="px-3 py-2.5 text-center text-[12px] font-semibold text-foreground">
-                {col}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, rowIdx) => (
-            <tr key={row} className={rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-              <td className="px-3 py-2.5 font-medium text-foreground">{row}</td>
-              {cols.map((col) => {
-                const checked = (userMap[row] || []).includes(col);
-                const isCorrect = (correct[row] || []).includes(col);
-                return (
-                  <td key={col} className="px-3 py-2.5 text-center">
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => toggle(row, col)}
-                      className={[
-                        'mx-auto flex h-6 w-6 items-center justify-center rounded border-2 transition-all',
-                        checked
-                          ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
-                          : 'border-muted-foreground/30 bg-background hover:border-[var(--accent-brand)]/60',
-                      ].join(' ')}
-                    >
-                      {checked && (
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                  </td>
-                );
-              })}
+    <div className="space-y-2">
+      <p className="text-[11px] text-muted-foreground">
+        {singleSelect ? 'Select one column per row.' : 'Select all that apply per row.'}
+      </p>
+      <div className="overflow-x-auto rounded-xl border border-border">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-border bg-muted/40">
+              <th className="px-3 py-2.5 text-left font-medium text-muted-foreground" />
+              {cols.map((col) => (
+                <th key={col} className="px-3 py-2.5 text-center text-[12px] font-semibold text-foreground">
+                  {col}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, rowIdx) => (
+              <tr key={row} className={rowIdx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                <td className="px-3 py-2.5 font-medium text-foreground">{row}</td>
+                {cols.map((col) => {
+                  const checked = (userMap[row] || []).includes(col);
+                  return (
+                    <td key={col} className="px-3 py-2.5 text-center">
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => toggle(row, col)}
+                        className={[
+                          'mx-auto flex h-6 w-6 items-center justify-center border-2',
+                          singleSelect ? 'rounded-full' : 'rounded',
+                          checked
+                            ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-white'
+                            : 'border-muted-foreground/30 bg-background hover:border-[var(--accent-brand)]/60',
+                        ].join(' ')}
+                      >
+                        {checked && (
+                          singleSelect
+                            ? <span className="h-2 w-2 rounded-full bg-white" />
+                            : <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                        )}
+                      </button>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1476,6 +1518,114 @@ function ScenarioQuestion({ question, answer, disabled, onChange, reveal, correc
   );
 }
 
+// ─── Visual Timeline ─────────────────────────────────────────────────────────
+function TimelineVisual({ question, answer, disabled, onChange }: {
+  question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
+}) {
+  const events = question.timelineEvents || [];
+  const start = question.timelineStart || '0';
+  const end = question.timelineEnd || '100';
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  // answer stores placed positions: { eventId: position (1-100) }
+  const placed: Record<string, number> = answer?.kind === 'matching' ? (answer.value as any) : {};
+
+  const placeEvent = (id: string, pct: number) => {
+    const pos = Math.round(Math.max(1, Math.min(100, pct)));
+    onChange({ kind: 'matching', value: { ...placed, [id]: pos } } as any);
+  };
+
+  const unplacedEvents = events.filter((e) => placed[e.id] === undefined);
+  const placedEvents = events.filter((e) => placed[e.id] !== undefined);
+
+  return (
+    <div className="space-y-5">
+      {/* Event pool */}
+      {unplacedEvents.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {unplacedEvents.map((ev) => (
+            <div
+              key={ev.id}
+              draggable={!disabled}
+              onDragStart={() => setDraggingId(ev.id)}
+              onDragEnd={() => setDraggingId(null)}
+              className="rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-[13px] text-foreground cursor-grab active:cursor-grabbing select-none shadow-sm"
+            >
+              {ev.label}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Timeline track */}
+      <div className="relative pt-8 pb-6">
+        {/* Drop zone line */}
+        <div
+          className="relative h-2 rounded-full bg-muted cursor-crosshair"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            const id = draggingId;
+            if (!id) return;
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const pct = ((e.clientX - rect.left) / rect.width) * 100;
+            placeEvent(id, pct);
+            setDraggingId(null);
+          }}
+          onClick={(e) => {
+            if (disabled || !draggingId) return;
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const pct = ((e.clientX - rect.left) / rect.width) * 100;
+            placeEvent(draggingId, pct);
+            setDraggingId(null);
+          }}
+        >
+          <div className="absolute inset-0 rounded-full bg-[var(--accent-brand)]/20" />
+
+          {/* Placed event markers */}
+          {placedEvents.map((ev) => {
+            const pos = placed[ev.id];
+            const correctPos = ev.position;
+            return (
+              <div
+                key={ev.id}
+                style={{ left: `${pos}%`, transform: 'translateX(-50%)' }}
+                className="absolute top-1/2 -translate-y-1/2"
+              >
+                {/* Dot */}
+                <div className="h-4 w-4 rounded-full border-2 border-white bg-[var(--accent-brand)] shadow-md" />
+                {/* Label chip above */}
+                <div
+                  className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-black/[0.08] bg-white px-2 py-0.5 text-[11px] text-foreground shadow-sm cursor-pointer"
+                  onClick={() => {
+                    if (disabled) return;
+                    const next = { ...placed };
+                    delete next[ev.id];
+                    onChange({ kind: 'matching', value: next } as any);
+                  }}
+                  title="Click to remove"
+                >
+                  {ev.label}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Start / end labels */}
+        <div className="mt-2 flex justify-between text-[11px] font-medium text-muted-foreground">
+          <span>{start}</span>
+          <span>{end}</span>
+        </div>
+      </div>
+
+      {placedEvents.length > 0 && !disabled && (
+        <p className="text-[11px] text-muted-foreground">Click a placed label to remove it.</p>
+      )}
+    </div>
+  );
+}
+
 function QuestionView({
   question,
   answer,
@@ -1499,11 +1649,16 @@ function QuestionView({
     question.correctOptionId ||
     '';
 
-  // ─── Timeline (ordering sort variant when orderingItems present) ─────────────
-  if (type === 'timeline' && (question.orderingItems?.length ?? 0) >= 2) {
-    const variant = selectVariant(question.id, ks, 2);
-    if (variant === 0) return <OrderingClickNumber question={question} answer={answer} disabled={disabled} onChange={onChange} />;
-    return <OrderingDragHandles question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+  // ─── Timeline: visual track if timelineEvents present, otherwise ordering ─────
+  if (type === 'timeline') {
+    if ((question.timelineEvents?.length ?? 0) >= 1) {
+      return <TimelineVisual question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    }
+    if ((question.orderingItems?.length ?? 0) >= 2) {
+      const variant = selectVariant(question.id, ks, 2);
+      if (variant === 0) return <OrderingClickNumber question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+      return <OrderingDragHandles question={question} answer={answer} disabled={disabled} onChange={onChange} />;
+    }
   }
 
   // ─── MCQ / True-False / timeline / media types (option-based) ───────────────
@@ -1726,35 +1881,7 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
   );
 }
 
-function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string> }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
-  const [practiceCategory, setPracticeCategory] = useState<string | null>(null);
-  const gradeStorageKey = `quiz.grade.format::${normalizeText(sourceText).slice(0, 96)}`;
-  const analyticsSelectionKey = `quiz.analytics.selection.v1::${normalizeText(sourceText).slice(0, 160)}`;
-  const [gradeFormat, setGradeFormat] = useState<'percent' | 'eu10' | 'usAF'>('percent');
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(gradeStorageKey);
-      if (raw === 'percent' || raw === 'eu10' || raw === 'usAF') setGradeFormat(raw);
-    } catch {}
-  }, [gradeStorageKey]);
-  useEffect(() => {
-    try {
-      localStorage.setItem(gradeStorageKey, gradeFormat);
-    } catch {}
-  }, [gradeFormat, gradeStorageKey]);
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(analyticsSelectionKey);
-      if (raw && Number.isFinite(Number(raw))) setSelectedIdx(Math.max(0, Number(raw)));
-    } catch {}
-  }, [analyticsSelectionKey]);
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(analyticsSelectionKey, String(selectedIdx));
-    } catch {}
-  }, [analyticsSelectionKey, selectedIdx]);
-
+function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRestart }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string>; onRestart?: () => void }) {
   const rows = useMemo(
     () =>
       quiz.questions.map((question, index) => {
@@ -1782,128 +1909,383 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds }: { q
     [answers, notRelevantIds, quiz.questions, signals]
   );
 
-  // Exclude not-relevant questions from scoring
-  const scoredRows = rows.filter((row) => !row.isNotRelevant);
+  const scoredRows = rows.filter((r) => !r.isNotRelevant);
+  const wrongRows = scoredRows.filter((r) => !r.correct);
+  const notRelevantCount = rows.length - scoredRows.length;
 
-  const selected = rows[Math.min(selectedIdx, Math.max(0, rows.length - 1))] || rows[0];
-  const grouped = scoredRows.reduce<Record<string, { total: number; scoreSum: number }>>((acc, row) => {
-    acc[row.category] = acc[row.category] || { total: 0, scoreSum: 0 };
-    acc[row.category].total += 1;
-    acc[row.category].scoreSum += row.accuracy;
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  const accuracyPct = scoredRows.length
+    ? Math.round(scoredRows.reduce((s, r) => s + r.accuracy, 0) / scoredRows.length)
+    : 0;
+  const completedPct = rows.length
+    ? Math.round((scoredRows.filter((r) => r.answer !== undefined).length / rows.length) * 100)
+    : 0;
+  const avgMs = signals.length
+    ? Math.round(signals.reduce((s, sig) => s + Number(sig.responseMs || 0), 0) / signals.length)
+    : 0;
+  const totalMs = signals.reduce((s, sig) => s + Number(sig.responseMs || 0), 0);
+
+  // ── Category breakdown ────────────────────────────────────────────────────────
+  const catMap = scoredRows.reduce<Record<string, { total: number; scoreSum: number; wrongQs: string[] }>>((acc, r) => {
+    acc[r.category] = acc[r.category] || { total: 0, scoreSum: 0, wrongQs: [] };
+    acc[r.category].total += 1;
+    acc[r.category].scoreSum += r.accuracy;
+    if (!r.correct) acc[r.category].wrongQs.push(r.question.question);
     return acc;
   }, {});
-  const categoryScores = Object.entries(grouped).map(([category, stat]) => ({ category, score: Math.round(stat.scoreSum / Math.max(1, stat.total)) }));
-  const weak = [...categoryScores].sort((a, b) => a.score - b.score).slice(0, 3);
-  const strong = [...categoryScores].sort((a, b) => b.score - a.score).slice(0, 3);
-  const accuracyPct = scoredRows.length ? Math.round(scoredRows.reduce((acc, row) => acc + row.accuracy, 0) / scoredRows.length) : 0;
-  const speedPct = scoreSpeed(signals);
-  const progressionPct = scoreProgression(signals);
-  const avgMs = signals.length ? Math.round(signals.reduce((acc, signal) => acc + Number(signal.responseMs || 0), 0) / signals.length) : 0;
-  const notes = buildLearningNotes(scoredRows.map((row) => ({ category: row.category, accuracy: row.accuracy })), accuracyPct, speedPct);
-  const notRelevantCount = rows.length - scoredRows.length;
-  const gradeLabel = gradeFormat === 'percent' ? `${accuracyPct}%` : gradeFormat === 'eu10' ? (accuracyPct / 10).toFixed(1) : accuracyPct >= 90 ? 'A' : accuracyPct >= 80 ? 'B' : accuracyPct >= 70 ? 'C' : accuracyPct >= 60 ? 'D' : accuracyPct >= 50 ? 'E' : 'F';
+  const categoryScores = Object.entries(catMap)
+    .map(([cat, s]) => ({ cat, score: Math.round(s.scoreSum / Math.max(1, s.total)), total: s.total, wrongQs: s.wrongQs }))
+    .sort((a, b) => a.score - b.score);
 
-  const openPracticeTool = (tool: 'quiz' | 'flashcards' | 'notes' | 'mindmap', category: string) => {
-    const scoped = `${sourceText}\n\nFocus category: ${category}`;
-    const path = tool === 'mindmap' ? '/tools/wordweb' : `/tools/${tool}`;
-    window.location.href = `${path}?sourceText=${encodeURIComponent(scoped)}`;
+  // ── Type breakdown ────────────────────────────────────────────────────────────
+  const typeMap = scoredRows.reduce<Record<string, { total: number; scoreSum: number }>>((acc, r) => {
+    acc[r.type] = acc[r.type] || { total: 0, scoreSum: 0 };
+    acc[r.type].total += 1;
+    acc[r.type].scoreSum += r.accuracy;
+    return acc;
+  }, {});
+  const typeScores = Object.entries(typeMap)
+    .map(([type, s]) => ({ type, score: Math.round(s.scoreSum / Math.max(1, s.total)) }))
+    .sort((a, b) => a.score - b.score);
+
+  // ── Retry recommendation ──────────────────────────────────────────────────────
+  const retryDays = accuracyPct >= 90 ? 7 : accuracyPct >= 70 ? 3 : accuracyPct >= 50 ? 1 : 0;
+
+  // ── Train action ─────────────────────────────────────────────────────────────
+  const openTrainTool = (tool: 'quiz' | 'flashcards' | 'notes', cat: string, wrongQs: string[]) => {
+    const focus = wrongQs.length
+      ? `\n\nFocus specifically on: "${cat}". The following questions from this topic were answered incorrectly — make sure to cover these concepts:\n${wrongQs.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+      : `\n\nFocus on: ${cat}`;
+    const path = `/tools/${tool}`;
+    window.location.href = `${path}?sourceText=${encodeURIComponent(sourceText + focus)}`;
   };
 
+  // ── Expanded question ─────────────────────────────────────────────────────────
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const [showTotalTime, setShowTotalTime] = useState(false);
+
+  const accentColor = (pct: number) =>
+    pct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : pct >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+  const accentBg = (pct: number) =>
+    pct >= 80 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : pct >= 50 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quiz Analytics</CardTitle>
-        <CardDescription>Interactive review of your answers</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-2.5">
-            {notRelevantCount > 0 && (
-              <p className="text-[12px] text-muted-foreground rounded-lg border border-border bg-muted/30 px-3 py-2">
-                {notRelevantCount} question{notRelevantCount > 1 ? 's were' : ' was'} marked as Not Relevant and excluded from scoring.
+    <div className="flex h-full flex-col bg-muted/30">
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-white dark:bg-card px-6 py-3">
+        <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+          <span className="font-medium text-foreground">Quiz</span>
+          {quiz.title ? <><span>/</span><span className="max-w-[200px] truncate">{quiz.title}</span></> : null}
+          <span>/</span>
+          <span className="font-medium text-foreground">Results</span>
+        </div>
+        {onRestart && (
+          <Button size="sm" variant="outline" className="h-8 text-[12px]" onClick={onRestart}>
+            Try again
+          </Button>
+        )}
+      </div>
+
+      {/* Full progress bar */}
+      <div className="h-[3px] w-full shrink-0 bg-[var(--accent-brand)]" />
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-auto">
+        <div className="mx-auto max-w-[820px] px-5 py-6 space-y-4">
+
+          {notRelevantCount > 0 && (
+            <p className="rounded-lg border border-border bg-white dark:bg-card px-4 py-2 text-[12px] text-muted-foreground">
+              {notRelevantCount} question{notRelevantCount > 1 ? 's were' : ' was'} marked as Not Relevant and excluded from scoring.
+            </p>
+          )}
+
+          {/* ── Stat pills ─────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-3 gap-3">
+            {/* Accuracy */}
+            <div className={`rounded-2xl border px-5 py-4 bg-white dark:bg-card ${accentBg(accuracyPct)}`}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Accuracy</p>
+              <p className={`mt-1 text-3xl font-bold tabular-nums ${accentColor(accuracyPct)}`}>{accuracyPct}%</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{scoredRows.filter((r) => r.correct).length} / {scoredRows.length} correct</p>
+            </div>
+            {/* Speed */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Speed</p>
+              <button
+                type="button"
+                className="mt-1 text-3xl font-bold tabular-nums text-foreground hover:text-[var(--accent-brand)] transition-colors"
+                onClick={() => setShowTotalTime((v) => !v)}
+                title="Click to toggle avg / total"
+              >
+                {showTotalTime
+                  ? totalMs > 0 ? `${Math.round(totalMs / 1000)}s` : '—'
+                  : avgMs > 0 ? `${(avgMs / 1000).toFixed(1)}s` : '—'}
+              </button>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {showTotalTime ? 'total time' : 'avg per question — click for total'}
               </p>
-            )}
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Grade</p>
-                <p className="text-lg font-semibold">{gradeLabel}</p>
-                <select value={gradeFormat} onChange={(e) => setGradeFormat(e.target.value as 'percent' | 'eu10' | 'usAF')} className="mt-1 h-7 rounded border border-border bg-background px-2 text-[11px]">
-                  <option value="percent">Percent</option>
-                  <option value="eu10">EU 1-10</option>
-                  <option value="usAF">US A-F</option>
-                </select>
-              </div>
-              <div className="rounded-lg border border-border bg-background p-3"><p className="text-xs text-muted-foreground">Accuracy</p><p className="text-lg font-semibold">{accuracyPct}%</p></div>
-              <div className="rounded-lg border border-border bg-background p-3"><p className="text-xs text-muted-foreground">Speed</p><p className="text-lg font-semibold">{speedPct}%</p><p className="text-[11px] text-muted-foreground">{avgMs > 0 ? `${(avgMs / 1000).toFixed(1)}s avg` : '-'}</p></div>
-              <div className="rounded-lg border border-border bg-background p-3"><p className="text-xs text-muted-foreground">Progression</p><p className="text-lg font-semibold">{progressionPct}%</p></div>
             </div>
+            {/* Completed */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Completed</p>
+              <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">{completedPct}%</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">{scoredRows.length} questions answered</p>
+            </div>
+          </div>
 
-            <div className="rounded-lg border border-border bg-background p-2.5">
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                {rows.map((row) => (
-                  <button key={row.id} type="button" onClick={() => setSelectedIdx(row.idx)} className={`rounded-full px-3 py-1 text-xs ${selected?.id === row.id ? 'bg-foreground text-background' : row.accuracy >= 100 ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : row.accuracy <= 0 ? 'border border-rose-200 bg-rose-50 text-rose-700' : 'border border-border bg-muted text-foreground'}`}>
-                    Q{row.idx + 1}
-                  </button>
-                ))}
-              </div>
-              {selected ? (
-                <div className="rounded-lg border border-border p-2.5">
-                  <p className="mb-1 text-sm font-medium">{selected.question.question}</p>
-                  <p className="mb-2 text-xs text-muted-foreground">Category: {selected.category} | Type: {selected.type} | Difficulty: {selected.difficulty} | Accuracy on this question: {selected.accuracy}%</p>
-                  <div className="grid gap-2 md:grid-cols-2">
-                    <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Your answer</p><p className="text-sm">{selected.given}</p></div>
-                    <div className="rounded-md bg-muted/30 p-2"><p className="text-xs text-muted-foreground">Correct answer</p><p className="text-sm">{selected.correctValue}</p></div>
+          {/* ── Question list ───────────────────────────────────────────────── */}
+          <div className="rounded-2xl border border-border bg-white dark:bg-card overflow-hidden shadow-sm">
+            <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">All questions</p>
+            </div>
+            <div className="divide-y divide-border/60">
+              {rows.map((row) => {
+                const isExpanded = expandedIdx === row.idx;
+                const unanswered = row.answer === undefined && !row.isNotRelevant;
+                return (
+                  <div key={row.id}>
+                    <button
+                      type="button"
+                      className="w-full px-5 py-3.5 text-left hover:bg-muted/20 transition-colors"
+                      onClick={() => setExpandedIdx(isExpanded ? null : row.idx)}
+                    >
+                      <div className="flex items-start gap-3">
+                        {/* Status dot */}
+                        <span className={[
+                          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                          row.isNotRelevant ? 'bg-muted text-muted-foreground' :
+                          unanswered ? 'bg-muted text-muted-foreground' :
+                          row.correct ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
+                        ].join(' ')}>
+                          {row.isNotRelevant ? '—' : unanswered ? '?' : row.correct ? '✓' : '✗'}
+                        </span>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-semibold text-muted-foreground">Q{row.idx + 1}</span>
+                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-1.5 py-0.5 text-[9px] font-semibold text-[var(--accent-brand)]">{getTypeLabel(row.type)}</span>
+                            {row.isNotRelevant && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">not relevant</span>}
+                          </div>
+                          <p className="mt-0.5 text-[13px] font-medium text-foreground line-clamp-2">
+                            {row.question.question.replace(/_{3,}/g, '____')}
+                          </p>
+                        </div>
+
+                        {/* Right: answer pills + time */}
+                        {!row.isNotRelevant && !unanswered && (
+                          <div className="shrink-0 flex flex-col items-end gap-1 text-right">
+                            <div className="flex flex-wrap justify-end gap-1 max-w-[220px]">
+                              <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium border ${row.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
+                                {row.given.length > 30 ? row.given.slice(0, 28) + '…' : row.given}
+                              </span>
+                              {!row.correct && (
+                                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300">
+                                  {row.correctValue.length > 30 ? row.correctValue.slice(0, 28) + '…' : row.correctValue}
+                                </span>
+                              )}
+                            </div>
+                            {row.responseMs > 0 && (
+                              <span className="text-[10px] text-muted-foreground">{(row.responseMs / 1000).toFixed(1)}s</span>
+                            )}
+                          </div>
+                        )}
+                        {unanswered && <span className="shrink-0 text-[11px] text-muted-foreground">skipped</span>}
+                      </div>
+                    </button>
+
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div className="border-t border-border/40 bg-muted/10 px-5 py-4 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
+                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Your answer</p>
+                            <p className={`text-[13px] font-medium ${row.correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{row.given || '—'}</p>
+                          </div>
+                          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 px-4 py-3">
+                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Correct answer</p>
+                            <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-400">{row.correctValue || '—'}</p>
+                          </div>
+                        </div>
+                        {row.question.type === 'matching' && (
+                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
+                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Matching breakdown</p>
+                            <MatchingComparison question={row.question} answer={row.answer} />
+                          </div>
+                        )}
+                        {row.question.explanation && (
+                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
+                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Explanation</p>
+                            <p className="text-[12.5px] text-foreground/80 leading-relaxed">{row.question.explanation}</p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span>Parts: {row.partsCorrect}/{row.partsTotal}</span>
+                          {row.responseMs > 0 && <span>Time: {(row.responseMs / 1000).toFixed(1)}s</span>}
+                          <span>Difficulty: {row.difficulty}/10</span>
+                          <span>Topic: {row.category}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground">Question parts: {selected.partsCorrect}/{selected.partsTotal} | Question speed: {selected.responseMs > 0 ? `${(selected.responseMs / 1000).toFixed(1)}s` : '-'}</div>
-                  {selected.question.type === 'matching' ? (
-                    <div className="mt-2 rounded-md bg-muted/20 p-2">
-                      <p className="mb-1 text-xs text-muted-foreground">Matching breakdown</p>
-                      <MatchingComparison question={selected.question} answer={selected.answer} />
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
+                );
+              })}
             </div>
           </div>
 
-          <div className="space-y-2.5">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-sm font-medium">Strong points</p>
-                <div className="mt-2 space-y-1.5">{strong.map((entry) => <p key={entry.category} className="text-xs">{entry.category} <span className="text-muted-foreground">{entry.score}%</span></p>)}</div>
+          {/* ── Insights row ────────────────────────────────────────────────── */}
+          <div className="grid gap-4 md:grid-cols-2">
+
+            {/* Strong / Weak split card */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Topics overview</p>
               </div>
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-sm font-medium">Weak points</p>
-                <div className="mt-2 space-y-1.5">{weak.map((entry) => <p key={entry.category} className="text-xs">{entry.category} <span className="text-muted-foreground">{entry.score}%</span></p>)}</div>
-              </div>
+              {categoryScores.length === 0 ? (
+                <p className="px-5 py-4 text-[12px] text-muted-foreground">No category data.</p>
+              ) : (
+                <div className="divide-y divide-border/40">
+                  {categoryScores.map((entry) => (
+                    <div key={entry.cat} className="flex items-center justify-between px-5 py-2.5">
+                      <span className="text-[13px] text-foreground capitalize">{entry.cat}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                          entry.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
+                          entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
+                          'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                        }`}>
+                          {entry.score}%
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{entry.total}q</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="rounded-lg border border-border bg-background p-3">
-              <p className="mb-2 text-sm font-medium">Practice weak points</p>
-              <div className="grid gap-2">{weak.map((entry) => <button key={entry.category} type="button" className="rounded-md border border-border bg-muted/40 px-3 py-2 text-left text-sm" onClick={() => setPracticeCategory(entry.category)}>{entry.category} ({entry.score}%)</button>)}</div>
-            </div>
-            {notes.length > 0 ? (
-              <div className="rounded-lg border border-border bg-background p-3">
-                <p className="text-sm font-medium">Notes</p>
-                <ul className="mt-2 list-disc pl-4 text-xs text-muted-foreground">{notes.map((note) => <li key={note}>{note}</li>)}</ul>
+
+            {/* Keep training */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Keep training</p>
               </div>
-            ) : null}
+              {wrongRows.length === 0 ? (
+                <div className="px-5 py-6 text-center">
+                  <p className="text-[13px] font-semibold text-emerald-600">Perfect score!</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Nothing to train right now.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border/40">
+                  {categoryScores.filter((e) => e.wrongQs.length > 0).map((entry) => (
+                    <div key={entry.cat} className="px-5 py-3.5">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-medium text-foreground capitalize">{entry.cat}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                            entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-red-50 border-red-200 text-red-600'
+                          }`}>{entry.wrongQs.length} wrong</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {(['quiz', 'flashcards', 'notes'] as const).map((tool) => (
+                          <button
+                            key={tool}
+                            type="button"
+                            onClick={() => openTrainTool(tool, entry.cat, entry.wrongQs)}
+                            className="rounded-lg border border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/[0.06] px-3 py-1.5 text-[11px] font-semibold text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.12] capitalize"
+                          >
+                            {tool}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-      {practiceCategory ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-background p-4">
-            <div className="mb-3 flex items-center justify-between"><p className="text-sm font-medium">Practice {practiceCategory}</p><Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setPracticeCategory(null)}>Close</Button></div>
-            <div className="grid gap-2">
-              <Button variant="outline" className="justify-start" onClick={() => openPracticeTool('quiz', practiceCategory)}>Quiz</Button>
-              <Button variant="outline" className="justify-start" onClick={() => openPracticeTool('flashcards', practiceCategory)}>Flashcards</Button>
-              <Button variant="outline" className="justify-start" onClick={() => openPracticeTool('notes', practiceCategory)}>Notes</Button>
-              <Button variant="outline" className="justify-start" onClick={() => openPracticeTool('mindmap', practiceCategory)}>Mindmap</Button>
+
+          {/* ── Extra insights row ───────────────────────────────────────────── */}
+          <div className="grid gap-4 md:grid-cols-3">
+
+            {/* Question type accuracy */}
+            {typeScores.length > 0 && (
+              <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+                <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">By question type</p>
+                </div>
+                <div className="px-5 py-3 space-y-2">
+                  {typeScores.map((t) => (
+                    <div key={t.type} className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] text-foreground truncate">{getTypeLabel(t.type)}</span>
+                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                        t.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                        t.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                        'bg-red-50 border-red-200 text-red-600'
+                      }`}>{t.score}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Retry window */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">When to retry</p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="text-2xl font-bold text-foreground">
+                  {retryDays === 0 ? 'Today' : `${retryDays}d`}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+                  {retryDays === 0
+                    ? 'Score is low — retry right away to reinforce the material.'
+                    : retryDays === 1
+                    ? 'Retry tomorrow while the material is still fresh.'
+                    : retryDays === 3
+                    ? 'Good score. Revisit in 3 days for best retention.'
+                    : 'Strong score! Wait a week — spacing increases long-term recall.'}
+                </p>
+              </div>
             </div>
+
+            {/* Hardest question */}
+            {(() => {
+              const slowest = [...scoredRows].sort((a, b) => b.responseMs - a.responseMs)[0];
+              const hardest = [...scoredRows].filter((r) => !r.correct).sort((a, b) => b.difficulty - a.difficulty)[0];
+              const highlight = hardest || slowest;
+              if (!highlight) return null;
+              return (
+                <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+                  <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                      {hardest ? 'Hardest question' : 'Slowest question'}
+                    </p>
+                  </div>
+                  <div className="px-5 py-4">
+                    <p className="text-[12.5px] font-medium text-foreground line-clamp-3">
+                      {highlight.question.question.replace(/_{3,}/g, '____')}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {highlight.difficulty}/10 difficulty
+                      </span>
+                      {highlight.responseMs > 0 && (
+                        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {(highlight.responseMs / 1000).toFixed(1)}s
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
           </div>
+
         </div>
-      ) : null}
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -1929,10 +2311,10 @@ function getTypePrompt(type: string): string {
     'matching': 'Match each item on the left with its correct pair on the right.',
     'ordering': 'Arrange the items in the correct order.',
     'cloze': 'Fill in the blanks in the passage below.',
-    'comparison-matrix': 'Check which attributes apply to each item.',
+    'comparison-matrix': 'Mark the correct cells in the table.',
     'argument-analysis': 'Tag each statement with its role in the argument.',
     'scenario': 'Read the scenario, then select the best answer.',
-    'timeline': 'Place the events in chronological order.',
+    'timeline': 'Drag events onto the timeline to place them at the correct position.',
     'ranking': 'Rank the items from first to last based on the given criterion.',
     'drag-drop': 'Drag each item into the correct category.',
     'venn': 'Assign each item to the correct region of the diagram.',
@@ -2147,7 +2529,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     setIsCurrentCorrect(null);
   };
 
-  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} />;
+  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} onRestart={onRestart} />;
   if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
@@ -2160,11 +2542,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       else advanceQuestion();
       return;
     }
-    if (!isAnswered && canAdvance) {
-      handleAnswerPress();
-      if (shouldHideCorrectnessUntilEnd) advanceQuestion();
-      return;
-    }
+    // In all non-assisted modes: finalize if not yet done, then always advance immediately
+    if (!isAnswered && canAdvance) handleAnswerPress();
     advanceQuestion();
   };
 
@@ -2200,7 +2579,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Top bar: breadcrumb left | nav right */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-white dark:bg-card px-6 py-3">
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
           <span className="font-medium text-foreground">Quiz</span>
@@ -2279,48 +2658,58 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       </div>
 
       {/* Scrollable question area */}
-      <div className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-[680px] px-8 pt-8 pb-24">
+      <div className="flex-1 overflow-auto bg-muted/30">
+        <div className="mx-auto max-w-[700px] px-5 pt-6 pb-24">
 
-          {/* Question header: number + type badge */}
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-              Question {currentIndex + 1}
-            </span>
-            <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-            <span className="rounded-full bg-[var(--accent-brand)]/12 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
-              {getTypeLabel(currentQuestion.type)}
-            </span>
-          </div>
+          {/* Question card */}
+          <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
 
-          {/* Question text */}
-          <p className="mb-3 text-[15.5px] font-semibold leading-[1.7] text-foreground">
-            {currentQuestion.question.replace(/_{3,}/g, '____')}
-          </p>
+            {/* Card header: number badge + type badge */}
+            <div className="flex items-center gap-2 border-b border-border/60 bg-muted/20 px-5 py-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] font-bold text-white">
+                {currentIndex + 1}
+              </span>
+              <span className="rounded-full bg-[var(--accent-brand)]/12 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+                {getTypeLabel(currentQuestion.type ?? 'multiple-choice')}
+              </span>
+            </div>
 
-          {/* Sub-prompt */}
-          <p className="mb-6 text-[12px] text-muted-foreground">
-            {getTypePrompt(currentQuestion.type)}
-          </p>
+            <div className="px-5 pt-5 pb-5">
+              {/* Question text — skip for fill-blank/cloze with blanks to avoid duplicate */}
+              {!(
+                (currentQuestion.type === 'fill-blank' || currentQuestion.type === 'cloze') &&
+                /_{3,}/.test(currentQuestion.question)
+              ) && (
+                <p className="mb-3 text-[15.5px] font-semibold leading-[1.7] text-foreground">
+                  {currentQuestion.question.replace(/_{3,}/g, '____')}
+                </p>
+              )}
 
-          {/* Media */}
-          <MediaPrompt question={currentQuestion} />
+              {/* Sub-prompt */}
+              <p className="mb-5 text-[12px] text-muted-foreground">
+                {getTypePrompt(currentQuestion.type ?? 'multiple-choice')}
+              </p>
 
-          {/* Answer area */}
-          <div className="mb-6">
-            <QuestionView
-              question={currentQuestion}
-              answer={currentAnswer}
-              disabled={effectiveMode !== 'classic' && isAnswered}
-              onChange={handleSetAnswer}
-              reveal={revealCurrent}
-              knowledgeScore={runtimeSettings?.knowledgeScore ?? 50}
-            />
+              {/* Media */}
+              <MediaPrompt question={currentQuestion} />
+
+              {/* Answer area */}
+              <div className="mb-1">
+                <QuestionView
+                  question={currentQuestion}
+                  answer={currentAnswer}
+                  disabled={effectiveMode !== 'classic' && isAnswered}
+                  onChange={handleSetAnswer}
+                  reveal={revealCurrent}
+                  knowledgeScore={runtimeSettings?.knowledgeScore ?? 50}
+                />
+              </div>
+            </div>
           </div>
 
           {/* ── Feedback panel ── */}
           {effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
-            <div className={`rounded-xl border overflow-hidden ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
+            <div className={`mt-3 rounded-2xl border overflow-hidden shadow-sm ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
               {/* Header strip */}
               <div className={`flex items-center gap-2 px-4 py-2 ${isCurrentCorrect ? 'bg-emerald-50 dark:bg-emerald-900/25' : 'bg-red-50 dark:bg-red-900/25'}`}>
                 <span className={`text-[12.5px] font-semibold ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
@@ -2384,7 +2773,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       </div>
 
       {/* ── Bottom nav ── full width, buttons at edges */}
-      <div className="shrink-0 border-t border-border bg-background px-5 py-3.5">
+      <div className="shrink-0 border-t border-border bg-white dark:bg-card px-5 py-3.5">
         <div className="flex items-center justify-between gap-3">
 
           {/* Previous */}

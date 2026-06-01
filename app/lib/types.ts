@@ -151,6 +151,7 @@ export const QuizQuestionSchema = z.object({
   comparisonRows: z.array(z.string()).optional().describe('Items being compared (rows).'),
   comparisonColumns: z.array(z.string()).optional().describe('Attributes being compared (columns).'),
   comparisonCorrect: z.record(z.array(z.string())).optional().describe('Map of rowName → list of column names that apply.'),
+  comparisonSingleSelect: z.boolean().optional().describe('If true each row allows only one column selection (radio). If false multiple columns can be selected (checkbox).'),
   // Argument analysis
   argumentStatements: z.array(z.object({
     id: z.string(),
@@ -186,6 +187,14 @@ export const QuizQuestionSchema = z.object({
     text: z.string(),
     isError: z.boolean(),
   })).optional().describe('Sentence broken into 3-6 clickable segments; exactly one has isError: true.'),
+  // Timeline (visual horizontal track)
+  timelineStart: z.string().optional().describe('Label for the start of the timeline (e.g. "1550", "January", "Week 1"). No restrictions.'),
+  timelineEnd: z.string().optional().describe('Label for the end of the timeline (e.g. "1648", "December", "Week 32"). No restrictions.'),
+  timelineEvents: z.array(z.object({
+    id: z.string(),
+    label: z.string().describe('Short event label.'),
+    position: z.number().int().min(1).max(100).describe('Position on the timeline from 1 (start) to 100 (end).'),
+  })).optional().describe('Events to place on the timeline. Each has a label and a position 1-100.'),
 });
 
 export const QuizSchema = z.object({

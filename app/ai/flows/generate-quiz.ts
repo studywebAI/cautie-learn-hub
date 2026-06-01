@@ -157,19 +157,6 @@ function normalizeQuestionShape(
     return normalized;
   }
 
-  if (type === 'comparison-matrix') {
-    normalized.comparisonRows = Array.isArray(question?.comparisonRows)
-      ? question.comparisonRows.map((r: any) => String(r || '').trim()).filter(Boolean)
-      : [];
-    normalized.comparisonColumns = Array.isArray(question?.comparisonColumns)
-      ? question.comparisonColumns.map((c: any) => String(c || '').trim()).filter(Boolean)
-      : [];
-    normalized.comparisonCorrect = question?.comparisonCorrect && typeof question.comparisonCorrect === 'object'
-      ? question.comparisonCorrect
-      : {};
-    return normalized;
-  }
-
   if (type === 'argument-analysis') {
     normalized.argumentStatements = Array.isArray(question?.argumentStatements)
       ? question.argumentStatements.map((s: any, i: number) => ({
@@ -317,14 +304,47 @@ function normalizeQuestionShape(
     return normalized;
   }
 
-  // Special: timeline with ordering items → chronological sort variant
-  if (type === 'timeline' && Array.isArray(question?.orderingItems) && question.orderingItems.length >= 2) {
-    const items = question.orderingItems.map((i: any) => String(i || '').trim()).filter(Boolean);
+  // Special: timeline with visual events
+  if (type === 'timeline') {
+    const timelineEvents = Array.isArray(question?.timelineEvents)
+      ? question.timelineEvents
+          .map((ev: any, i: number) => ({
+            id: String(ev?.id || `tev-${i}`),
+            label: String(ev?.label || `Event ${i + 1}`).trim(),
+            position: Math.round(Math.max(1, Math.min(100, Number(ev?.position ?? 50)))),
+          }))
+          .filter((ev: any) => ev.label)
+      : [];
+    if (timelineEvents.length >= 2) {
+      normalized.timelineEvents = timelineEvents;
+      normalized.timelineStart = typeof question?.timelineStart === 'string' ? question.timelineStart.trim() : undefined;
+      normalized.timelineEnd = typeof question?.timelineEnd === 'string' ? question.timelineEnd.trim() : undefined;
+      normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+      return normalized;
+    }
+    // Fallback: ordering items
+    const items = Array.isArray(question?.orderingItems)
+      ? question.orderingItems.map((i: any) => String(i || '').trim()).filter(Boolean)
+      : [];
     if (items.length >= 2) {
       normalized.orderingItems = items;
       normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
       return normalized;
     }
+  }
+
+  if (type === 'comparison-matrix') {
+    normalized.comparisonRows = Array.isArray(question?.comparisonRows)
+      ? question.comparisonRows.map((r: any) => String(r || '').trim()).filter(Boolean)
+      : [];
+    normalized.comparisonColumns = Array.isArray(question?.comparisonColumns)
+      ? question.comparisonColumns.map((c: any) => String(c || '').trim()).filter(Boolean)
+      : [];
+    normalized.comparisonCorrect = question?.comparisonCorrect && typeof question.comparisonCorrect === 'object'
+      ? question.comparisonCorrect
+      : {};
+    normalized.comparisonSingleSelect = typeof question?.comparisonSingleSelect === 'boolean' ? question.comparisonSingleSelect : false;
+    return normalized;
   }
 
   const rawOptions = Array.isArray(question?.options) ? question.options : [];
@@ -569,12 +589,13 @@ If type is scenario, also include scenarioContext (1-3 sentence case/scenario te
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
 If type is matching, include matchingPairs as array of {left,right} (4-6 pairs).
 If type is ordering, include orderingItems as array of strings in correct order.
+If type is timeline, include timelineStart, timelineEnd, and timelineEvents (array of {id, label, position 1-100}) — NOT orderingItems.
 If type is ranking, include orderingItems (3-6 items in correct ranked order, first = highest/most) and rankingCriteria (brief label for the ranking criterion, e.g. "from most influential to least" or "chronological").
 If type is drag-drop, include dragDropCategories (2-4 category names), and dragDropItems (each: {id, text, correctCategory}). For cause-effect chains set dragDropVariant: "cause-effect" and use categories "Cause" and "Effect".
 If type is venn, include vennCircles (2-3 circles, each: {id, label}) and vennItems (each: {id, text, correctZone} where zone is a circle id "A", combination "AB", or "outside").
 If type is spot-error, write question as a normal sentence in spotErrorSegments: split the sentence into 3-6 meaningful chunks, set isError:true on EXACTLY ONE segment that contains a subtle factual error. Keep the question text field short (e.g. "Find the error in this statement about X:").
 If type is cloze, write question text with ___ for each blank (2-4 blanks), include acceptableAnswers in order of blanks, and include clozeWordBank with correct answers plus 3-4 plausible distractors (all same approximate length so box size doesn't reveal answer).
-If type is comparison-matrix, include comparisonRows (3-5 items), comparisonColumns (3-5 attributes), and comparisonCorrect as a map of {row: [applicable columns]}.
+If type is comparison-matrix, include comparisonRows (3-5 items), comparisonColumns (3-5 attributes), comparisonCorrect as a map of {row: [applicable columns]}, and comparisonSingleSelect (true if each row has exactly one correct column, false if multiple columns can apply to a row).
 If type is argument-analysis, include argumentStatements (3-5 statements from the source text), argumentTags (3-5 context-specific labels like "Claim", "Evidence", "Counterexample", "Conclusion" — no emojis, plain text only), and argumentCorrect as {statementId: tag}.
 For media analysis types, include media {kind,url,title,source,startSec,endSec}. If valid media is unavailable, do NOT emit media-analysis question types.
 For video-analysis media URLs, use only channels from the provided whitelist list below.
@@ -584,7 +605,7 @@ Media mode policy:
 - video-analysis/video-fragment: only when answerable from time-based video context (clip/timestamp relevance).
 - video-fragment: include startSec and endSec for a short clip segment.
 - internet-photo: use a real image URL from curated image context, never AI-generated placeholders.
-- timeline: ask timeline-anchor questions (for example "what happened at marker T3?").
+- timeline: generate a VISUAL timeline question using timelineStart (e.g. "1550", "January", "Week 1"), timelineEnd (e.g. "1648", "December", "Week 32"), and timelineEvents array (3-6 events, each: {id, label, position} where position is 1-100 representing location on the timeline from start to end). The question asks the user to place events on the timeline. Do NOT use orderingItems for timeline — use timelineEvents.
 - never choose media-analysis if the same question can be answered equally well without media evidence.
 When in adaptive mode, rebalance subtlely toward weaker categories from adaptiveProfile and lower difficulty for repeatedly wrong categories.
 Hard requirements:

@@ -753,12 +753,11 @@ function QuizPageContent() {
               <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How much do you already know?</p>
-                  <span className="text-[13px] font-medium text-[var(--accent-brand)]">{knowledgeScore}</span>
                 </div>
                 <Slider
                   value={[knowledgeScore]}
                   onValueChange={([v]) => setKnowledgeScore(v)}
-                  min={0} max={100} step={5}
+                  min={0} max={100} step={1}
                   disabled={loading}
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
