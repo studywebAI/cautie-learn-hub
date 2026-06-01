@@ -1881,6 +1881,23 @@ function MediaPrompt({ question }: { question: QuizQuestion }) {
   );
 }
 
+// ── Straight icon primitives (no curves, no Unicode) ─────────────────────────
+function IconCheck({ size = 10, strokeWidth = 1.8 }: { size?: number; strokeWidth?: number }) {
+  return (
+    <svg width={size} height={size * 0.8} viewBox="0 0 10 8" fill="none" aria-hidden>
+      <polyline points="1,4 3.5,7 9,1" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="square" strokeLinejoin="miter"/>
+    </svg>
+  );
+}
+function IconX({ size = 10, strokeWidth = 1.8 }: { size?: number; strokeWidth?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 10 10" fill="none" aria-hidden>
+      <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="square"/>
+      <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="square"/>
+    </svg>
+  );
+}
+
 function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRestart }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string>; onRestart?: () => void }) {
   const rows = useMemo(
     () =>
@@ -1948,20 +1965,19 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
     .map(([type, s]) => ({ type, score: Math.round(s.scoreSum / Math.max(1, s.total)) }))
     .sort((a, b) => a.score - b.score);
 
-  // ── Retry recommendation ──────────────────────────────────────────────────────
-  const retryDays = accuracyPct >= 90 ? 7 : accuracyPct >= 70 ? 3 : accuracyPct >= 50 ? 1 : 0;
-
-  // ── Train action ─────────────────────────────────────────────────────────────
-  const openTrainTool = (tool: 'quiz' | 'flashcards' | 'notes', cat: string, wrongQs: string[]) => {
-    const focus = wrongQs.length
-      ? `\n\nFocus specifically on: "${cat}". The following questions from this topic were answered incorrectly — make sure to cover these concepts:\n${wrongQs.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
-      : `\n\nFocus on: ${cat}`;
-    const path = `/tools/${tool}`;
-    window.location.href = `${path}?sourceText=${encodeURIComponent(sourceText + focus)}`;
+  // ── Combined keep-training (all wrong questions together) ─────────────────────
+  const allWrongQTexts = wrongRows.map((r) => r.question.question);
+  const openTrainTool = (tool: 'quiz' | 'flashcards' | 'notes') => {
+    const focusBlock = allWrongQTexts.length
+      ? `\n\nFocus on these incorrectly answered questions — make sure to cover these specific concepts:\n${allWrongQTexts.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+      : '';
+    window.location.href = `/tools/${tool}?sourceText=${encodeURIComponent(sourceText + focusBlock)}`;
   };
 
-  // ── Expanded question ─────────────────────────────────────────────────────────
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  // ── Modal question expand ─────────────────────────────────────────────────────
+  const [modalIdx, setModalIdx] = useState<number | null>(null);
+  const modalRow = modalIdx !== null ? rows[modalIdx] : null;
+
   const [showTotalTime, setShowTotalTime] = useState(false);
 
   const accentColor = (pct: number) =>
@@ -1969,7 +1985,120 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
   const accentBg = (pct: number) =>
     pct >= 80 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : pct >= 50 ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
 
+  const scoreColor = accuracyPct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : accuracyPct >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500 dark:text-red-400';
+
   return (
+    <>
+    {/* ── Fullscreen question modal ── */}
+    {modalRow !== null && (
+      <>
+        <style>{`@keyframes qModalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}`}</style>
+        <div
+          className="fixed inset-0 z-50 bg-background/90 backdrop-blur-sm"
+          onClick={() => setModalIdx(null)}
+          style={{ animation: 'qModalIn 0.18s cubic-bezier(0.16,1,0.3,1) both' }}
+        />
+        <div
+          className="fixed inset-4 z-50 flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden"
+          style={{ animation: 'qModalIn 0.18s cubic-bezier(0.16,1,0.3,1) both' }}
+        >
+          {/* Modal header */}
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-muted/20 px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className={[
+                'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px]',
+                modalRow.isNotRelevant ? 'bg-muted text-muted-foreground' :
+                modalRow.correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+              ].join(' ')}>
+                {modalRow.correct ? <IconCheck size={9} strokeWidth={2} /> : <IconX size={9} strokeWidth={2} />}
+              </span>
+              <span className="text-[12px] font-semibold text-muted-foreground">Q{modalRow.idx + 1}</span>
+              <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+                {getTypeLabel(modalRow.type)}
+              </span>
+              {modalRow.responseMs > 0 && (
+                <span className="text-[10px] text-muted-foreground">{(modalRow.responseMs / 1000).toFixed(1)}s</span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalIdx(null)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <IconX size={10} strokeWidth={2} />
+            </button>
+          </div>
+
+          {/* Modal body */}
+          <div className="flex-1 overflow-auto px-6 py-5 space-y-4">
+            <p className="text-[16px] font-semibold leading-[1.65] text-foreground">
+              {modalRow.question.question.replace(/_{3,}/g, '____')}
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className={`rounded-xl border px-4 py-3 ${modalRow.correct ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10' : 'border-red-200 dark:border-red-800 bg-red-50/40 dark:bg-red-900/10'}`}>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Your answer</p>
+                <p className={`text-[14px] font-medium ${modalRow.correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{modalRow.given || '—'}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 px-4 py-3">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Correct answer</p>
+                <p className="text-[14px] font-medium text-emerald-700 dark:text-emerald-400">{modalRow.correctValue || '—'}</p>
+              </div>
+            </div>
+
+            {modalRow.question.type === 'matching' && (
+              <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Matching breakdown</p>
+                <MatchingComparison question={modalRow.question} answer={modalRow.answer} />
+              </div>
+            )}
+
+            {modalRow.question.explanation && (
+              <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Explanation</p>
+                <p className="text-[13.5px] leading-relaxed text-foreground/80">{modalRow.question.explanation}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { label: `Parts: ${modalRow.partsCorrect}/${modalRow.partsTotal}` },
+                ...(modalRow.responseMs > 0 ? [{ label: `${(modalRow.responseMs / 1000).toFixed(1)}s` }] : []),
+                { label: `Difficulty ${modalRow.difficulty}/10` },
+                { label: modalRow.category },
+              ].map((c) => (
+                <span key={c.label} className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] text-muted-foreground">{c.label}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Modal prev/next */}
+          <div className="flex shrink-0 items-center justify-between border-t border-border bg-muted/10 px-5 py-3">
+            <button
+              type="button"
+              disabled={(modalIdx ?? 0) <= 0}
+              onClick={() => setModalIdx((prev) => Math.max(0, (prev ?? 0) - 1))}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+            >
+              <ChevronLeft size={14} /> Prev
+            </button>
+            <span className="text-[11px] text-muted-foreground">
+              {(modalIdx ?? 0) + 1} / {rows.length}
+            </span>
+            <button
+              type="button"
+              disabled={(modalIdx ?? 0) >= rows.length - 1}
+              onClick={() => setModalIdx((prev) => Math.min(rows.length - 1, (prev ?? 0) + 1))}
+              className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
+            >
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      </>
+    )}
+
     <div className="flex h-full flex-col bg-muted/30">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border bg-white dark:bg-card px-6 py-3">
@@ -1991,7 +2120,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-[820px] px-5 py-6 space-y-4">
+        <div className="mx-auto max-w-[1100px] px-5 py-5 space-y-4">
 
           {notRelevantCount > 0 && (
             <p className="rounded-lg border border-border bg-white dark:bg-card px-4 py-2 text-[12px] text-muted-foreground">
@@ -1999,293 +2128,190 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
             </p>
           )}
 
-          {/* ── Stat pills ─────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* ── Horizontal stats strip ─────────────────────────────────────── */}
+          <div className="flex overflow-hidden rounded-2xl border border-border bg-white dark:bg-card shadow-sm">
             {/* Accuracy */}
-            <div className={`rounded-2xl border px-5 py-4 bg-white dark:bg-card ${accentBg(accuracyPct)}`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Accuracy</p>
-              <p className={`mt-1 text-3xl font-bold tabular-nums ${accentColor(accuracyPct)}`}>{accuracyPct}%</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{scoredRows.filter((r) => r.correct).length} / {scoredRows.length} correct</p>
+            <div className={`flex-1 border-r border-border px-5 py-4 ${accentBg(accuracyPct)}`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Accuracy</p>
+              <p className={`mt-1 text-[26px] font-bold tabular-nums leading-none ${scoreColor}`}>{accuracyPct}%</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{scoredRows.filter((r) => r.correct).length} / {scoredRows.length} correct</p>
             </div>
             {/* Speed */}
-            <div className="rounded-2xl border border-border bg-white dark:bg-card px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Speed</p>
+            <div className="flex-1 border-r border-border px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Speed</p>
               <button
                 type="button"
-                className="mt-1 text-3xl font-bold tabular-nums text-foreground hover:text-[var(--accent-brand)] transition-colors"
+                className="mt-1 text-[26px] font-bold tabular-nums leading-none text-foreground hover:text-[var(--accent-brand)] transition-colors"
                 onClick={() => setShowTotalTime((v) => !v)}
-                title="Click to toggle avg / total"
               >
-                {showTotalTime
-                  ? totalMs > 0 ? `${Math.round(totalMs / 1000)}s` : '—'
-                  : avgMs > 0 ? `${(avgMs / 1000).toFixed(1)}s` : '—'}
+                {showTotalTime ? (totalMs > 0 ? `${Math.round(totalMs / 1000)}s` : '—') : (avgMs > 0 ? `${(avgMs / 1000).toFixed(1)}s` : '—')}
               </button>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                {showTotalTime ? 'total time' : 'avg per question — click for total'}
-              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{showTotalTime ? 'total · click for avg' : 'avg / question · click for total'}</p>
             </div>
             {/* Completed */}
-            <div className="rounded-2xl border border-border bg-white dark:bg-card px-5 py-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Completed</p>
-              <p className="mt-1 text-3xl font-bold tabular-nums text-foreground">{completedPct}%</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{scoredRows.length} questions answered</p>
+            <div className="flex-1 px-5 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Completed</p>
+              <p className="mt-1 text-[26px] font-bold tabular-nums leading-none text-foreground">{completedPct}%</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{scoredRows.length} questions answered</p>
             </div>
           </div>
 
-          {/* ── Question list ───────────────────────────────────────────────── */}
-          <div className="rounded-2xl border border-border bg-white dark:bg-card overflow-hidden shadow-sm">
-            <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">All questions</p>
-            </div>
-            <div className="divide-y divide-border/60">
-              {rows.map((row) => {
-                const isExpanded = expandedIdx === row.idx;
-                const unanswered = row.answer === undefined && !row.isNotRelevant;
-                return (
-                  <div key={row.id}>
+          {/* ── 2-column body ─────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-[1fr_300px] gap-4 items-start">
+
+            {/* LEFT: full question list */}
+            <div className="rounded-2xl border border-border bg-white dark:bg-card overflow-hidden shadow-sm">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-3 flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">All questions</p>
+                <span className="text-[10px] text-muted-foreground">click to expand</span>
+              </div>
+              <div className="divide-y divide-border/50">
+                {rows.map((row) => {
+                  const unanswered = row.answer === undefined && !row.isNotRelevant;
+                  return (
                     <button
+                      key={row.id}
                       type="button"
-                      className="w-full px-5 py-3.5 text-left hover:bg-muted/20 transition-colors"
-                      onClick={() => setExpandedIdx(isExpanded ? null : row.idx)}
+                      className="w-full px-4 py-3 text-left hover:bg-muted/20 transition-colors"
+                      onClick={() => setModalIdx(row.idx)}
                     >
-                      <div className="flex items-start gap-3">
-                        {/* Status dot */}
+                      <div className="flex items-center gap-3">
+                        {/* Status icon */}
                         <span className={[
-                          'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold',
+                          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
                           row.isNotRelevant ? 'bg-muted text-muted-foreground' :
                           unanswered ? 'bg-muted text-muted-foreground' :
-                          row.correct ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                          row.correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
                           'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
                         ].join(' ')}>
-                          {row.isNotRelevant ? '—' : unanswered ? '?' : row.correct ? '✓' : '✗'}
+                          {row.isNotRelevant || unanswered
+                            ? <span className="text-[9px] font-bold">—</span>
+                            : row.correct
+                              ? <IconCheck size={8} strokeWidth={2} />
+                              : <IconX size={8} strokeWidth={2} />}
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 mb-0.5">
                             <span className="text-[10px] font-semibold text-muted-foreground">Q{row.idx + 1}</span>
                             <span className="rounded-full bg-[var(--accent-brand)]/10 px-1.5 py-0.5 text-[9px] font-semibold text-[var(--accent-brand)]">{getTypeLabel(row.type)}</span>
-                            {row.isNotRelevant && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">not relevant</span>}
                           </div>
-                          <p className="mt-0.5 text-[13px] font-medium text-foreground line-clamp-2">
+                          <p className="text-[12.5px] font-medium text-foreground line-clamp-1">
                             {row.question.question.replace(/_{3,}/g, '____')}
                           </p>
                         </div>
 
-                        {/* Right: answer pills + time */}
+                        {/* Answer pills */}
                         {!row.isNotRelevant && !unanswered && (
-                          <div className="shrink-0 flex flex-col items-end gap-1 text-right">
-                            <div className="flex flex-wrap justify-end gap-1 max-w-[220px]">
-                              <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium border ${row.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
-                                {row.given.length > 30 ? row.given.slice(0, 28) + '…' : row.given}
+                          <div className="shrink-0 flex flex-col items-end gap-1">
+                            <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium border max-w-[140px] truncate ${row.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
+                              {row.given.length > 22 ? row.given.slice(0, 20) + '…' : row.given}
+                            </span>
+                            {!row.correct && (
+                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300 max-w-[140px] truncate">
+                                {row.correctValue.length > 22 ? row.correctValue.slice(0, 20) + '…' : row.correctValue}
                               </span>
-                              {!row.correct && (
-                                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300">
-                                  {row.correctValue.length > 30 ? row.correctValue.slice(0, 28) + '…' : row.correctValue}
-                                </span>
-                              )}
-                            </div>
+                            )}
                             {row.responseMs > 0 && (
-                              <span className="text-[10px] text-muted-foreground">{(row.responseMs / 1000).toFixed(1)}s</span>
+                              <span className="text-[9px] text-muted-foreground">{(row.responseMs / 1000).toFixed(1)}s</span>
                             )}
                           </div>
                         )}
-                        {unanswered && <span className="shrink-0 text-[11px] text-muted-foreground">skipped</span>}
+                        {unanswered && <span className="shrink-0 text-[10px] text-muted-foreground">skipped</span>}
                       </div>
                     </button>
-
-                    {/* Expanded detail */}
-                    {isExpanded && (
-                      <div className="border-t border-border/40 bg-muted/10 px-5 py-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
-                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Your answer</p>
-                            <p className={`text-[13px] font-medium ${row.correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{row.given || '—'}</p>
-                          </div>
-                          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 px-4 py-3">
-                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Correct answer</p>
-                            <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-400">{row.correctValue || '—'}</p>
-                          </div>
-                        </div>
-                        {row.question.type === 'matching' && (
-                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
-                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Matching breakdown</p>
-                            <MatchingComparison question={row.question} answer={row.answer} />
-                          </div>
-                        )}
-                        {row.question.explanation && (
-                          <div className="rounded-xl border border-border bg-white dark:bg-card px-4 py-3">
-                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.07em] text-muted-foreground">Explanation</p>
-                            <p className="text-[12.5px] text-foreground/80 leading-relaxed">{row.question.explanation}</p>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                          <span>Parts: {row.partsCorrect}/{row.partsTotal}</span>
-                          {row.responseMs > 0 && <span>Time: {(row.responseMs / 1000).toFixed(1)}s</span>}
-                          <span>Difficulty: {row.difficulty}/10</span>
-                          <span>Topic: {row.category}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Insights row ────────────────────────────────────────────────── */}
-          <div className="grid gap-4 md:grid-cols-2">
-
-            {/* Strong / Weak split card */}
-            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
-              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Topics overview</p>
+                  );
+                })}
               </div>
-              {categoryScores.length === 0 ? (
-                <p className="px-5 py-4 text-[12px] text-muted-foreground">No category data.</p>
-              ) : (
-                <div className="divide-y divide-border/40">
-                  {categoryScores.map((entry) => (
-                    <div key={entry.cat} className="flex items-center justify-between px-5 py-2.5">
-                      <span className="text-[13px] text-foreground capitalize">{entry.cat}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
-                          entry.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
-                          entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
-                          'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
-                        }`}>
-                          {entry.score}%
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{entry.total}q</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Keep training */}
-            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
-              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Keep training</p>
-              </div>
-              {wrongRows.length === 0 ? (
-                <div className="px-5 py-6 text-center">
-                  <p className="text-[13px] font-semibold text-emerald-600">Perfect score!</p>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Nothing to train right now.</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/40">
-                  {categoryScores.filter((e) => e.wrongQs.length > 0).map((entry) => (
-                    <div key={entry.cat} className="px-5 py-3.5">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px] font-medium text-foreground capitalize">{entry.cat}</span>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-                            entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-red-50 border-red-200 text-red-600'
-                          }`}>{entry.wrongQs.length} wrong</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {(['quiz', 'flashcards', 'notes'] as const).map((tool) => (
-                          <button
-                            key={tool}
-                            type="button"
-                            onClick={() => openTrainTool(tool, entry.cat, entry.wrongQs)}
-                            className="rounded-lg border border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/[0.06] px-3 py-1.5 text-[11px] font-semibold text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.12] capitalize"
-                          >
-                            {tool}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+            {/* RIGHT: insights */}
+            <div className="space-y-3">
 
-          {/* ── Extra insights row ───────────────────────────────────────────── */}
-          <div className="grid gap-4 md:grid-cols-3">
-
-            {/* Question type accuracy */}
-            {typeScores.length > 0 && (
+              {/* Topics overview */}
               <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
-                <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">By question type</p>
+                <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Topics</p>
                 </div>
-                <div className="px-5 py-3 space-y-2">
-                  {typeScores.map((t) => (
-                    <div key={t.type} className="flex items-center justify-between gap-2">
-                      <span className="text-[12px] text-foreground truncate">{getTypeLabel(t.type)}</span>
-                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
-                        t.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                        t.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                        'bg-red-50 border-red-200 text-red-600'
-                      }`}>{t.score}%</span>
+                {categoryScores.length === 0 ? (
+                  <p className="px-4 py-3 text-[11px] text-muted-foreground">No data.</p>
+                ) : (
+                  <div className="divide-y divide-border/40">
+                    {categoryScores.map((entry) => (
+                      <div key={entry.cat} className="flex items-center justify-between px-4 py-2">
+                        <span className="text-[12px] text-foreground capitalize truncate flex-1 mr-2">{entry.cat}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                            entry.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
+                            entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
+                            'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                          }`}>{entry.score}%</span>
+                          <span className="text-[9px] text-muted-foreground">{entry.total}q</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Keep training — ALL wrong combined */}
+              <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+                <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Keep training</p>
+                </div>
+                {wrongRows.length === 0 ? (
+                  <div className="px-4 py-4 text-center">
+                    <p className="text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">Perfect score!</p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">Nothing to retrain.</p>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3.5">
+                    <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
+                      {wrongRows.length} incorrect question{wrongRows.length > 1 ? 's' : ''} — practise all of them together:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(['quiz', 'flashcards', 'notes'] as const).map((tool) => (
+                        <button
+                          key={tool}
+                          type="button"
+                          onClick={() => openTrainTool(tool)}
+                          className="rounded-lg border border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/[0.07] px-3 py-2 text-[12px] font-semibold text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.13] capitalize transition-colors"
+                        >
+                          {tool === 'quiz' ? 'New quiz' : tool === 'flashcards' ? 'Flashcards' : 'Notes'}
+                        </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Retry window */}
-            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
-              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">When to retry</p>
-              </div>
-              <div className="px-5 py-4">
-                <p className="text-2xl font-bold text-foreground">
-                  {retryDays === 0 ? 'Today' : `${retryDays}d`}
-                </p>
-                <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
-                  {retryDays === 0
-                    ? 'Score is low — retry right away to reinforce the material.'
-                    : retryDays === 1
-                    ? 'Retry tomorrow while the material is still fresh.'
-                    : retryDays === 3
-                    ? 'Good score. Revisit in 3 days for best retention.'
-                    : 'Strong score! Wait a week — spacing increases long-term recall.'}
-                </p>
-              </div>
-            </div>
-
-            {/* Hardest question */}
-            {(() => {
-              const slowest = [...scoredRows].sort((a, b) => b.responseMs - a.responseMs)[0];
-              const hardest = [...scoredRows].filter((r) => !r.correct).sort((a, b) => b.difficulty - a.difficulty)[0];
-              const highlight = hardest || slowest;
-              if (!highlight) return null;
-              return (
+              {/* By question type */}
+              {typeScores.length > 1 && (
                 <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
-                  <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
-                    <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                      {hardest ? 'Hardest question' : 'Slowest question'}
-                    </p>
+                  <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">By type</p>
                   </div>
-                  <div className="px-5 py-4">
-                    <p className="text-[12.5px] font-medium text-foreground line-clamp-3">
-                      {highlight.question.question.replace(/_{3,}/g, '____')}
-                    </p>
-                    <div className="mt-2 flex gap-2">
-                      <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                        {highlight.difficulty}/10 difficulty
-                      </span>
-                      {highlight.responseMs > 0 && (
-                        <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {(highlight.responseMs / 1000).toFixed(1)}s
-                        </span>
-                      )}
-                    </div>
+                  <div className="px-4 py-2 space-y-1.5">
+                    {typeScores.map((t) => (
+                      <div key={t.type} className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-foreground truncate">{getTypeLabel(t.type)}</span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                          t.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
+                          t.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
+                          'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                        }`}>{t.score}%</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })()}
-
+              )}
+            </div>
           </div>
 
         </div>
       </div>
     </div>
+    </>
   );
 }
 
@@ -2707,38 +2733,37 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             </div>
           </div>
 
-          {/* ── Feedback panel ── */}
+          {/* ── Feedback overlay (cleaner, inside card bottom) ── */}
           {effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
-            <div className={`mt-3 rounded-2xl border overflow-hidden shadow-sm ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
-              {/* Header strip */}
-              <div className={`flex items-center gap-2 px-4 py-2 ${isCurrentCorrect ? 'bg-emerald-50 dark:bg-emerald-900/25' : 'bg-red-50 dark:bg-red-900/25'}`}>
-                <span className={`text-[12.5px] font-semibold ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
-                  {isCurrentCorrect ? '✓ Correct' : '✗ Incorrect'}
+            <div className={`mt-3 rounded-2xl overflow-hidden shadow-sm border ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
+              {/* Result bar */}
+              <div className={`flex items-center gap-2.5 px-5 py-3 ${isCurrentCorrect ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isCurrentCorrect ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+                  {isCurrentCorrect ? <IconCheck size={9} strokeWidth={2.2} /> : <IconX size={9} strokeWidth={2.2} />}
+                </span>
+                <span className={`text-[13px] font-semibold ${isCurrentCorrect ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-700 dark:text-red-400'}`}>
+                  {isCurrentCorrect ? 'Correct' : 'Incorrect'}
                 </span>
               </div>
 
               {/* Answer comparison */}
-              <div className="px-4 py-3 bg-background/50">
-                <div className={`grid gap-3 ${isCurrentCorrect ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  <div>
-                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Your answer</p>
-                    <p className={`text-[13px] font-medium ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
-                      {formatAnswer(currentQuestion, currentAnswer)}
-                    </p>
-                  </div>
-                  {!isCurrentCorrect && (
-                    <div>
-                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Correct answer</p>
-                      <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-300">
-                        {getCorrectAnswerText(currentQuestion)}
-                      </p>
+              <div className={`px-5 py-4 bg-card`}>
+                {!isCurrentCorrect && (
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="rounded-xl border border-red-100 dark:border-red-900/40 bg-red-50/30 dark:bg-red-900/10 px-4 py-3">
+                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Your answer</p>
+                      <p className="text-[13px] font-medium text-red-600 dark:text-red-400">{formatAnswer(currentQuestion, currentAnswer)}</p>
                     </div>
-                  )}
-                </div>
+                    <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10 px-4 py-3">
+                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Correct answer</p>
+                      <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-400">{getCorrectAnswerText(currentQuestion)}</p>
+                    </div>
+                  </div>
+                )}
 
-                {/* Explanation body */}
-                {showWhy ? (
-                  <div className="mt-3 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
+                {/* Explanation */}
+                {showWhy && (
+                  <div className="mb-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
                     {whyIncorrectLoading && !whyIncorrect && !currentQuestion.explanation?.trim() ? (
                       <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2750,12 +2775,11 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                       </p>
                     )}
                   </div>
-                ) : null}
+                )}
 
-                {/* Explain button */}
                 <button
                   type="button"
-                  className="mt-3 text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2 transition-colors"
+                  className="text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2"
                   onClick={() => {
                     const next = !showWhy;
                     setShowWhy(next);
