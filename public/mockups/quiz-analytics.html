@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cautie — Quiz Analytics Mockups</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#e5e5e5;min-height:100vh}
+.layout{display:flex;gap:0;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:#111;border-right:1px solid #1c1c1c;padding:24px 16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h1{font-size:15px;font-weight:700;margin-bottom:4px;color:#e5e5e5}
+.sidebar p{font-size:11px;color:#555;margin-bottom:24px}
+.nav-section{font-size:10px;font-weight:600;color:#444;letter-spacing:.1em;text-transform:uppercase;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:#666;transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:#1a1a1a;color:#ccc}
+.nav-item.active{background:rgba(127,137,98,.15);color:#7f8962}
+.nav-num{font-size:10px;color:#444;min-width:18px}
+.main{flex:1;padding:40px 48px;max-width:1100px}
+.page-header{margin-bottom:56px}
+.page-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.page-header p{font-size:14px;color:#666;max-width:600px;line-height:1.6}
+.section{margin-bottom:80px;scroll-margin-top:40px}
+.section-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.section-badge{display:inline-block;font-size:11px;font-weight:600;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 10px;border-radius:4px;margin-bottom:10px}
+.section-desc{font-size:13px;color:#555;margin-bottom:28px;line-height:1.6;max-width:680px}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.variant{background:#141414;border:1px solid #1c1c1c;border-radius:14px;overflow:hidden}
+.variant.wide{grid-column:1/-1}
+.vhead{padding:14px 18px 12px;border-bottom:1px solid #191919;display:flex;align-items:center;justify-content:space-between}
+.vname{font-size:12px;font-weight:600;color:#888}
+.vtag{font-size:10px;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px}
+.vbody{padding:22px 18px}
+.divider{border:none;border-top:1px solid #1a1a1a;margin:56px 0}
+
+/* ─── BRAND COLORS ─── */
+:root{
+  --brand:#7f8962;
+  --brand-bg:rgba(127,137,98,.08);
+  --brand-border:rgba(127,137,98,.25);
+  --green:#4ade80;
+  --green-bg:rgba(74,222,128,.08);
+  --green-border:rgba(74,222,128,.2);
+  --amber:#fbbf24;
+  --amber-bg:rgba(251,191,36,.08);
+  --amber-border:rgba(251,191,36,.2);
+  --red:#f87171;
+  --red-bg:rgba(248,113,113,.08);
+  --red-border:rgba(248,113,113,.2);
+  --blue:#60a5fa;
+  --blue-bg:rgba(96,165,250,.08);
+  --blue-border:rgba(96,165,250,.2);
+  --surface:#141414;
+  --surface2:#1a1a1a;
+  --border:#1e1e1e;
+  --muted:#333;
+  --text2:#888;
+  --text3:#555;
+}
+
+/* ─── SHARED ANALYTICS COMPONENTS ─── */
+
+/* Top bar */
+.an-topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:#111}
+.an-breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.an-breadcrumb span{color:var(--text3)}
+.an-breadcrumb strong{color:#ccc;font-weight:500}
+.an-breadcrumb b{color:var(--brand);font-weight:500}
+.an-btn-sm{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #2a2a2a;background:#1e1e1e;color:#aaa}
+.an-btn-sm.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.an-progress-full{height:3px;background:var(--brand);width:100%}
+
+/* Stat pills — Variant A (large, colored) */
+.stat-row{display:grid;gap:10px;margin-bottom:16px}
+.stat-row.cols3{grid-template-columns:repeat(3,1fr)}
+.stat-row.cols4{grid-template-columns:repeat(4,1fr)}
+.stat-card{border-radius:12px;padding:14px 16px;border:1.5px solid var(--border);background:var(--surface2)}
+.stat-card.green{border-color:var(--green-border);background:rgba(74,222,128,.05)}
+.stat-card.amber{border-color:var(--amber-border);background:rgba(251,191,36,.05)}
+.stat-card.red{border-color:var(--red-border);background:rgba(248,113,113,.05)}
+.stat-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.stat-value{font-size:26px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.stat-value.green{color:var(--green)}
+.stat-value.amber{color:var(--amber)}
+.stat-value.red{color:var(--red)}
+.stat-sub{font-size:10px;color:var(--text3);margin-top:4px}
+
+/* Accuracy ring — Variant B hero */
+.hero-ring-wrap{display:flex;align-items:center;gap:20px;padding:16px 0 20px}
+.ring-svg{flex-shrink:0}
+.hero-text-col{flex:1}
+.hero-score{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.hero-sublabel{font-size:12px;color:var(--text2);margin-top:3px}
+.hero-pills{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.hpill{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
+.hpill.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.hpill.muted{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+.hpill.brand{background:var(--brand-bg);border-color:var(--brand-border);color:var(--brand)}
+
+/* ─── QUESTION LIST ─── */
+.qlist{border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.qlist-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.qrow{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid #161616;transition:background .1s;cursor:pointer}
+.qrow:hover{background:rgba(255,255,255,.02)}
+.qrow:last-child{border-bottom:none}
+.qrow.expanded{background:rgba(127,137,98,.03)}
+
+/* Status badge */
+.qstatus{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.qstatus.correct{background:rgba(74,222,128,.12);color:#4ade80}
+.qstatus.wrong{background:rgba(248,113,113,.12);color:#f87171}
+.qstatus.partial{background:rgba(251,191,36,.12);color:#fbbf24}
+.qstatus.skip{background:#1e1e1e;color:#444}
+
+.qrow-main{flex:1;min-width:0}
+.qrow-meta{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.qnum{font-size:10px;font-weight:700;color:var(--text3)}
+.qtype-badge{font-size:9px;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--brand-bg);border:1px solid var(--brand-border);color:var(--brand)}
+.qrow-text{font-size:12px;color:#bbb;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px}
+
+/* Answer pills inline */
+.qrow-answers{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;max-width:190px}
+.ans-pill{padding:3px 9px;border-radius:6px;font-size:10px;font-weight:500;border:1px solid;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:185px}
+.ans-pill.wrong{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.ans-pill.correct{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.ans-pill.neutral{background:var(--surface2);border-color:var(--border);color:var(--text2)}
+.qrow-time{font-size:10px;color:var(--text3);flex-shrink:0;align-self:flex-start;margin-top:6px;min-width:30px;text-align:right}
+
+/* Expanded detail */
+.qdetail{background:#111;border-top:1px solid #161616;padding:12px 14px 14px 46px}
+.qdetail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.qd-box{border-radius:9px;padding:10px 12px;border:1px solid var(--border)}
+.qd-box.correct-box{border-color:var(--green-border);background:rgba(74,222,128,.04)}
+.qd-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:4px}
+.qd-val{font-size:12px;font-weight:500;color:#ccc;line-height:1.4}
+.qd-val.correct-val{color:var(--green)}
+.qd-val.wrong-val{color:var(--red)}
+.qd-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.qd-chip{padding:2px 8px;border-radius:5px;font-size:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.qd-expl{padding:9px 12px;border-radius:9px;background:var(--surface2);font-size:11px;color:#888;line-height:1.6;margin-top:6px;border-left:2px solid var(--brand)}
+
+/* ─── INSIGHTS: TOPICS OVERVIEW ─── */
+.topics-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.topics-header{display:flex;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.topics-header-col{flex:1;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.topics-row{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #161616;gap:8px}
+.topics-row:last-child{border-bottom:none}
+.topics-name{flex:1;font-size:12px;color:#bbb;capitalize:first}
+.topics-bar-wrap{width:80px;height:5px;background:#1e1e1e;border-radius:3px;overflow:hidden}
+.topics-bar{height:100%;border-radius:3px}
+.topics-bar.green{background:var(--green)}
+.topics-bar.amber{background:var(--amber)}
+.topics-bar.red{background:var(--red)}
+.topics-pill{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid}
+.topics-pill.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.topics-pill.amber{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.topics-pill.red{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.topics-count{font-size:10px;color:var(--text3);min-width:22px;text-align:right}
+
+/* ─── KEEP TRAINING ─── */
+.train-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.train-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.train-row{padding:12px 14px;border-bottom:1px solid #161616}
+.train-row:last-child{border-bottom:none}
+.train-row-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.train-topic{font-size:12px;font-weight:600;color:#ccc}
+.train-badge{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600}
+.train-badge.red{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+.train-badge.amber{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
+.train-actions{display:flex;gap:6px}
+.train-btn{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--brand-border);background:var(--brand-bg);color:var(--brand);transition:all .15s}
+.train-btn:hover{background:rgba(127,137,98,.14)}
+.train-wrong-qs{font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.5}
+
+/* ─── EXTRA INSIGHTS ─── */
+.extra-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.extra-card{border-radius:12px;border:1px solid var(--border);background:var(--surface2);overflow:hidden}
+.extra-head{padding:9px 13px;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.extra-body{padding:13px}
+.extra-big{font-size:24px;font-weight:700;letter-spacing:-.02em;color:#ddd;line-height:1}
+.extra-sub{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5}
+
+/* Type breakdown rows */
+.type-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;gap:8px}
+.type-name{font-size:11px;color:#aaa;flex:1}
+.type-pill{padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;border:1px solid}
+.type-pill.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.type-pill.amber{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.type-pill.red{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+
+/* Hardest q box */
+.hardest-q{font-size:11px;color:#bbb;line-height:1.55;margin-bottom:10px}
+.hq-chips{display:flex;gap:5px;flex-wrap:wrap}
+.hq-chip{padding:2px 8px;border-radius:5px;font-size:10px;background:#1e1e1e;border:1px solid var(--border);color:var(--text2)}
+
+/* ─── VARIANT B: 2-column layout ─── */
+.an-2col{display:grid;grid-template-columns:1fr 320px;gap:14px}
+.an-main-col{min-width:0}
+.an-side-col{min-width:0}
+
+/* ─── VARIANT C: Horizontal stat bar ─── */
+.stat-bar{display:flex;align-items:stretch;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.stat-bar-item{flex:1;padding:14px 16px;border-right:1px solid var(--border)}
+.stat-bar-item:last-child{border-right:none}
+.sbi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:4px}
+.sbi-val{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1}
+.sbi-sub{font-size:10px;color:var(--text3);margin-top:3px}
+
+/* ─── QUESTION GRID (Variant D) ─── */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:16px}
+.qgrid-card{border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);padding:12px;cursor:pointer;transition:all .15s}
+.qgrid-card:hover{border-color:var(--brand-border)}
+.qgrid-card.correct{border-color:var(--green-border);background:rgba(74,222,128,.04)}
+.qgrid-card.wrong{border-color:var(--red-border);background:rgba(248,113,113,.04)}
+.qgrid-card.partial{border-color:var(--amber-border);background:rgba(251,191,36,.04)}
+.qgrid-card.sel{outline:2px solid var(--brand);outline-offset:1px}
+.qgcard-num{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px}
+.qgcard-text{font-size:11px;color:#bbb;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.qgcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.qgcard-icon{font-size:12px}
+.qgcard-time{font-size:10px;color:var(--text3)}
+
+/* ─── STRONG/WEAK SPLIT ─── */
+.sw-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:16px}
+.sw-header{display:grid;grid-template-columns:1fr 1px 1fr}
+.sw-col-head{padding:10px 14px;background:var(--surface2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.sw-divider-head{background:var(--border)}
+.sw-body{display:grid;grid-template-columns:1fr 1px 1fr}
+.sw-col{padding:6px 0}
+.sw-divider-body{background:var(--border)}
+.sw-item{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;gap:8px}
+.sw-name{font-size:12px;color:#bbb;flex:1;text-transform:capitalize}
+.sw-pill{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid}
+.sw-pill.green{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.sw-pill.red{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.sw-pill.amber{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+
+/* ─── MASTERY BADGE ─── */
+.mastery-wrap{display:flex;align-items:center;gap:12px;padding:12px 0}
+.mastery-steps{display:flex;gap:4px;flex:1}
+.mstep{flex:1;height:5px;border-radius:3px}
+.mstep.done{background:var(--brand)}
+.mstep.half{background:rgba(127,137,98,.3)}
+.mstep.empty{background:#1e1e1e}
+.mastery-label{font-size:12px;font-weight:600;color:var(--brand)}
+.mastery-sub{font-size:10px;color:var(--text3)}
+
+/* ─── RETRY WINDOW ─── */
+.retry-big{font-size:28px;font-weight:700;color:#ddd;line-height:1}
+.retry-sub{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.55;max-width:180px}
+
+/* ─── FLOATING FOOTER / CTA ─── */
+.an-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:#111}
+.footer-left{font-size:11px;color:var(--text3)}
+.footer-left b{color:#bbb;font-weight:500}
+.footer-actions{display:flex;gap:8px}
+.fan-btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid}
+.fan-btn.outline{border-color:#2a2a2a;background:transparent;color:#888}
+.fan-btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
+
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <h1>Cautie</h1>
+  <p>Quiz Analytics Mockups</p>
+  <div class="nav-section">Variants</div>
+  <a class="nav-item active" href="#varA"><span class="nav-num">A</span> Full Page (recommended)</a>
+  <a class="nav-item" href="#varB"><span class="nav-num">B</span> 2-Column Layout</a>
+  <a class="nav-item" href="#varC"><span class="nav-num">C</span> Horizontal Stats Bar</a>
+  <a class="nav-item" href="#varD"><span class="nav-num">D</span> Card Grid Questions</a>
+  <div class="nav-section">Components</div>
+  <a class="nav-item" href="#comp-stats"><span class="nav-num">—</span> Stat Pills</a>
+  <a class="nav-item" href="#comp-qlist"><span class="nav-num">—</span> Question List</a>
+  <a class="nav-item" href="#comp-topics"><span class="nav-num">—</span> Topics Overview</a>
+  <a class="nav-item" href="#comp-train"><span class="nav-num">—</span> Keep Training</a>
+  <a class="nav-item" href="#comp-extra"><span class="nav-num">—</span> Extra Insights</a>
+</nav>
+
+<div class="main">
+
+<div class="page-header">
+  <h2>Quiz Analytics</h2>
+  <p>Post-quiz results screen. Multiple layout variants and component explorations. All data is mocked with a Swiss history quiz (11 questions, 45% accuracy).</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- VARIANT A — Recommended full-page layout                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="varA">
+  <div class="section-badge">Variant A</div>
+  <div class="section-title">Full-Page Layout — Recommended</div>
+  <div class="section-desc">Full-height page matching the quiz-taker. Stat pills at top, expandable question list, split insights, keep training with direct actions, and 3 extra insight boxes. This is the closest to the final design intent.</div>
+
+  <div class="variant wide">
+    <div class="vhead"><span class="vname">Complete screen</span><span class="vtag">Recommended</span></div>
+    <div style="background:#0f0f0f;border-radius:0 0 14px 14px;overflow:hidden">
+
+      <!-- Top bar -->
+      <div class="an-topbar">
+        <div class="an-breadcrumb">
+          <strong>Quiz</strong><span>/</span><span>Caribbean Part of the Kingdom</span><span>/</span><b>Results</b>
+        </div>
+        <button class="an-btn-sm">Try again</button>
+      </div>
+      <div class="an-progress-full"></div>
+
+      <!-- Content -->
+      <div style="padding:20px;max-width:780px;margin:0 auto">
+
+        <!-- STAT PILLS -->
+        <div class="stat-row cols3" style="margin-bottom:14px">
+          <div class="stat-card red">
+            <div class="stat-label">Accuracy</div>
+            <div class="stat-value red">45%</div>
+            <div class="stat-sub">5 / 11 correct</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Speed</div>
+            <div class="stat-value" style="color:#ddd">2.5s</div>
+            <div class="stat-sub" style="color:var(--text3)">avg per question · click for total</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Completed</div>
+            <div class="stat-value" style="color:#ddd">100%</div>
+            <div class="stat-sub">11 questions answered</div>
+          </div>
+        </div>
+
+        <!-- QUESTION LIST -->
+        <div class="qlist">
+          <div class="qlist-header">All questions</div>
+
+          <!-- Q1 wrong, expanded -->
+          <div class="qrow expanded">
+            <div class="qstatus wrong">✗</div>
+            <div class="qrow-main">
+              <div class="qrow-meta"><span class="qnum">Q1</span><span class="qtype-badge">Scenario</span></div>
+              <div class="qrow-text">A newly elected official in a Swiss canton is outlining their responsibilities. Which statement describes a power typically held by a Swiss canton?</div>
+            </div>
+            <div class="qrow-answers">
+              <span class="ans-pill wrong">Option B</span>
+              <span class="ans-pill correct">Option A</span>
+            </div>
+            <div class="qrow-time">1.8s</div>
+          </div>
+          <!-- Expanded detail -->
+          <div class="qdetail">
+            <div class="qdetail-grid">
+              <div class="qd-box">
+                <div class="qd-label">Your answer</div>
+                <div class="qd-val wrong-val">Option B — Collecting federal income taxes on behalf of the national government</div>
+              </div>
+              <div class="qd-box correct-box">
+                <div class="qd-label">Correct answer</div>
+                <div class="qd-val correct-val">Option A — Managing cantonal roads and local infrastructure</div>
+              </div>
+            </div>
+            <div class="qd-expl">Swiss cantons have autonomy over cantonal roads, local police, education, and some taxes — federal tax collection is a central government responsibility.</div>
+            <div class="qd-chips">
+              <span class="qd-chip">Difficulty 6/10</span>
+              <span class="qd-chip">Topic: politics</span>
+              <span class="qd-chip">1.8s</span>
+            </div>
+          </div>
+
+          <!-- Q2 correct -->
+          <div class="qrow">
+            <div class="qstatus correct">✓</div>
+            <div class="qrow-main">
+              <div class="qrow-meta"><span class="qnum">Q2</span><span class="qtype-badge">MCQ</span></div>
+              <div class="qrow-text">In what year did Switzerland become a federal state?</div>
+            </div>
+            <div class="qrow-answers">
+              <span class="ans-pill correct">1848</span>
+            </div>
+            <div class="qrow-time">1.2s</div>
+          </div>
+
+          <!-- Q3 partial -->
+          <div class="qrow">
+            <div class="qstatus partial">½</div>
+            <div class="qrow-main">
+              <div class="qrow-meta"><span class="qnum">Q3</span><span class="qtype-badge">Matching</span></div>
+              <div class="qrow-text">Match each Swiss institution with its primary function.</div>
+            </div>
+            <div class="qrow-answers">
+              <span class="ans-pill neutral">2 / 4 correct</span>
+            </div>
+            <div class="qrow-time">4.1s</div>
+          </div>
+
+          <!-- Q4 wrong -->
+          <div class="qrow">
+            <div class="qstatus wrong">✗</div>
+            <div class="qrow-main">
+              <div class="qrow-meta"><span class="qnum">Q4</span><span class="qtype-badge">Fill-blank</span></div>
+              <div class="qrow-text">The federal capital of Switzerland is ____.</div>
+            </div>
+            <div class="qrow-answers">
+              <span class="ans-pill wrong">Zurich</span>
+              <span class="ans-pill correct">Bern</span>
+            </div>
+            <div class="qrow-time">2.0s</div>
+          </div>
+
+          <!-- Collapsed Q5–Q11 placeholder -->
+          <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-top:1px solid #161616">
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <div class="qstatus correct" style="width:20px;height:20px;font-size:9px">✓</div>
+              <div class="qstatus correct" style="width:20px;height:20px;font-size:9px">✓</div>
+              <div class="qstatus wrong" style="width:20px;height:20px;font-size:9px">✗</div>
+              <div class="qstatus correct" style="width:20px;height:20px;font-size:9px">✓</div>
+              <div class="qstatus wrong" style="width:20px;height:20px;font-size:9px">✗</div>
+              <div class="qstatus partial" style="width:20px;height:20px;font-size:9px">½</div>
+              <div class="qstatus wrong" style="width:20px;height:20px;font-size:9px">✗</div>
+            </div>
+            <span style="font-size:10px;color:var(--text3)">Q5 – Q11 (click to expand)</span>
+          </div>
+        </div>
+
+        <!-- INSIGHTS ROW -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+
+          <!-- Topics overview — all categories, no cap -->
+          <div class="topics-card">
+            <div class="topics-header">
+              <span class="topics-header-col" style="flex:2">Topic</span>
+              <span class="topics-header-col" style="width:80px;text-align:right">Score</span>
+              <span class="topics-header-col" style="width:30px;text-align:right">Qs</span>
+            </div>
+            <div class="topics-row">
+              <span class="topics-name" style="flex:2">history</span>
+              <div style="width:80px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                <div class="topics-bar-wrap"><div class="topics-bar green" style="width:63%"></div></div>
+                <span class="topics-pill green">63%</span>
+              </div>
+              <span class="topics-count">3</span>
+            </div>
+            <div class="topics-row">
+              <span class="topics-name" style="flex:2">politics</span>
+              <div style="width:80px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                <div class="topics-bar-wrap"><div class="topics-bar amber" style="width:67%"></div></div>
+                <span class="topics-pill amber">67%</span>
+              </div>
+              <span class="topics-count">3</span>
+            </div>
+            <div class="topics-row">
+              <span class="topics-name" style="flex:2">geography</span>
+              <div style="width:80px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                <div class="topics-bar-wrap"><div class="topics-bar red" style="width:25%"></div></div>
+                <span class="topics-pill red">25%</span>
+              </div>
+              <span class="topics-count">4</span>
+            </div>
+            <div class="topics-row">
+              <span class="topics-name" style="flex:2">demography</span>
+              <div style="width:80px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
+                <div class="topics-bar-wrap"><div class="topics-bar red" style="width:0%"></div></div>
+                <span class="topics-pill red">0%</span>
+              </div>
+              <span class="topics-count">1</span>
+            </div>
+          </div>
+
+          <!-- Keep training — by wrong topic, direct action -->
+          <div class="train-card">
+            <div class="train-header">Keep training</div>
+            <div class="train-row">
+              <div class="train-row-top">
+                <span class="train-topic">geography</span>
+                <span class="train-badge red">3 wrong</span>
+              </div>
+              <div class="train-wrong-qs">What is the largest lake? · Name the three bordering countries · ...</div>
+              <div class="train-actions">
+                <button class="train-btn">Quiz</button>
+                <button class="train-btn">Flashcards</button>
+                <button class="train-btn">Notes</button>
+              </div>
+            </div>
+            <div class="train-row">
+              <div class="train-row-top">
+                <span class="train-topic">demography</span>
+                <span class="train-badge red">1 wrong</span>
+              </div>
+              <div class="train-wrong-qs">What percentage of Swiss residents are foreign nationals?</div>
+              <div class="train-actions">
+                <button class="train-btn">Quiz</button>
+                <button class="train-btn">Flashcards</button>
+                <button class="train-btn">Notes</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- EXTRA INSIGHTS -->
+        <div class="extra-row">
+
+          <!-- By question type -->
+          <div class="extra-card">
+            <div class="extra-head">By question type</div>
+            <div class="extra-body">
+              <div class="type-row"><span class="type-name">Scenario</span><span class="type-pill amber">50%</span></div>
+              <div class="type-row"><span class="type-name">Multiple choice</span><span class="type-pill green">80%</span></div>
+              <div class="type-row"><span class="type-name">Timeline</span><span class="type-pill red">0%</span></div>
+              <div class="type-row"><span class="type-name">Fill in blank</span><span class="type-pill red">25%</span></div>
+              <div class="type-row"><span class="type-name">Matching</span><span class="type-pill amber">50%</span></div>
+            </div>
+          </div>
+
+          <!-- When to retry (spaced repetition) -->
+          <div class="extra-card">
+            <div class="extra-head">When to retry</div>
+            <div class="extra-body">
+              <div class="retry-big">Today</div>
+              <div class="retry-sub">Score is below 50% — retry now while the material is still fresh. Spacing helps after you've mastered it.</div>
+            </div>
+          </div>
+
+          <!-- Hardest question -->
+          <div class="extra-card">
+            <div class="extra-head">Hardest question</div>
+            <div class="extra-body">
+              <div class="hardest-q">What percentage of Swiss residents are foreign nationals according to the 2020 census?</div>
+              <div class="hq-chips">
+                <span class="hq-chip">Difficulty 8/10</span>
+                <span class="hq-chip">3.2s</span>
+                <span class="hq-chip">demography</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Footer CTA -->
+      <div class="an-footer">
+        <div class="footer-left">Quiz on <b>Caribbean Part of the Kingdom</b> · 11 questions · May 2025</div>
+        <div class="footer-actions">
+          <button class="fan-btn outline">Share results</button>
+          <button class="fan-btn brand">Try again →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- VARIANT B — 2-column layout                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="varB">
+  <div class="section-badge">Variant B</div>
+  <div class="section-title">2-Column Layout</div>
+  <div class="section-desc">Questions take the full left column. Right sidebar has a compact hero score + insights stacked. Better when there are many questions. Sidebar stays sticky while scrolling the question list.</div>
+
+  <div class="variant wide">
+    <div class="vhead"><span class="vname">2-column with hero score</span><span class="vtag">Sidebar layout</span></div>
+    <div style="background:#0f0f0f;border-radius:0 0 14px 14px;overflow:hidden">
+      <div class="an-topbar">
+        <div class="an-breadcrumb"><strong>Quiz</strong><span>/</span><span>Caribbean Part of the Kingdom</span><span>/</span><b>Results</b></div>
+        <button class="an-btn-sm">Try again</button>
+      </div>
+      <div class="an-progress-full"></div>
+
+      <div style="padding:16px;display:grid;grid-template-columns:1fr 280px;gap:14px;align-items:start">
+
+        <!-- LEFT: question list -->
+        <div>
+          <div class="qlist">
+            <div class="qlist-header">All questions — 11 total</div>
+            <div class="qrow">
+              <div class="qstatus wrong">✗</div>
+              <div class="qrow-main">
+                <div class="qrow-meta"><span class="qnum">Q1</span><span class="qtype-badge">Scenario</span></div>
+                <div class="qrow-text">A newly elected official in a Swiss canton…</div>
+              </div>
+              <div class="qrow-answers"><span class="ans-pill wrong">Option B</span><span class="ans-pill correct">Option A</span></div>
+              <div class="qrow-time">1.8s</div>
+            </div>
+            <div class="qrow">
+              <div class="qstatus correct">✓</div>
+              <div class="qrow-main">
+                <div class="qrow-meta"><span class="qnum">Q2</span><span class="qtype-badge">MCQ</span></div>
+                <div class="qrow-text">In what year did Switzerland become a federal state?</div>
+              </div>
+              <div class="qrow-answers"><span class="ans-pill correct">1848</span></div>
+              <div class="qrow-time">1.2s</div>
+            </div>
+            <div class="qrow">
+              <div class="qstatus partial">½</div>
+              <div class="qrow-main">
+                <div class="qrow-meta"><span class="qnum">Q3</span><span class="qtype-badge">Matching</span></div>
+                <div class="qrow-text">Match each Swiss institution with its primary function.</div>
+              </div>
+              <div class="qrow-answers"><span class="ans-pill neutral">2/4 correct</span></div>
+              <div class="qrow-time">4.1s</div>
+            </div>
+            <div class="qrow">
+              <div class="qstatus wrong">✗</div>
+              <div class="qrow-main">
+                <div class="qrow-meta"><span class="qnum">Q4</span><span class="qtype-badge">Fill-blank</span></div>
+                <div class="qrow-text">The federal capital of Switzerland is ____.</div>
+              </div>
+              <div class="qrow-answers"><span class="ans-pill wrong">Zurich</span><span class="ans-pill correct">Bern</span></div>
+              <div class="qrow-time">2.0s</div>
+            </div>
+            <div style="padding:10px 14px;font-size:10px;color:var(--text3);border-top:1px solid #161616;text-align:center">
+              + 7 more questions · click to expand all
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT sidebar -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+
+          <!-- Hero ring score -->
+          <div style="border-radius:12px;border:1px solid var(--border);background:var(--surface2);padding:16px">
+            <div class="hero-ring-wrap" style="gap:14px;padding:0 0 14px">
+              <!-- SVG ring -->
+              <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#1e1e1e" stroke-width="7"/>
+                <circle cx="36" cy="36" r="28" fill="none" stroke="#f87171" stroke-width="7"
+                  stroke-dasharray="175.9" stroke-dashoffset="96.7"
+                  stroke-linecap="round" transform="rotate(-90 36 36)"/>
+                <text x="36" y="41" text-anchor="middle" font-size="14" font-weight="700" fill="#f87171" font-family="-apple-system,sans-serif">45%</text>
+              </svg>
+              <div>
+                <div class="hero-score" style="color:#f87171">45%</div>
+                <div class="hero-sublabel">accuracy · 5 / 11 correct</div>
+                <div class="hero-pills" style="margin-top:10px">
+                  <span class="hpill muted">2.5s avg</span>
+                  <span class="hpill muted">100% done</span>
+                </div>
+              </div>
+            </div>
+            <!-- Mastery bar -->
+            <div class="mastery-wrap" style="border-top:1px solid var(--border);padding-top:12px;margin-top:0">
+              <div>
+                <div class="mastery-steps">
+                  <div class="mstep done"></div>
+                  <div class="mstep half"></div>
+                  <div class="mstep empty"></div>
+                  <div class="mstep empty"></div>
+                </div>
+                <div style="margin-top:5px;display:flex;justify-content:space-between">
+                  <span style="font-size:10px;color:var(--brand)">Familiar</span>
+                  <span style="font-size:10px;color:var(--text3)">Proficient →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Topics split -->
+          <div class="sw-card" style="margin:0">
+            <div class="sw-header">
+              <div class="sw-col-head">Strong</div>
+              <div class="sw-divider-head"></div>
+              <div class="sw-col-head">Weak</div>
+            </div>
+            <div class="sw-body">
+              <div class="sw-col">
+                <div class="sw-item"><span class="sw-name">history</span><span class="sw-pill green">63%</span></div>
+                <div class="sw-item"><span class="sw-name">politics</span><span class="sw-pill amber">67%</span></div>
+              </div>
+              <div class="sw-divider-body"></div>
+              <div class="sw-col">
+                <div class="sw-item"><span class="sw-name">geography</span><span class="sw-pill red">25%</span></div>
+                <div class="sw-item"><span class="sw-name">demography</span><span class="sw-pill red">0%</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Keep training (compact) -->
+          <div class="train-card" style="margin:0">
+            <div class="train-header">Keep training</div>
+            <div class="train-row">
+              <div class="train-row-top"><span class="train-topic">geography</span><span class="train-badge red">3 wrong</span></div>
+              <div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div>
+            </div>
+            <div class="train-row">
+              <div class="train-row-top"><span class="train-topic">demography</span><span class="train-badge red">1 wrong</span></div>
+              <div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div>
+            </div>
+          </div>
+
+          <!-- Retry -->
+          <div class="extra-card" style="margin:0">
+            <div class="extra-head">When to retry</div>
+            <div class="extra-body"><div class="retry-big">Today</div><div class="retry-sub">Score below 50% — retry now.</div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- VARIANT C — Horizontal stats bar                          -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="varC">
+  <div class="section-badge">Variant C</div>
+  <div class="section-title">Horizontal Stats Bar</div>
+  <div class="section-desc">Stats as a single connected strip — fewer visual jumps, more space for content below. Cleaner when screen space is tight.</div>
+
+  <div class="variant wide">
+    <div class="vhead"><span class="vname">Stats strip + full-width sections</span><span class="vtag">Compact top</span></div>
+    <div style="background:#0f0f0f;border-radius:0 0 14px 14px;overflow:hidden;padding:16px">
+
+      <!-- Stat strip -->
+      <div class="stat-bar">
+        <div class="stat-bar-item">
+          <div class="sbi-label">Accuracy</div>
+          <div class="sbi-val" style="color:#f87171">45%</div>
+          <div class="sbi-sub">5 / 11 correct</div>
+        </div>
+        <div class="stat-bar-item">
+          <div class="sbi-label">Speed</div>
+          <div class="sbi-val">2.5s</div>
+          <div class="sbi-sub">avg per question</div>
+        </div>
+        <div class="stat-bar-item">
+          <div class="sbi-label">Completed</div>
+          <div class="sbi-val">100%</div>
+          <div class="sbi-sub">all answered</div>
+        </div>
+        <div class="stat-bar-item" style="border-right:none">
+          <div class="sbi-label">Retry in</div>
+          <div class="sbi-val">Today</div>
+          <div class="sbi-sub">score below 50%</div>
+        </div>
+      </div>
+
+      <!-- Question list truncated for mockup -->
+      <div class="qlist" style="margin-bottom:14px">
+        <div class="qlist-header">All questions</div>
+        <div class="qrow"><div class="qstatus wrong">✗</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q1</span><span class="qtype-badge">Scenario</span></div><div class="qrow-text">A newly elected official in a Swiss canton is outlining their responsibilities…</div></div><div class="qrow-answers"><span class="ans-pill wrong">Option B</span><span class="ans-pill correct">Option A</span></div><div class="qrow-time">1.8s</div></div>
+        <div class="qrow"><div class="qstatus correct">✓</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q2</span><span class="qtype-badge">MCQ</span></div><div class="qrow-text">In what year did Switzerland become a federal state?</div></div><div class="qrow-answers"><span class="ans-pill correct">1848</span></div><div class="qrow-time">1.2s</div></div>
+        <div class="qrow"><div class="qstatus wrong">✗</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q4</span><span class="qtype-badge">Fill-blank</span></div><div class="qrow-text">The federal capital of Switzerland is ____.</div></div><div class="qrow-answers"><span class="ans-pill wrong">Zurich</span><span class="ans-pill correct">Bern</span></div><div class="qrow-time">2.0s</div></div>
+        <div style="padding:9px 14px;font-size:10px;color:var(--text3);border-top:1px solid #161616;text-align:center">8 more questions …</div>
+      </div>
+
+      <!-- Full-width topics + keep training -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="topics-card" style="margin:0">
+          <div class="topics-header"><span class="topics-header-col" style="flex:2">Topic</span><span class="topics-header-col" style="width:70px;text-align:right">Score</span><span class="topics-header-col" style="width:30px;text-align:right">Qs</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">history</span><div style="width:70px;display:flex;align-items:center;justify-content:flex-end;gap:5px"><div class="topics-bar-wrap"><div class="topics-bar green" style="width:63%"></div></div><span class="topics-pill green">63%</span></div><span class="topics-count">3</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">politics</span><div style="width:70px;display:flex;align-items:center;justify-content:flex-end;gap:5px"><div class="topics-bar-wrap"><div class="topics-bar amber" style="width:67%"></div></div><span class="topics-pill amber">67%</span></div><span class="topics-count">3</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">geography</span><div style="width:70px;display:flex;align-items:center;justify-content:flex-end;gap:5px"><div class="topics-bar-wrap"><div class="topics-bar red" style="width:25%"></div></div><span class="topics-pill red">25%</span></div><span class="topics-count">4</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">demography</span><div style="width:70px;display:flex;align-items:center;justify-content:flex-end;gap:5px"><div class="topics-bar-wrap"><div class="topics-bar red" style="width:0%"></div></div><span class="topics-pill red">0%</span></div><span class="topics-count">1</span></div>
+        </div>
+        <div class="train-card" style="margin:0">
+          <div class="train-header">Keep training</div>
+          <div class="train-row"><div class="train-row-top"><span class="train-topic">geography</span><span class="train-badge red">3 wrong</span></div><div class="train-wrong-qs">What is the largest lake? · Name the three bordering countries · …</div><div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div></div>
+          <div class="train-row"><div class="train-row-top"><span class="train-topic">demography</span><span class="train-badge red">1 wrong</span></div><div class="train-wrong-qs">What % of Swiss residents are foreign nationals?</div><div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- VARIANT D — Card grid questions                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="varD">
+  <div class="section-badge">Variant D</div>
+  <div class="section-title">Card Grid Questions</div>
+  <div class="section-desc">Questions as a grid of small cards — faster visual scan of the full set. Good for 20+ questions. Click a card to see detail. Works well on wide screens.</div>
+
+  <div class="variant wide">
+    <div class="vhead"><span class="vname">Card grid + bottom detail</span><span class="vtag">Visual / high density</span></div>
+    <div style="background:#0f0f0f;border-radius:0 0 14px 14px;overflow:hidden;padding:16px">
+      <div class="stat-row cols3" style="margin-bottom:14px">
+        <div class="stat-card red"><div class="stat-label">Accuracy</div><div class="stat-value red">45%</div><div class="stat-sub">5 / 11 correct</div></div>
+        <div class="stat-card"><div class="stat-label">Speed</div><div class="stat-value" style="color:#ddd">2.5s</div><div class="stat-sub">avg per question</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#ddd">100%</div><div class="stat-sub">11 answered</div></div>
+      </div>
+
+      <div class="qgrid">
+        <div class="qgrid-card wrong">
+          <div class="qgcard-num">Q1 · Scenario</div>
+          <div class="qgcard-text">A newly elected official in a Swiss canton is outlining their responsibilities…</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#f87171">✗</span><span class="qgcard-time">1.8s</span></div>
+        </div>
+        <div class="qgrid-card correct">
+          <div class="qgcard-num">Q2 · MCQ</div>
+          <div class="qgcard-text">In what year did Switzerland become a federal state?</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#4ade80">✓</span><span class="qgcard-time">1.2s</span></div>
+        </div>
+        <div class="qgrid-card partial">
+          <div class="qgcard-num">Q3 · Matching</div>
+          <div class="qgcard-text">Match each Swiss institution with its primary function.</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#fbbf24">½</span><span class="qgcard-time">4.1s</span></div>
+        </div>
+        <div class="qgrid-card wrong sel">
+          <div class="qgcard-num">Q4 · Fill-blank</div>
+          <div class="qgcard-text">The federal capital of Switzerland is ____.</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#f87171">✗</span><span class="qgcard-time">2.0s</span></div>
+        </div>
+        <div class="qgrid-card correct">
+          <div class="qgcard-num">Q5 · MCQ</div>
+          <div class="qgcard-text">Which body elects the Swiss Federal Council?</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#4ade80">✓</span><span class="qgcard-time">1.5s</span></div>
+        </div>
+        <div class="qgrid-card wrong">
+          <div class="qgcard-num">Q6 · Timeline</div>
+          <div class="qgcard-text">What event took place at timeline marker T2?</div>
+          <div class="qgcard-foot"><span class="qgcard-icon" style="color:#f87171">✗</span><span class="qgcard-time">5.2s</span></div>
+        </div>
+      </div>
+
+      <!-- Selected card detail -->
+      <div style="border-radius:12px;border:1px solid var(--amber-border);background:rgba(251,191,36,.04);padding:14px;margin-top:-4px">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:#fbbf24;margin-bottom:8px">Q4 — Selected</div>
+        <div style="font-size:13px;color:#ddd;margin-bottom:12px">The federal capital of Switzerland is ____.</div>
+        <div class="qdetail-grid">
+          <div class="qd-box"><div class="qd-label">Your answer</div><div class="qd-val wrong-val">Zurich</div></div>
+          <div class="qd-box correct-box"><div class="qd-label">Correct answer</div><div class="qd-val correct-val">Bern</div></div>
+        </div>
+        <div class="qd-expl" style="margin-top:8px">Bern has been the federal city (de facto capital) of Switzerland since 1848. Zurich is the largest city but is not the capital.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- COMPONENT REFERENCE                                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="comp-stats">
+  <div class="section-badge">Component</div>
+  <div class="section-title">Stat Pills — All Options</div>
+  <div class="section-desc">Three sizing options and color states for the stat pills.</div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Large — colored by score</span></div>
+      <div class="vbody">
+        <div class="stat-row cols3">
+          <div class="stat-card red"><div class="stat-label">Accuracy</div><div class="stat-value red">45%</div><div class="stat-sub">5 / 11 correct</div></div>
+          <div class="stat-card"><div class="stat-label">Speed</div><div class="stat-value" style="color:#ddd">2.5s</div><div class="stat-sub">avg · click for total</div></div>
+          <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:#ddd">100%</div><div class="stat-sub">11 answered</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Large — good score (green)</span></div>
+      <div class="vbody">
+        <div class="stat-row cols3">
+          <div class="stat-card green"><div class="stat-label">Accuracy</div><div class="stat-value green">91%</div><div class="stat-sub">10 / 11 correct</div></div>
+          <div class="stat-card"><div class="stat-label">Speed</div><div class="stat-value" style="color:#ddd">1.8s</div><div class="stat-sub">avg per question</div></div>
+          <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value green">100%</div><div class="stat-sub">all answered</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="comp-qlist">
+  <div class="section-badge">Component</div>
+  <div class="section-title">Question List — Expanded States</div>
+  <div class="variants">
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">All row states</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="qlist" style="border:none;border-radius:0;margin:0">
+          <div class="qlist-header">All questions</div>
+          <div class="qrow"><div class="qstatus correct">✓</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q1</span><span class="qtype-badge">MCQ</span></div><div class="qrow-text">Correct answer — short</div></div><div class="qrow-answers"><span class="ans-pill correct">Option A</span></div><div class="qrow-time">1.2s</div></div>
+          <div class="qrow"><div class="qstatus wrong">✗</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q2</span><span class="qtype-badge">Fill-blank</span></div><div class="qrow-text">Wrong answer — shows both pills side by side</div></div><div class="qrow-answers"><span class="ans-pill wrong">Wrong answer</span><span class="ans-pill correct">Correct answer</span></div><div class="qrow-time">2.0s</div></div>
+          <div class="qrow"><div class="qstatus partial">½</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q3</span><span class="qtype-badge">Matching</span></div><div class="qrow-text">Partial answer — multi-part questions</div></div><div class="qrow-answers"><span class="ans-pill neutral">2/4 correct</span></div><div class="qrow-time">4.1s</div></div>
+          <div class="qrow"><div class="qstatus skip">?</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q4</span><span class="qtype-badge">Short answer</span></div><div class="qrow-text">Skipped — no answer given</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0">skipped</div></div>
+          <div class="qrow expanded"><div class="qstatus wrong">✗</div><div class="qrow-main"><div class="qrow-meta"><span class="qnum">Q5</span><span class="qtype-badge">Scenario</span></div><div class="qrow-text">Expanded state — tap/click anywhere on row to expand</div></div><div class="qrow-answers"><span class="ans-pill wrong">Wrong</span><span class="ans-pill correct">Correct</span></div><div class="qrow-time">3.4s</div></div>
+          <div class="qdetail"><div class="qdetail-grid"><div class="qd-box"><div class="qd-label">Your answer</div><div class="qd-val wrong-val">The user's wrong answer text goes here, highlighted red</div></div><div class="qd-box correct-box"><div class="qd-label">Correct answer</div><div class="qd-val correct-val">The correct answer highlighted green with subtle green background</div></div></div><div class="qd-expl">Explanation text appears here — pulled from the AI-generated explanation field on the question. Clear, source-based, concise.</div><div class="qd-chips"><span class="qd-chip">Difficulty 7/10</span><span class="qd-chip">Topic: politics</span><span class="qd-chip">3.4s</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="comp-topics">
+  <div class="section-badge">Component</div>
+  <div class="section-title">Topics Overview — Single Box</div>
+  <div class="section-desc">All categories used in the quiz in one box. Percentage pills + mini bars. No fixed cap — shows however many categories exist. Sorted worst → best or vice versa.</div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">With bar + pill</span><span class="vtag">Recommended</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="topics-card" style="border:none;border-radius:0;margin:0">
+          <div class="topics-header"><span class="topics-header-col" style="flex:2">Topic</span><span class="topics-header-col" style="width:110px;text-align:right">Score</span><span class="topics-header-col" style="width:30px;text-align:right">Qs</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">history</span><div style="width:110px;display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="topics-bar-wrap"><div class="topics-bar green" style="width:63%"></div></div><span class="topics-pill green">63%</span></div><span class="topics-count">3</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">politics</span><div style="width:110px;display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="topics-bar-wrap"><div class="topics-bar amber" style="width:67%"></div></div><span class="topics-pill amber">67%</span></div><span class="topics-count">3</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">geography</span><div style="width:110px;display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="topics-bar-wrap"><div class="topics-bar red" style="width:25%"></div></div><span class="topics-pill red">25%</span></div><span class="topics-count">4</span></div>
+          <div class="topics-row"><span class="topics-name" style="flex:2">demography</span><div style="width:110px;display:flex;align-items:center;justify-content:flex-end;gap:6px"><div class="topics-bar-wrap"><div class="topics-bar red" style="width:0%"></div></div><span class="topics-pill red">0%</span></div><span class="topics-count">1</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Strong / Weak split box</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="sw-card" style="border:none;border-radius:0;margin:0">
+          <div class="sw-header"><div class="sw-col-head">Strong</div><div class="sw-divider-head"></div><div class="sw-col-head">Weak</div></div>
+          <div class="sw-body">
+            <div class="sw-col">
+              <div class="sw-item"><span class="sw-name">history</span><span class="sw-pill green">63%</span></div>
+              <div class="sw-item"><span class="sw-name">politics</span><span class="sw-pill amber">67%</span></div>
+            </div>
+            <div class="sw-divider-body"></div>
+            <div class="sw-col">
+              <div class="sw-item"><span class="sw-name">geography</span><span class="sw-pill red">25%</span></div>
+              <div class="sw-item"><span class="sw-name">demography</span><span class="sw-pill red">0%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="comp-train">
+  <div class="section-badge">Component</div>
+  <div class="section-title">Keep Training</div>
+  <div class="section-desc">Groups wrong questions by their topic. Shows which specific questions were missed (as short previews). Direct buttons go to that tool pre-loaded with the original source + targeted instructions for that exact topic and wrong questions. No extra clicks.</div>
+  <div class="variants">
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">Full version with question previews</span><span class="vtag">Recommended</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="train-card" style="border:none;border-radius:0;margin:0">
+          <div class="train-header">Keep training — based on wrong answers</div>
+          <div class="train-row">
+            <div class="train-row-top"><span class="train-topic">geography</span><span class="train-badge red">3 wrong</span></div>
+            <div class="train-wrong-qs">• What is the largest lake entirely within Switzerland?<br>• Name three countries bordering Switzerland to the south.<br>• Which Swiss city sits at the confluence of the Aare and Reuss rivers?</div>
+            <div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div>
+          </div>
+          <div class="train-row">
+            <div class="train-row-top"><span class="train-topic">demography</span><span class="train-badge red">1 wrong</span></div>
+            <div class="train-wrong-qs">• What percentage of Swiss residents are foreign nationals according to the 2020 census?</div>
+            <div class="train-actions"><button class="train-btn">Quiz</button><button class="train-btn">Flashcards</button><button class="train-btn">Notes</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="comp-extra">
+  <div class="section-badge">Component</div>
+  <div class="section-title">Extra Insight Boxes</div>
+  <div class="section-desc">Supplementary analytics. Show only when data is available. Ideas: question type accuracy, spaced repetition retry window, hardest/slowest question, mastery level, streak.</div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Question type accuracy</span></div>
+      <div class="vbody">
+        <div class="type-row"><span class="type-name">Multiple choice</span><span class="type-pill green">80%</span></div>
+        <div class="type-row"><span class="type-name">Scenario</span><span class="type-pill amber">50%</span></div>
+        <div class="type-row"><span class="type-name">Matching</span><span class="type-pill amber">50%</span></div>
+        <div class="type-row"><span class="type-name">Fill in blank</span><span class="type-pill red">25%</span></div>
+        <div class="type-row"><span class="type-name">Timeline</span><span class="type-pill red">0%</span></div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">When to retry (spaced repetition)</span></div>
+      <div class="vbody">
+        <div class="retry-big">Today</div>
+        <div class="retry-sub" style="max-width:100%">Score is below 50% — retry right away while the material is still in working memory. Spaced repetition works best once you've achieved a baseline.</div>
+        <div style="margin-top:12px;display:flex;gap:6px">
+          <span class="hpill brand">≥90% → 7 days</span>
+          <span class="hpill muted">≥70% → 3 days</span>
+          <span class="hpill muted">&lt;50% → today</span>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Hardest / Slowest question</span></div>
+      <div class="vbody">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px">Hardest question</div>
+        <div class="hardest-q">What percentage of Swiss residents are foreign nationals according to the 2020 census?</div>
+        <div class="hq-chips"><span class="hq-chip">Difficulty 8/10</span><span class="hq-chip">3.2s</span><span class="hq-chip">demography</span></div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Mastery progress</span></div>
+      <div class="vbody">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Based on your accuracy across retries</div>
+        <div class="mastery-wrap" style="flex-direction:column;align-items:flex-start;gap:6px">
+          <div style="display:flex;gap:4px;width:100%">
+            <div class="mstep done" style="height:8px;border-radius:4px"></div>
+            <div class="mstep half" style="height:8px;border-radius:4px"></div>
+            <div class="mstep empty" style="height:8px;border-radius:4px"></div>
+            <div class="mstep empty" style="height:8px;border-radius:4px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;width:100%">
+            <span style="font-size:10px;color:var(--brand);font-weight:600">Familiar</span>
+            <span style="font-size:10px;color:var(--text3)">Proficient · Expert · Master</span>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">Retry 2 more times above 70% to reach Proficient.</div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Hero ring score (SVG)</span></div>
+      <div class="vbody">
+        <div style="display:flex;align-items:center;gap:16px">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#1e1e1e" stroke-width="8"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#f87171" stroke-width="8"
+              stroke-dasharray="201.1" stroke-dashoffset="110.6"
+              stroke-linecap="round" transform="rotate(-90 40 40)"/>
+            <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#f87171" font-family="-apple-system,sans-serif">45%</text>
+          </svg>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">Good for hero stat in Variant B sidebar. Renders cleanly at any size.</div>
+            <div style="margin-top:8px;display:flex;gap:6px">
+              <span class="hpill muted">2.5s avg</span>
+              <span class="hpill muted">11/11 done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Stats as horizontal bar</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="stat-bar" style="border-radius:0;border:none;border-top:1px solid var(--border)">
+          <div class="stat-bar-item"><div class="sbi-label">Accuracy</div><div class="sbi-val" style="color:#f87171">45%</div><div class="sbi-sub">5 correct</div></div>
+          <div class="stat-bar-item"><div class="sbi-label">Speed</div><div class="sbi-val">2.5s</div><div class="sbi-sub">avg</div></div>
+          <div class="stat-bar-item"><div class="sbi-label">Completed</div><div class="sbi-val">100%</div><div class="sbi-sub">11 done</div></div>
+          <div class="stat-bar-item" style="border-right:none"><div class="sbi-label">Retry</div><div class="sbi-val">Today</div><div class="sbi-sub">&lt;50% score</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+  navItems.forEach(n => n.classList.toggle('active', n.getAttribute('href') === '#' + cur));
+});
+</script>
+</body>
+</html>
