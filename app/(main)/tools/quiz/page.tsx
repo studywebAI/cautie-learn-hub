@@ -557,6 +557,8 @@ function QuizPageContent() {
         processes: contentClass.processes === 'y' || aiCategories?.processes === 'y' || aiCategories?.causeEffect === 'y' ? 'y' : 'n',
         diagrams: contentClass.diagrams === 'y' || aiCategories?.visual === 'y' || aiCategories?.classifications === 'y' ? 'y' : 'n',
         vocabulary: contentClass.vocabulary === 'y' || aiCategories?.definitions === 'y' ? 'y' : 'n',
+        comparisons: contentClass.comparisons === 'y' || aiCategories?.comparisons === 'y' || aiCategories?.classifications === 'y' ? 'y' : 'n',
+        arguments: contentClass.arguments === 'y' || aiCategories?.arguments === 'y' ? 'y' : 'n',
       }
     : null;
 

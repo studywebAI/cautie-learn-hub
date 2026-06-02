@@ -14,7 +14,9 @@ export type ClassificationKey =
   | 'vocabulary'
   | 'code'
   | 'quotes'
-  | 'sequential_plot';
+  | 'sequential_plot'
+  | 'comparisons'
+  | 'arguments';
 
 export type ClassificationValue = 'y' | 'n';
 export type ContentClassification = Record<ClassificationKey, ClassificationValue>;
@@ -81,6 +83,14 @@ export function classifyContent(text: string): ContentClassification | null {
   const sequentialPlotPresent =
     /\b(chapter|scene|act \d|protagonist|antagonist|plot|subplot|story|narrative|character|novel|poem|play|author|setting|conflict|resolution|climax|exposition)\b/.test(t);
 
+  // ── Comparisons ────────────────────────────────────────────────────────────
+  const comparisonsPresent =
+    /\b(compar|contrast|differ|similar|whereas|while\b|unlike|in contrast|on the other hand|versus|vs\.?|both .{1,40} and|neither .{1,40} nor)\b/.test(t);
+
+  // ── Arguments ──────────────────────────────────────────────────────────────
+  const argumentsPresent =
+    /\b(therefore|thus|hence|because|however|although|claim|evidence|premise|conclusion|argue|argument|refute|rebut|counterargument|justify|support|oppose|nevertheless|nonetheless|despite|in spite of)\b/.test(t);
+
   return {
     timeline: timelinePresent ? 'y' : 'n',
     dates: datesPresent ? 'y' : 'n',
@@ -91,6 +101,8 @@ export function classifyContent(text: string): ContentClassification | null {
     code: codePresent ? 'y' : 'n',
     quotes: quotesPresent ? 'y' : 'n',
     sequential_plot: sequentialPlotPresent ? 'y' : 'n',
+    comparisons: comparisonsPresent ? 'y' : 'n',
+    arguments: argumentsPresent ? 'y' : 'n',
   };
 }
 
@@ -107,6 +119,11 @@ export function isQuizTypeAvailable(
   if (typeValue === 'ordering' && cls.processes === 'n' && cls.sequential_plot === 'n') return false;
   if (typeValue === 'ranking' && cls.processes === 'n' && cls.sequential_plot === 'n' && cls.timeline === 'n') return false;
   if (typeValue === 'drag-drop' && cls.processes === 'n' && cls.diagrams === 'n') return false;
-  if (typeValue === 'venn' && cls.diagrams === 'n' && cls.people === 'n') return false;
+  if (typeValue === 'venn' && cls.diagrams === 'n' && cls.people === 'n' && cls.comparisons === 'n') return false;
+  if (typeValue === 'comparison-matrix' && cls.comparisons === 'n' && cls.diagrams === 'n' && cls.people === 'n') return false;
+  if (typeValue === 'argument-analysis' && cls.arguments === 'n' && cls.quotes === 'n') return false;
+  if (typeValue === 'hotspot' && cls.diagrams === 'n') return false;
+  if ((typeValue === 'video-analysis' || typeValue === 'video-fragment') && cls.timeline === 'n' && cls.processes === 'n') return false;
+  if (typeValue === 'internet-photo' && cls.people === 'n' && cls.diagrams === 'n' && cls.vocabulary === 'n') return false;
   return true;
 }
