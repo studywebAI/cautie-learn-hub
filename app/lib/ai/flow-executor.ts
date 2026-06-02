@@ -1,7 +1,6 @@
 type FlowHandler = (input: any) => Promise<any> | any;
 import {
   OPENROUTER_LOCKED_MODEL,
-  OPENROUTER_PROVIDER_PREFERENCE,
   resolveOpenRouterApiKey,
 } from "@/lib/ai/openrouter-policy";
 
@@ -126,21 +125,17 @@ export async function executeAIFlow(
       ? { ...input, groundingInstruction: SOURCE_GROUNDING_INSTRUCTION }
       : input;
 
-  // OpenRouter is the only provider (locked by policy)
+  // Fail fast if the OpenRouter key is missing before invoking the flow
   const openRouterApiKey = resolveOpenRouterApiKey();
-  const openRouterModel = OPENROUTER_LOCKED_MODEL;
-
   if (!openRouterApiKey) {
     const error = new Error(
-      `OpenRouter API key is required for flow '${flowName}'`
+      `OPENROUTER_API_KEY is missing for flow '${flowName}'`
     ) as Error & { code?: string };
     error.code = "OPENROUTER_API_KEY_MISSING";
     throw error;
   }
 
-  console.info(
-    `[AI_FLOW] ${flowName} provider=openrouter model=${openRouterModel} policy=${OPENROUTER_PROVIDER_PREFERENCE}`
-  );
+  console.info(`[AI_FLOW] ${flowName} provider=openrouter model=${OPENROUTER_LOCKED_MODEL}`);
 
   return flow(enrichedInput);
 }
