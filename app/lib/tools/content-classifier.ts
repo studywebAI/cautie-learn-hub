@@ -109,21 +109,64 @@ export function classifyContent(text: string): ContentClassification | null {
 /**
  * Returns true when a given quiz type is available for the provided classification.
  * Pass null to show all types (before content is classified).
+ *
+ * Always-show (work for any academic text):
+ *   multiple-choice, true-false, fill-blank, short-answer
+ *
+ * Everything else requires at least one relevant content signal.
  */
 export function isQuizTypeAvailable(
   typeValue: string,
   cls: ContentClassification | null
 ): boolean {
   if (!cls) return true;
-  if (typeValue === 'timeline' && cls.timeline === 'n' && cls.dates === 'n') return false;
-  if (typeValue === 'ordering' && cls.processes === 'n' && cls.sequential_plot === 'n') return false;
-  if (typeValue === 'ranking' && cls.processes === 'n' && cls.sequential_plot === 'n' && cls.timeline === 'n') return false;
-  if (typeValue === 'drag-drop' && cls.processes === 'n' && cls.diagrams === 'n') return false;
-  if (typeValue === 'venn' && cls.diagrams === 'n' && cls.people === 'n' && cls.comparisons === 'n') return false;
-  if (typeValue === 'comparison-matrix' && cls.comparisons === 'n' && cls.diagrams === 'n' && cls.people === 'n') return false;
-  if (typeValue === 'argument-analysis' && cls.arguments === 'n' && cls.quotes === 'n') return false;
-  if (typeValue === 'hotspot' && cls.diagrams === 'n') return false;
-  if ((typeValue === 'video-analysis' || typeValue === 'video-fragment') && cls.timeline === 'n' && cls.processes === 'n') return false;
-  if (typeValue === 'internet-photo' && cls.people === 'n' && cls.diagrams === 'n' && cls.vocabulary === 'n') return false;
+
+  // ── Types that need specific content signals ───────────────────────────────
+  if (typeValue === 'matching')
+    return cls.vocabulary === 'y' || cls.people === 'y' || cls.dates === 'y' || cls.comparisons === 'y';
+
+  if (typeValue === 'cloze')
+    return cls.vocabulary === 'y' || cls.dates === 'y' || cls.people === 'y' || cls.processes === 'y';
+
+  if (typeValue === 'scenario')
+    return cls.people === 'y' || cls.processes === 'y' || cls.sequential_plot === 'y';
+
+  if (typeValue === 'spot-error')
+    return cls.dates === 'y' || cls.people === 'y' || cls.vocabulary === 'y' || cls.processes === 'y';
+
+  if (typeValue === 'image-analysis' || typeValue === 'drawing-analysis')
+    return cls.diagrams === 'y';
+
+  if (typeValue === 'timeline')
+    return cls.timeline === 'y' || cls.dates === 'y';
+
+  if (typeValue === 'ordering')
+    return cls.processes === 'y' || cls.sequential_plot === 'y';
+
+  if (typeValue === 'ranking')
+    return cls.processes === 'y' || cls.sequential_plot === 'y' || cls.timeline === 'y';
+
+  if (typeValue === 'drag-drop')
+    return cls.processes === 'y' || cls.diagrams === 'y';
+
+  if (typeValue === 'venn')
+    return cls.diagrams === 'y' || cls.people === 'y' || cls.comparisons === 'y';
+
+  if (typeValue === 'comparison-matrix')
+    return cls.comparisons === 'y' || cls.diagrams === 'y' || cls.people === 'y';
+
+  if (typeValue === 'argument-analysis')
+    return cls.arguments === 'y' || cls.quotes === 'y';
+
+  if (typeValue === 'hotspot')
+    return cls.diagrams === 'y';
+
+  if (typeValue === 'video-analysis' || typeValue === 'video-fragment')
+    return cls.timeline === 'y' || cls.processes === 'y';
+
+  if (typeValue === 'internet-photo')
+    return cls.people === 'y' || cls.diagrams === 'y';
+
+  // multiple-choice, true-false, fill-blank, short-answer — always available
   return true;
 }
