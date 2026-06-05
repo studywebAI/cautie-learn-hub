@@ -1983,7 +1983,7 @@ function IconX({ size = 10, strokeWidth = 1.8 }: { size?: number; strokeWidth?: 
   );
 }
 
-function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRestart }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string>; onRestart?: () => void }) {
+function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRestart, studysetId, taskId }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string>; onRestart?: () => void; studysetId?: string; taskId?: string }) {
   const rows = useMemo(
     () =>
       quiz.questions.map((question, index) => {
@@ -2026,6 +2026,42 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
     ? Math.round(signals.reduce((s, sig) => s + Number(sig.responseMs || 0), 0) / signals.length)
     : 0;
   const totalMs = signals.reduce((s, sig) => s + Number(sig.responseMs || 0), 0);
+
+  // ── Record studyset performance (fires once on mount; results are final here) ──
+  const performanceRecordedRef = useRef(false);
+  useEffect(() => {
+    if (performanceRecordedRef.current) return;
+    if (!taskId || !studysetId) return;
+    performanceRecordedRef.current = true;
+
+    const correctCount = scoredRows.filter((r) => r.correct).length;
+    const totalCount = scoredRows.length;
+    const score = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+    const timeSpentSeconds = Math.round(totalMs / 1000);
+    // Weak topics: categories of incorrectly answered (scored) questions, de-duplicated
+    const weakTopics = scoredRows
+      .filter((r) => !r.correct)
+      .map((r) => r.category || r.question?.category || '')
+      .filter(Boolean)
+      .filter((v, i, arr) => arr.indexOf(v) === i)
+      .slice(0, 8);
+
+    void fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studysetId,
+        toolId: 'quiz',
+        score,
+        totalItems: totalCount,
+        correctItems: correctCount,
+        timeSpentSeconds,
+        weakTopics,
+        markCompleted: true,
+      }),
+    }).catch(() => { /* non-fatal — performance recording is best-effort */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Category breakdown ────────────────────────────────────────────────────────
   const catMap = scoredRows.reduce<Record<string, { total: number; scoreSum: number; wrongQs: string[] }>>((acc, r) => {
@@ -2434,7 +2470,7 @@ function getTypePrompt(type: string): string {
   return prompts[type] || 'Answer the question below.';
 }
 
-export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle, inputMode }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string; inputMode?: 'literal' | 'research' }) {
+export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle, inputMode, studysetId, taskId }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string; inputMode?: 'literal' | 'research'; studysetId?: string; taskId?: string }) {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -2654,7 +2690,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     setIsCurrentCorrect(null);
   };
 
-  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} onRestart={onRestart} />;
+  if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} onRestart={onRestart} studysetId={studysetId} taskId={taskId} />;
   if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;

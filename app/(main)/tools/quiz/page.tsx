@@ -185,6 +185,9 @@ function QuizPageContent() {
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const searchParams = useSearchParams();
+  const taskId = searchParams.get('taskId');
+  const studysetId = searchParams.get('studysetId');
+  const launchRequested = searchParams.get('launch') === '1';
 
   const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
@@ -222,6 +225,7 @@ function QuizPageContent() {
 
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
+  const launchHandledRef = useRef(false);
 
   // Classify source text after user stops typing (800 ms debounce — instant regex)
   useEffect(() => {
@@ -523,6 +527,63 @@ function QuizPageContent() {
       setLoading(false);
     }
   }, [buildGenerationInput, mode, questionTypes, title, toast]);
+
+  // Studyset launch — load preset and auto-generate when launched from a plan task
+  useEffect(() => {
+    if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
+    launchHandledRef.current = true;
+    console.info('[STUDYSET_LAUNCH][QUIZ] launch requested', { taskId, studysetId, launchRequested });
+
+    const runLaunch = async () => {
+      try {
+        const response = await fetch(`/api/studysets/plan-tasks/${taskId}/launch`);
+        if (!response.ok) throw new Error(`Could not load studyset task preset (${response.status})`);
+        const payload = await response.json();
+        const source = String(payload?.launch?.sourceText || '').trim();
+        const preset = payload?.launch?.quizPreset || {};
+        const presetTitle = String(payload?.launch?.artifactTitle || '').trim();
+        console.info('[STUDYSET_LAUNCH][QUIZ] launch payload loaded', {
+          taskId,
+          studysetId,
+          sourceLength: source.length,
+          preset,
+          hasTitle: Boolean(presetTitle),
+        });
+
+        if (source) setSourceText(source);
+        if (presetTitle) setTitle(presetTitle);
+        if (typeof preset?.questionCount === 'number') {
+          setQuestionCount(Math.max(3, Math.min(25, preset.questionCount)));
+        }
+        // Map difficulty profile → "how much you already know" slider (harder => assume less known)
+        if (preset?.difficultyProfile === 'hard') setKnowledgeScore(30);
+        else if (preset?.difficultyProfile === 'easy') setKnowledgeScore(70);
+        else if (preset?.difficultyProfile === 'balanced') setKnowledgeScore(50);
+
+        if (source) {
+          setPhase('study');
+          await handleGenerate(source);
+          console.info('[STUDYSET_LAUNCH][QUIZ] generation completed', { taskId, studysetId });
+        } else {
+          setPhase('options');
+        }
+      } catch (error: any) {
+        console.error('[STUDYSET_LAUNCH][QUIZ] error', {
+          taskId,
+          studysetId,
+          message: error?.message || String(error),
+        });
+        toast({
+          variant: 'destructive',
+          title: 'Could not start studyset task',
+          description: error?.message || 'Please refresh and try again.',
+          errorCode: error?.code ? String(error.code) : undefined,
+        });
+      }
+    };
+
+    void runLaunch();
+  }, [handleGenerate, launchRequested, studysetId, taskId, toast]);
 
   const handleRestart = useCallback(() => {
     setQuiz(null);
@@ -1030,6 +1091,8 @@ function QuizPageContent() {
           sourceText={sourceText}
           quizTitle={title.trim() || undefined}
           inputMode={inputMode}
+          studysetId={studysetId || undefined}
+          taskId={taskId || undefined}
           onRestart={() => {
             setQuiz(null);
             setPhase('options');

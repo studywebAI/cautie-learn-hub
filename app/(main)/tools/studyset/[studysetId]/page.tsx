@@ -1,16 +1,35 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeft, CalendarDays, CheckCircle2, RefreshCcw } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ArrowLeft,
+  Brain,
+  CheckCircle2,
+  FileText,
+  Layers,
+  Map,
+  RefreshCcw,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { PageSection } from '@/components/layout/page-section';
 
@@ -40,6 +59,10 @@ type StudysetDetail = {
   target_days: number;
   minutes_per_day: number;
   status: string;
+  exam_date?: string | null;
+  subject?: string | null;
+  meta?: { icon?: string | null; color?: string | null } | null;
+  source_bundle?: string | null;
 };
 
 type StudysetAdaptive = {
@@ -47,6 +70,17 @@ type StudysetAdaptive = {
   mastery_band: string;
   last_issues: string[];
   updated_at?: string | null;
+};
+
+type MasteryTopic = {
+  topic_label: string;
+  weakness_score: number;
+  mastery_score: number;
+};
+
+type TrendPoint = {
+  date: string;
+  avg_score: number;
 };
 
 const TOOL_HREFS: Record<string, string> = {
@@ -57,12 +91,28 @@ const TOOL_HREFS: Record<string, string> = {
   review: '/tools/studyset',
 };
 
-function toolLabel(taskType: string) {
-  if (taskType === 'flashcards') return 'Flashcards';
-  if (taskType === 'wordweb') return 'Concept map';
-  if (taskType === 'quiz') return 'Quiz';
-  if (taskType === 'review') return 'Review';
-  return 'Notes';
+const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
+const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
+
+function toolMeta(taskType: string) {
+  switch (taskType) {
+    case 'quiz':
+      return { emoji: '🧠', Icon: Brain, label: 'Quiz' };
+    case 'flashcards':
+      return { emoji: '🃏', Icon: Layers, label: 'Flashcards' };
+    case 'wordweb':
+      return { emoji: '🗺', Icon: Map, label: 'Concept map' };
+    case 'review':
+      return { emoji: '✅', Icon: CheckCircle2, label: 'Review' };
+    default:
+      return { emoji: '📝', Icon: FileText, label: 'Notes' };
+  }
+}
+
+function taskHref(taskType: string, studysetId: string, taskId: string) {
+  if (taskType === 'review') return `/tools/studyset/${studysetId}`;
+  const base = TOOL_HREFS[taskType] || '/tools/notes';
+  return `${base}?studysetId=${studysetId}&taskId=${taskId}&launch=1`;
 }
 
 function toIsoLocalDate(date: Date) {
@@ -72,31 +122,84 @@ function toIsoLocalDate(date: Date) {
   return `${y}-${m}-${d}`;
 }
 
+function readinessTone(percent: number) {
+  if (percent >= 75) return 'var(--accent-brand)';
+  if (percent >= 40) return '#d6a312';
+  return '#c0524a';
+}
+
+function chipTone(weakness: number) {
+  if (weakness > 70) return 'bg-[#fbe9e7] text-[#9b3a32] border border-[#f1c4bf]';
+  if (weakness >= 40) return 'bg-[#fdf3da] text-[#8a6a13] border border-[#f0e0b0]';
+  return 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]';
+}
+
 export default function StudysetDetailPage() {
   const params = useParams<{ studysetId: string }>();
   const studysetId = params?.studysetId;
+  const router = useRouter();
   const { toast } = useToast();
   const todayIso = useMemo(() => toIsoLocalDate(new Date()), []);
 
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
-  const [showAllDays, setShowAllDays] = useState(false);
+  const [planMode, setPlanMode] = useState<'today' | 'full'>('today');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const [studyset, setStudyset] = useState<StudysetDetail | null>(null);
   const [adaptive, setAdaptive] = useState<StudysetAdaptive | null>(null);
   const [days, setDays] = useState<StudysetDay[]>([]);
   const [progress, setProgress] = useState({ total_tasks: 0, completed_tasks: 0, percent: 0 });
+  const [masteryTopics, setMasteryTopics] = useState<MasteryTopic[]>([]);
+  const [scoreTrend, setScoreTrend] = useState<TrendPoint[]>([]);
+  const [materialsCount, setMaterialsCount] = useState(0);
+
+  const dayRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const loadDetail = async () => {
     if (!studysetId) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/studysets/${studysetId}`);
-      if (!response.ok) throw new Error('Could not load studyset');
-      const data = await response.json();
-      setStudyset(data.studyset || null);
+      const [detailRes, analyticsRes] = await Promise.all([
+        fetch(`/api/studysets/${studysetId}`, { cache: 'no-store' }),
+        fetch(`/api/studysets/${studysetId}/analytics`, { cache: 'no-store' }).catch(() => null),
+      ]);
+
+      if (!detailRes.ok) throw new Error('Could not load studyset');
+      const data = await detailRes.json();
+
+      const detail: StudysetDetail | null = data.studyset || null;
+      setStudyset(detail);
       setAdaptive(data.adaptive || null);
       setDays(data.days || []);
       setProgress(data.progress || { total_tasks: 0, completed_tasks: 0, percent: 0 });
+
+      // Best-effort materials count from the source bundle.
+      try {
+        const bundle = detail?.source_bundle ? JSON.parse(detail.source_bundle) : null;
+        const uploaded = Array.isArray(bundle?.sources?.uploaded_files) ? bundle.sources.uploaded_files.length : 0;
+        const ms = Array.isArray(bundle?.sources?.imports?.selected_documents)
+          ? bundle.sources.imports.selected_documents.length
+          : 0;
+        const pasted = String(bundle?.sources?.pasted_text || '').trim() ? 1 : 0;
+        const notes = String(bundle?.sources?.notes_text || '').trim() ? 1 : 0;
+        setMaterialsCount(uploaded + ms + pasted + notes);
+      } catch {
+        setMaterialsCount(0);
+      }
+
+      if (analyticsRes && analyticsRes.ok) {
+        const analytics = await analyticsRes.json();
+        setMasteryTopics(Array.isArray(analytics?.mastery_topics) ? analytics.mastery_topics : []);
+        setScoreTrend(Array.isArray(analytics?.score_trend_30d) ? analytics.score_trend_30d : []);
+      } else {
+        // Fall back to mastery topics embedded in the detail analytics payload.
+        const fallbackTopics = Array.isArray(data?.analytics?.mastery_topics) ? data.analytics.mastery_topics : [];
+        const fallbackTrend = Array.isArray(data?.analytics?.score_trend_7d) ? data.analytics.score_trend_7d : [];
+        setMasteryTopics(fallbackTopics);
+        setScoreTrend(fallbackTrend);
+      }
     } catch (error: any) {
       toast({
         title: 'Could not load studyset',
@@ -153,8 +256,28 @@ export default function StudysetDetailPage() {
     }
   };
 
+  const deleteStudyset = async () => {
+    if (!studysetId) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/studysets/${studysetId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Could not delete studyset');
+      toast({ title: 'Studyset deleted' });
+      router.push('/tools/studyset');
+    } catch (error: any) {
+      toast({
+        title: 'Could not delete studyset',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
+  };
+
   useEffect(() => {
     void loadDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studysetId]);
 
   const completedDays = useMemo(() => days.filter((day) => day.completed).length, [days]);
@@ -164,185 +287,511 @@ export default function StudysetDetailPage() {
     [days, todayIso]
   );
 
-  const fallbackDay = useMemo(
-    () => days.find((day) => !day.completed) || days[0] || null,
-    [days]
+  const fallbackDay = useMemo(() => days.find((day) => !day.completed) || days[0] || null, [days]);
+
+  const focusDay = todayDay || fallbackDay;
+
+  const todayTasks = focusDay?.studyset_plan_tasks ?? [];
+
+  const weakTopicCount = useMemo(
+    () => masteryTopics.filter((topic) => topic.weakness_score > topic.mastery_score).length,
+    [masteryTopics]
   );
 
-  const visibleDays = useMemo(() => {
-    if (showAllDays) return days;
-    const day = todayDay || fallbackDay;
-    return day ? [day] : [];
-  }, [days, fallbackDay, showAllDays, todayDay]);
+  const sparkPoints = useMemo(() => {
+    const last7 = scoreTrend.slice(-7);
+    if (last7.length === 0) return '';
+    const w = 120;
+    const h = 36;
+    const max = 100;
+    if (last7.length === 1) {
+      const y = h - (Math.min(max, last7[0].avg_score) / max) * h;
+      return `0,${y.toFixed(1)} ${w},${y.toFixed(1)}`;
+    }
+    return last7
+      .map((point, index) => {
+        const x = (index / (last7.length - 1)) * w;
+        const y = h - (Math.min(max, point.avg_score) / max) * h;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+  }, [scoreTrend]);
+
+  const showPerformance = (adaptive?.avg_score ?? 0) > 0 || scoreTrend.length > 0;
+
+  const examCountdown = useMemo(() => {
+    const examDate = studyset?.exam_date;
+    if (!examDate) return null;
+    const exam = new Date(`${String(examDate).slice(0, 10)}T00:00:00`);
+    const now = new Date(`${todayIso}T00:00:00`);
+    const diff = Math.round((exam.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return { days: diff };
+  }, [studyset?.exam_date, todayIso]);
+
+  // Readiness ring math.
+  const ringRadius = 30;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference * (1 - Math.min(100, Math.max(0, progress.percent)) / 100);
+
+  const scrollToDay = (dayId: string) => {
+    const node = dayRefs.current[dayId];
+    if (node) node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const renderTaskCard = (task: StudysetTask) => {
+    const { emoji, label } = toolMeta(task.task_type);
+    const href = taskHref(task.task_type, String(studysetId), task.id);
+    return (
+      <div
+        key={task.id}
+        className="flex items-start gap-3 rounded-xl border border-border bg-white p-4"
+      >
+        <span className="mt-0.5 text-lg leading-none" aria-hidden>
+          {emoji}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className={`text-sm ${
+                task.completed ? 'text-muted-foreground line-through' : 'font-medium text-foreground'
+              }`}
+            >
+              {task.title}
+            </p>
+            <Badge variant="outline" className="text-[10px]">
+              {label}
+            </Badge>
+            {task.completed && <CheckCircle2 className="h-4 w-4 text-[var(--accent-brand)]" />}
+          </div>
+          {task.description && (
+            <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
+          )}
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          {task.task_type !== 'review' && (
+            <Button asChild size="sm">
+              <Link href={href}>Start</Link>
+            </Button>
+          )}
+          <Checkbox
+            checked={task.completed}
+            disabled={savingTaskId === task.id}
+            onCheckedChange={(checked) => {
+              if (typeof checked !== 'boolean') return;
+              void toggleTask(task.id, checked);
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <PageSection variant="tool">
+        <div className="flex min-h-[55vh] items-center justify-center">
+          <CautieLoader label="Loading study plan" sublabel="Preparing day-by-day tasks" size="lg" />
+        </div>
+      </PageSection>
+    );
+  }
 
   return (
     <PageSection variant="tool">
-        <div className="flex items-center justify-between gap-3">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/tools/studyset">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Studysets
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <Button asChild variant="outline" size="icon" className="h-9 w-9 shrink-0">
+            <Link href="/tools/studyset" aria-label="Back to studysets">
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => void loadDetail()} disabled={loading}>
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Refresh
+          <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
+            {studyset?.name || 'Studyset'}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          {studyset?.subject && (
+            <span className="rounded-full bg-[#e8eddf] px-3 py-1 text-xs font-medium text-[#4a5735]">
+              {studyset.subject}
+            </span>
+          )}
+          {studyset?.status && (
+            <Badge variant="outline" className="capitalize">
+              {studyset.status}
+            </Badge>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => void loadDetail()}
+            aria-label="Refresh"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9 text-destructive"
+            onClick={() => setDeleteOpen(true)}
+            aria-label="Delete studyset"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </div>
+      </div>
 
-        <Card className="border-none">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-2">
-              <span>{studyset?.name || 'Studyset'}</span>
-              {studyset?.status && <Badge variant="outline">{studyset.status}</Badge>}
-            </CardTitle>
-            <CardDescription className="flex flex-wrap gap-4 text-xs">
-              <span className="inline-flex items-center gap-1">
-                <CalendarDays className="h-3 w-3" /> {studyset?.target_days || 0} days
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" /> {completedDays}/{days.length} days complete
-              </span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Progress value={progress.percent} />
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm text-muted-foreground">
-                {progress.completed_tasks}/{progress.total_tasks} tasks completed ({progress.percent}%)
+      {/* Stat boxes */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className={`${CARD} flex items-center gap-4`}>
+          <svg width="72" height="72" viewBox="0 0 72 72" className="shrink-0">
+            <circle cx="36" cy="36" r={ringRadius} fill="none" stroke="#e8eddf" strokeWidth="8" />
+            <circle
+              cx="36"
+              cy="36"
+              r={ringRadius}
+              fill="none"
+              stroke={readinessTone(progress.percent)}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={ringCircumference}
+              strokeDashoffset={ringOffset}
+              transform="rotate(-90 36 36)"
+            />
+            <text x="36" y="41" textAnchor="middle" className="fill-foreground text-[15px] font-semibold">
+              {progress.percent}%
+            </text>
+          </svg>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              Readiness
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {progress.completed_tasks}/{progress.total_tasks} tasks
+            </p>
+          </div>
+        </div>
+
+        <div className={`${CARD} flex flex-col justify-center`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Sessions done
+          </p>
+          <p className="mt-1 text-3xl font-semibold text-foreground">
+            {completedDays}
+            <span className="text-base font-normal text-muted-foreground">/{days.length}</span>
+          </p>
+          <p className="text-sm text-muted-foreground">study days complete</p>
+        </div>
+
+        <div className={`${CARD} flex flex-col justify-center`}>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            Weak topics
+          </p>
+          <p className="mt-1 text-3xl font-semibold text-foreground">{weakTopicCount}</p>
+          <p className="text-sm text-muted-foreground">need attention</p>
+        </div>
+      </div>
+
+      {/* Exam countdown */}
+      {examCountdown && (
+        <div
+          className="rounded-2xl border p-5 shadow-sm"
+          style={{
+            backgroundColor:
+              examCountdown.days <= 7 ? '#fbe9e7' : examCountdown.days <= 14 ? '#fdf3da' : '#e8eddf',
+            borderColor:
+              examCountdown.days <= 7 ? '#f1c4bf' : examCountdown.days <= 14 ? '#f0e0b0' : '#d4dcc2',
+          }}
+        >
+          <p
+            className="text-2xl font-semibold"
+            style={{
+              color:
+                examCountdown.days <= 7 ? '#9b3a32' : examCountdown.days <= 14 ? '#8a6a13' : '#4a5735',
+            }}
+          >
+            {examCountdown.days < 0
+              ? 'Exam has passed'
+              : examCountdown.days === 0
+                ? 'Exam is today'
+                : `${examCountdown.days} day${examCountdown.days === 1 ? '' : 's'} until exam`}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Current readiness: {progress.percent}%</p>
+        </div>
+      )}
+
+      {/* Today's Plan */}
+      <section>
+        <h2 className={SECTION_HEADING}>today&apos;s plan</h2>
+        {todayTasks.length === 0 ? (
+          <div className={`${CARD} text-center`}>
+            <p className="text-sm text-muted-foreground">All done for today 🎉</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {focusDay && (
+              <p className="text-xs text-muted-foreground">
+                Day {focusDay.day_number}
+                {focusDay.plan_date
+                  ? ` · ${format(new Date(`${focusDay.plan_date}T00:00:00`), 'EEEE, MMM d')}`
+                  : ''}
+                {focusDay.summary ? ` · ${focusDay.summary}` : ''}
               </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant={showAllDays ? 'outline' : 'default'}
-                  onClick={() => setShowAllDays(false)}
+            )}
+            {todayTasks.map(renderTaskCard)}
+          </div>
+        )}
+      </section>
+
+      {/* Weak Spots */}
+      {masteryTopics.length > 0 && (
+        <section>
+          <h2 className={SECTION_HEADING}>weak spots</h2>
+          <div className={CARD}>
+            <div className="flex flex-wrap gap-2">
+              {masteryTopics.map((topic, index) => (
+                <span
+                  key={`${topic.topic_label}-${index}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${chipTone(topic.weakness_score)}`}
                 >
-                  Today
-                </Button>
-                <Button
-                  size="sm"
-                  variant={showAllDays ? 'default' : 'outline'}
-                  onClick={() => setShowAllDays(true)}
-                >
-                  All days
-                </Button>
+                  {topic.topic_label}
+                </span>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/tools/quiz?studysetId=${studysetId}&launch=1`}>Study weak spots</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Study Plan roadmap */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            study plan
+          </h2>
+          <div className="flex items-center gap-1 rounded-full border border-border bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setPlanMode('today')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                planMode === 'today'
+                  ? 'bg-[var(--accent-brand)] text-white'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlanMode('full')}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                planMode === 'full'
+                  ? 'bg-[var(--accent-brand)] text-white'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Full plan
+            </button>
+          </div>
+        </div>
+
+        {planMode === 'today' ? (
+          focusDay ? (
+            <div
+              className={CARD}
+              ref={(node) => {
+                dayRefs.current[focusDay.id] = node;
+              }}
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-medium text-foreground">
+                  Day {focusDay.day_number}
+                  {focusDay.plan_date
+                    ? ` · ${format(new Date(`${focusDay.plan_date}T00:00:00`), 'MMM d')}`
+                    : ''}
+                </p>
+                <Badge variant={focusDay.completed ? 'default' : 'outline'}>
+                  {focusDay.completed ? 'Completed' : 'In progress'}
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                {focusDay.studyset_plan_tasks.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No tasks for this day.</p>
+                ) : (
+                  focusDay.studyset_plan_tasks.map(renderTaskCard)
+                )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {adaptive && (adaptive.last_issues?.length > 0 || adaptive.avg_score > 0) && (
-          <Card className="border-none">
-            <CardHeader>
-              <CardTitle className="text-base">Adaptive coach</CardTitle>
-              <CardDescription>
-                Avg score: {adaptive.avg_score || 0}% {adaptive.mastery_band ? `· ${adaptive.mastery_band}` : ''}
-              </CardDescription>
-            </CardHeader>
-            {adaptive.last_issues?.length > 0 && (
-              <CardContent className="space-y-1 pt-0">
-                {adaptive.last_issues.slice(0, 4).map((issue, index) => (
-                  <p key={`${issue}-${index}`} className="text-xs text-muted-foreground">
-                    {issue}
-                  </p>
-                ))}
-              </CardContent>
-            )}
-          </Card>
-        )}
-
-        {loading ? (
-          <div className="flex min-h-[45vh] items-center justify-center">
-            <CautieLoader label="Loading study plan" sublabel="Preparing day-by-day tasks" size="lg" />
-          </div>
-        ) : visibleDays.length === 0 ? (
-          <Card className="border-none">
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              No plan days yet.
-            </CardContent>
-          </Card>
+          ) : (
+            <div className={`${CARD} text-sm text-muted-foreground`}>No plan days yet.</div>
+          )
         ) : (
           <div className="space-y-4">
-            {visibleDays.map((day, index) => (
-              <Card
-                key={day.id}
-                className="border-none studyset-day-card"
-                style={{ animationDelay: `${index * 55}ms` }}
-              >
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center justify-between gap-2">
-                    <span>
+            {/* Horizontal timeline */}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {days.map((day) => {
+                const total = day.studyset_plan_tasks.length;
+                const done = day.studyset_plan_tasks.filter((task) => task.completed).length;
+                return (
+                  <button
+                    key={day.id}
+                    type="button"
+                    onClick={() => scrollToDay(day.id)}
+                    className={`min-w-[120px] shrink-0 rounded-xl border p-3 text-left transition-colors ${
+                      day.completed
+                        ? 'border-[#d4dcc2] bg-[#e8eddf]'
+                        : 'border-border bg-white hover:border-[var(--accent-brand)]'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-foreground">Day {day.day_number}</span>
+                      {day.completed ? (
+                        <CheckCircle2 className="h-4 w-4 text-[var(--accent-brand)]" />
+                      ) : (
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
+                      )}
+                    </div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {day.plan_date
+                        ? format(new Date(`${day.plan_date}T00:00:00`), 'MMM d')
+                        : 'Unscheduled'}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {done}/{total} tasks
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Expanded day list */}
+            <div className="space-y-4">
+              {days.map((day) => (
+                <div
+                  key={day.id}
+                  className={CARD}
+                  ref={(node) => {
+                    dayRefs.current[day.id] = node;
+                  }}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">
                       Day {day.day_number}
-                      {day.plan_date ? ` - ${format(new Date(`${day.plan_date}T00:00:00`), 'EEEE, MMM d')}` : ''}
-                    </span>
+                      {day.plan_date
+                        ? ` · ${format(new Date(`${day.plan_date}T00:00:00`), 'EEEE, MMM d')}`
+                        : ''}
+                    </p>
                     <Badge variant={day.completed ? 'default' : 'outline'}>
                       {day.completed ? 'Completed' : 'In progress'}
                     </Badge>
-                  </CardTitle>
-                  <CardDescription>
-                    {day.summary || 'Study session'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {day.studyset_plan_tasks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No tasks for this day.</p>
-                  ) : (
-                    day.studyset_plan_tasks.map((task) => {
-                      const href =
-                        task.task_type === 'review'
-                          ? `/tools/studyset/${studysetId}`
-                          : `${TOOL_HREFS[task.task_type] || '/tools/notes'}?studysetId=${studysetId}&taskId=${task.id}&launch=1`;
-
-                      return (
-                        <div key={task.id} className="rounded-xl bg-background p-3">
-                          <div className="flex items-start gap-3">
-                            <Checkbox
-                              checked={task.completed}
-                              disabled={savingTaskId === task.id}
-                              onCheckedChange={(checked) => {
-                                if (typeof checked !== 'boolean') return;
-                                void toggleTask(task.id, checked);
-                              }}
-                            />
-                            <div className="flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className={`text-sm ${task.completed ? 'line-through text-muted-foreground' : 'font-medium'}`}>
-                                  {task.title}
-                                </p>
-                                <Badge variant="outline" className="surface-panel">
-                                  {toolLabel(task.task_type)}
-                                </Badge>
-                              </div>
-                              {task.description && (
-                                <p className="mt-1 text-xs text-muted-foreground">{task.description}</p>
-                              )}
-                            </div>
-                            <Button asChild size="sm" variant="outline">
-                              <Link
-                                href={href}
-                                onClick={() => {
-                                  console.info('[STUDYSET_TASK] start now clicked', {
-                                    studysetId,
-                                    taskId: task.id,
-                                    taskType: task.task_type,
-                                    href,
-                                    completed: task.completed,
-                                  });
-                                }}
-                              >
-                                Start now
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  </div>
+                  {day.summary && <p className="mb-3 text-xs text-muted-foreground">{day.summary}</p>}
+                  <div className="space-y-3">
+                    {day.studyset_plan_tasks.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No tasks for this day.</p>
+                    ) : (
+                      day.studyset_plan_tasks.map(renderTaskCard)
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
+      </section>
+
+      {/* Performance */}
+      {showPerformance && (
+        <section>
+          <h2 className={SECTION_HEADING}>performance</h2>
+          <div className={CARD}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#e8eddf] px-3 py-1 text-sm font-medium text-[#4a5735]">
+                  <Sparkles className="h-4 w-4" />
+                  Avg score: {adaptive?.avg_score ?? 0}%
+                </span>
+                {adaptive?.mastery_band && (
+                  <Badge variant="outline" className="capitalize">
+                    {adaptive.mastery_band}
+                  </Badge>
+                )}
+              </div>
+              {sparkPoints && (
+                <svg width="120" height="36" viewBox="0 0 120 36" className="shrink-0">
+                  <polyline
+                    points={sparkPoints}
+                    fill="none"
+                    stroke="var(--accent-brand)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+            {adaptive?.last_issues && adaptive.last_issues.length > 0 && (
+              <ul className="mt-4 space-y-1">
+                {adaptive.last_issues.slice(0, 4).map((issue, index) => (
+                  <li key={`${issue}-${index}`} className="text-xs text-muted-foreground">
+                    • {issue}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Materials */}
+      <section>
+        <h2 className={SECTION_HEADING}>materials</h2>
+        <div className={`${CARD} flex flex-wrap items-center justify-between gap-3`}>
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8eddf] text-[#4a5735]">
+              <FileText className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {materialsCount} source material{materialsCount === 1 ? '' : 's'} uploaded
+              </p>
+              <p className="text-xs text-muted-foreground">Notes, files and imports for this studyset</p>
+            </div>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/tools/studyset/${studysetId}/materials`}>View materials</Link>
+          </Button>
+        </div>
+      </section>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this studyset?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will archive &quot;{studyset?.name || 'this studyset'}&quot; and remove it from your list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void deleteStudyset();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageSection>
   );
 }
