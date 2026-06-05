@@ -218,6 +218,7 @@ export function ToolInputBox({
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusButtonRef = useRef<HTMLButtonElement>(null);
@@ -661,15 +662,35 @@ export function ToolInputBox({
               top: `${plusMenuPosition.top}px`,
               left: `${plusMenuPosition.left}px`,
             }}>
-              {/* Hidden file input */}
+              {/* Hidden file inputs — use <label> trick for iOS Safari compatibility */}
               <input
                 ref={fileInputRef}
+                id="tool-input-file"
                 type="file"
                 multiple
                 accept="image/*,.pdf,.docx,.txt,.md"
                 onChange={handleFileChange}
                 className="hidden"
               />
+              <input
+                ref={cameraInputRef}
+                id="tool-input-camera"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+
+              {/* Share a page (camera — top-level, iOS-safe via label) */}
+              <label
+                htmlFor="tool-input-camera"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50 cursor-pointer"
+                onClick={() => setShowPlusMenu(false)}
+              >
+                <Camera className="h-4 w-4 text-muted-foreground" />
+                Share a page
+              </label>
 
               {/* Photos submenu */}
               <button
@@ -697,34 +718,26 @@ export function ToolInputBox({
                     {capturing ? <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
                     Take screenshot
                   </button>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
-                    onClick={() => { fileInputRef.current?.click(); setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
-                  >
-                    <Camera className="h-4 w-4 text-muted-foreground" />
-                    Take photo
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50"
-                    onClick={() => fileInputRef.current?.click()}
+                  <label
+                    htmlFor="tool-input-file"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50 cursor-pointer"
+                    onClick={() => { setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
                   >
                     <Image className="h-4 w-4 text-muted-foreground" />
                     Photo library
-                  </button>
+                  </label>
                 </>
               )}
 
-              {/* Files */}
-              <button
-                type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
-                onClick={() => fileInputRef.current?.click()}
+              {/* Files — label for iOS Safari compatibility */}
+              <label
+                htmlFor="tool-input-file"
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50 cursor-pointer"
+                onClick={() => setShowPlusMenu(false)}
               >
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 Files
-              </button>
+              </label>
 
               {/* Import from submenu */}
               <button
