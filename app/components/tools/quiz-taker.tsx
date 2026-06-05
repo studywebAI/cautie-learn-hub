@@ -2453,6 +2453,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
   const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
+  const pendingAdvance = useRef(false);
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
   const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
@@ -2493,6 +2494,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       localStorage.setItem(adaptiveStorageKey, JSON.stringify({ updatedAt: Date.now(), signals: adaptiveSignals.slice(-40) }));
     } catch {}
   }, [adaptiveSignals, adaptiveStorageKey, effectiveMode]);
+
+  // Auto-advance once buffer is ready (when user clicked Next while buffer was empty)
+  useEffect(() => {
+    if (!pendingAdvance.current || adaptiveBuffer.length === 0) return;
+    pendingAdvance.current = false;
+    const [next, ...rest] = adaptiveBuffer;
+    setQuestions((prev) => [...prev, next]);
+    setAdaptiveBuffer(rest);
+    setCurrentIndex((prev) => prev + 1);
+    setIsAnswered(false);
+    setIsCurrentCorrect(null);
+  }, [adaptiveBuffer]);
 
   useEffect(() => {
     try {
@@ -2617,7 +2630,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       if (currentIndex >= questions.length - 1) {
         if (adaptiveBuffer.length > 0) {
           const [next, ...rest] = adaptiveBuffer;
-          setQuestions((prev) => [...prev, next].slice(0, adaptiveCap));
+          setQuestions((prev) => [...prev, next]);
           setAdaptiveBuffer(rest);
           setCurrentIndex((prev) => prev + 1);
           setIsAnswered(false);
@@ -2625,6 +2638,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           void ensureAdaptiveBuffer();
           return;
         }
+        pendingAdvance.current = true;
         void ensureAdaptiveBuffer();
         return;
       }
@@ -2649,11 +2663,14 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
 
   const handleNext = () => {
     if (effectiveMode === 'assisted' && !isAnswered) {
-      if (canAdvance) handleAnswerPress();
-      else advanceQuestion();
+      if (canAdvance) {
+        handleAnswerPress();
+        // Don't advance yet — let user see feedback, they'll click Next again
+        return;
+      }
+      advanceQuestion();
       return;
     }
-    // In all non-assisted modes: finalize if not yet done, then always advance immediately
     if (!isAnswered && canAdvance) handleAnswerPress();
     advanceQuestion();
   };
@@ -2705,8 +2722,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
         {/* Right: circles or progress bar + toggle */}
         <div className="flex items-center gap-3">
           {navMode === 'circles' ? (
-            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[360px]">
-              {questions.map((_, idx) => {
+            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[200px] sm:max-w-[320px] lg:max-w-[420px]">
+              {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions).map((_, idx) => {
                 const state = getCircleState(idx);
                 return (
                   <button
@@ -2729,10 +2746,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                   </button>
                 );
               })}
+              {effectiveMode === 'adaptive' && (
+                <span
+                  title="More questions to come"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[13px] text-[var(--accent-brand)]/70"
+                >
+                  ∞
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[13px] text-muted-foreground">
-              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {questions.length}
+              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {effectiveMode === 'adaptive' ? '∞' : questions.length}
             </span>
           )}
 
@@ -2882,25 +2907,36 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       </div>
 
       {/* ── Bottom nav ── full width, buttons at edges */}
-      <div className="shrink-0 border-t border-border bg-white dark:bg-card px-5 py-3.5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="shrink-0 border-t border-border bg-white dark:bg-card px-3 sm:px-5 py-3 sm:py-3.5">
+        <div className="flex items-center justify-between gap-2">
 
           {/* Previous */}
           <Button
             type="button"
             variant="outline"
-            className="relative h-10 ps-11 pe-5 text-[13px]"
+            className="relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
-            Previous
+            <span className="hidden sm:inline">Previous</span>
             <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
               <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
             </span>
           </Button>
 
-          {/* Center: not-relevant */}
+          {/* Center: stop button (adaptive) or not-relevant */}
           <div className="flex items-center gap-2">
+            {effectiveMode === 'adaptive' && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 px-3 text-[12px] text-muted-foreground hover:text-foreground border-border"
+                onClick={() => setIsFinished(true)}
+                title="Stop and see results"
+              >
+                Stop
+              </Button>
+            )}
             {inputMode === 'research' && !notRelevantIds.has(currentQuestion.id) && (
               <Button
                 type="button"
@@ -2909,7 +2945,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 onClick={handleNotRelevant}
                 title="Mark as not relevant to your research"
               >
-                Not relevant
+                <span className="hidden sm:inline">Not relevant</span>
+                <span className="sm:hidden">Skip</span>
               </Button>
             )}
           </div>
@@ -2918,9 +2955,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             onClick={handleNext}
-            className="relative h-10 ps-5 pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
+            className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
           >
-            {isLastQuestion ? 'Finish Quiz' : 'Next'}
+            {isLastQuestion ? 'Finish' : 'Next'}
             <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
               <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
             </span>
