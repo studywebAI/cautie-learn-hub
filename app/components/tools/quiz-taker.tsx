@@ -182,18 +182,17 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
   const items = question.orderingItems || [];
   const current: string[] = answer?.kind === 'ordering' && answer.value.length === items.length
     ? answer.value
-    : [...items].sort(() => 0); // keep original order as initial display
+    : [...items].sort(() => 0);
 
   const dragIdx = useRef<number | null>(null);
+  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
 
-  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
-  const handleDrop = (dropIdx: number) => {
-    if (dragIdx.current === null || dragIdx.current === dropIdx) return;
+  const handleDrop = (dropIdx: number, fromIdx: number | null) => {
+    if (fromIdx === null || fromIdx === dropIdx) return;
     const next = [...current];
-    const [moved] = next.splice(dragIdx.current, 1);
+    const [moved] = next.splice(fromIdx, 1);
     next.splice(dropIdx, 0, moved);
     onChange({ kind: 'ordering', value: next });
-    dragIdx.current = null;
   };
 
   return (
@@ -201,11 +200,30 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
       {current.map((item, idx) => (
         <div
           key={item}
+          data-order-idx={idx}
           draggable={!disabled}
-          onDragStart={() => handleDragStart(idx)}
+          onDragStart={() => { dragIdx.current = idx; }}
           onDragOver={(e) => e.preventDefault()}
-          onDrop={() => handleDrop(idx)}
-          className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 cursor-grab active:cursor-grabbing select-none"
+          onDrop={() => { handleDrop(idx, dragIdx.current); dragIdx.current = null; }}
+          onTouchStart={(e) => {
+            if (disabled) return;
+            e.stopPropagation();
+            setTouchDragIdx(idx);
+          }}
+          onTouchEnd={(e) => {
+            if (touchDragIdx === null) return;
+            const touch = e.changedTouches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            const target = el?.closest('[data-order-idx]');
+            const dropIdx = target ? Number(target.getAttribute('data-order-idx')) : null;
+            if (dropIdx !== null && !Number.isNaN(dropIdx)) handleDrop(dropIdx, touchDragIdx);
+            setTouchDragIdx(null);
+          }}
+          className={[
+            'flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 select-none transition-opacity',
+            disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+            touchDragIdx === idx ? 'opacity-40' : '',
+          ].join(' ')}
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] font-semibold text-[var(--accent-brand)]">
             {idx + 1}
@@ -710,13 +728,17 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
   const mapping = answer?.kind === 'matching' ? answer.value : {};
   const pool = Array.from(new Set(pairs.map((pair) => pair.right)));
   const canReuse = /multiple times|more than once|reuse/i.test(String(question.hint || ''));
-  const onDrop = (left: string, right: string) => {
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+
+  const assign = (left: string, right: string) => {
     if (disabled) return;
     const next = { ...mapping };
     if (!canReuse) for (const key of Object.keys(next)) if (next[key] === right) delete next[key];
     next[left] = right;
     onChange({ kind: 'matching', value: next });
+    setSelectedOption(null);
   };
+
   return (
     <div className="space-y-3">
       <div className="grid gap-2 md:grid-cols-2">
@@ -724,33 +746,42 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
           <div key={pair.left} className="rounded-lg border border-border bg-background p-2.5">
             <p className="mb-2 text-sm font-medium">{pair.left}</p>
             <div
-              className="min-h-10 rounded-md border border-dashed border-border px-2 py-2 text-sm"
+              className={[
+                'min-h-10 rounded-md border border-dashed px-2 py-2 text-sm transition-colors',
+                selectedOption ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/5 cursor-pointer' : 'border-border',
+              ].join(' ')}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
                 const right = e.dataTransfer.getData('text/plain');
-                if (right) onDrop(pair.left, right);
+                if (right) assign(pair.left, right);
               }}
+              onClick={() => { if (selectedOption) assign(pair.left, selectedOption); }}
             >
-              {mapping[pair.left] || <span className="text-muted-foreground">Drop match here</span>}
+              {mapping[pair.left] || <span className="text-muted-foreground">{selectedOption ? 'Tap to place here' : 'Drop match here'}</span>}
             </div>
           </div>
         ))}
       </div>
       <div className="rounded-lg border border-black/[0.06] bg-white p-2.5">
-        <p className="mb-2 text-xs text-muted-foreground">Drag options</p>
+        <p className="mb-2 text-xs text-muted-foreground">Drag or tap an option, then tap a slot</p>
         <div className="flex flex-wrap gap-2">
           {pool.map((right) => (
             <button
               key={right}
               type="button"
               draggable={!disabled}
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', right)}
+              onDragStart={(e) => { e.dataTransfer.setData('text/plain', right); setSelectedOption(null); }}
               onClick={() => {
-                const unassigned = pairs.find((pair) => !mapping[pair.left]);
-                if (unassigned) onDrop(unassigned.left, right);
+                if (disabled) return;
+                setSelectedOption((prev) => (prev === right ? null : right));
               }}
-              className="rounded-full border border-black/[0.08] bg-background px-3 py-1.5 text-xs hover:border-[var(--accent-brand)]/50"
+              className={[
+                'rounded-full border px-3 py-1.5 text-xs transition-all',
+                selectedOption === right
+                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium ring-2 ring-[var(--accent-brand)]/30'
+                  : 'border-black/[0.08] bg-background hover:border-[var(--accent-brand)]/50',
+              ].join(' ')}
             >
               {right}
             </button>
@@ -831,6 +862,25 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
   values.forEach((v, i) => { if (v) usedSlotMap[v] = i; });
 
   const [dragWord, setDragWord] = useState<string | null>(null);
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
+
+  const handleBlankClick = (blankIdx: number) => {
+    if (disabled) return;
+    if (selectedWord) {
+      // Place selected word into this blank (swap if already filled)
+      const next = Array.from({ length: blankCount }, (_, i) => values[i] ?? '');
+      const displaced = next[blankIdx];
+      next[blankIdx] = selectedWord;
+      // If the selected word came from another blank, clear that blank
+      const fromBlankIdx = values.indexOf(selectedWord);
+      if (fromBlankIdx !== -1 && fromBlankIdx !== blankIdx) next[fromBlankIdx] = displaced;
+      onChange({ kind: 'cloze', value: next });
+      setSelectedWord(null);
+    } else if (values[blankIdx]) {
+      // Select the word already in this blank for moving
+      setSelectedWord(values[blankIdx]);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -855,7 +905,6 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
                 e.preventDefault();
                 const raw = e.dataTransfer.getData('text/plain') || dragWord || '';
                 if (raw.startsWith('__RETURN__:')) {
-                  // Another slot dragged here — swap
                   const fromIdx = Number(raw.split(':')[1]);
                   if (!Number.isNaN(fromIdx) && fromIdx !== part.index) {
                     const next = Array.from({ length: blankCount }, (_, i) => values[i] ?? '');
@@ -869,14 +918,16 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
                 }
                 setDragWord(null);
               }}
-              onClick={() => {
-                if (values[part.index]) update(part.index, '');
-              }}
+              onClick={() => handleBlankClick(part.index)}
               className={[
-                'mx-1.5 inline-flex min-w-[80px] items-center justify-center rounded-md border px-2 py-0.5 align-middle text-[13px] cursor-pointer',
-                values[part.index]
-                  ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium cursor-grab active:cursor-grabbing'
-                  : 'border-dashed border-muted-foreground/40 bg-background text-muted-foreground',
+                'mx-1.5 inline-flex min-w-[80px] items-center justify-center rounded-md border px-2 py-0.5 align-middle text-[13px] cursor-pointer transition-all',
+                selectedWord && selectedWord === values[part.index]
+                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/20 text-[var(--accent-brand)] font-medium ring-2 ring-[var(--accent-brand)]/30'
+                  : values[part.index]
+                    ? 'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium cursor-grab active:cursor-grabbing'
+                    : selectedWord
+                      ? 'border-dashed border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/5 text-muted-foreground'
+                      : 'border-dashed border-muted-foreground/40 bg-background text-muted-foreground',
               ].join(' ')}
             >
               {values[part.index] || `(${part.index + 1})`}
@@ -907,18 +958,31 @@ function ClozeWordBank({ question, answer, disabled, onChange }: {
                 key={word}
                 type="button"
                 draggable={!disabled && !usedInSlot}
-                onDragStart={(e) => { e.dataTransfer.setData('text/plain', word); setDragWord(word); }}
+                onDragStart={(e) => { e.dataTransfer.setData('text/plain', word); setDragWord(word); setSelectedWord(null); }}
                 onClick={() => {
-                  if (disabled || usedInSlot) return;
-                  const emptyIdx = Array.from({ length: blankCount }, (_, i) => i).find((i) => !values[i]);
-                  if (emptyIdx !== undefined) update(emptyIdx, word);
+                  if (disabled) return;
+                  if (usedInSlot) {
+                    // Select this word to move it from its slot
+                    setSelectedWord((prev) => (prev === word ? null : word));
+                    return;
+                  }
+                  if (selectedWord) {
+                    // Place selected word into first empty blank
+                    const emptyIdx = Array.from({ length: blankCount }, (_, i) => i).find((i) => !values[i]);
+                    if (emptyIdx !== undefined) update(emptyIdx, selectedWord);
+                    setSelectedWord(null);
+                    return;
+                  }
+                  setSelectedWord((prev) => (prev === word ? null : word));
                 }}
                 disabled={disabled}
                 className={[
-                  'rounded-lg border px-3 py-1.5 text-[13px]',
-                  usedInSlot
-                    ? 'border-black/[0.06] bg-muted/20 text-muted-foreground/40 line-through cursor-default'
-                    : 'border-black/[0.08] bg-white text-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/[0.04] cursor-grab active:cursor-grabbing',
+                  'rounded-lg border px-3 py-1.5 text-[13px] transition-all',
+                  usedInSlot && selectedWord !== word
+                    ? 'border-black/[0.06] bg-muted/20 text-muted-foreground/40 line-through'
+                    : selectedWord === word
+                      ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium ring-2 ring-[var(--accent-brand)]/30'
+                      : 'border-black/[0.08] bg-white text-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/[0.04] cursor-grab active:cursor-grabbing',
                 ].join(' ')}
               >
                 {word}
@@ -1549,12 +1613,25 @@ function TimelineVisual({ question, answer, disabled, onChange }: {
               draggable={!disabled}
               onDragStart={() => setDraggingId(ev.id)}
               onDragEnd={() => setDraggingId(null)}
-              className="rounded-lg border border-black/[0.08] bg-white px-3 py-1.5 text-[13px] text-foreground cursor-grab active:cursor-grabbing select-none shadow-sm"
+              onClick={() => {
+                if (disabled) return;
+                setDraggingId((prev) => (prev === ev.id ? null : ev.id));
+              }}
+              className={[
+                'rounded-lg border px-3 py-1.5 text-[13px] text-foreground select-none shadow-sm transition-all',
+                disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+                draggingId === ev.id
+                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] font-medium ring-2 ring-[var(--accent-brand)]/30'
+                  : 'border-black/[0.08] bg-white',
+              ].join(' ')}
             >
               {ev.label}
             </div>
           ))}
         </div>
+      )}
+      {draggingId && !disabled && (
+        <p className="text-[11px] text-[var(--accent-brand)]">Tap or drag to the timeline to place this event</p>
       )}
 
       {/* Timeline track */}
@@ -1570,6 +1647,14 @@ function TimelineVisual({ question, answer, disabled, onChange }: {
             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
             const pct = ((e.clientX - rect.left) / rect.width) * 100;
             placeEvent(id, pct);
+            setDraggingId(null);
+          }}
+          onTouchEnd={(e) => {
+            if (disabled || !draggingId) return;
+            const touch = e.changedTouches[0];
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const pct = ((touch.clientX - rect.left) / rect.width) * 100;
+            placeEvent(draggingId, pct);
             setDraggingId(null);
           }}
           onClick={(e) => {
@@ -2368,6 +2453,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
   const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
+  const pendingAdvance = useRef(false);
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
   const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
@@ -2408,6 +2494,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       localStorage.setItem(adaptiveStorageKey, JSON.stringify({ updatedAt: Date.now(), signals: adaptiveSignals.slice(-40) }));
     } catch {}
   }, [adaptiveSignals, adaptiveStorageKey, effectiveMode]);
+
+  // Auto-advance once buffer is ready (when user clicked Next while buffer was empty)
+  useEffect(() => {
+    if (!pendingAdvance.current || adaptiveBuffer.length === 0) return;
+    pendingAdvance.current = false;
+    const [next, ...rest] = adaptiveBuffer;
+    setQuestions((prev) => [...prev, next]);
+    setAdaptiveBuffer(rest);
+    setCurrentIndex((prev) => prev + 1);
+    setIsAnswered(false);
+    setIsCurrentCorrect(null);
+  }, [adaptiveBuffer]);
 
   useEffect(() => {
     try {
@@ -2532,7 +2630,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       if (currentIndex >= questions.length - 1) {
         if (adaptiveBuffer.length > 0) {
           const [next, ...rest] = adaptiveBuffer;
-          setQuestions((prev) => [...prev, next].slice(0, adaptiveCap));
+          setQuestions((prev) => [...prev, next]);
           setAdaptiveBuffer(rest);
           setCurrentIndex((prev) => prev + 1);
           setIsAnswered(false);
@@ -2540,6 +2638,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           void ensureAdaptiveBuffer();
           return;
         }
+        pendingAdvance.current = true;
         void ensureAdaptiveBuffer();
         return;
       }
@@ -2564,11 +2663,14 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
 
   const handleNext = () => {
     if (effectiveMode === 'assisted' && !isAnswered) {
-      if (canAdvance) handleAnswerPress();
-      else advanceQuestion();
+      if (canAdvance) {
+        handleAnswerPress();
+        // Don't advance yet — let user see feedback, they'll click Next again
+        return;
+      }
+      advanceQuestion();
       return;
     }
-    // In all non-assisted modes: finalize if not yet done, then always advance immediately
     if (!isAnswered && canAdvance) handleAnswerPress();
     advanceQuestion();
   };
@@ -2620,8 +2722,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
         {/* Right: circles or progress bar + toggle */}
         <div className="flex items-center gap-3">
           {navMode === 'circles' ? (
-            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[360px]">
-              {questions.map((_, idx) => {
+            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[200px] sm:max-w-[320px] lg:max-w-[420px]">
+              {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions).map((_, idx) => {
                 const state = getCircleState(idx);
                 return (
                   <button
@@ -2644,10 +2746,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                   </button>
                 );
               })}
+              {effectiveMode === 'adaptive' && (
+                <span
+                  title="More questions to come"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[13px] text-[var(--accent-brand)]/70"
+                >
+                  ∞
+                </span>
+              )}
             </div>
           ) : (
             <span className="text-[13px] text-muted-foreground">
-              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {questions.length}
+              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {effectiveMode === 'adaptive' ? '∞' : questions.length}
             </span>
           )}
 
@@ -2797,25 +2907,36 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
       </div>
 
       {/* ── Bottom nav ── full width, buttons at edges */}
-      <div className="shrink-0 border-t border-border bg-white dark:bg-card px-5 py-3.5">
-        <div className="flex items-center justify-between gap-3">
+      <div className="shrink-0 border-t border-border bg-white dark:bg-card px-3 sm:px-5 py-3 sm:py-3.5">
+        <div className="flex items-center justify-between gap-2">
 
           {/* Previous */}
           <Button
             type="button"
             variant="outline"
-            className="relative h-10 ps-11 pe-5 text-[13px]"
+            className="relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
-            Previous
+            <span className="hidden sm:inline">Previous</span>
             <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
               <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
             </span>
           </Button>
 
-          {/* Center: not-relevant */}
+          {/* Center: stop button (adaptive) or not-relevant */}
           <div className="flex items-center gap-2">
+            {effectiveMode === 'adaptive' && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 px-3 text-[12px] text-muted-foreground hover:text-foreground border-border"
+                onClick={() => setIsFinished(true)}
+                title="Stop and see results"
+              >
+                Stop
+              </Button>
+            )}
             {inputMode === 'research' && !notRelevantIds.has(currentQuestion.id) && (
               <Button
                 type="button"
@@ -2824,7 +2945,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 onClick={handleNotRelevant}
                 title="Mark as not relevant to your research"
               >
-                Not relevant
+                <span className="hidden sm:inline">Not relevant</span>
+                <span className="sm:hidden">Skip</span>
               </Button>
             )}
           </div>
@@ -2833,9 +2955,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             onClick={handleNext}
-            className="relative h-10 ps-5 pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
+            className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
           >
-            {isLastQuestion ? 'Finish Quiz' : 'Next'}
+            {isLastQuestion ? 'Finish' : 'Next'}
             <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
               <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
             </span>

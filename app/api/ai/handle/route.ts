@@ -30,7 +30,10 @@ export async function POST(req: Request) {
       return Response.json(result);
     } catch (err: any) {
       const message = err?.message || "Flow execution failed";
-      const isMissingKey = message.includes("Missing GEMINI_API_KEY");
+      const isMissingKey =
+        message.includes("OPENROUTER_API_KEY is missing") ||
+        message.includes("OPENROUTER_API_KEY_MISSING") ||
+        err?.code === "OPENROUTER_API_KEY_MISSING";
       return Response.json(
         {
           error: isMissingKey ? "AI Configuration Missing" : message,

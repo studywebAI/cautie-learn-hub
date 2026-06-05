@@ -23,7 +23,7 @@ const QuizTaker = dynamic(() => import('@/components/tools/quiz-taker').then((mo
 type QuizMode = 'classic' | 'assisted' | 'adaptive';
 type AnswerFeedback = 'immediate' | 'end';
 type GradingMode = 'accuracy' | 'speed' | 'progression';
-type Phase = 'input' | 'options' | 'study';
+type Phase = 'input' | 'analyzing' | 'options' | 'study';
 
 // ─── Question type hierarchy ───────────────────────────────────────────────────
 type QuizVariant = { id: string; label: string; difficulty: 'easy' | 'medium' | 'hard' };
@@ -262,22 +262,34 @@ function QuizPageContent() {
       .finally(() => setImageDescLoading(false));
   }, []);
 
-  // Triggered once when user clicks Next in State 1 — runs in background while user sees State 2
-  const triggerAiCategoryEval = useCallback((text: string, imgDesc: string | null) => {
+  const runAiCategoryEval = useCallback(async (text: string, imgDesc: string | null) => {
     const combined = imgDesc ? `${text}\n\n${imgDesc}` : text;
     if (!combined || combined.trim().length < 150) return;
     setAiCategoryLoading(true);
     setAiCategories(null);
-    fetch('/api/ai/handle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flowName: 'evaluateContentCategories', input: { sourceText: combined.slice(0, 4000) } }),
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data && typeof data === 'object') setAiCategories(data); })
-      .catch(() => { /* non-fatal — regex fallback stays active */ })
-      .finally(() => setAiCategoryLoading(false));
+    try {
+      const res = await fetch('/api/ai/handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flowName: 'evaluateContentCategories', input: { sourceText: combined.slice(0, 4000) } }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data === 'object') setAiCategories(data);
+      }
+    } catch {
+      // non-fatal — regex fallback stays active
+    } finally {
+      setAiCategoryLoading(false);
+    }
   }, []);
+
+  const handleInputSubmit = useCallback(async (compiledText: string) => {
+    setSourceText(compiledText);
+    setPhase('analyzing');
+    await runAiCategoryEval(compiledText, imageDescription);
+    setPhase('options');
+  }, [runAiCategoryEval, imageDescription]);
 
   // When classification changes, drop any question types that are no longer applicable
   useEffect(() => {
@@ -545,6 +557,8 @@ function QuizPageContent() {
         processes: contentClass.processes === 'y' || aiCategories?.processes === 'y' || aiCategories?.causeEffect === 'y' ? 'y' : 'n',
         diagrams: contentClass.diagrams === 'y' || aiCategories?.visual === 'y' || aiCategories?.classifications === 'y' ? 'y' : 'n',
         vocabulary: contentClass.vocabulary === 'y' || aiCategories?.definitions === 'y' ? 'y' : 'n',
+        comparisons: contentClass.comparisons === 'y' || aiCategories?.comparisons === 'y' || aiCategories?.classifications === 'y' ? 'y' : 'n',
+        arguments: contentClass.arguments === 'y' || aiCategories?.arguments === 'y' ? 'y' : 'n',
       }
     : null;
 
@@ -960,11 +974,7 @@ function QuizPageContent() {
               placeholder="Paste your content here..."
               onSourceChange={(text) => setSourceText(text)}
               onImageDataUriChange={handleImageDataUriChange}
-              onSubmit={(compiledText) => {
-                setSourceText(compiledText);
-                setPhase('options');
-                triggerAiCategoryEval(compiledText, imageDescription);
-              }}
+              onSubmit={handleInputSubmit}
               isLoading={false}
               submitLabel="Next"
               speechLanguage={language}
@@ -985,6 +995,22 @@ function QuizPageContent() {
               </div>
             )}
           </div>
+        </div>
+      </WorkbenchShell>
+    );
+  }
+
+  if (phase === 'analyzing') {
+    return (
+      <WorkbenchShell
+        title="Quiz"
+        sidebar={<div />}
+        hideSidebar={true}
+        breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
+      >
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+          <Loader2 className="h-7 w-7 animate-spin text-[var(--accent-brand)]" />
+          <p className="text-sm text-muted-foreground">Analyzing your content…</p>
         </div>
       </WorkbenchShell>
     );
