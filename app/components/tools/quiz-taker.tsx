@@ -2707,22 +2707,22 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Top bar: breadcrumb left | nav right */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border bg-white dark:bg-card px-6 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-white dark:bg-card px-3 sm:px-4 lg:px-6 py-2.5 sm:py-3">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-          <span className="font-medium text-foreground">Quiz</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] text-muted-foreground min-w-0">
+          <span className="font-medium text-foreground shrink-0">Quiz</span>
           {quizTitle ? (
             <>
-              <span>/</span>
-              <span className="max-w-[200px] truncate">{quizTitle}</span>
+              <span className="shrink-0">/</span>
+              <span className="max-w-[100px] sm:max-w-[160px] lg:max-w-[200px] truncate">{quizTitle}</span>
             </>
           ) : null}
         </div>
 
         {/* Right: circles or progress bar + toggle */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 ml-2">
           {navMode === 'circles' ? (
-            <div className="flex items-center gap-1 flex-wrap justify-end max-w-[200px] sm:max-w-[320px] lg:max-w-[420px]">
+            <div className="flex items-center gap-0.5 flex-wrap justify-end max-w-[180px] sm:max-w-[280px] md:max-w-[360px] lg:max-w-[480px]">
               {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions).map((_, idx) => {
                 const state = getCircleState(idx);
                 return (
@@ -2732,7 +2732,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                     onClick={() => handleJumpTo(idx)}
                     title={`Question ${idx + 1}`}
                     className={[
-                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-medium transition-all',
+                      'flex h-6 w-6 sm:h-6 sm:w-6 lg:h-7 lg:w-7 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-[10px] lg:text-[11px] font-medium transition-all',
                       state === 'current'
                         ? 'bg-[var(--accent-brand)] text-white ring-2 ring-[var(--accent-brand)] ring-offset-1 ring-offset-background'
                         : state === 'answered'
@@ -2749,7 +2749,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               {effectiveMode === 'adaptive' && (
                 <span
                   title="More questions to come"
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[13px] text-[var(--accent-brand)]/70"
+                  className="flex h-6 w-6 sm:h-6 sm:w-6 lg:h-7 lg:w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[10px] sm:text-[10px] lg:text-[13px] text-[var(--accent-brand)]/70"
                 >
                   ∞
                 </span>
@@ -2766,7 +2766,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             type="button"
             onClick={() => setNavMode((prev) => (prev === 'circles' ? 'progress' : 'circles'))}
             title={navMode === 'circles' ? 'Switch to progress view' : 'Switch to circle view'}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+            className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground shrink-0"
           >
             {navMode === 'circles' ? (
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
