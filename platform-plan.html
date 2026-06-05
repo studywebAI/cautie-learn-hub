@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cautie Learn Hub — Platform Plan</title>
+<style>
+  :root{
+    --olive:#6b7c4e;
+    --olive-light:#e8eddf;
+    --olive-dark:#4a5735;
+    --bg:#fafaf8;
+    --card:#ffffff;
+    --ink:#2c3322;
+    --muted:#7a8169;
+    --line:#e3e6da;
+    --good:#5a8a4a;
+    --warn:#c8902e;
+    --bad:#c0533f;
+    --shadow:0 1px 3px rgba(74,87,53,.08),0 4px 16px rgba(74,87,53,.06);
+    --shadow-lg:0 8px 28px rgba(74,87,53,.14);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.55;
+    font-size:15px;
+  }
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    position:fixed;top:0;left:0;width:268px;height:100vh;
+    background:linear-gradient(180deg,var(--olive-dark),#3b4529);
+    color:#dfe6cf;overflow-y:auto;padding:0 0 40px;z-index:100;
+    box-shadow:2px 0 18px rgba(0,0,0,.12);
+  }
+  .sidebar::-webkit-scrollbar{width:8px}
+  .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:8px}
+  .brand{
+    padding:22px 22px 18px;border-bottom:1px solid rgba(255,255,255,.1);
+    position:sticky;top:0;background:linear-gradient(180deg,var(--olive-dark),#414c2e);z-index:2;
+  }
+  .brand .logo{display:flex;align-items:center;gap:11px}
+  .brand .mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg,var(--olive),#8aa063);
+    display:grid;place-items:center;font-weight:800;color:#fff;font-size:19px;
+    box-shadow:0 3px 10px rgba(0,0,0,.25);
+  }
+  .brand .name{font-weight:800;font-size:17px;color:#fff;letter-spacing:.2px}
+  .brand .tag{font-size:11.5px;color:#aebd92;margin-top:2px;letter-spacing:.3px}
+  .nav{padding:14px 12px 0}
+  .nav-group{margin-bottom:6px}
+  .nav-group>a{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;
+    color:#e7eed9;text-decoration:none;font-weight:600;font-size:13.5px;
+    transition:background .15s,color .15s;
+  }
+  .nav-group>a:hover{background:rgba(255,255,255,.09);color:#fff}
+  .nav-group>a .ix{
+    width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.1);
+    display:grid;place-items:center;font-size:11px;font-weight:700;color:#cdd9b4;flex:none;
+  }
+  .nav-sub{padding:2px 0 6px 30px}
+  .nav-sub a{
+    display:block;padding:5px 12px;border-radius:7px;color:#b8c79c;
+    text-decoration:none;font-size:12.5px;transition:.15s;
+  }
+  .nav-sub a:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav-foot{padding:18px 22px 0;font-size:11px;color:#8a9970;border-top:1px solid rgba(255,255,255,.08);margin-top:14px}
+  /* ---------- Main ---------- */
+  .main{margin-left:268px;padding:0 0 80px}
+  .topbar{
+    position:sticky;top:0;z-index:50;background:rgba(250,250,248,.88);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+    padding:14px 40px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar h1{font-size:16px;font-weight:700;color:var(--olive-dark)}
+  .topbar .crumbs{font-size:12.5px;color:var(--muted)}
+  .topbar .actions{display:flex;gap:9px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 40px}
+  section.doc{padding:48px 0 24px;border-bottom:1px dashed var(--line)}
+  .sec-head{margin-bottom:22px}
+  .sec-kicker{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:1.2px;
+    text-transform:uppercase;color:var(--olive);background:var(--olive-light);
+    padding:4px 11px;border-radius:20px;margin-bottom:10px;
+  }
+  .sec-head h2{font-size:27px;font-weight:800;color:var(--olive-dark);letter-spacing:-.4px}
+  .sec-head p.lead{color:var(--muted);font-size:14.5px;margin-top:6px;max-width:720px}
+  h3.block{font-size:16px;font-weight:700;color:var(--olive-dark);margin:30px 0 14px;display:flex;align-items:center;gap:9px}
+  h3.block::before{content:"";width:5px;height:18px;background:var(--olive);border-radius:3px;display:inline-block}
+  h4.sub{font-size:13.5px;font-weight:700;color:var(--ink);margin:18px 0 10px;text-transform:uppercase;letter-spacing:.5px}
+  /* ---------- Generic UI atoms ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;border:none;cursor:pointer;
+    font-family:inherit;font-weight:600;font-size:13px;padding:9px 16px;border-radius:9px;
+    background:var(--olive);color:#fff;transition:.15s;text-decoration:none;
+  }
+  .btn:hover{background:var(--olive-dark)}
+  .btn.ghost{background:var(--olive-light);color:var(--olive-dark)}
+  .btn.ghost:hover{background:#dde4cf}
+  .btn.outline{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+  .btn.outline:hover{border-color:var(--olive);color:var(--olive-dark)}
+  .btn.sm{padding:6px 12px;font-size:12px;border-radius:8px}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+    padding:3px 10px;border-radius:20px;background:var(--olive-light);color:var(--olive-dark);
+  }
+  .chip.weak{background:#f7e4df;color:var(--bad)}
+  .chip.good{background:#e2f0dc;color:var(--good)}
+  .chip.warn{background:#faf0d8;color:#9a7320}
+  .chip.muted{background:#eef0e8;color:var(--muted)}
+  .pill{font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;letter-spacing:.4px}
+  .pill.live{background:#e2f0dc;color:var(--good)}
+  .pill.soon{background:#faf0d8;color:#9a7320}
+  .pill.plan{background:#e6e9f5;color:#5b6aa0}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  table.t{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:12px;overflow:hidden}
+  table.t th{
+    text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+    color:var(--muted);font-weight:700;padding:11px 14px;background:#f4f6ef;border-bottom:1px solid var(--line);
+  }
+  table.t td{padding:11px 14px;border-bottom:1px solid var(--line)}
+  table.t tr:last-child td{border-bottom:none}
+  table.t tr:hover td{background:#fcfdfa}
+  .specs{
+    background:var(--olive-light);border-left:4px solid var(--olive);border-radius:0 12px 12px 0;
+    padding:16px 20px;margin:18px 0 6px;
+  }
+  .specs h5{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--olive-dark);margin-bottom:9px;font-weight:800}
+  .specs ul{list-style:none}
+  .specs li{position:relative;padding:4px 0 4px 22px;font-size:13.5px;color:#46503a}
+  .specs li::before{content:"▸";position:absolute;left:4px;color:var(--olive);font-weight:700}
+  .specs li b{color:var(--olive-dark)}
+  .mock{background:#f4f6ef;border:1px solid var(--line);border-radius:16px;padding:22px;margin:6px 0}
+  .mock-label{font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px}
+  .mock-label::before{content:"●";color:var(--olive)}
+  /* progress ring */
+  .ring{position:relative;width:54px;height:54px;flex:none}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .rt{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:800;color:var(--olive-dark)}
+  /* sparkline / bars */
+  .spark{display:flex;align-items:flex-end;gap:3px;height:42px}
+  .spark span{flex:1;background:var(--olive);border-radius:3px 3px 0 0;opacity:.85}
+  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .barrow .bl{width:120px;font-size:12.5px;color:var(--ink)}
+  .bartrack{flex:1;height:10px;background:#e9ecdf;border-radius:6px;overflow:hidden}
+  .barfill{height:100%;background:linear-gradient(90deg,var(--olive),#8aa063);border-radius:6px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+  .stat .v{font-size:24px;font-weight:800;color:var(--olive-dark);line-height:1.1}
+  .stat .l{font-size:11.5px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+  .stat .d{font-size:11px;font-weight:700;margin-top:5px}
+  .up{color:var(--good)}.down{color:var(--bad)}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--olive);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+  .avatar.a2{background:#8a6d9e}.avatar.a3{background:#c8902e}.avatar.a4{background:#4a8a8a}.avatar.a5{background:#b0623f}
+  /* arrows / flow */
+  .flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center}
+  .flow-node{
+    background:#fff;border:2px solid var(--olive);border-radius:12px;padding:13px 16px;
+    text-align:center;min-width:120px;box-shadow:var(--shadow);
+  }
+  .flow-node .fn-t{font-weight:700;font-size:13px;color:var(--olive-dark)}
+  .flow-node .fn-s{font-size:11px;color:var(--muted);margin-top:2px}
+  .flow-node.alt{border-color:var(--warn);background:#fffdf6}
+  .flow-arrow{color:var(--olive);font-size:22px;padding:0 10px;font-weight:700}
+  .note{font-size:12px;color:var(--muted);font-style:italic;margin-top:8px}
+  .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .kv:last-child{border:none}
+  .kv .k{color:var(--muted)}
+  .kv .vv{font-weight:600;color:var(--ink)}
+  .toggle{width:38px;height:22px;border-radius:20px;background:var(--olive);position:relative;flex:none}
+  .toggle::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;right:3px}
+  .toggle.off{background:#cdd0c4}
+  .toggle.off::after{right:auto;left:3px}
+  .heat{display:grid;gap:5px}
+  .heat .hc{aspect-ratio:1;border-radius:6px;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff}
+  .slider{height:6px;border-radius:6px;background:#e9ecdf;position:relative;margin:18px 0}
+  .slider .fills{position:absolute;left:0;top:0;height:100%;border-radius:6px;background:var(--olive)}
+  .slider .knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--olive);box-shadow:var(--shadow)}
+  code.inline{background:#eef0e8;padding:1px 6px;border-radius:5px;font-size:12px;color:var(--olive-dark);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+</style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="logo">
+      <div class="mark">C</div>
+      <div>
+        <div class="name">Cautie Learn Hub</div>
+        <div class="tag">Adaptive Learning Platform</div>
+      </div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group"><a href="#s1"><span class="ix">01</span> Platform Vision</a></div>
+    <div class="nav-group"><a href="#s2"><span class="ix">02</span> Information Architecture</a></div>
+    <div class="nav-group">
+      <a href="#s3"><span class="ix">03</span> Studyset Hub</a>
+      <div class="nav-sub">
+        <a href="#s3a">3a · Studyset List</a>
+        <a href="#s3b">3b · Studyset Detail</a>
+        <a href="#s3c">3c · Quick Create Modal</a>
+      </div>
+    </div>
+    <div class="nav-group">
+      <a href="#s4"><span class="ix">04</span> Analytics</a>
+      <div class="nav-sub">
+        <a href="#s4sub">Subject-level</a>
+        <a href="#s4set">Studyset-level</a>
+      </div>
+    </div>
+    <div class="nav-group"><a href="#s5"><span class="ix">05</span> Adaptive Engine</a></div>
+    <div class="nav-group"><a href="#s6"><span class="ix">06</span> Universal Tool Launch</a></div>
+    <div class="nav-group"><a href="#s7"><span class="ix">07</span> Dashboard Redesign</a></div>
+    <div class="nav-group"><a href="#s8"><span class="ix">08</span> Teacher Features</a></div>
+    <div class="nav-group"><a href="#s9"><span class="ix">09</span> ICS Calendar System</a></div>
+    <div class="nav-group"><a href="#s10"><span class="ix">10</span> Performance Loop</a></div>
+    <div class="nav-group"><a href="#s11"><span class="ix">11</span> Notification System</a></div>
+    <div class="nav-group"><a href="#s12"><span class="ix">12</span> Settings &amp; Preferences</a></div>
+  </nav>
+  <div class="nav-foot">
+    v0.9 · Product Spec<br>Last edit Mar 15, 2026<br>Owner: studyweb.help
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Platform Planning Document</h1>
+      <div class="crumbs">Product / Cautie Learn Hub / Master Spec</div>
+    </div>
+    <div class="actions">
+      <a class="btn outline sm" href="#s1">Share</a>
+      <a class="btn sm" href="#s7">View Dashboard</a>
+    </div>
+  </div>
+  <div class="wrap">
+
+<!-- ===================== SECTION 1 ===================== -->
+<section class="doc" id="s1">
+  <div class="sec-head">
+    <span class="sec-kicker">01 — Platform Vision</span>
+    <h2>A performance-driven adaptive learning loop</h2>
+    <p class="lead">Cautie Learn Hub turns every study action into measured signal. Tools feed performance data into an adaptive engine that continuously rewrites each learner's plan — closing the gap between studying and actually being ready.</p>
+  </div>
+
+  <h3 class="block">The Core Learning Loop</h3>
+  <div class="mock">
+    <div class="mock-label">Closed adaptive loop</div>
+    <div class="flow">
+      <div class="flow-node"><div class="fn-t">1 · Study</div><div class="fn-s">Quiz · Flashcards · Notes</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">2 · Measure</div><div class="fn-s">Score · time · confidence</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node alt"><div class="fn-t">3 · Analyze</div><div class="fn-s">Topic mastery model</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">4 · Adapt</div><div class="fn-s">Rewrite the plan</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">5 · Recommend</div><div class="fn-s">Today's focus</div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <span class="flow-arrow" style="display:inline-block;transform:rotate(90deg)">↩</span>
+      <div class="note">Loop closes back to Study — every run sharpens the next recommendation.</div>
+    </div>
+  </div>
+
+  <h3 class="block">How we compare</h3>
+  <table class="t">
+    <thead>
+      <tr><th>Capability</th><th>Cautie Learn Hub</th><th>Anki</th><th>Quizlet</th><th>Khan Academy</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Adaptive study plan</b></td><td><span class="chip good">Full · per-topic</span></td><td><span class="chip muted">SRS only</span></td><td><span class="chip weak">None</span></td><td><span class="chip warn">Course path</span></td></tr>
+      <tr><td><b>Cross-tool performance model</b></td><td><span class="chip good">Unified</span></td><td><span class="chip weak">Cards only</span></td><td><span class="chip weak">Per-set</span></td><td><span class="chip warn">Per-skill</span></td></tr>
+      <tr><td><b>Exam readiness projection</b></td><td><span class="chip good">Yes</span></td><td><span class="chip weak">No</span></td><td><span class="chip weak">No</span></td><td><span class="chip weak">No</span></td></tr>
+      <tr><td><b>Weak-spot auto detection</b></td><td><span class="chip good">Real-time</span></td><td><span class="chip warn">Lapse-based</span></td><td><span class="chip weak">No</span></td><td><span class="chip warn">Quiz-based</span></td></tr>
+      <tr><td><b>Multi-format tools</b></td><td><span class="chip good">5 tools, 1 dataset</span></td><td><span class="chip muted">Cards</span></td><td><span class="chip muted">Cards/games</span></td><td><span class="chip muted">Video/quiz</span></td></tr>
+      <tr><td><b>Teacher class analytics</b></td><td><span class="chip good">Built-in</span></td><td><span class="chip weak">No</span></td><td><span class="chip warn">Quizlet+</span></td><td><span class="chip good">Yes</span></td></tr>
+      <tr><td><b>Calendar / ICS sync</b></td><td><span class="chip good">webcal feed</span></td><td><span class="chip weak">No</span></td><td><span class="chip weak">No</span></td><td><span class="chip weak">No</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="block">What makes it world-class</h3>
+  <div class="grid g3">
+    <div class="card" style="padding:18px">
+      <div class="chip">One dataset</div>
+      <h4 class="sub" style="margin:10px 0 6px">Every tool, one mastery score</h4>
+      <p style="font-size:13px;color:var(--muted)">A flashcard miss and a quiz miss on the <b>Krebs Cycle</b> update the same topic node. No siloed progress.</p>
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="chip">Always current</div>
+      <h4 class="sub" style="margin:10px 0 6px">The plan rewrites itself</h4>
+      <p style="font-size:13px;color:var(--muted)">Finish a session at 78% and tomorrow's plan already reflects it — no manual scheduling.</p>
+    </div>
+    <div class="card" style="padding:18px">
+      <div class="chip">Outcome-first</div>
+      <h4 class="sub" style="margin:10px 0 6px">Readiness, not streaks</h4>
+      <p style="font-size:13px;color:var(--muted)">We project a score for <b>Mar 28 · AP Biology</b>, then drive every recommendation toward it.</p>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs</h5>
+    <ul>
+      <li><b>Unified mastery graph</b> — all five tools write to one per-topic mastery model (0–100).</li>
+      <li><b>Readiness projection</b> — Bayesian estimate of exam-day score with confidence band.</li>
+      <li><b>Continuous adaptation</b> — plan recomputed after every completed tool run.</li>
+      <li><b>Signal richness</b> — captures accuracy, latency, self-rated confidence, and recency decay.</li>
+      <li><b>Zero-config start</b> — paste material, pick an exam date, the engine builds the first plan.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 2 ===================== -->
+<section class="doc" id="s2">
+  <div class="sec-head">
+    <span class="sec-kicker">02 — Information Architecture</span>
+    <h2>How everything is organized</h2>
+    <p class="lead">A clean four-level hierarchy keeps learners oriented: a Subject contains Studysets, each Studyset is studied across Sessions, and each Session is made of individual Tool Runs that emit performance data.</p>
+  </div>
+
+  <h3 class="block">4-level hierarchy</h3>
+  <div class="mock">
+    <div class="mock-label">Subject → Studyset → Session → Tool Run</div>
+    <div class="flow" style="flex-direction:column;align-items:flex-start;gap:0">
+      <div class="flow-node" style="min-width:260px;text-align:left"><div class="fn-t">📚 Subject — AP Biology</div><div class="fn-s">Container for everything in a course</div></div>
+      <span class="flow-arrow" style="transform:rotate(90deg);margin-left:40px">→</span>
+      <div class="flow-node" style="min-width:260px;text-align:left;margin-left:60px"><div class="fn-t">🗂 Studyset — Unit 4: Cell Energetics</div><div class="fn-s">Goal + exam date + material + topics</div></div>
+      <span class="flow-arrow" style="transform:rotate(90deg);margin-left:100px">→</span>
+      <div class="flow-node" style="min-width:260px;text-align:left;margin-left:120px"><div class="fn-t">⏱ Session — Mar 15 · Evening Review</div><div class="fn-s">A sitting; one or more tool runs</div></div>
+      <span class="flow-arrow" style="transform:rotate(90deg);margin-left:160px">→</span>
+      <div class="flow-node alt" style="min-width:260px;text-align:left;margin-left:180px"><div class="fn-t">🎯 Tool Run — Quiz · Krebs Cycle</div><div class="fn-s">Atomic unit of performance (78%, 6m 12s)</div></div>
+    </div>
+  </div>
+
+  <h3 class="block">Full site map</h3>
+  <div class="grid g3">
+    <div class="card" style="padding:16px">
+      <h4 class="sub">Learner</h4>
+      <div style="font-size:13px;color:var(--ink);line-height:2">
+        / Dashboard<br>
+        / Subjects<br>
+        &nbsp;&nbsp;/ :subject<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;/ Analytics<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;/ Studysets<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ :studyset<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ Plan<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ Analytics<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/ Sessions
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <h4 class="sub">Tools &amp; Agenda</h4>
+      <div style="font-size:13px;color:var(--ink);line-height:2">
+        / Tools<br>
+        &nbsp;&nbsp;/ Quiz<br>
+        &nbsp;&nbsp;/ Flashcards<br>
+        &nbsp;&nbsp;/ Notes<br>
+        &nbsp;&nbsp;/ Mindmap<br>
+        &nbsp;&nbsp;/ Timeline<br>
+        / Agenda<br>
+        &nbsp;&nbsp;/ Calendar feeds<br>
+        / Notifications
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <h4 class="sub">Teacher &amp; Settings</h4>
+      <div style="font-size:13px;color:var(--ink);line-height:2">
+        / Classes<br>
+        &nbsp;&nbsp;/ :class · Analytics<br>
+        &nbsp;&nbsp;/ :class · Templates<br>
+        &nbsp;&nbsp;/ :class · Calendar<br>
+        / Settings<br>
+        &nbsp;&nbsp;/ Tool presets<br>
+        &nbsp;&nbsp;/ Adaptive sensitivity<br>
+        &nbsp;&nbsp;/ Calendars · Notifications
+      </div>
+    </div>
+  </div>
+
+  <h3 class="block">Primary navigation structure</h3>
+  <div class="mock">
+    <div class="mock-label">Global top-level nav</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <span class="chip">🏠 Dashboard</span>
+      <span class="chip">📚 Subjects</span>
+      <span class="chip">🗂 Studysets</span>
+      <span class="chip">📊 Analytics</span>
+      <span class="chip">🛠 Tools</span>
+      <span class="chip">📅 Agenda</span>
+      <span class="chip">🔔 Notifications</span>
+      <span class="chip">👩‍🏫 Classes</span>
+      <span class="chip muted">⚙ Settings</span>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs</h5>
+    <ul>
+      <li><b>Stable URLs</b> — <code class="inline">/subject/ap-bio/studyset/unit-4</code> deep-links to any level.</li>
+      <li><b>Breadcrumb everywhere</b> — Subject ▸ Studyset ▸ Session ▸ Run, always one click back.</li>
+      <li><b>Tool Run is canonical</b> — every analytic rolls up from the run, never re-derived.</li>
+      <li><b>Cross-cutting Agenda</b> — calendar feeds span all subjects in one ICS endpoint.</li>
+      <li><b>Role-aware nav</b> — Classes appears only for teacher accounts.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 3 ===================== -->
+<section class="doc" id="s3">
+  <div class="sec-head">
+    <span class="sec-kicker">03 — Studyset Hub</span>
+    <h2>The home base for focused study</h2>
+    <p class="lead">The Studyset Hub is where a learner lives day-to-day: a list of active goals, a rich detail page driving the plan, and a frictionless create flow.</p>
+  </div>
+
+  <!-- 3a -->
+  <h3 class="block" id="s3a">3a · Studyset list page</h3>
+  <div class="mock">
+    <div class="mock-label">Active studysets</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;gap:8px">
+        <span class="chip good">3 active</span>
+        <span class="chip muted">2 archived</span>
+      </div>
+      <button class="btn sm">+ New Studyset</button>
+    </div>
+    <div class="grid g3">
+      <!-- card 1 -->
+      <div class="card" style="padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <span class="chip" style="margin-bottom:8px">AP Biology</span>
+            <h4 style="font-size:15px;color:var(--olive-dark);font-weight:800">Unit 4: Cell Energetics</h4>
+          </div>
+          <div class="ring">
+            <svg width="54" height="54"><circle cx="27" cy="27" r="23" fill="none" stroke="#e9ecdf" stroke-width="6"/><circle cx="27" cy="27" r="23" fill="none" stroke="#6b7c4e" stroke-width="6" stroke-dasharray="144" stroke-dashoffset="40" stroke-linecap="round"/></svg>
+            <div class="rt">72%</div>
+          </div>
+        </div>
+        <div style="margin:12px 0 10px"><span class="pill soon">⏳ Exam in 10 days · Mar 15</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip weak">Krebs Cycle</span>
+          <span class="chip weak">Electron Transport</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn sm" style="flex:1">Continue plan</button>
+          <button class="btn outline sm">Analytics</button>
+        </div>
+      </div>
+      <!-- card 2 -->
+      <div class="card" style="padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <span class="chip" style="margin-bottom:8px">AP Biology</span>
+            <h4 style="font-size:15px;color:var(--olive-dark);font-weight:800">Unit 5: Heredity</h4>
+          </div>
+          <div class="ring">
+            <svg width="54" height="54"><circle cx="27" cy="27" r="23" fill="none" stroke="#e9ecdf" stroke-width="6"/><circle cx="27" cy="27" r="23" fill="none" stroke="#5a8a4a" stroke-width="6" stroke-dasharray="144" stroke-dashoffset="14" stroke-linecap="round"/></svg>
+            <div class="rt">90%</div>
+          </div>
+        </div>
+        <div style="margin:12px 0 10px"><span class="pill live">✓ On track · Mar 28</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip weak">Linked Genes</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn sm" style="flex:1">Continue plan</button>
+          <button class="btn outline sm">Analytics</button>
+        </div>
+      </div>
+      <!-- card 3 -->
+      <div class="card" style="padding:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <span class="chip" style="margin-bottom:8px">World History</span>
+            <h4 style="font-size:15px;color:var(--olive-dark);font-weight:800">WWI Causes &amp; Course</h4>
+          </div>
+          <div class="ring">
+            <svg width="54" height="54"><circle cx="27" cy="27" r="23" fill="none" stroke="#e9ecdf" stroke-width="6"/><circle cx="27" cy="27" r="23" fill="none" stroke="#c8902e" stroke-width="6" stroke-dasharray="144" stroke-dashoffset="80" stroke-linecap="round"/></svg>
+            <div class="rt">45%</div>
+          </div>
+        </div>
+        <div style="margin:12px 0 10px"><span class="pill soon">⏳ Exam in 18 days · Apr 12</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="chip weak">Alliance System</span>
+          <span class="chip weak">Trench Warfare</span>
+          <span class="chip weak">Treaty Terms</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn sm" style="flex:1">Continue plan</button>
+          <button class="btn outline sm">Analytics</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mock-label" style="margin-top:22px">Archived</div>
+    <div class="card" style="overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="chip muted">Chemistry</span>
+          <span style="font-size:13.5px;color:var(--ink);font-weight:600">Stoichiometry Basics</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--muted)">
+          <span>Final 94%</span><span>Archived Feb 02</span><button class="btn outline sm">Restore</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="chip muted">Spanish III</span>
+          <span style="font-size:13.5px;color:var(--ink);font-weight:600">Preterite vs Imperfect</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--muted)">
+          <span>Final 88%</span><span>Archived Jan 20</span><button class="btn outline sm">Restore</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="specs">
+    <h5>Feature specs · list page</h5>
+    <ul>
+      <li><b>Progress ring</b> shows current mastery; color shifts red→amber→green by readiness.</li>
+      <li><b>Exam countdown pill</b> turns amber inside 14 days, red inside 3.</li>
+      <li><b>Weak topic chips</b> surface the top 1–3 lowest-mastery topics per set.</li>
+      <li><b>Archived list</b> is compact, single-line, with final score and restore action.</li>
+      <li><b>Sort &amp; filter</b> by exam date, readiness, or subject (default: soonest exam).</li>
+    </ul>
+  </div>
+
+  <!-- 3b -->
+  <h3 class="block" id="s3b">3b · Studyset detail page</h3>
+  <div class="mock">
+    <div class="mock-label">Studyset detail — Unit 4: Cell Energetics</div>
+    <!-- header -->
+    <div class="card" style="padding:20px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px">
+        <div>
+          <span class="chip">AP Biology</span>
+          <h3 style="font-size:21px;color:var(--olive-dark);font-weight:800;margin:8px 0 4px">Unit 4: Cell Energetics</h3>
+          <div style="font-size:13px;color:var(--muted)">Goal: score 85%+ on the unit exam · 7 topics · 142 cards</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:30px;font-weight:800;color:var(--bad)">10</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">days to Mar 15</div>
+          <button class="btn sm" style="margin-top:8px">▶ Start today's plan</button>
+        </div>
+      </div>
+    </div>
+    <!-- 3 stat boxes -->
+    <div class="grid g3" style="margin-bottom:16px">
+      <div class="stat"><div class="v">72%</div><div class="l">Current mastery</div><div class="d up">▲ 6% this week</div></div>
+      <div class="stat"><div class="v">68%</div><div class="l">Projected exam score</div><div class="d up">▲ 4% vs last plan</div></div>
+      <div class="stat"><div class="v">14</div><div class="l">Sessions logged</div><div class="d">avg 22 min</div></div>
+    </div>
+    <div class="grid g2">
+      <!-- today's plan -->
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Today's plan</h4>
+        <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)">
+          <input type="checkbox" checked> <span class="chip weak">Krebs Cycle</span>
+          <span style="font-size:13px;color:var(--ink);flex:1">Quiz · 15 questions</span>
+          <span style="font-size:12px;color:var(--good);font-weight:700">Done · 78%</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)">
+          <input type="checkbox"> <span class="chip weak">Electron Transport</span>
+          <span style="font-size:13px;color:var(--ink);flex:1">Flashcards · 24 cards</span>
+          <button class="btn sm">Start</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:11px;padding:10px 0">
+          <input type="checkbox"> <span class="chip">Glycolysis</span>
+          <span style="font-size:13px;color:var(--ink);flex:1">Notes review · 8 min</span>
+          <button class="btn outline sm">Start</button>
+        </div>
+      </div>
+      <!-- weak spots + sparkline -->
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Weak spots</h4>
+        <div class="barrow"><span class="bl">Krebs Cycle</span><div class="bartrack"><div class="barfill" style="width:54%"></div></div><span style="font-size:12px;font-weight:700;color:var(--bad)">54%</span></div>
+        <div class="barrow"><span class="bl">Electron Trans.</span><div class="bartrack"><div class="barfill" style="width:48%"></div></div><span style="font-size:12px;font-weight:700;color:var(--bad)">48%</span></div>
+        <div class="barrow"><span class="bl">Glycolysis</span><div class="bartrack"><div class="barfill" style="width:71%"></div></div><span style="font-size:12px;font-weight:700;color:#9a7320">71%</span></div>
+        <h4 class="sub">Mastery trend (14 days)</h4>
+        <div class="spark">
+          <span style="height:30%"></span><span style="height:38%"></span><span style="height:35%"></span><span style="height:46%"></span><span style="height:52%"></span><span style="height:49%"></span><span style="height:58%"></span><span style="height:62%"></span><span style="height:60%"></span><span style="height:68%"></span><span style="height:66%"></span><span style="height:72%"></span><span style="height:70%"></span><span style="height:78%"></span>
+        </div>
+      </div>
+    </div>
+    <!-- study plan timeline -->
+    <div class="card" style="padding:18px;margin-top:16px">
+      <h4 class="sub" style="margin-top:0">Study plan roadmap</h4>
+      <div style="display:flex;gap:0;align-items:stretch">
+        <div style="flex:1;text-align:center;padding:0 6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--good);margin:0 auto"></div>
+          <div style="height:3px;background:var(--good);margin:6px 0"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--olive-dark)">Mar 6–8</div>
+          <div style="font-size:11px;color:var(--muted)">Glycolysis ✓</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:0 6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:var(--olive);margin:0 auto;box-shadow:0 0 0 4px var(--olive-light)"></div>
+          <div style="height:3px;background:linear-gradient(90deg,var(--good),#e9ecdf);margin:6px 0"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--olive-dark)">Mar 9–11</div>
+          <div style="font-size:11px;color:var(--muted)">Krebs Cycle ← now</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:0 6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#cdd0c4;margin:0 auto"></div>
+          <div style="height:3px;background:#e9ecdf;margin:6px 0"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted)">Mar 12–13</div>
+          <div style="font-size:11px;color:var(--muted)">Electron Transport</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:0 6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#cdd0c4;margin:0 auto"></div>
+          <div style="height:3px;background:#e9ecdf;margin:6px 0"></div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted)">Mar 14</div>
+          <div style="font-size:11px;color:var(--muted)">Full mock exam</div>
+        </div>
+      </div>
+    </div>
+    <!-- materials -->
+    <div class="card" style="padding:18px;margin-top:16px">
+      <h4 class="sub" style="margin-top:0">Materials</h4>
+      <div class="kv"><span class="k">📄 Campbell Biology — Ch. 9 notes.pdf</span><span class="vv">Linked</span></div>
+      <div class="kv"><span class="k">🖼 Cellular respiration diagram.png</span><span class="vv">Linked</span></div>
+      <div class="kv"><span class="k">🔗 Khan: ETC walkthrough</span><span class="vv">External</span></div>
+    </div>
+  </div>
+  <div class="specs">
+    <h5>Feature specs · detail page</h5>
+    <ul>
+      <li><b>Header countdown</b> mirrors readiness color and links to "Start today's plan".</li>
+      <li><b>3 stat boxes</b> — current mastery, projected exam score, sessions logged — each with delta.</li>
+      <li><b>Today's plan</b> is auto-generated, checkable, and launches the right tool per task.</li>
+      <li><b>Roadmap</b> shows phased coverage with a "you are here" marker.</li>
+      <li><b>Weak spots + sparkline</b> give an at-a-glance pulse without leaving the page.</li>
+      <li><b>Materials</b> link source PDFs, images, and external resources to the set.</li>
+    </ul>
+  </div>
+
+  <!-- 3c -->
+  <h3 class="block" id="s3c">3c · Quick create modal</h3>
+  <div class="mock" style="display:flex;justify-content:center">
+    <div class="card" style="padding:0;width:440px;box-shadow:var(--shadow-lg);overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <h4 style="font-size:16px;color:var(--olive-dark);font-weight:800">New Studyset</h4>
+        <span style="color:var(--muted);font-size:18px;cursor:pointer">✕</span>
+      </div>
+      <div style="padding:20px">
+        <label style="font-size:12px;font-weight:700;color:var(--ink)">Title</label>
+        <div style="border:1.5px solid var(--olive);border-radius:9px;padding:10px 12px;margin:6px 0 14px;font-size:14px;color:var(--ink)">Unit 6: Photosynthesis</div>
+        <label style="font-size:12px;font-weight:700;color:var(--ink)">Subject</label>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;margin:6px 0 14px;font-size:14px;color:var(--ink);display:flex;justify-content:space-between">AP Biology <span style="color:var(--muted)">▾</span></div>
+        <div style="display:flex;gap:12px">
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:700;color:var(--ink)">Exam date</label>
+            <div style="border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;margin:6px 0 14px;font-size:14px;color:var(--ink)">📅 Apr 22, 2026</div>
+          </div>
+          <div style="flex:1">
+            <label style="font-size:12px;font-weight:700;color:var(--ink)">Target score</label>
+            <div style="border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;margin:6px 0 14px;font-size:14px;color:var(--ink)">85%</div>
+          </div>
+        </div>
+        <label style="font-size:12px;font-weight:700;color:var(--ink)">Paste material (optional)</label>
+        <div style="border:1.5px dashed var(--line);border-radius:9px;padding:16px;margin:6px 0 4px;font-size:13px;color:var(--muted);text-align:center">⬆ Drop notes / PDF or paste text — topics auto-detected</div>
+        <div style="display:flex;gap:6px;margin:10px 0 4px">
+          <span class="chip good">+ Auto-build first plan</span>
+          <span class="chip muted">Light theme</span>
+        </div>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px">
+        <button class="btn outline sm">Cancel</button>
+        <button class="btn sm">Create studyset</button>
+      </div>
+    </div>
+  </div>
+  <div class="specs">
+    <h5>Feature specs · create modal</h5>
+    <ul>
+      <li><b>Two required fields</b> — title and subject; everything else is optional.</li>
+      <li><b>Material ingestion</b> — paste or drop; topics auto-extracted for the mastery graph.</li>
+      <li><b>Exam date + target</b> seed the readiness projection immediately.</li>
+      <li><b>Auto-build first plan</b> toggle generates a roadmap on create.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 4 ===================== -->
+<section class="doc" id="s4">
+  <div class="sec-head">
+    <span class="sec-kicker">04 — Analytics</span>
+    <h2>Performance you can act on</h2>
+    <p class="lead">Two tiers of analytics: a subject-wide view that finds patterns across studysets, and a studyset view that drives the plan with readiness and per-topic detail.</p>
+  </div>
+
+  <!-- subject-level -->
+  <h3 class="block" id="s4sub">Subject-level analytics — AP Biology</h3>
+  <div class="mock">
+    <div class="mock-label">Performance over time</div>
+    <div class="card" style="padding:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h4 style="font-size:14px;color:var(--olive-dark);font-weight:800">Average mastery · last 8 weeks</h4>
+        <span class="chip good">▲ 22 pts</span>
+      </div>
+      <!-- CSS line chart -->
+      <div style="position:relative;height:160px;border-left:2px solid var(--line);border-bottom:2px solid var(--line);padding:6px 0 0 0">
+        <div style="position:absolute;left:8px;bottom:30%;right:10px;border-top:1px dashed #e9ecdf"></div>
+        <div style="position:absolute;left:8px;bottom:60%;right:10px;border-top:1px dashed #e9ecdf"></div>
+        <svg viewBox="0 0 400 150" style="width:100%;height:100%" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#6b7c4e" stroke-width="3" points="0,120 57,108 114,96 171,82 228,70 285,52 342,40 400,28"/>
+          <polygon fill="rgba(107,124,78,.10)" points="0,120 57,108 114,96 171,82 228,70 285,52 342,40 400,28 400,150 0,150"/>
+          <circle cx="0" cy="120" r="4" fill="#6b7c4e"/><circle cx="114" cy="96" r="4" fill="#6b7c4e"/><circle cx="228" cy="70" r="4" fill="#6b7c4e"/><circle cx="342" cy="40" r="4" fill="#6b7c4e"/><circle cx="400" cy="28" r="5" fill="#5a8a4a"/>
+        </svg>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+        <span>Jan 12</span><span>Feb 02</span><span>Feb 23</span><span>Mar 05</span>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <!-- tool comparison bar -->
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Tool effectiveness (avg score)</h4>
+        <div class="barrow"><span class="bl">Quiz</span><div class="bartrack"><div class="barfill" style="width:82%"></div></div><span style="font-size:12px;font-weight:700;color:var(--olive-dark)">82%</span></div>
+        <div class="barrow"><span class="bl">Flashcards</span><div class="bartrack"><div class="barfill" style="width:76%"></div></div><span style="font-size:12px;font-weight:700;color:var(--olive-dark)">76%</span></div>
+        <div class="barrow"><span class="bl">Notes</span><div class="bartrack"><div class="barfill" style="width:69%"></div></div><span style="font-size:12px;font-weight:700;color:var(--olive-dark)">69%</span></div>
+        <div class="barrow"><span class="bl">Mindmap</span><div class="bartrack"><div class="barfill" style="width:64%"></div></div><span style="font-size:12px;font-weight:700;color:var(--olive-dark)">64%</span></div>
+        <div class="barrow"><span class="bl">Timeline</span><div class="bartrack"><div class="barfill" style="width:58%"></div></div><span style="font-size:12px;font-weight:700;color:var(--olive-dark)">58%</span></div>
+      </div>
+      <!-- topic mastery heatmap -->
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Topic mastery heatmap</h4>
+        <div class="heat" style="grid-template-columns:repeat(5,1fr)">
+          <div class="hc" style="background:#5a8a4a">94</div>
+          <div class="hc" style="background:#6b9a4e">88</div>
+          <div class="hc" style="background:#a8b25a">79</div>
+          <div class="hc" style="background:#c8902e">71</div>
+          <div class="hc" style="background:#c0533f">54</div>
+          <div class="hc" style="background:#6b9a4e">86</div>
+          <div class="hc" style="background:#a8b25a">77</div>
+          <div class="hc" style="background:#c8902e">68</div>
+          <div class="hc" style="background:#c0533f">48</div>
+          <div class="hc" style="background:#d97b5f">42</div>
+          <div class="hc" style="background:#5a8a4a">92</div>
+          <div class="hc" style="background:#6b9a4e">84</div>
+          <div class="hc" style="background:#a8b25a">75</div>
+          <div class="hc" style="background:#c8902e">66</div>
+          <div class="hc" style="background:#a8b25a">73</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:10px">15 topics · darker green = stronger · 3 below 55% need attention</div>
+      </div>
+    </div>
+
+    <div class="mock-label" style="margin-top:22px">AI insights</div>
+    <div class="grid g3">
+      <div class="card" style="padding:16px;border-left:4px solid var(--bad)">
+        <div class="chip weak">⚠ Weak pattern</div>
+        <p style="font-size:13px;color:#46503a;margin-top:9px"><b>Electron Transport</b> drops 30% whenever it follows Glycolysis in the same session — try spacing them.</p>
+      </div>
+      <div class="card" style="padding:16px;border-left:4px solid var(--good)">
+        <div class="chip good">↑ Momentum</div>
+        <p style="font-size:13px;color:#46503a;margin-top:9px">Quiz scores rose <b>22 pts</b> in 4 weeks. Flashcards are your highest-leverage tool here.</p>
+      </div>
+      <div class="card" style="padding:16px;border-left:4px solid var(--warn)">
+        <div class="chip warn">⏱ Timing</div>
+        <p style="font-size:13px;color:#46503a;margin-top:9px">You retain <b>11% more</b> in morning sessions. The plan now front-loads weak topics before noon.</p>
+      </div>
+    </div>
+  </div>
+  <div class="specs">
+    <h5>Feature specs · subject analytics</h5>
+    <ul>
+      <li><b>Mastery-over-time line chart</b> aggregates every tool run across all studysets in the subject.</li>
+      <li><b>Tool effectiveness bars</b> rank which formats yield the highest gains for this learner.</li>
+      <li><b>Topic heatmap</b> renders all topics on one grid; click drills into the topic.</li>
+      <li><b>AI insight cards</b> surface correlations (ordering, timing, tool mix) as plain-language tips.</li>
+    </ul>
+  </div>
+
+  <!-- studyset-level -->
+  <h3 class="block" id="s4set">Studyset-level analytics — Unit 4</h3>
+  <div class="mock">
+    <div class="grid g2">
+      <!-- readiness gauge -->
+      <div class="card" style="padding:18px;text-align:center">
+        <h4 class="sub" style="margin-top:0;text-align:left">Exam readiness</h4>
+        <div style="position:relative;width:180px;height:100px;margin:6px auto 0">
+          <svg viewBox="0 0 180 100" style="width:100%">
+            <path d="M10,95 A80,80 0 0,1 170,95" fill="none" stroke="#e9ecdf" stroke-width="14" stroke-linecap="round"/>
+            <path d="M10,95 A80,80 0 0,1 138,33" fill="none" stroke="#c8902e" stroke-width="14" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;left:0;right:0;bottom:0;text-align:center">
+            <div style="font-size:30px;font-weight:800;color:var(--olive-dark)">68%</div>
+            <div style="font-size:11px;color:var(--muted)">projected · target 85%</div>
+          </div>
+        </div>
+        <div style="margin-top:10px"><span class="chip warn">Almost ready · 17 pts to target</span></div>
+      </div>
+      <!-- score trend -->
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Score trend (per session)</h4>
+        <div class="spark" style="height:90px">
+          <span style="height:42%"></span><span style="height:48%"></span><span style="height:45%"></span><span style="height:56%"></span><span style="height:52%"></span><span style="height:63%"></span><span style="height:60%"></span><span style="height:71%"></span><span style="height:68%"></span><span style="height:78%"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px"><span>Feb 24</span><span>Mar 05</span></div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:18px;margin-top:16px">
+      <h4 class="sub" style="margin-top:0">Per-topic mastery</h4>
+      <table class="t">
+        <thead><tr><th>Topic</th><th>Mastery</th><th>Last studied</th><th>Trend</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Glycolysis</td><td><div class="bartrack" style="width:120px;display:inline-block"><div class="barfill" style="width:71%"></div></div> 71%</td><td>Mar 04</td><td class="up">▲ 8</td><td><span class="chip warn">Review</span></td></tr>
+          <tr><td>Krebs Cycle</td><td><div class="bartrack" style="width:120px;display:inline-block"><div class="barfill" style="width:54%"></div></div> 54%</td><td>Mar 05</td><td class="up">▲ 12</td><td><span class="chip weak">Weak</span></td></tr>
+          <tr><td>Electron Transport</td><td><div class="bartrack" style="width:120px;display:inline-block"><div class="barfill" style="width:48%"></div></div> 48%</td><td>Mar 03</td><td class="down">▼ 3</td><td><span class="chip weak">Weak</span></td></tr>
+          <tr><td>ATP Synthase</td><td><div class="bartrack" style="width:120px;display:inline-block"><div class="barfill" style="width:88%"></div></div> 88%</td><td>Mar 02</td><td class="up">▲ 5</td><td><span class="chip good">Strong</span></td></tr>
+          <tr><td>Fermentation</td><td><div class="bartrack" style="width:120px;display:inline-block"><div class="barfill" style="width:82%"></div></div> 82%</td><td>Mar 01</td><td class="up">▲ 9</td><td><span class="chip good">Strong</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Session history</h4>
+        <div class="kv"><span class="k">Mar 05 · Quiz · Krebs Cycle</span><span class="vv">78%</span></div>
+        <div class="kv"><span class="k">Mar 04 · Flashcards · Glycolysis</span><span class="vv">84%</span></div>
+        <div class="kv"><span class="k">Mar 03 · Notes · Electron Transport</span><span class="vv">61%</span></div>
+        <div class="kv"><span class="k">Mar 02 · Quiz · Mixed unit</span><span class="vv">72%</span></div>
+        <div class="kv"><span class="k">Mar 01 · Mindmap · Respiration</span><span class="vv">66%</span></div>
+      </div>
+      <div class="card" style="padding:18px">
+        <h4 class="sub" style="margin-top:0">Score projection</h4>
+        <div style="position:relative;height:120px;border-left:2px solid var(--line);border-bottom:2px solid var(--line)">
+          <svg viewBox="0 0 300 110" style="width:100%;height:100%" preserveAspectRatio="none">
+            <polyline fill="none" stroke="#6b7c4e" stroke-width="3" points="0,80 80,62 160,50"/>
+            <polyline fill="none" stroke="#5a8a4a" stroke-width="3" stroke-dasharray="6 5" points="160,50 230,34 300,22"/>
+            <polygon fill="rgba(90,138,74,.12)" points="160,50 230,34 300,22 300,46 230,52 160,62"/>
+            <circle cx="160" cy="50" r="4" fill="#6b7c4e"/><circle cx="300" cy="22" r="5" fill="#5a8a4a"/>
+          </svg>
+          <div style="position:absolute;right:6px;top:6px;font-size:11px;color:var(--good);font-weight:700">→ 85% by Mar 15</div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px">Solid = actual · dashed = projection · band = confidence</div>
+      </div>
+    </div>
+  </div>
+  <div class="specs">
+    <h5>Feature specs · studyset analytics</h5>
+    <ul>
+      <li><b>Readiness gauge</b> arcs current projection against target with a status chip.</li>
+      <li><b>Per-topic table</b> sortable by mastery, trend, or recency; weak rows flagged.</li>
+      <li><b>Session history</b> is the audit trail — every run with its score.</li>
+      <li><b>Score projection</b> extends the curve to exam day with a confidence band.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 5 ===================== -->
+<section class="doc" id="s5">
+  <div class="sec-head">
+    <span class="sec-kicker">05 — Adaptive Engine</span>
+    <h2>The brain that rewrites the plan</h2>
+    <p class="lead">After every tool run, the adaptive engine ingests fresh signal, recomputes topic mastery, and regenerates the plan — then tells the learner exactly what changed and why.</p>
+  </div>
+
+  <h3 class="block">Engine flow</h3>
+  <div class="mock">
+    <div class="mock-label">Signal → mastery → plan</div>
+    <div class="flow">
+      <div class="flow-node"><div class="fn-t">Tool run result</div><div class="fn-s">Quiz · Krebs · 78%</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Extract signals</div><div class="fn-s">Accuracy · latency · confidence</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node alt"><div class="fn-t">Update mastery</div><div class="fn-s">Bayesian per-topic</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Re-rank weak spots</div><div class="fn-s">By gap × exam weight</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Regenerate plan</div><div class="fn-s">Next 7 days</div></div>
+    </div>
+    <div class="note" style="text-align:center">Runs in &lt;200 ms client-side after each completed run — no page reload.</div>
+  </div>
+
+  <h3 class="block">Plan-updated notification</h3>
+  <div class="mock" style="display:flex;justify-content:center">
+    <div class="card" style="padding:0;width:420px;box-shadow:var(--shadow-lg);overflow:hidden;border-left:4px solid var(--olive)">
+      <div style="padding:16px 18px">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+          <span style="font-size:18px">🔄</span>
+          <b style="color:var(--olive-dark);font-size:14px">Your plan was updated</b>
+          <span style="margin-left:auto;font-size:11px;color:var(--muted)">just now</span>
+        </div>
+        <p style="font-size:13px;color:#46503a">Your <b>Krebs Cycle</b> quiz (78%) bumped its mastery. We moved <b>Electron Transport</b> earlier and added a mixed mock for Mar 14.</p>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn sm">Review changes</button>
+          <button class="btn outline sm">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="block">Before / after plan comparison</h3>
+  <div class="mock">
+    <div class="grid g2">
+      <div class="card" style="padding:18px;opacity:.8">
+        <div class="chip muted" style="margin-bottom:10px">Before</div>
+        <div class="kv"><span class="k">Mar 11</span><span class="vv">Glycolysis review</span></div>
+        <div class="kv"><span class="k">Mar 12</span><span class="vv">Krebs Cycle quiz</span></div>
+        <div class="kv"><span class="k">Mar 13</span><span class="vv">Electron Transport</span></div>
+        <div class="kv"><span class="k">Mar 14</span><span class="vv">Light cards</span></div>
+      </div>
+      <div class="card" style="padding:18px;border:2px solid var(--olive)">
+        <div class="chip good" style="margin-bottom:10px">After ✓</div>
+        <div class="kv"><span class="k">Mar 11</span><span class="vv">Electron Transport <span class="chip weak" style="font-size:10px">↑ moved up</span></span></div>
+        <div class="kv"><span class="k">Mar 12</span><span class="vv">Electron Transport drill</span></div>
+        <div class="kv"><span class="k">Mar 13</span><span class="vv">Krebs maintenance</span></div>
+        <div class="kv"><span class="k">Mar 14</span><span class="vv">Full mock exam <span class="chip good" style="font-size:10px">+ new</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="block">Sensitivity settings</h3>
+  <div class="mock">
+    <div class="card" style="padding:20px">
+      <div style="display:flex;justify-content:space-between"><h4 class="sub" style="margin-top:0">Adaptation sensitivity</h4><span class="chip">Balanced</span></div>
+      <div class="slider"><div class="fills" style="width:55%"></div><div class="knob" style="left:55%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+        <span>Gentle — small, slow shifts</span><span>Aggressive — react to every run</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:18px">
+        <span class="toggle"></span><span style="font-size:13px">Notify me when the plan changes</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:12px">
+        <span class="toggle off"></span><span style="font-size:13px">Auto-add mock exams in final week</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:12px">
+        <span class="toggle"></span><span style="font-size:13px">Protect strong topics from over-review</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · adaptive engine</h5>
+    <ul>
+      <li><b>Bayesian mastery update</b> weights recent runs more heavily with recency decay.</li>
+      <li><b>Weak-spot ranking</b> = mastery gap × exam weight × time-to-exam urgency.</li>
+      <li><b>Explainable changes</b> — every plan edit carries a human-readable reason.</li>
+      <li><b>Sensitivity slider</b> tunes how reactive the plan is to single sessions.</li>
+      <li><b>Guardrails</b> prevent thrash: strong topics are protected from churn.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 6 ===================== -->
+<section class="doc" id="s6">
+  <div class="sec-head">
+    <span class="sec-kicker">06 — Universal Tool Launch System</span>
+    <h2>One overlay launches every tool</h2>
+    <p class="lead">A single, consistent launch overlay sits in front of all five tools. Pick a mode, tune tool-specific options, and go — preferences remembered per subject.</p>
+  </div>
+
+  <h3 class="block">Launch overlay — mode selection</h3>
+  <div class="mock">
+    <div class="card" style="padding:0;max-width:680px;margin:0 auto;box-shadow:var(--shadow-lg);overflow:hidden">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Launch · Quiz</div>
+          <h4 style="font-size:16px;color:var(--olive-dark);font-weight:800">Unit 4 · Krebs Cycle</h4>
+        </div>
+        <span style="color:var(--muted);font-size:18px;cursor:pointer">✕</span>
+      </div>
+      <div style="padding:20px">
+        <h4 class="sub" style="margin-top:0">Choose a mode</h4>
+        <div class="grid g3">
+          <div class="card" style="padding:16px;cursor:pointer;border:1.5px solid var(--line)">
+            <div style="font-size:22px">⚡</div>
+            <b style="display:block;color:var(--olive-dark);margin:6px 0 3px">Quick Focus</b>
+            <div style="font-size:12px;color:var(--muted)">5 min · weak topics only · 8 items</div>
+          </div>
+          <div class="card" style="padding:16px;cursor:pointer;border:2px solid var(--olive);background:#f7faf2">
+            <div style="font-size:22px">🎯</div>
+            <b style="display:block;color:var(--olive-dark);margin:6px 0 3px">Full Session <span class="chip good" style="font-size:10px">recommended</span></b>
+            <div style="font-size:12px;color:var(--muted)">20 min · plan-driven · 25 items</div>
+          </div>
+          <div class="card" style="padding:16px;cursor:pointer;border:1.5px solid var(--line)">
+            <div style="font-size:22px">⚙</div>
+            <b style="display:block;color:var(--olive-dark);margin:6px 0 3px">Custom</b>
+            <div style="font-size:12px;color:var(--muted)">Pick topics, length &amp; difficulty</div>
+          </div>
+        </div>
+
+        <h4 class="sub">Quiz options</h4>
+        <div class="grid g2">
+          <div class="kv"><span class="k">Question count</span><span class="vv">25 ▾</span></div>
+          <div class="kv"><span class="k">Difficulty</span><span class="vv">Adaptive ▾</span></div>
+          <div class="kv"><span class="k">Question types</span><span class="vv">MCQ + short answer</span></div>
+          <div class="kv"><span class="k">Timer</span><span class="vv">Off</span></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:9px;margin-top:16px">
+          <input type="checkbox" checked> <span style="font-size:13px;color:var(--ink)">Remember these preferences for <b>AP Biology</b> quizzes</span>
+        </div>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px">
+        <button class="btn outline sm">Cancel</button>
+        <button class="btn sm">▶ Start Full Session</button>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="block">Tool-specific option panels</h3>
+  <div class="mock">
+    <div class="grid g2">
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">🃏 Flashcards</div>
+        <div class="kv"><span class="k">Card mode</span><span class="vv">Spaced repetition</span></div>
+        <div class="kv"><span class="k">Direction</span><span class="vv">Term → Definition</span></div>
+        <div class="kv"><span class="k">Shuffle</span><span class="vv">On</span></div>
+        <div class="kv"><span class="k">Due today</span><span class="vv">24 cards</span></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">📝 Notes</div>
+        <div class="kv"><span class="k">Layout</span><span class="vv">Cornell</span></div>
+        <div class="kv"><span class="k">Source</span><span class="vv">Campbell Ch. 9</span></div>
+        <div class="kv"><span class="k">Cloze quizzing</span><span class="vv">Enabled</span></div>
+        <div class="kv"><span class="k">Focus topic</span><span class="vv">Krebs Cycle</span></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">🕸 Mindmap</div>
+        <div class="kv"><span class="k">Root node</span><span class="vv">Cellular Respiration</span></div>
+        <div class="kv"><span class="k">Depth</span><span class="vv">3 levels</span></div>
+        <div class="kv"><span class="k">Recall mode</span><span class="vv">Hide leaves</span></div>
+        <div class="kv"><span class="k">Auto-layout</span><span class="vv">Radial</span></div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">📜 Timeline</div>
+        <div class="kv"><span class="k">Range</span><span class="vv">Glycolysis → ATP</span></div>
+        <div class="kv"><span class="k">Order quiz</span><span class="vv">On</span></div>
+        <div class="kv"><span class="k">Events</span><span class="vv">10 steps</span></div>
+        <div class="kv"><span class="k">Hints</span><span class="vv">After 2 misses</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · launch system</h5>
+    <ul>
+      <li><b>Three modes</b> — Quick Focus, Full Session (recommended), Custom — consistent across all tools.</li>
+      <li><b>Plan-aware defaults</b> — Full Session pulls the exact topics/items from today's plan.</li>
+      <li><b>Tool-specific panels</b> expose only the options that matter per tool.</li>
+      <li><b>Remember preferences</b> stores per-subject defaults so launch is one click next time.</li>
+      <li><b>Every launch is a Tool Run</b> — emits performance signal to the engine on completion.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 7 ===================== -->
+<section class="doc" id="s7">
+  <div class="sec-head">
+    <span class="sec-kicker">07 — Dashboard Redesign</span>
+    <h2>One screen, everything that matters today</h2>
+    <p class="lead">The dashboard answers "what should I do right now?" — today's focus up top, weak spots across all subjects, recent activity, upcoming exams, and a live notification panel.</p>
+  </div>
+
+  <div class="mock">
+    <div class="mock-label">Learner dashboard · Sarah Chen</div>
+    <!-- greeting -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="avatar" style="width:42px;height:42px;font-size:15px">SC</div>
+        <div>
+          <h3 style="font-size:18px;color:var(--olive-dark);font-weight:800">Good morning, Sarah</h3>
+          <div style="font-size:12.5px;color:var(--muted)">Friday · Mar 5 · 3 tasks queued today</div>
+        </div>
+      </div>
+      <button class="btn">▶ Start today's plan</button>
+    </div>
+
+    <div class="grid" style="grid-template-columns:2fr 1fr">
+      <!-- LEFT column -->
+      <div style="display:grid;gap:16px">
+        <!-- today's focus -->
+        <div class="card" style="padding:20px;border-top:4px solid var(--olive)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h4 class="sub" style="margin:0">Today's focus</h4>
+            <span class="chip soon">~32 min</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)">
+            <span class="chip weak">Krebs Cycle</span><span style="flex:1;font-size:13.5px">Quiz · 15 questions · AP Biology</span><button class="btn sm">Start</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)">
+            <span class="chip weak">Alliance System</span><span style="flex:1;font-size:13.5px">Flashcards · 18 cards · World History</span><button class="btn sm">Start</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:11px;padding:12px 0">
+            <span class="chip">Linked Genes</span><span style="flex:1;font-size:13.5px">Notes review · 8 min · AP Biology</span><button class="btn outline sm">Start</button>
+          </div>
+        </div>
+
+        <!-- weak spots across studysets -->
+        <div class="card" style="padding:20px">
+          <h4 class="sub" style="margin-top:0">Weak spots across all studysets</h4>
+          <div class="barrow"><span class="bl">Electron Transport</span><div class="bartrack"><div class="barfill" style="width:48%"></div></div><span class="chip weak" style="font-size:10px">AP Bio · 48%</span></div>
+          <div class="barrow"><span class="bl">Trench Warfare</span><div class="bartrack"><div class="barfill" style="width:41%"></div></div><span class="chip weak" style="font-size:10px">History · 41%</span></div>
+          <div class="barrow"><span class="bl">Krebs Cycle</span><div class="bartrack"><div class="barfill" style="width:54%"></div></div><span class="chip weak" style="font-size:10px">AP Bio · 54%</span></div>
+          <div class="barrow"><span class="bl">Treaty Terms</span><div class="bartrack"><div class="barfill" style="width:52%"></div></div><span class="chip weak" style="font-size:10px">History · 52%</span></div>
+        </div>
+
+        <!-- recent activity -->
+        <div class="card" style="padding:20px">
+          <h4 class="sub" style="margin-top:0">Recent activity</h4>
+          <div class="kv"><span class="k">✅ Quiz · Krebs Cycle</span><span class="vv">78% · 2h ago</span></div>
+          <div class="kv"><span class="k">🃏 Flashcards · Glycolysis</span><span class="vv">84% · yesterday</span></div>
+          <div class="kv"><span class="k">📝 Notes · Electron Transport</span><span class="vv">61% · yesterday</span></div>
+          <div class="kv"><span class="k">🏆 Mastered · ATP Synthase</span><span class="vv">Mar 02</span></div>
+        </div>
+      </div>
+
+      <!-- RIGHT column -->
+      <div style="display:grid;gap:16px;align-content:start">
+        <!-- upcoming exams -->
+        <div class="card" style="padding:18px">
+          <h4 class="sub" style="margin-top:0">Upcoming exams</h4>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)">
+            <div style="text-align:center;width:44px"><div style="font-size:20px;font-weight:800;color:var(--bad)">10</div><div style="font-size:10px;color:var(--muted)">days</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">AP Biology · Unit 4</div><div style="font-size:11px;color:var(--muted)">Mar 15 · 68% ready</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)">
+            <div style="text-align:center;width:44px"><div style="font-size:20px;font-weight:800;color:var(--warn)">18</div><div style="font-size:10px;color:var(--muted)">days</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">World History · WWI</div><div style="font-size:11px;color:var(--muted)">Apr 12 · 45% ready</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0">
+            <div style="text-align:center;width:44px"><div style="font-size:20px;font-weight:800;color:var(--good)">23</div><div style="font-size:10px;color:var(--muted)">days</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink)">AP Biology · Unit 5</div><div style="font-size:11px;color:var(--muted)">Mar 28 · 90% ready</div></div>
+          </div>
+        </div>
+
+        <!-- notification panel -->
+        <div class="card" style="padding:18px">
+          <div style="display:flex;justify-content:space-between"><h4 class="sub" style="margin:0">Notifications</h4><span class="chip" style="font-size:10px">3 new</span></div>
+          <div style="display:flex;gap:9px;padding:10px 0;border-bottom:1px solid var(--line)">
+            <span style="font-size:15px">⚠</span><div style="font-size:12.5px;color:#46503a">New weak spot: <b>Trench Warfare</b> dropped to 41%</div>
+          </div>
+          <div style="display:flex;gap:9px;padding:10px 0;border-bottom:1px solid var(--line)">
+            <span style="font-size:15px">🔄</span><div style="font-size:12.5px;color:#46503a">Plan updated for <b>Unit 4</b> after your quiz</div>
+          </div>
+          <div style="display:flex;gap:9px;padding:10px 0">
+            <span style="font-size:15px">🏆</span><div style="font-size:12.5px;color:#46503a">You mastered <b>ATP Synthase</b> — nice!</div>
+          </div>
+        </div>
+
+        <!-- streak -->
+        <div class="card" style="padding:18px;text-align:center;background:var(--olive-light);border:none">
+          <div style="font-size:28px">🔥</div>
+          <div style="font-size:22px;font-weight:800;color:var(--olive-dark)">12-day streak</div>
+          <div style="font-size:12px;color:var(--muted)">Best: 19 days · keep it going</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · dashboard</h5>
+    <ul>
+      <li><b>Today's Focus</b> card is the hero — plan-driven tasks with inline launch.</li>
+      <li><b>Cross-studyset weak spots</b> aggregate the lowest topics across every subject.</li>
+      <li><b>Upcoming exams</b> widget shows countdown + readiness, color-coded by urgency.</li>
+      <li><b>Recent activity</b> feed is the personal performance ledger at a glance.</li>
+      <li><b>Notification panel</b> surfaces engine + system events without leaving the page.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 8 ===================== -->
+<section class="doc" id="s8">
+  <div class="sec-head">
+    <span class="sec-kicker">08 — Teacher Features</span>
+    <h2>Run a class on the same engine</h2>
+    <p class="lead">Teachers publish template studysets to a class, watch readiness roll up per student, and manage class events — all powered by the same performance model students use.</p>
+  </div>
+
+  <h3 class="block">Class template studysets</h3>
+  <div class="mock">
+    <div class="mock-label">Period 3 · AP Biology · Ms. Reyes</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <span class="chip">28 students enrolled</span>
+      <button class="btn sm">+ New template</button>
+    </div>
+    <div class="grid g3">
+      <div class="card" style="padding:16px">
+        <div class="chip good" style="margin-bottom:8px">Published</div>
+        <h4 style="font-size:14px;color:var(--olive-dark);font-weight:800">Unit 4: Cell Energetics</h4>
+        <div style="font-size:12px;color:var(--muted);margin:6px 0">Due Mar 15 · 7 topics · 142 cards</div>
+        <div class="kv"><span class="k">Class avg readiness</span><span class="vv">68%</span></div>
+        <div class="kv"><span class="k">Assigned to</span><span class="vv">28 students</span></div>
+        <button class="btn outline sm" style="margin-top:10px;width:100%">Edit template</button>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip good" style="margin-bottom:8px">Published</div>
+        <h4 style="font-size:14px;color:var(--olive-dark);font-weight:800">Unit 5: Heredity</h4>
+        <div style="font-size:12px;color:var(--muted);margin:6px 0">Due Mar 28 · 9 topics · 168 cards</div>
+        <div class="kv"><span class="k">Class avg readiness</span><span class="vv">81%</span></div>
+        <div class="kv"><span class="k">Assigned to</span><span class="vv">28 students</span></div>
+        <button class="btn outline sm" style="margin-top:10px;width:100%">Edit template</button>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip muted" style="margin-bottom:8px">Draft</div>
+        <h4 style="font-size:14px;color:var(--olive-dark);font-weight:800">Unit 6: Photosynthesis</h4>
+        <div style="font-size:12px;color:var(--muted);margin:6px 0">Due Apr 22 · 6 topics · drafting</div>
+        <div class="kv"><span class="k">Class avg readiness</span><span class="vv">—</span></div>
+        <div class="kv"><span class="k">Assigned to</span><span class="vv">Not yet</span></div>
+        <button class="btn sm" style="margin-top:10px;width:100%">Publish to class</button>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="block">Class analytics</h3>
+  <div class="mock">
+    <div class="card" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h4 class="sub" style="margin:0">Unit 4 · student readiness</h4>
+        <div style="display:flex;gap:8px"><span class="chip good">12 ready</span><span class="chip warn">11 close</span><span class="chip weak">5 at risk</span></div>
+      </div>
+      <table class="t">
+        <thead><tr><th>Student</th><th>Readiness</th><th>Sessions</th><th>Avg score</th><th>Weakest topic</th></tr></thead>
+        <tbody>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar">SC</span> Sarah Chen</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:88%"></div></div> 88%</td><td>14</td><td>82%</td><td><span class="chip warn">Electron Transp.</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar a2">MJ</span> Marcus Johnson</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:62%"></div></div> 62%</td><td>9</td><td>67%</td><td><span class="chip weak">Krebs Cycle</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar a3">PA</span> Priya Anand</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:94%"></div></div> 94%</td><td>17</td><td>91%</td><td><span class="chip good">Fermentation</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar a4">DL</span> David Lee</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:41%"></div></div> 41%</td><td>4</td><td>52%</td><td><span class="chip weak">Glycolysis</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar a5">EO</span> Emma Ortiz</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:76%"></div></div> 76%</td><td>11</td><td>74%</td><td><span class="chip warn">Electron Transp.</span></td></tr>
+          <tr><td><div style="display:flex;align-items:center;gap:8px"><span class="avatar">TN</span> Tariq Nasser</td><td><div class="bartrack" style="width:90px;display:inline-block"><div class="barfill" style="width:58%"></div></div> 58%</td><td>7</td><td>63%</td><td><span class="chip weak">Krebs Cycle</span></td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px">💡 <b>Krebs Cycle</b> is the class-wide weak topic — 5 students below 60%. Consider a re-teach.</div>
+    </div>
+  </div>
+
+  <h3 class="block">Class calendar events manager</h3>
+  <div class="mock">
+    <div class="card" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h4 class="sub" style="margin:0">Period 3 events</h4>
+        <button class="btn sm">+ Add event</button>
+      </div>
+      <div class="kv"><span class="k">📝 Unit 4 Exam</span><span class="vv">Mar 15 · 9:00 AM · pushes to all feeds</span></div>
+      <div class="kv"><span class="k">🔬 Lab: Cellular Respiration</span><span class="vv">Mar 11 · 1:00 PM</span></div>
+      <div class="kv"><span class="k">📚 Review session (optional)</span><span class="vv">Mar 13 · 3:30 PM</span></div>
+      <div class="kv"><span class="k">📝 Unit 5 Exam</span><span class="vv">Mar 28 · 9:00 AM</span></div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · teacher</h5>
+    <ul>
+      <li><b>Template studysets</b> publish once and clone into every student's hub.</li>
+      <li><b>Class analytics table</b> rolls up readiness, sessions, avg score, and weakest topic per student.</li>
+      <li><b>Class-wide weak topic</b> callout flags where a re-teach has the highest payoff.</li>
+      <li><b>Events manager</b> writes to the class ICS feed students subscribe to.</li>
+      <li><b>At-risk flagging</b> highlights students below the readiness threshold early.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 9 ===================== -->
+<section class="doc" id="s9">
+  <div class="sec-head">
+    <span class="sec-kicker">09 — ICS Calendar System</span>
+    <h2>Study schedule, in any calendar app</h2>
+    <p class="lead">Exams, class events, and the learner's own study sessions publish as a live <code class="inline">webcal://</code> feed — subscribe once in Apple/Google/Outlook and it stays in sync.</p>
+  </div>
+
+  <h3 class="block">Subscription flow in agenda settings</h3>
+  <div class="mock">
+    <div class="card" style="padding:20px;max-width:620px">
+      <h4 class="sub" style="margin-top:0">Calendar subscriptions</h4>
+
+      <!-- class calendars -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:8px 0">Class calendars</div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)">
+        <span class="toggle"></span>
+        <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:var(--ink)">Period 3 · AP Biology</div><div style="font-size:11px;color:var(--muted)">Exams, labs, review sessions</div></div>
+        <span class="chip good">Synced</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)">
+        <span class="toggle"></span>
+        <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:var(--ink)">Period 5 · World History</div><div style="font-size:11px;color:var(--muted)">Exams &amp; due dates</div></div>
+        <span class="chip good">Synced</span>
+      </div>
+
+      <!-- personal study schedule -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">Personal study schedule</div>
+      <div style="display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)">
+        <span class="toggle"></span>
+        <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:var(--ink)">My study sessions</div><div style="font-size:11px;color:var(--muted)">Plan blocks pushed to your calendar</div></div>
+      </div>
+
+      <!-- webcal link -->
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">Your feed URL</div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <div style="flex:1;background:#eef0e8;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--olive-dark);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">webcal://cautie.app/ics/sarah-chen/abx91kf2.ics</div>
+        <button class="btn sm">📋 Copy</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn outline sm"> Apple Calendar</button>
+        <button class="btn outline sm"> Google Calendar</button>
+        <button class="btn outline sm"> Outlook</button>
+      </div>
+      <div class="note">Read-only · refreshes every 4 hours · regenerate URL to revoke access.</div>
+    </div>
+  </div>
+
+  <h3 class="block">Subscribe flow</h3>
+  <div class="mock">
+    <div class="flow">
+      <div class="flow-node"><div class="fn-t">Toggle on</div><div class="fn-s">Pick calendars to include</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Copy webcal URL</div><div class="fn-s">Or tap an app button</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node alt"><div class="fn-t">Add to calendar app</div><div class="fn-s">Apple · Google · Outlook</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Stays in sync</div><div class="fn-s">Auto-refresh every 4h</div></div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · ICS calendar</h5>
+    <ul>
+      <li><b>Single feed</b> merges class events, exam dates, and personal study blocks.</li>
+      <li><b>Per-source toggles</b> let learners include/exclude each class or personal schedule.</li>
+      <li><b>webcal:// link</b> with one-tap copy and app-specific subscribe buttons.</li>
+      <li><b>Read-only &amp; revocable</b> — regenerating the token invalidates the old URL.</li>
+      <li><b>Study sessions sync</b> — adaptive plan blocks appear as calendar events.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 10 ===================== -->
+<section class="doc" id="s10">
+  <div class="sec-head">
+    <span class="sec-kicker">10 — Performance Tracking Loop</span>
+    <h2>How a single answer becomes a better plan</h2>
+    <p class="lead">The closed performance loop and the data that powers it. Every tool run lands in one ledger, updates mastery, and feeds the plan — fully traceable end to end.</p>
+  </div>
+
+  <h3 class="block">Closed loop</h3>
+  <div class="mock">
+    <div class="mock-label">Closed performance loop</div>
+    <div class="flow" style="gap:0">
+      <div class="flow-node"><div class="fn-t">Tool Run</div><div class="fn-s">Quiz · Krebs · 78%</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Run Result row</div><div class="fn-s">score, time, items</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node alt"><div class="fn-t">Topic Mastery</div><div class="fn-s">54% → 61%</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Plan rows rewritten</div><div class="fn-s">next 7 days</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node"><div class="fn-t">Recommendation</div><div class="fn-s">today's focus</div></div>
+    </div>
+    <div style="text-align:center;margin-top:10px"><span class="chip">↩ back to the next Tool Run</span></div>
+  </div>
+
+  <h3 class="block">Database tables involved</h3>
+  <div class="mock">
+    <div class="grid g3">
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">tool_runs</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          id · user_id<br>studyset_id · tool<br>started_at · ended_at<br>mode · item_count
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">run_results</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          run_id · topic_id<br>score · latency_ms<br>confidence · correct_n<br>created_at
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">topic_mastery</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          user_id · topic_id<br>mastery (0–100)<br>last_updated<br>decay_rate
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">study_plans</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          id · studyset_id<br>version · generated_at<br>target_date<br>projected_score
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">plan_tasks</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          plan_id · topic_id<br>tool · scheduled_for<br>status · reason
+        </div>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="chip" style="margin-bottom:8px">topics</div>
+        <div style="font-size:12.5px;color:#46503a;line-height:1.9">
+          id · studyset_id<br>name · exam_weight<br>prereq_ids
+        </div>
+      </div>
+    </div>
+    <table class="t" style="margin-top:16px">
+      <thead><tr><th>Step</th><th>Writes to</th><th>Reads from</th></tr></thead>
+      <tbody>
+        <tr><td>Complete run</td><td><code class="inline">tool_runs</code>, <code class="inline">run_results</code></td><td><code class="inline">topics</code></td></tr>
+        <tr><td>Update mastery</td><td><code class="inline">topic_mastery</code></td><td><code class="inline">run_results</code></td></tr>
+        <tr><td>Regenerate plan</td><td><code class="inline">study_plans</code>, <code class="inline">plan_tasks</code></td><td><code class="inline">topic_mastery</code>, <code class="inline">topics</code></td></tr>
+        <tr><td>Recommend</td><td>—</td><td><code class="inline">plan_tasks</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · tracking loop</h5>
+    <ul>
+      <li><b>Append-only results</b> — <code class="inline">run_results</code> is the immutable source of truth.</li>
+      <li><b>Mastery is derived</b> — always recomputable from results; never hand-edited.</li>
+      <li><b>Versioned plans</b> — each regeneration bumps <code class="inline">version</code> for full history.</li>
+      <li><b>Traceable reasons</b> — <code class="inline">plan_tasks.reason</code> links a task to the run that caused it.</li>
+      <li><b>Exam-weighted topics</b> drive prioritization in the regenerate step.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 11 ===================== -->
+<section class="doc" id="s11">
+  <div class="sec-head">
+    <span class="sec-kicker">11 — Notification System</span>
+    <h2>Timely nudges, never noise</h2>
+    <p class="lead">A unified notification center delivers four core event types — weak spot detected, plan updated, topic mastered, and exam countdown — each with the right action.</p>
+  </div>
+
+  <h3 class="block">Notification center</h3>
+  <div class="mock" style="display:flex;justify-content:center">
+    <div class="card" style="padding:0;width:480px;box-shadow:var(--shadow-lg);overflow:hidden">
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <h4 style="font-size:15px;color:var(--olive-dark);font-weight:800">🔔 Notifications</h4>
+        <div style="display:flex;gap:8px"><span class="chip">All</span><span class="chip muted">Unread</span><span style="font-size:12px;color:var(--olive);font-weight:700;cursor:pointer">Mark all read</span></div>
+      </div>
+
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;gap:11px;background:#fbfcf8;border-left:3px solid var(--bad)">
+        <span style="font-size:18px">⚠</span>
+        <div style="flex:1"><b style="font-size:13.5px;color:var(--olive-dark)">Weak spot detected</b><div style="font-size:12.5px;color:#46503a">Your <b>Trench Warfare</b> mastery dropped to 41% after a missed flashcard streak.</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn sm">Practice now</button><button class="btn outline sm">Snooze</button></div></div>
+        <span style="font-size:10px;color:var(--muted)">2m</span>
+      </div>
+
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;gap:11px;border-left:3px solid var(--olive)">
+        <span style="font-size:18px">🔄</span>
+        <div style="flex:1"><b style="font-size:13.5px;color:var(--olive-dark)">Plan updated</b><div style="font-size:12.5px;color:#46503a">Unit 4 plan rewritten after your Krebs quiz — Electron Transport moved earlier.</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn sm">View changes</button></div></div>
+        <span style="font-size:10px;color:var(--muted)">2h</span>
+      </div>
+
+      <div style="padding:14px 18px;border-bottom:1px solid var(--line);display:flex;gap:11px;border-left:3px solid var(--good)">
+        <span style="font-size:18px">🏆</span>
+        <div style="flex:1"><b style="font-size:13.5px;color:var(--olive-dark)">Topic mastered</b><div style="font-size:12.5px;color:#46503a">You hit 88% on <b>ATP Synthase</b> — it's now in maintenance mode.</div></div>
+        <span style="font-size:10px;color:var(--muted)">Mar 2</span>
+      </div>
+
+      <div style="padding:14px 18px;display:flex;gap:11px;border-left:3px solid var(--warn)">
+        <span style="font-size:18px">⏳</span>
+        <div style="flex:1"><b style="font-size:13.5px;color:var(--olive-dark)">Exam countdown</b><div style="font-size:12.5px;color:#46503a"><b>AP Biology · Unit 4</b> is in 10 days. You're 68% ready — 17 pts to target.</div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn sm">Open plan</button></div></div>
+        <span style="font-size:10px;color:var(--muted)">8h</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · notifications</h5>
+    <ul>
+      <li><b>Four event types</b> — weak spot, plan updated, mastered, exam countdown — color-coded by accent.</li>
+      <li><b>Actionable</b> — each card carries the single most useful next step.</li>
+      <li><b>Quiet hours &amp; batching</b> prevent spam; weak-spot alerts batch per session.</li>
+      <li><b>Read state</b> with filter tabs (All / Unread) and mark-all-read.</li>
+      <li><b>Channel routing</b> — in-app, email digest, or push per preference.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===================== SECTION 12 ===================== -->
+<section class="doc" id="s12">
+  <div class="sec-head">
+    <span class="sec-kicker">12 — Settings &amp; Preferences</span>
+    <h2>Tune the system to the learner</h2>
+    <p class="lead">Per-subject tool presets, adaptive sensitivity, calendar management, and notification preferences — all in one settings surface.</p>
+  </div>
+
+  <h3 class="block">Per-subject tool presets</h3>
+  <div class="mock">
+    <div class="card" style="padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h4 class="sub" style="margin:0">Tool presets</h4>
+        <span class="chip">AP Biology ▾</span>
+      </div>
+      <table class="t">
+        <thead><tr><th>Tool</th><th>Default mode</th><th>Key option</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>🎯 Quiz</td><td>Full Session</td><td>Adaptive difficulty · 25 Q</td><td><span class="chip good">Saved</span></td></tr>
+          <tr><td>🃏 Flashcards</td><td>Quick Focus</td><td>Spaced repetition · Term→Def</td><td><span class="chip good">Saved</span></td></tr>
+          <tr><td>📝 Notes</td><td>Custom</td><td>Cornell · cloze on</td><td><span class="chip good">Saved</span></td></tr>
+          <tr><td>🕸 Mindmap</td><td>Full Session</td><td>Radial · 3 levels</td><td><span class="chip muted">Default</span></td></tr>
+          <tr><td>📜 Timeline</td><td>Quick Focus</td><td>Order quiz on</td><td><span class="chip muted">Default</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="block">Adaptive sensitivity</h3>
+  <div class="mock">
+    <div class="card" style="padding:20px">
+      <div style="display:flex;justify-content:space-between"><h4 class="sub" style="margin-top:0">How aggressively should the plan adapt?</h4><span class="chip">Balanced</span></div>
+      <div class="slider"><div class="fills" style="width:55%"></div><div class="knob" style="left:55%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>Gentle</span><span>Balanced</span><span>Aggressive</span></div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:16px"><span class="toggle"></span><span style="font-size:13px">Protect strong topics from over-review</span></div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:12px"><span class="toggle off"></span><span style="font-size:13px">Allow same-day plan changes after a session</span></div>
+    </div>
+  </div>
+
+  <div class="grid g2" style="margin-top:6px">
+    <!-- calendar management -->
+    <div class="mock" style="margin:0">
+      <h3 class="block" style="margin-top:0">Calendar management</h3>
+      <div class="card" style="padding:18px">
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">Period 3 · AP Biology</span><span class="chip good">Synced</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">Period 5 · World History</span><span class="chip good">Synced</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span class="toggle off"></span><span style="flex:1;font-size:13px">Personal study blocks</span><span class="chip muted">Off</span></div>
+        <button class="btn outline sm" style="margin-top:12px;width:100%">Manage feed URL</button>
+      </div>
+    </div>
+
+    <!-- notification prefs -->
+    <div class="mock" style="margin:0">
+      <h3 class="block" style="margin-top:0">Notification preferences</h3>
+      <div class="card" style="padding:18px">
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">⚠ Weak spot detected</span><span style="font-size:11px;color:var(--muted)">In-app + push</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">🔄 Plan updated</span><span style="font-size:11px;color:var(--muted)">In-app</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">🏆 Topic mastered</span><span style="font-size:11px;color:var(--muted)">In-app</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)"><span class="toggle"></span><span style="flex:1;font-size:13px">⏳ Exam countdown</span><span style="font-size:11px;color:var(--muted)">Email digest</span></div>
+        <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><span class="toggle off"></span><span style="flex:1;font-size:13px">🌙 Quiet hours (9 PM–7 AM)</span><span class="chip muted">Off</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="specs">
+    <h5>Feature specs · settings</h5>
+    <ul>
+      <li><b>Per-subject presets</b> remember launch defaults so studying is one click.</li>
+      <li><b>Sensitivity slider</b> mirrors the adaptive-engine control with guardrail toggles.</li>
+      <li><b>Calendar management</b> controls every ICS source and the revocable feed URL.</li>
+      <li><b>Granular notification routing</b> — per type, choose in-app, push, or email digest.</li>
+      <li><b>Quiet hours</b> suppress non-critical alerts overnight.</li>
+    </ul>
+  </div>
+</section>
+
+  </div><!-- /.wrap -->
+
+  <footer style="padding:30px 40px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);max-width:1080px;margin:0 auto">
+    Cautie Learn Hub — Platform Planning Document · v0.9 · 12 sections · prepared for studyweb.help · Mar 15, 2026
+  </footer>
+</div><!-- /.main -->
+
+</body>
+</html>
