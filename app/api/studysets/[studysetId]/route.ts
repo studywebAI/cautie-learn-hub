@@ -31,15 +31,18 @@ function extractFocusTopic(rawBundle: string | null | undefined, fallbackName: s
 }
 
 function extractMeta(rawBundle: string | null | undefined) {
-  if (!rawBundle) return { icon: null as string | null, color: null as string | null }
+  if (!rawBundle) return { icon: null as string | null, color: null as string | null, subject: null as string | null, exam_date: null as string | null, description: null as string | null }
   try {
     const parsed = JSON.parse(rawBundle)
     return {
       icon: typeof parsed?.meta?.icon === 'string' ? parsed.meta.icon : null,
       color: typeof parsed?.meta?.color === 'string' ? parsed.meta.color : null,
+      subject: typeof parsed?.meta?.subject === 'string' ? parsed.meta.subject : null,
+      exam_date: typeof parsed?.meta?.exam_date === 'string' ? parsed.meta.exam_date : null,
+      description: typeof parsed?.meta?.description === 'string' ? parsed.meta.description : null,
     }
   } catch {
-    return { icon: null, color: null }
+    return { icon: null, color: null, subject: null, exam_date: null, description: null }
   }
 }
 
@@ -460,11 +463,14 @@ export async function GET(
       .sort()
     if (pendingPlanDates.length > 0) forecastFinishDate = pendingPlanDates[pendingPlanDates.length - 1]
 
-    const { icon, color } = extractMeta(studyset.source_bundle)
+    const { icon, color, subject, exam_date, description } = extractMeta(studyset.source_bundle)
     return NextResponse.json({
       studyset: {
         ...studyset,
-        meta: { icon, color },
+        subject,
+        exam_date,
+        description,
+        meta: { icon, color, subject, exam_date, description },
       },
       days,
       adaptive,

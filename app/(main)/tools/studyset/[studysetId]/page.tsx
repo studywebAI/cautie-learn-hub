@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   FileText,
   Layers,
+  LineChart,
   Map,
   RefreshCcw,
   Sparkles,
@@ -421,6 +422,11 @@ export default function StudysetDetailPage() {
               {studyset.status}
             </Badge>
           )}
+          <Button asChild variant="outline" size="icon" className="h-9 w-9" aria-label="Analytics">
+            <Link href={`/tools/studyset/${studysetId}/analytics`}>
+              <LineChart className="h-4 w-4" />
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="icon"
