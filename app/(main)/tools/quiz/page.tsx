@@ -188,6 +188,7 @@ function QuizPageContent() {
   const taskId = searchParams.get('taskId');
   const studysetId = searchParams.get('studysetId');
   const launchRequested = searchParams.get('launch') === '1';
+  const launchMode = searchParams.get('mode') || '';
 
   const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
@@ -552,8 +553,11 @@ function QuizPageContent() {
 
         if (source) setSourceText(source);
         if (presetTitle) setTitle(presetTitle);
-        if (typeof preset?.questionCount === 'number') {
-          setQuestionCount(Math.max(3, Math.min(25, preset.questionCount)));
+        const presetCount = typeof preset?.questionCount === 'number' ? preset.questionCount : 12;
+        if (launchMode === 'quick') {
+          setQuestionCount(Math.min(10, presetCount));
+        } else {
+          setQuestionCount(Math.max(3, Math.min(25, presetCount)));
         }
         // Map difficulty profile → "how much you already know" slider (harder => assume less known)
         if (preset?.difficultyProfile === 'hard') setKnowledgeScore(30);
@@ -583,7 +587,7 @@ function QuizPageContent() {
     };
 
     void runLaunch();
-  }, [handleGenerate, launchRequested, studysetId, taskId, toast]);
+  }, [handleGenerate, launchMode, launchRequested, studysetId, taskId, toast]);
 
   const handleRestart = useCallback(() => {
     setQuiz(null);

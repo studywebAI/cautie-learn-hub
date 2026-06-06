@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { TrendingUp, Target, BarChart3, ChevronRight } from 'lucide-react';
+import { TrendingUp, Target, BarChart3, ChevronRight, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageSection } from '@/components/layout/page-section';
+import { AppContext } from '@/contexts/app-context';
 
 const BRAND = '#6b7c4e';
 
@@ -62,7 +63,113 @@ function StatBox({
   );
 }
 
+type ClassRow = {
+  id: string;
+  name: string;
+  memberCount: number;
+  avgScore: number;
+  totalSessions: number;
+};
+
+function TeacherAnalytics() {
+  const appContext = useContext(AppContext) as any;
+  const classes: Array<{ id: string; name: string }> = appContext?.classes || [];
+  const [rows, setRows] = useState<ClassRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const enriched = await Promise.all(
+          classes.map(async (cls): Promise<ClassRow> => {
+            const base: ClassRow = { id: cls.id, name: cls.name, memberCount: 0, avgScore: 0, totalSessions: 0 };
+            try {
+              const res = await fetch(`/api/classes/${cls.id}/analytics`, { cache: 'no-store' });
+              if (!res.ok) return base;
+              const data = await res.json();
+              return {
+                ...base,
+                memberCount: num(data?.memberCount ?? data?.member_count ?? 0),
+                avgScore: num(data?.avgScore ?? data?.avg_score ?? 0),
+                totalSessions: num(data?.totalSessions ?? data?.total_sessions ?? 0),
+              };
+            } catch { return base; }
+          })
+        );
+        if (!cancelled) setRows(enriched);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    if (classes.length > 0) void load();
+    else setLoading(false);
+    return () => { cancelled = true; };
+  }, [classes.length]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <CautieLoader label="Loading analytics" sublabel="Gathering class data" />
+      </div>
+    );
+  }
+
+  return (
+    <PageSection className="[--accent-brand:#6b7c4e]">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">Analytics</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Class performance overview.</p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Your classes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {rows.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">No classes found.</p>
+          ) : (
+            <ul className="divide-y">
+              {rows.map((row) => (
+                <li key={row.id}>
+                  <Link
+                    href={`/class/${row.id}?tab=group`}
+                    className="flex items-center gap-4 py-3 transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${BRAND}1a`, color: BRAND }}>
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium text-foreground">{row.name}</p>
+                      <p className="text-xs text-muted-foreground">{row.memberCount} members</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-foreground">{row.avgScore > 0 ? `${row.avgScore}%` : '—'}</p>
+                      <p className="text-xs text-muted-foreground">avg score</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </PageSection>
+  );
+}
+
 export default function AnalyticsOverviewPage() {
+  const appContext = useContext(AppContext) as any;
+  const isTeacher = appContext?.role === 'teacher';
+
+  if (isTeacher) return <TeacherAnalytics />;
+
+  return <StudentAnalytics />;
+}
+
+function StudentAnalytics() {
   const [rows, setRows] = useState<StudysetRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

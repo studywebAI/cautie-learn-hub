@@ -74,7 +74,34 @@ export function ListView({ events, onEventClick }: ListViewProps) {
   );
 }
 
+function PrepareTrainButtons({ event }: { event: CalendarEvent }) {
+  const subject = event.subject?.trim() || '';
+  const prepareHref = `/tools/studyset${subject ? `?subject=${encodeURIComponent(subject)}&fromAgenda=1` : '?fromAgenda=1'}`;
+  const trainHref = `/tools/quiz${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`;
+
+  return (
+    <div className="mt-2 flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <Link
+        href={prepareHref}
+        prefetch={false}
+        className="inline-flex items-center gap-1 rounded-md bg-[#e8eddf] px-2.5 py-1 text-[11px] font-medium text-[#4a5735] transition-colors hover:bg-[#dce3d0]"
+      >
+        Prepare
+      </Link>
+      <Link
+        href={trainHref}
+        prefetch={false}
+        className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-foreground/80 transition-colors hover:surface-interactive"
+      >
+        Train
+      </Link>
+    </div>
+  );
+}
+
 function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventClick?: (event: CalendarEvent) => void }) {
+  const isTestItem = event.task_category === 'small_test' || event.task_category === 'big_test';
+
   const getEventAccent = () => {
     if (event.type === 'agenda_item') {
       if (event.visibility_state === 'hidden') return '#EF4444'; // Red for hidden
@@ -115,10 +142,10 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
 
   const content = (
     <div
-      className="flex items-center gap-3 rounded-md surface-panel px-3 py-2 transition-colors hover:surface-interactive border-l-4"
+      className="rounded-md surface-panel border-l-4 px-3 py-2 transition-colors hover:surface-interactive"
       style={{ borderLeftColor: getEventAccent() }}
     >
-
+      <div className="flex items-center gap-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[13px] text-foreground">{event.title}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -178,6 +205,8 @@ function EventListItem({ event, onEventClick }: { event: CalendarEvent; onEventC
           <BrainCircuit className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
         )}
       </div>
+      </div>
+      {isTestItem && <PrepareTrainButtons event={event} />}
     </div>
   );
 

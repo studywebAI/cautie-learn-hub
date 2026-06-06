@@ -22,9 +22,6 @@ const LogsTab = dynamic(
   () => import('@/components/class/logs-tab-redesigned').then((m) => m.LogsTabRedesigned),
   { ssr: false }
 );
-const AnalyticsTab = dynamic(
-  () => import('@/components/class/analytics-tab-redesigned').then((m) => m.AnalyticsTabRedesigned)
-);
 const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
   { ssr: false }
@@ -171,9 +168,6 @@ export default function ClassDetailsPage() {
         case 'schedule':
           url = `/api/classes/${classId}/school-schedule`;
           break;
-        case 'analytics':
-          url = `/api/classes/${classId}/analytics`;
-          break;
         case 'logs':
           url = `/api/classes/${classId}/audit-logs?limit=100&offset=0`;
           break;
@@ -256,7 +250,6 @@ export default function ClassDetailsPage() {
       await Promise.allSettled([
         loadTabData('group'),
         loadTabData('schedule'),
-        loadTabData('analytics'),
         loadTabData('logs'),
       ]);
     };
@@ -322,8 +315,6 @@ export default function ClassDetailsPage() {
         return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
       case 'calendar':
         return isTeacher ? <CalendarTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
-      case 'analytics':
-        return isTeacher ? <AnalyticsTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
         return isTeacher ? <LogsTab classId={classId} cachedData={cachedTabData['logs']} parentLoading={!!loadingTabs['logs']} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':
