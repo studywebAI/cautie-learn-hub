@@ -6,6 +6,7 @@ import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { Copy, Check, Loader2, RefreshCw } from 'lucide-react';
 import { InviteTab } from '@/components/class/invite-tab';
+import { ClassCalendarEvents } from '@/components/class/class-calendar-events';
 
 type ClassData = {
   id: string;
@@ -18,7 +19,7 @@ type Teacher = {
   name: string;
 };
 
-const SECTIONS = ['classinfo', 'access', 'features', 'invite'] as const;
+const SECTIONS = ['classinfo', 'access', 'features', 'calendar', 'invite'] as const;
 type Section = (typeof SECTIONS)[number];
 
 export function ClassSettingsRedesigned({
@@ -224,6 +225,7 @@ export function ClassSettingsRedesigned({
               classinfo: { en: 'Class Info', nl: 'Klasinfo' },
               access: { en: 'Access', nl: 'Toegang' },
               features: { en: 'Features', nl: 'Functies' },
+              calendar: { en: 'Calendar', nl: 'Kalender' },
               invite: { en: 'Invite', nl: 'Uitnodigen' },
             };
             const label = labels[section];
@@ -254,12 +256,14 @@ export function ClassSettingsRedesigned({
             {activeSection === 'classinfo' && (isDutch ? 'Klasinformatie' : 'Class Information')}
             {activeSection === 'access' && (isDutch ? 'Toegang & Leden' : 'Access & Members')}
             {activeSection === 'features' && (isDutch ? 'Functies' : 'Features')}
+            {activeSection === 'calendar' && (isDutch ? 'Kalender' : 'Calendar')}
             {activeSection === 'invite' && (isDutch ? 'Uitnodigen' : 'Invite')}
           </h2>
           <p className="text-[12px] text-muted-foreground mt-1">
             {activeSection === 'classinfo' && (isDutch ? 'Basisgegevens over uw klas' : 'Basic information about your class')}
             {activeSection === 'access' && (isDutch ? 'Beheer docenten en student access' : 'Manage teachers and student access')}
             {activeSection === 'features' && (isDutch ? 'Schakel tabs en functies in/uit' : 'Enable or disable features')}
+            {activeSection === 'calendar' && (isDutch ? 'Kalendergebeurtenissen voor studenten' : 'Events students see in their calendar subscription')}
             {activeSection === 'invite' && (isDutch ? 'Nodig studenten en docenten uit via e-mail' : 'Invite students and teachers by email')}
           </p>
         </div>
@@ -387,6 +391,11 @@ export function ClassSettingsRedesigned({
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Calendar Section */}
+          {activeSection === 'calendar' && (
+            <ClassCalendarEvents classId={classId} className={className} />
           )}
 
           {/* Invite Section — reuses the working InviteTab */}

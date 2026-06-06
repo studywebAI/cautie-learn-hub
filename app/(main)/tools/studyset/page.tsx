@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronDown,
   ChevronRight,
-  ChevronUp,
   Code2,
   Compass,
   Dna,
@@ -33,7 +32,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,7 +39,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { PageSection } from '@/components/layout/page-section';
-import { PageHeader } from '@/components/ui/page-header';
 
 type StudysetRow = {
   id: string;
@@ -191,8 +188,6 @@ export default function StudysetPage() {
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
-  const [showIconOptions, setShowIconOptions] = useState(false);
-  const [showColorOptions, setShowColorOptions] = useState(false);
   const [showNotesInput, setShowNotesInput] = useState(false);
 
   const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
@@ -538,164 +533,201 @@ export default function StudysetPage() {
     }
   };
 
+  const selectedIconOption = ICON_OPTIONS.find((o) => o.id === selectedIcon);
+  const selectedColorOption = COLOR_OPTIONS.find((o) => o.id === selectedColor);
+
+  const STEP_SUBTITLES = [
+    'Give your studyset a name and a look.',
+    'Pick the days you plan to study.',
+    'Add your notes, files, or paste text.',
+  ];
+
   return (
     <PageSection variant="tool">
-        <Card className="border-none">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Route className="h-5 w-5" />
-              Studyset
-            </CardTitle>
-            <CardDescription>Build once, follow day-by-day. Changes auto-save.</CardDescription>
-          </CardHeader>
-        </Card>
-
+      {/* Tool header strip */}
+      <div className="flex items-center justify-between pb-2">
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+            <Route className="h-4 w-4 text-muted-foreground" />
+            Studyset
+          </h1>
+          <p className="text-sm text-muted-foreground">Build once, follow day-by-day.</p>
+        </div>
         {view === 'home' && (
-          <>
-            <Card className="border-none">
-              <CardHeader>
-                <CardTitle>New studyset</CardTitle>
-                <CardDescription>Create a fresh study plan in 3 clear steps.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button type="button" onClick={startCreate}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Open new studyset
-                </Button>
-              </CardContent>
-            </Card>
-
-            {!loadingStudysets && madeStudysets.length > 0 && (
-              <Card className="border-none">
-                <CardHeader>
-                  <CardTitle>Made studysets</CardTitle>
-                  <CardDescription>Open today plan, edit tasks, or view all days.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {madeStudysets.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => router.push(`/tools/studyset/${item.id}`)}
-                      className="w-full rounded-xl surface-panel px-3 py-2 text-left transition-colors hover:surface-interactive"
-                    >
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.target_days} days
-                      </p>
-                    </button>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </>
+          <Button type="button" onClick={startCreate} style={{ backgroundColor: '#6b7c4e' }}>
+            <Plus className="mr-2 h-4 w-4" />
+            New studyset
+          </Button>
         )}
+      </div>
 
-        {view === 'create' && (
-          <div className="flex flex-col gap-6">
-            <PageHeader title="Create Studyset" subtitle={`Step ${step + 1}: ${STEP_TITLES[step]}`} hideBreadcrumb={false} />
-            <Card className="mx-auto w-full max-w-2xl flex flex-col gap-6">
-              <CardHeader className="pb-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div>
-                    <CardTitle className="text-lg">{STEP_TITLES[step]}</CardTitle>
-                  </div>
-                  <div className="ml-auto flex items-center gap-2">
-                    {STEP_TITLES.map((title, index) => (
-                      <div
-                        key={title}
-                        className={`rounded-full px-3 py-1 text-xs ${
-                          index === step ? 'surface-interactive text-foreground' : 'bg-background text-muted-foreground'
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                    ))}
-                  </div>
+      {view === 'home' && (
+        <div className="space-y-4">
+          {loadingStudysets && (
+            <div className="space-y-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />
+              ))}
+            </div>
+          )}
+          {!loadingStudysets && madeStudysets.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6b7c4e]/10 mb-4">
+                <Route className="h-6 w-6 text-[#6b7c4e]" />
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">No studysets yet</p>
+              <p className="text-xs text-muted-foreground mb-5 max-w-xs">
+                Create your first studyset — pick your study days, add your materials and we generate a day-by-day plan.
+              </p>
+              <Button type="button" onClick={startCreate} style={{ backgroundColor: '#6b7c4e' }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create studyset
+              </Button>
+            </div>
+          )}
+          {!loadingStudysets && madeStudysets.length > 0 && (
+            <div className="space-y-2">
+              {madeStudysets.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-[#6b7c4e]/40 hover:shadow-sm"
+                >
+                  <p className="text-sm font-medium text-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.target_days} study days planned</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {view === 'create' && (
+        <div className="mx-auto w-full max-w-2xl">
+          {/* Step progress bars */}
+          <div className="flex gap-1.5 mb-8">
+            {STEP_TITLES.map((_, index) => (
+              <div
+                key={index}
+                className="h-1 flex-1 rounded-full transition-all duration-300"
+                style={{ backgroundColor: index <= step ? '#6b7c4e' : '#e5e7eb' }}
+              />
+            ))}
+          </div>
+
+          {/* Wizard card */}
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+            {/* Step header */}
+            <div className="px-8 pt-8 pb-6 border-b border-border/60">
+              <div className="flex items-start gap-4">
+                <div
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white text-sm font-bold"
+                  style={{ backgroundColor: '#6b7c4e' }}
+                >
+                  {step + 1}
                 </div>
-              </CardHeader>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground leading-tight">{STEP_TITLES[step]}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">{STEP_SUBTITLES[step]}</p>
+                </div>
+              </div>
+            </div>
 
-            <CardContent className="flex flex-1 flex-col space-y-4">
+            {/* Step body */}
+            <div className="px-8 py-6">
               {step === 0 && (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <Label>Studyset name</Label>
+                <div className="space-y-6">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Studyset name *</label>
                     <Input
                       value={name}
                       onChange={(event) => setName(event.target.value)}
-                      placeholder="My StudySet"
-                      className="h-9"
+                      placeholder="e.g. Biology Chapter 5 — Photosynthesis"
+                      className="h-10 text-base"
+                      autoFocus
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Icon (optional)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowIconOptions((v) => !v)}>
-                      Select icon
-                      {showIconOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
-                    </Button>
-                    {showIconOptions && (
-                      <div className={`grid grid-cols-8 gap-1.5 rounded-lg p-2 md:grid-cols-12 ${SOFT_SURFACE}`}>
-                        {ICON_OPTIONS.map((option) => {
-                          const ActiveIcon = option.Icon;
-                          const selected = selectedIcon === option.id;
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() => setSelectedIcon(selected ? null : option.id)}
-                              aria-label={option.id}
-                              title={option.id}
-                              className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
-                                selected
-                                  ? 'bg-surface-chip text-foreground ring-1 ring-border'
-                                  : 'bg-background text-muted-foreground hover:bg-surface-interactive'
-                              }`}
-                            >
-                              <ActiveIcon className="h-3.5 w-3.5" />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                  {/* Icon picker */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Icon <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <div className="grid grid-cols-10 gap-1.5">
+                      {ICON_OPTIONS.map((option) => {
+                        const ActiveIcon = option.Icon;
+                        const selected = selectedIcon === option.id;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setSelectedIcon(selected ? null : option.id)}
+                            aria-label={option.id}
+                            title={option.id}
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
+                              selected
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#6b7c4e]'
+                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5'
+                            }`}
+                          >
+                            <ActiveIcon className="h-4 w-4" />
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Color (optional)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowColorOptions((v) => !v)}>
-                      Select color
-                      {showColorOptions ? <ChevronUp className="ml-2 h-3 w-3" /> : <ChevronDown className="ml-2 h-3 w-3" />}
-                    </Button>
-                    {showColorOptions && (
-                      <div className={`grid grid-cols-10 gap-1.5 rounded-lg p-2 md:grid-cols-14 ${SOFT_SURFACE}`}>
-                        {COLOR_OPTIONS.map((color) => {
-                          const selected = selectedColor === color.id;
-                          return (
-                            <button
-                              key={color.id}
-                              type="button"
-                              aria-label={color.id}
-                              title={color.id}
-                              onClick={() => setSelectedColor(selected ? null : color.id)}
-                              className={`h-6 w-6 rounded-md transition-all ${color.swatchClass} ${
-                                selected ? 'ring-2 ring-[#334155] ring-offset-1 ring-offset-background' : 'hover:scale-[1.03]'
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
+                  {/* Color picker */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Color <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {COLOR_OPTIONS.map((color) => {
+                        const selected = selectedColor === color.id;
+                        return (
+                          <button
+                            key={color.id}
+                            type="button"
+                            aria-label={color.id}
+                            title={color.id}
+                            onClick={() => setSelectedColor(selected ? null : color.id)}
+                            className={`h-7 w-7 rounded-full transition-all ${color.swatchClass} ${
+                              selected
+                                ? 'ring-2 ring-foreground ring-offset-2 ring-offset-card scale-110'
+                                : 'hover:scale-110 opacity-80 hover:opacity-100'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    {(selectedIcon || selectedColor) ? (
+                      <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
+                        {selectedIconOption && <selectedIconOption.Icon className="h-3 w-3" />}
+                        {selectedColorOption && (
+                          <span className={`inline-block h-2.5 w-2.5 rounded-full ${selectedColorOption.swatchClass}`} />
+                        )}
+                        {selectedIcon && selectedColor ? 'Icon and color selected' : selectedIcon ? 'Icon selected' : 'Color selected'}
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedIcon(null); setSelectedColor(null); }}
+                          className="underline text-muted-foreground hover:text-foreground ml-1"
+                        >
+                          clear
+                        </button>
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs text-muted-foreground">Skip to auto-pick an unused combo.</p>
                     )}
-                    <p className="text-xs text-muted-foreground">
-                      If you skip icon/color, we auto-pick an unused combo.
-                    </p>
                   </div>
                 </div>
               )}
 
               {step === 1 && (
-                <div className="space-y-3">
-                  <Label>Select available study days</Label>
-                  <div className={`rounded-xl p-2 ${SOFT_SURFACE}`}>
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-border/60 bg-background p-2">
                     <Calendar
                       mode="multiple"
                       selected={selectedDates}
@@ -704,49 +736,72 @@ export default function StudysetPage() {
                       classNames={CALENDAR_CLASSES}
                     />
                   </div>
-                  <div className={`rounded-xl p-3 text-xs text-foreground/80 ${SOFT_SURFACE}`}>
-                    {selectedDateStrings.length === 0
-                      ? 'Pick at least one day.'
-                      : `${selectedDateStrings.length} day${selectedDateStrings.length === 1 ? '' : 's'} selected.`}
+                  <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm ${SOFT_SURFACE}`}>
+                    {selectedDateStrings.length === 0 ? (
+                      <span className="text-muted-foreground">Pick at least one study day to continue.</span>
+                    ) : (
+                      <>
+                        <span
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-bold"
+                          style={{ backgroundColor: '#6b7c4e' }}
+                        >
+                          {selectedDateStrings.length}
+                        </span>
+                        <span className="font-medium">
+                          {selectedDateStrings.length === 1 ? '1 study session' : `${selectedDateStrings.length} study sessions`} planned
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
 
               {step === 2 && (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <Label>Notes (optional)</Label>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowNotesInput((v) => !v)}>
-                        {showNotesInput ? 'Hide' : 'Add notes'}
-                        {showNotesInput ? <ChevronUp className="ml-1 h-3 w-3" /> : <ChevronDown className="ml-1 h-3 w-3" />}
-                      </Button>
+                <div className="space-y-5">
+                  {/* Notes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-sm font-medium text-foreground">
+                        Notes <span className="text-muted-foreground font-normal">(optional)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowNotesInput((v) => !v)}
+                        className="text-xs text-muted-foreground hover:text-foreground underline"
+                      >
+                        {showNotesInput ? 'Hide' : 'Add focus notes'}
+                      </button>
                     </div>
                     {showNotesInput && (
                       <Textarea
                         value={notesText}
                         onChange={(event) => setNotesText(event.target.value)}
-                        placeholder="What this studyset should focus on..."
-                        className={`min-h-[110px] ${SOFT_SURFACE}`}
+                        placeholder="What should this studyset focus on? Any specific topics or goals..."
+                        className="min-h-[90px] resize-none"
                       />
                     )}
                   </div>
 
-                  <div className="space-y-1">
-                    <Label>Pasted text</Label>
+                  {/* Pasted text */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Paste your material</label>
                     <Textarea
                       value={pastedText}
                       onChange={(event) => setPastedText(event.target.value)}
-                      placeholder="Paste chapters, summaries, requirements..."
-                      className={`min-h-[140px] ${SOFT_SURFACE}`}
+                      placeholder="Paste chapters, lecture notes, summaries, requirements..."
+                      className="min-h-[130px] resize-none"
                     />
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
-                    <p className="mb-2 text-sm font-medium">Files</p>
-                    <label className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm ${SOFT_SURFACE}`}>
-                      <Upload className="h-4 w-4" />
-                      Add files
+                  {/* File upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Upload files</label>
+                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-background px-4 py-6 text-center transition-colors hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Click to upload files</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">PDF, Word, PowerPoint, images, text</p>
+                      </div>
                       <input
                         type="file"
                         multiple
@@ -756,103 +811,108 @@ export default function StudysetPage() {
                       />
                     </label>
                     {uploads.length > 0 && (
-                      <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
+                      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
                         {uploads.map((file) => (
-                          <div key={`${file.name}-${file.size}`} className="rounded-lg border border-border/60 bg-background p-2">
-                            <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-surface-1">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            <p className="truncate text-xs">{file.name}</p>
+                          <div key={`${file.name}-${file.size}`} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                            <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                            <p className="truncate text-xs font-medium">{file.name}</p>
+                            {file.extractionStatus === 'ready' && (
+                              <span className="ml-auto flex-shrink-0 h-1.5 w-1.5 rounded-full bg-green-500" title="Text extracted" />
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <div className={`rounded-xl p-3 ${SOFT_SURFACE}`}>
-                    <div className="flex items-center justify-between gap-2">
+                  {/* OneDrive */}
+                  <div className="rounded-xl border border-border/60 bg-background p-4">
+                    <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-medium">Import from OneDrive</p>
-                      {microsoftConnected ? (
+                      {microsoftConnected && (
                         <span className="text-xs text-muted-foreground">{microsoftEmail || 'Connected'}</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Not connected</span>
                       )}
                     </div>
-
-                    <div className="mt-2 min-h-[260px]">
-                      <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
-                    </div>
-                    <div className="mt-3 grid grid-cols-1 gap-3">
-                      <div className="rounded-lg border border-border/60 bg-background p-2">
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <p className="text-xs font-medium">Selected OneDrive files</p>
-                          {microsoftConnected && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => void loadMicrosoftSelectedFiles()}>
-                              Refresh
-                            </Button>
-                          )}
+                    <MicrosoftAppStrip returnTo="/tools/studyset?open=create&step=2" />
+                    {microsoftConnected && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Selected files</p>
+                          <button
+                            type="button"
+                            onClick={() => void loadMicrosoftSelectedFiles()}
+                            className="text-xs text-muted-foreground hover:text-foreground underline"
+                          >
+                            Refresh
+                          </button>
                         </div>
-                        {!microsoftConnected && (
-                          <p className="text-xs text-muted-foreground">Connect Microsoft above to select files.</p>
-                        )}
-                        {microsoftConnected && sortedOneDriveFiles.length === 0 && (
-                          <p className="text-xs text-muted-foreground">No OneDrive files selected yet.</p>
-                        )}
-                        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                          {sortedOneDriveFiles.map((file) => (
-                            <div key={file.id} className="rounded-lg border border-border/60 bg-background p-2">
-                              <div className="mb-2 flex h-14 items-center justify-center rounded-md bg-surface-1">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
+                        {sortedOneDriveFiles.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No files selected yet.</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                            {sortedOneDriveFiles.map((file) => (
+                              <div key={file.id} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                                <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                                <p className="truncate text-xs">{file.name}</p>
                               </div>
-                              <p className="truncate text-xs">{file.name}</p>
-                            </div>
-                          ))}
-                        </div>
-                        {microsoftConnected && (
-                          <div className="mt-2">
-                            <Button type="button" variant="outline" onClick={() => void disconnectMicrosoft()}>
-                              Disconnect
-                            </Button>
+                            ))}
                           </div>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => void disconnectMicrosoft()}
+                          className="mt-3 text-xs text-muted-foreground hover:text-foreground underline"
+                        >
+                          Disconnect Microsoft
+                        </button>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
-
-              <div className="mt-auto flex items-center justify-between pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    if (step === 0) {
-                      setView('home');
-                      return;
-                    }
-                    setStep((value) => Math.max(0, value - 1));
-                  }}
-                  disabled={creating}
-                >
-                  <ChevronLeft className="mr-1 h-4 w-4" />
-                  Previous
-                </Button>
-
-                {step < 2 ? (
-                  <Button type="button" onClick={goNext} disabled={!canNext || creating}>
-                    Next
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={() => void createStudyset()} disabled={!isStepThreeReady || creating}>
-                    {creating ? 'Creating...' : 'Create studyset'}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
             </div>
-        )}
+
+            {/* Footer navigation */}
+            <div className="flex items-center gap-3 border-t border-border/60 px-8 py-5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (step === 0) { setView('home'); return; }
+                  setStep((value) => Math.max(0, value - 1));
+                }}
+                disabled={creating}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </button>
+
+              {step < 2 ? (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={!canNext || creating}
+                  className="ml-auto flex items-center gap-1.5 rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: canNext ? '#6b7c4e' : undefined }}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void createStudyset()}
+                  disabled={!isStepThreeReady || creating}
+                  className="ml-auto rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: isStepThreeReady ? '#6b7c4e' : undefined }}
+                >
+                  {creating ? 'Creating studyset…' : 'Create studyset'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageSection>
   );
 }
