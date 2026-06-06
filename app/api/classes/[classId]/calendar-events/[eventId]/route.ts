@@ -1,44 +1,3 @@
-<<<<<<< HEAD
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
-
-export const dynamic = 'force-dynamic'
-
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ classId: string; eventId: string }> }
-) {
-  try {
-    const { classId, eventId } = await params
-    const cookieStore = await cookies()
-    const supabase = await createClient(cookieStore)
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const { data: member } = await (supabase as any)
-      .from('class_members')
-      .select('role')
-      .eq('class_id', classId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!member || member.role !== 'teacher') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const { error } = await (supabase as any)
-      .from('class_calendar_events')
-      .delete()
-      .eq('id', eventId)
-      .eq('class_id', classId)
-
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-=======
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -88,5 +47,4 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true })
->>>>>>> a6edf58496d4da4e9e7b76a0867852440e40ef56
 }
