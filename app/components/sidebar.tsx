@@ -23,6 +23,7 @@ import {
   Users,
   CalendarDays,
   BarChart2,
+  LineChart,
   Menu,
   ArrowUpRight,
   ChevronDown,
@@ -160,12 +161,14 @@ export function AppSidebar() {
         { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: Library },
         { href: teacherManageHref, label: t.manage, icon: Users },
         { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
+        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: LineChart },
         { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: CalendarDays },
       ]
     : [
         { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: Library },
         { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
+        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: LineChart },
         { href: '/classes', label: t.classes, icon: Users },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: CalendarDays },
       ];

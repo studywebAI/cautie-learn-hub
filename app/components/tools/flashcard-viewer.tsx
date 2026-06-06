@@ -130,6 +130,7 @@ export function FlashcardViewer({
   taskId,
   studysetId,
   onCompletionChange,
+  onComplete,
   settings,
 }: {
   cards: Flashcard[];
@@ -139,6 +140,7 @@ export function FlashcardViewer({
   taskId?: string;
   studysetId?: string;
   onCompletionChange?: (completed: boolean) => void;
+  onComplete?: (analytics: { score: number; totalItems: number; correctItems: number }) => void;
   settings?: {
     timePerCardSeconds?: number;
     autoFlipDelayMs?: number;
@@ -302,6 +304,18 @@ export function FlashcardViewer({
   useEffect(() => {
     onCompletionChange?.(sessionComplete);
   }, [onCompletionChange, sessionComplete]);
+
+  const onCompleteRef = React.useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const firedCompleteRef = React.useRef(false);
+  useEffect(() => {
+    if (!sessionComplete || firedCompleteRef.current) return;
+    firedCompleteRef.current = true;
+    const total = queue.length;
+    const correct = correctCards;
+    const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+    onCompleteRef.current?.({ score, totalItems: total, correctItems: correct });
+  }, [sessionComplete, queue.length, correctCards]);
 
   const computeDeckHealth = useCallback(() => {
     const states = cards.map((c) => srsState[c.id] || defaultSRSState());

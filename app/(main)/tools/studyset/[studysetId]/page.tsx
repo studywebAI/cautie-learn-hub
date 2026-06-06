@@ -10,12 +10,12 @@ import {
   CheckCircle2,
   FileText,
   Layers,
+  LineChart,
   Map,
   RefreshCcw,
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -83,12 +83,12 @@ type TrendPoint = {
   avg_score: number;
 };
 
-const TOOL_HREFS: Record<string, string> = {
-  notes: '/tools/notes',
-  flashcards: '/tools/flashcards',
-  quiz: '/tools/quiz',
-  wordweb: '/tools/notes',
-  review: '/tools/studyset',
+// Maps a plan-task type to the launch page `tool` param.
+const TOOL_TYPES: Record<string, string> = {
+  notes: 'notes',
+  flashcards: 'flashcards',
+  quiz: 'quiz',
+  wordweb: 'wordweb',
 };
 
 const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
@@ -111,8 +111,8 @@ function toolMeta(taskType: string) {
 
 function taskHref(taskType: string, studysetId: string, taskId: string) {
   if (taskType === 'review') return `/tools/studyset/${studysetId}`;
-  const base = TOOL_HREFS[taskType] || '/tools/notes';
-  return `${base}?studysetId=${studysetId}&taskId=${taskId}&launch=1`;
+  const tool = TOOL_TYPES[taskType] || 'notes';
+  return `/tools/launch?tool=${tool}&studysetId=${studysetId}&taskId=${taskId}&launch=1`;
 }
 
 function toIsoLocalDate(date: Date) {
@@ -421,6 +421,11 @@ export default function StudysetDetailPage() {
               {studyset.status}
             </Badge>
           )}
+          <Button asChild variant="outline" size="icon" className="h-9 w-9" aria-label="Analytics">
+            <Link href={`/tools/studyset/${studysetId}/analytics`}>
+              <LineChart className="h-4 w-4" />
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="icon"
@@ -763,9 +768,6 @@ export default function StudysetDetailPage() {
               <p className="text-xs text-muted-foreground">Notes, files and imports for this studyset</p>
             </div>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/tools/studyset/${studysetId}/materials`}>View materials</Link>
-          </Button>
         </div>
       </section>
 

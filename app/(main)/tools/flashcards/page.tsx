@@ -85,6 +85,7 @@ function FlashcardsPageContent() {
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
   const launchHandledRef = useRef(false);
+  const performanceRecordedRef = useRef(false);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceParamsHandledRef = useRef(false);
   const { toast } = useToast();
@@ -363,6 +364,30 @@ function FlashcardsPageContent() {
     }
   };
 
+  const handleFlashcardComplete = React.useCallback(
+    async ({ score, totalItems, correctItems }: { score: number; totalItems: number; correctItems: number }) => {
+      if (performanceRecordedRef.current || !taskId || !studysetId) return;
+      performanceRecordedRef.current = true;
+      try {
+        await fetch(`/api/studysets/plan-tasks/${taskId}/performance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studysetId,
+            toolId: 'flashcards',
+            score,
+            totalItems,
+            correctItems,
+            markCompleted: true,
+          }),
+        });
+      } catch {
+        // non-critical
+      }
+    },
+    [taskId, studysetId]
+  );
+
   const handleShareToClass = useCallback(async (targetClassId: string) => {
     if (!targetClassId || !generatedCards) return;
     setIsSharingToClass(true);
@@ -457,6 +482,7 @@ function FlashcardsPageContent() {
               taskId={taskId || undefined}
               studysetId={studysetId || undefined}
               onCompletionChange={setStudyCompleted}
+              onComplete={handleFlashcardComplete}
               settings={{
                 activeRecallOnly,
                 interleavingMode,

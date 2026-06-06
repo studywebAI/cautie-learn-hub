@@ -9,14 +9,17 @@ import { runDailyAdaptiveSyncForUser } from '@/lib/studysets/adaptive-engine'
 export const dynamic = 'force-dynamic'
 
 function extractMeta(rawBundle: string | null | undefined) {
-  if (!rawBundle) return { icon: null as string | null, color: null as string | null }
+  if (!rawBundle) return { icon: null as string | null, color: null as string | null, subject: null as string | null, exam_date: null as string | null, description: null as string | null }
   try {
     const parsed = JSON.parse(rawBundle)
     const icon = typeof parsed?.meta?.icon === 'string' ? parsed.meta.icon : null
     const color = typeof parsed?.meta?.color === 'string' ? parsed.meta.color : null
-    return { icon, color }
+    const subject = typeof parsed?.meta?.subject === 'string' ? parsed.meta.subject : null
+    const exam_date = typeof parsed?.meta?.exam_date === 'string' ? parsed.meta.exam_date : null
+    const description = typeof parsed?.meta?.description === 'string' ? parsed.meta.description : null
+    return { icon, color, subject, exam_date, description }
   } catch {
-    return { icon: null, color: null }
+    return { icon: null, color: null, subject: null, exam_date: null, description: null }
   }
 }
 
@@ -158,7 +161,7 @@ export async function GET() {
       const days = (daysByStudyset.get(studysetId) || []).sort(
         (a: any, b: any) => Number(a.day_number || 0) - Number(b.day_number || 0)
       )
-      const { icon, color } = extractMeta(row.source_bundle)
+      const { icon, color, subject, exam_date, description } = extractMeta(row.source_bundle)
 
       let totalTasks = 0
       let completedTasks = 0
@@ -218,7 +221,10 @@ export async function GET() {
       return {
         ...row,
         status: derivedStatus,
-        meta: { icon, color },
+        subject,
+        exam_date,
+        description,
+        meta: { icon, color, subject, exam_date, description },
         progress: {
           total_tasks: totalTasks,
           completed_tasks: completedTasks,
@@ -278,7 +284,17 @@ export async function POST(req: NextRequest) {
       : 'beginner'
     const targetDays = Math.max(1, Math.min(60, Number(body?.target_days || 7)))
     const minutesPerDay = Math.max(10, Math.min(480, Number(body?.minutes_per_day || 45)))
-    const sourceBundle = body?.source_bundle ? String(body.source_bundle) : null
+
+    // Merge subject/exam_date/description into source_bundle.meta so they
+    // persist without a DB migration (no separate columns yet).
+    let baseBundle: Record<string, any> = {}
+    if (body?.source_bundle) {
+      try { baseBundle = JSON.parse(String(body.source_bundle)) } catch { /* ignore */ }
+    }
+    if (body?.subject) baseBundle.meta = { ...baseBundle.meta, subject: String(body.subject).trim().slice(0, 120) }
+    if (body?.exam_date) baseBundle.meta = { ...baseBundle.meta, exam_date: String(body.exam_date).trim() }
+    if (body?.description) baseBundle.meta = { ...baseBundle.meta, description: String(body.description).trim().slice(0, 500) }
+    const sourceBundle = Object.keys(baseBundle).length > 0 ? JSON.stringify(baseBundle) : null
 
     if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
 

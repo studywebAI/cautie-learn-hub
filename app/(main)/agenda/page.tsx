@@ -162,6 +162,7 @@ function AgendaPageContent() {
     isLoading,
     role,
     personalTasks,
+    session,
     createPersonalTask,
     updatePersonalTask,
   } = useContext(AppContext) as AppContextType;
@@ -766,6 +767,8 @@ function AgendaPageContent() {
       <CalendarConnectionDialog
         isOpen={isCalendarDialogOpen}
         setIsOpen={setIsCalendarDialogOpen}
+        userId={(session as any)?.user?.id ?? null}
+        classes={(classes || []).map((c: any) => ({ id: c.id, name: c.name || c.title || '' }))}
       />
     </PageSection>
   );

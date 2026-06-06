@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Copy, Check, CalendarPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type CalendarProvider = 'apple' | 'google' | 'outlook' | 'caldav';
@@ -29,13 +29,18 @@ interface CalendarAccount {
 interface CalendarConnectionDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
+  userId?: string | null;
+  classes?: Array<{ id: string; name: string }> | null;
 }
 
 export function CalendarConnectionDialog({
   isOpen,
   setIsOpen,
+  userId,
+  classes,
 }: CalendarConnectionDialogProps) {
   const { toast } = useToast();
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [accounts, setAccounts] = useState<CalendarAccount[]>([]);
   const [hasLoadedAccounts, setHasLoadedAccounts] = useState(false);
@@ -173,6 +178,21 @@ export function CalendarConnectionDialog({
     }
   };
 
+  const copyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch {
+      toast({ title: 'Could not copy', description: 'Copy the URL manually', variant: 'destructive' });
+    }
+  };
+
+  const getWebcalUrl = (path: string) => {
+    if (typeof window === 'undefined') return '';
+    return `webcal://${window.location.host}${path}`;
+  };
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open && !hasLoadedAccounts) {
@@ -214,11 +234,103 @@ export function CalendarConnectionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="connect" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="connect">Connect New</TabsTrigger>
-            <TabsTrigger value="accounts">Connected Accounts</TabsTrigger>
+        <Tabs defaultValue="subscribe" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="subscribe">Subscribe</TabsTrigger>
+            <TabsTrigger value="connect">Connect</TabsTrigger>
+            <TabsTrigger value="accounts">Accounts</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="subscribe" className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Add these links to Apple Calendar, Google Calendar, or any app that supports webcal subscriptions. The feed updates automatically.
+            </p>
+
+            {/* Personal study plan feed */}
+            {userId && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Personal study plan</Label>
+                <div className="flex gap-2">
+                  <Input
+                    readOnly
+                    value={getWebcalUrl(`/api/calendar/student/${userId}`)}
+                    className="h-9 text-xs font-mono"
+                  />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => copyUrl(getWebcalUrl(`/api/calendar/student/${userId}`))}
+                    title="Copy link"
+                  >
+                    {copiedUrl === getWebcalUrl(`/api/calendar/student/${userId}`) ? (
+                      <Check className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-9 w-9 shrink-0"
+                    asChild
+                    title="Add to calendar"
+                  >
+                    <a href={getWebcalUrl(`/api/calendar/student/${userId}`)}>
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Per-class feeds */}
+            {Array.isArray(classes) && classes.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-xs font-medium">Class calendars</Label>
+                {classes.map((cls) => (
+                  <div key={cls.id} className="space-y-1">
+                    <p className="text-xs text-muted-foreground truncate">{cls.name}</p>
+                    <div className="flex gap-2">
+                      <Input
+                        readOnly
+                        value={getWebcalUrl(`/api/calendar/class/${cls.id}`)}
+                        className="h-9 text-xs font-mono"
+                      />
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() => copyUrl(getWebcalUrl(`/api/calendar/class/${cls.id}`))}
+                        title="Copy link"
+                      >
+                        {copiedUrl === getWebcalUrl(`/api/calendar/class/${cls.id}`) ? (
+                          <Check className="h-3.5 w-3.5 text-green-600" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-9 w-9 shrink-0"
+                        asChild
+                        title="Add to calendar"
+                      >
+                        <a href={getWebcalUrl(`/api/calendar/class/${cls.id}`)}>
+                          <CalendarPlus className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!userId && !classes?.length && (
+              <p className="text-sm text-muted-foreground py-4 text-center">No feeds available yet.</p>
+            )}
+          </TabsContent>
 
           <TabsContent value="connect" className="space-y-4">
             <div className="space-y-3">

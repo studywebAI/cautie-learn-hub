@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,6 +50,8 @@ const INITIAL_DATA: WorkflowData = {
 
 export default function StudysetCreatePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const incomingStudysetId = searchParams.get('studysetId');
   const { toast } = useToast();
   const [data, setData] = useState<WorkflowData>(INITIAL_DATA);
   const [loading, setLoading] = useState(false);
@@ -64,6 +66,34 @@ export default function StudysetCreatePage() {
       } catch {}
     }
   }, []);
+
+  // Adopt a studyset created upstream (e.g. the quick-create modal on the
+  // studysets list) rather than creating a duplicate. Hydrate its name so the
+  // wizard continues with the existing record.
+  useEffect(() => {
+    if (!incomingStudysetId) return;
+    setStudysetId(incomingStudysetId);
+    let cancelled = false;
+    fetch(`/api/studysets/${incomingStudysetId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.studyset) return;
+        const ss = payload.studyset;
+        setData((prev) => ({
+          ...prev,
+          studysetId: incomingStudysetId,
+          name: prev.name?.trim() ? prev.name : String(ss.name || ''),
+          subject: prev.subject || String(ss.subject || ''),
+          description: prev.description || String(ss.description || ''),
+        }));
+      })
+      .catch(() => {
+        /* non-fatal — user can still proceed with the wizard */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [incomingStudysetId]);
 
   // Auto-save to localStorage
   useEffect(() => {
@@ -165,7 +195,7 @@ export default function StudysetCreatePage() {
       // Finish and cleanup
       localStorage.removeItem('studyset-workflow-draft-v2');
       toast({ title: 'Success', description: 'StudySet created successfully!' });
-      router.push(`/studyset/${studysetId}`);
+      router.push(`/tools/studyset/${studysetId}`);
     }
   };
 

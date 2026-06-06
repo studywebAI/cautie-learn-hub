@@ -4,6 +4,7 @@ import { useContext, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { ThemePicker } from '@/components/settings/theme-picker';
+import { NotificationPreferences } from '@/components/notifications/notification-preferences';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +53,22 @@ export default function SettingsPage() {
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
   const [usesDefaultOpenAIKey, setUsesDefaultOpenAIKey] = useState(false);
   const [logCodeQuery, setLogCodeQuery] = useState('');
+  const [adaptiveSensitivity, setAdaptiveSensitivity] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const savedSensitivity = window.localStorage.getItem('studyweb-adaptive-sensitivity');
+    if (savedSensitivity === 'conservative' || savedSensitivity === 'balanced' || savedSensitivity === 'aggressive') {
+      setAdaptiveSensitivity(savedSensitivity);
+    }
+  }, []);
+
+  const updateAdaptiveSensitivity = (value: 'conservative' | 'balanced' | 'aggressive') => {
+    setAdaptiveSensitivity(value);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-adaptive-sensitivity', value);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -66,7 +83,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tabParam = (searchParams?.get('tab') || '').toLowerCase();
-    const validTabs = new Set(['personalization', 'general', 'subscription', 'help', 'log-codes']);
+    const validTabs = new Set(['personalization', 'general', 'studysets', 'subscription', 'help', 'log-codes']);
     if (validTabs.has(tabParam)) {
       setActiveTab(tabParam);
       return;
@@ -204,6 +221,7 @@ export default function SettingsPage() {
   const tabItems = [
     { id: 'personalization', label: tr({ en: 'Personalization', nl: 'Personalisatie' }) },
     { id: 'general', label: tr({ en: 'General', nl: 'Algemeen' }) },
+    { id: 'studysets', label: tr({ en: 'Studysets', nl: 'Studiesets' }) },
     { id: 'subscription', label: tr({ en: 'Subscription', nl: 'Abonnement' }) },
     { id: 'help', label: tr({ en: 'Help & FAQ', nl: 'Help & FAQ' }) },
     { id: 'log-codes', label: tr({ en: 'Log codes', nl: 'Logcodes' }) },
@@ -513,6 +531,47 @@ export default function SettingsPage() {
                   </div>
                 </CardContent>
               </Card>
+              )}
+
+              {activeTab === 'studysets' && (
+              <div className="space-y-5">
+                <Card className="border-0 surface-panel shadow-none">
+                  <CardHeader>
+                    <CardTitle>Adaptive sensitivity</CardTitle>
+                    <CardDescription>How aggressively your study plan adapts to your performance.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {([
+                        { id: 'conservative', label: 'Conservative', description: 'Small adjustments, stable plan' },
+                        { id: 'balanced', label: 'Balanced', description: 'Moderate adaptation' },
+                        { id: 'aggressive', label: 'Aggressive', description: 'Fast and intensive adaptations' },
+                      ] as Array<{ id: 'conservative' | 'balanced' | 'aggressive'; label: string; description: string }>).map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => updateAdaptiveSensitivity(option.id)}
+                          className={cn(
+                            'flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors',
+                            adaptiveSensitivity === option.id
+                              ? 'border-[var(--accent-brand)] bg-[#e8eddf]/50'
+                              : 'border-border hover:border-[var(--accent-brand)]/50'
+                          )}
+                        >
+                          <span className="text-sm font-medium text-foreground">
+                            {option.label}
+                            {option.id === 'balanced' ? <span className="ml-1 text-xs text-muted-foreground">(Recommended)</span> : null}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{option.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">This setting will be applied to all new study plans.</p>
+                  </CardContent>
+                </Card>
+
+                <NotificationPreferences className="border-0 surface-panel shadow-none" />
+              </div>
               )}
 
               {activeTab === 'subscription' && (
