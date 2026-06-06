@@ -185,14 +185,14 @@ function ActiveCard({
         {ss.subject ? (
           <Chip className="bg-[var(--accent-brand)]/12 text-[var(--accent-brand)]">{ss.subject.toLowerCase()}</Chip>
         ) : (
-          <Chip className="bg-muted text-muted-foreground">no subject</Chip>
+          <span />
         )}
         <Chip className={badge.className}>{badge.label}</Chip>
       </div>
 
       {/* title */}
       <Link
-        href={`/studyset/${ss.id}`}
+        href={`/tools/studyset/${ss.id}`}
         className="mt-3 line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-foreground transition-colors hover:text-[var(--accent-brand)]"
       >
         {ss.name}
@@ -242,7 +242,7 @@ function ActiveCard({
           </Link>
         </Button>
         <Button asChild variant="ghost" size="sm">
-          <Link href={`/studyset/${ss.id}`}>open</Link>
+          <Link href={`/tools/studyset/${ss.id}`}>open</Link>
         </Button>
         <Button
           variant="ghost"
@@ -273,11 +273,15 @@ function ArchivedRow({
   const percent = ss.total_tasks === 0 ? 0 : Math.round((ss.completed_tasks / ss.total_tasks) * 100);
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-white px-4 py-3 shadow-sm transition hover:shadow-md">
-      <Link href={`/studyset/${ss.id}`} className="min-w-0 flex-1">
+      <Link href={`/tools/studyset/${ss.id}`} className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-foreground">{ss.name}</div>
         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-          {ss.subject ? <span>{ss.subject.toLowerCase()}</span> : <span>no subject</span>}
-          <span>·</span>
+          {ss.subject && (
+            <>
+              <span>{ss.subject.toLowerCase()}</span>
+              <span>·</span>
+            </>
+          )}
           <span>{percent}% complete</span>
         </div>
       </Link>

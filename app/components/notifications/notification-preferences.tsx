@@ -19,6 +19,9 @@ interface NotificationPreferences {
   ai_grading_completed: boolean;
   comment_added: boolean;
   deadline_reminder: boolean;
+  studyset_weak_spot: boolean;
+  studyset_milestone: boolean;
+  exam_countdown: boolean;
   email_enabled: boolean;
   push_enabled: boolean;
 }
@@ -38,6 +41,9 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
     ai_grading_completed: true,
     comment_added: true,
     deadline_reminder: true,
+    studyset_weak_spot: true,
+    studyset_milestone: true,
+    exam_countdown: true,
     email_enabled: true,
     push_enabled: true,
   });
@@ -221,6 +227,48 @@ export function NotificationPreferences({ className }: NotificationPreferencesPr
                 id="deadline_reminder"
                 checked={preferences.deadline_reminder}
                 onCheckedChange={(checked) => updatePreference('deadline_reminder', checked)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Studyset Learning */}
+        <div>
+          <h4 className="text-sm font-medium mb-3">Studyset learning</h4>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="studyset_weak_spot">Weak spot alerts</Label>
+                <p className="text-xs text-muted-foreground">Notified when you struggle on a topic</p>
+              </div>
+              <Switch
+                id="studyset_weak_spot"
+                checked={preferences.studyset_weak_spot}
+                onCheckedChange={(checked) => updatePreference('studyset_weak_spot', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="studyset_milestone">Strong performance</Label>
+                <p className="text-xs text-muted-foreground">Notified when you score 90% or above</p>
+              </div>
+              <Switch
+                id="studyset_milestone"
+                checked={preferences.studyset_milestone}
+                onCheckedChange={(checked) => updatePreference('studyset_milestone', checked)}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="exam_countdown">Exam countdown</Label>
+                <p className="text-xs text-muted-foreground">Reminders as your exam date approaches</p>
+              </div>
+              <Switch
+                id="exam_countdown"
+                checked={preferences.exam_countdown}
+                onCheckedChange={(checked) => updatePreference('exam_countdown', checked)}
               />
             </div>
           </div>

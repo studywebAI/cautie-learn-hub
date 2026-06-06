@@ -13,6 +13,8 @@ import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
+import { UpcomingExamsStudysets } from "@/components/dashboard/upcoming-exams-studysets";
+import { WeakSpotsPanel } from "@/components/dashboard/weak-spots-panel";
 import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
@@ -166,7 +168,9 @@ function StudentDashboard() {
         {/* Sidebar rail */}
         <div className="lg:col-span-1 flex flex-col gap-4 md:gap-5">
             <GradesMiniCard />
+            <UpcomingExamsStudysets />
             <LearningPulse />
+            <WeakSpotsPanel />
             <Alerts alerts={alerts} />
             <UpcomingDeadlines />
         </div>

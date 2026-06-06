@@ -35,6 +35,9 @@ const ShareTab = dynamic(
 const ScheduleTab = dynamic(
   () => import('@/components/class/schedule-tab-redesigned').then((m) => m.ScheduleTabRedesigned)
 );
+const CalendarTab = dynamic(
+  () => import('@/components/class/calendar-tab').then((m) => ({ default: m.CalendarTab }))
+);
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
@@ -317,6 +320,8 @@ export default function ClassDetailsPage() {
         return <ShareTab classId={classId} />;
       case 'schedule':
         return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
+      case 'calendar':
+        return isTeacher ? <CalendarTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'analytics':
         return isTeacher ? <AnalyticsTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':

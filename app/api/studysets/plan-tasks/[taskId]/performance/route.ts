@@ -136,6 +136,7 @@ export async function POST(
           studysets!inner (
             id,
             user_id,
+            name,
             status,
             source_bundle
           )
@@ -440,6 +441,100 @@ export async function POST(
     }).catch(() => {
       // Keep the primary task completion flow resilient even when adaptive tables are not migrated yet.
     })
+
+    // Notification triggers (fire-and-forget). Any failure here must never break
+    // the performance submission, so the whole block is wrapped in try/catch and
+    // individual inserts swallow their own errors.
+    try {
+      const studysetName = String(studyset.name || 'your studyset')
+      const studysetMeta = bundle.meta && typeof bundle.meta === 'object' ? bundle.meta : {}
+
+      const insertNotification = async (payload: {
+        type: string
+        title: string
+        message: string
+        data?: Record<string, unknown>
+      }) => {
+        try {
+          await (supabase as any).from('notifications').insert({
+            user_id: user.id,
+            type: payload.type,
+            title: payload.title,
+            message: payload.message,
+            data: { studyset_id: day.studyset_id, ...(payload.data || {}) },
+            read: false,
+          })
+        } catch {
+          // notifications table may not be migrated yet — log and continue.
+          console.warn('[performance] notification insert failed', payload.type)
+        }
+      }
+
+      // Trigger 1: Weak spot detected.
+      if (derivedScore < 60 && weakTopics.length > 0) {
+        await insertNotification({
+          type: 'studyset_weak_spot',
+          title: 'Weak area flagged',
+          message: `You struggled with: ${weakTopics.join(', ')}. A review has been added to your plan.`,
+          data: { score: derivedScore, weak_topics: weakTopics, task_id: taskId },
+        })
+      }
+
+      // Trigger 2: Strong performance.
+      if (derivedScore >= 90) {
+        await insertNotification({
+          type: 'studyset_milestone',
+          title: 'Great session!',
+          message: `You scored ${derivedScore}% on ${studysetName}. Keep it up.`,
+          data: { score: derivedScore, task_id: taskId },
+        })
+      }
+
+      // Trigger 3: Exam approaching (only once per day per studyset).
+      const examDateRaw = typeof studysetMeta.exam_date === 'string' ? studysetMeta.exam_date.trim() : ''
+      if (examDateRaw) {
+        const examMs = new Date(examDateRaw).getTime()
+        if (Number.isFinite(examMs)) {
+          const now = new Date()
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+          const examDate = new Date(examMs)
+          const startOfExam = new Date(examDate.getFullYear(), examDate.getMonth(), examDate.getDate()).getTime()
+          const daysUntilExam = Math.round((startOfExam - startOfToday) / (24 * 60 * 60 * 1000))
+
+          if (daysUntilExam >= 0 && daysUntilExam <= 7) {
+            // Fire at most once per day per studyset.
+            let alreadySentToday = false
+            try {
+              const startOfTodayIso = new Date(startOfToday).toISOString()
+              const { data: existing } = await (supabase as any)
+                .from('notifications')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('type', 'exam_countdown')
+                .contains('data', { studyset_id: day.studyset_id })
+                .gte('created_at', startOfTodayIso)
+                .limit(1)
+              alreadySentToday = Array.isArray(existing) && existing.length > 0
+            } catch {
+              // If the dedupe lookup fails, fall through and attempt the insert.
+              alreadySentToday = false
+            }
+
+            if (!alreadySentToday) {
+              await insertNotification({
+                type: 'exam_countdown',
+                title: `Exam in ${daysUntilExam} day${daysUntilExam === 1 ? '' : 's'}`,
+                message: `${studysetName} exam is coming up. Stay on track.`,
+                data: { exam_date: examDateRaw, days_until: daysUntilExam },
+              })
+            }
+          }
+        }
+      }
+    } catch {
+      // Never let notification logic break the performance endpoint.
+      console.warn('[performance] notification triggers failed')
+    }
 
     return NextResponse.json({
       success: true,

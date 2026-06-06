@@ -3,6 +3,7 @@ export const TEACHER_CLASS_TAB_IDS = [
   'share',
   'analytics',
   'schedule',
+  'calendar',
   'logs',
   'settings',
 ] as const;

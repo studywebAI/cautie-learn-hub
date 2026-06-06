@@ -25,6 +25,7 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },
     schedule: { label: isDutch ? 'Rooster' : 'Schedule', icon: CalendarDays, href: '?tab=schedule' },
+    calendar: { label: isDutch ? 'Kalender' : 'Calendar', icon: CalendarDays, href: '?tab=calendar' },
     logs: { label: isDutch ? 'Logs' : 'Logs', icon: History, href: '?tab=logs' },
     settings: { label: isDutch ? 'Instellingen' : 'Settings', icon: Settings2, href: '?tab=settings' },
   } as const;
