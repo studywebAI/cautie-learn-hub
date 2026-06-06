@@ -42,7 +42,8 @@ create table if not exists public.class_calendar_events (
 alter table public.class_calendar_events enable row level security;
 
 -- Teachers can do everything with their own class events
-create policy if not exists "class_calendar_events_teacher_all"
+drop policy if exists "class_calendar_events_teacher_all" on public.class_calendar_events;
+create policy "class_calendar_events_teacher_all"
   on public.class_calendar_events
   for all
   using (
@@ -55,7 +56,8 @@ create policy if not exists "class_calendar_events_teacher_all"
   );
 
 -- Students can read events for classes they are members of
-create policy if not exists "class_calendar_events_student_read"
+drop policy if exists "class_calendar_events_student_read" on public.class_calendar_events;
+create policy "class_calendar_events_student_read"
   on public.class_calendar_events
   for select
   using (
@@ -89,7 +91,8 @@ create table if not exists public.studyset_materials (
 
 alter table public.studyset_materials enable row level security;
 
-create policy if not exists "studyset_materials_owner"
+drop policy if exists "studyset_materials_owner" on public.studyset_materials;
+create policy "studyset_materials_owner"
   on public.studyset_materials
   for all
   using (user_id = auth.uid());
@@ -107,7 +110,8 @@ create table if not exists public.calendar_tokens (
 
 alter table public.calendar_tokens enable row level security;
 
-create policy if not exists "calendar_tokens_owner"
+drop policy if exists "calendar_tokens_owner" on public.calendar_tokens;
+create policy "calendar_tokens_owner"
   on public.calendar_tokens
   for all
   using (user_id = auth.uid());
