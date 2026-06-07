@@ -7,15 +7,22 @@ import { format } from 'date-fns';
 import {
   ArrowLeft,
   Brain,
+  Check,
   CheckCircle2,
   FileText,
   Layers,
   LineChart,
   Link2,
   Map,
+  Minus,
   RefreshCcw,
   Sparkles,
+  Target,
+  TrendingDown,
+  TrendingUp,
   Trash2,
+  X,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -88,6 +95,50 @@ type TrendPoint = {
   avg_score: number;
 };
 
+type AiRecommendation = {
+  id: string;
+  kind: string;
+  tool_key?: string | null;
+  title: string;
+  reason: string;
+  priority: number;
+  due_date?: string | null;
+  status: string;
+  task_id?: string | null;
+  task_type?: string | null;
+  task_title?: string | null;
+  day_number?: number | null;
+  plan_date?: string | null;
+  launch_href?: string | null;
+};
+
+type AiBrief = {
+  title: string;
+  summary: string;
+  recommendation?: {
+    tool: string;
+    taskTitle: string;
+    href: string | null;
+    dayNumber: number;
+  } | null;
+};
+
+type DailyPulse = {
+  summary?: string;
+  weakest_tool?: string | null;
+  focus_topics?: string[];
+  recommended_tools?: string[];
+  completion_percent?: number;
+  avg_score?: number;
+};
+
+type PerformanceSummary = {
+  weakest_tool?: string | null;
+  strongest_tool?: string | null;
+  momentum?: string;
+  momentum_delta?: number;
+};
+
 // Maps a plan-task type to the launch page `tool` param.
 const TOOL_TYPES: Record<string, string> = {
   notes: 'notes',
@@ -139,6 +190,29 @@ function chipTone(weakness: number) {
   return 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]';
 }
 
+function recommendationMeta(kind: string) {
+  switch (kind) {
+    case 'focus':
+      return { Icon: Target, label: 'Focus' };
+    case 'retry':
+      return { Icon: RefreshCcw, label: 'Retry' };
+    case 'challenge':
+      return { Icon: Zap, label: 'Challenge' };
+    default:
+      return { Icon: Sparkles, label: 'Suggestion' };
+  }
+}
+
+function momentumMeta(momentum?: string | null) {
+  if (momentum === 'up') {
+    return { Icon: TrendingUp, label: 'Improving', className: 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]' };
+  }
+  if (momentum === 'down') {
+    return { Icon: TrendingDown, label: 'Slipping', className: 'bg-[#fbe9e7] text-[#9b3a32] border border-[#f1c4bf]' };
+  }
+  return { Icon: Minus, label: 'Steady', className: 'bg-muted text-muted-foreground border border-border' };
+}
+
 export default function StudysetDetailPage() {
   const params = useParams<{ studysetId: string }>();
   const studysetId = params?.studysetId;
@@ -161,6 +235,11 @@ export default function StudysetDetailPage() {
   const [progress, setProgress] = useState({ total_tasks: 0, completed_tasks: 0, percent: 0 });
   const [masteryTopics, setMasteryTopics] = useState<MasteryTopic[]>([]);
   const [scoreTrend, setScoreTrend] = useState<TrendPoint[]>([]);
+  const [aiBrief, setAiBrief] = useState<AiBrief | null>(null);
+  const [recommendations, setRecommendations] = useState<AiRecommendation[]>([]);
+  const [dailyPulse, setDailyPulse] = useState<DailyPulse | null>(null);
+  const [performanceSummary, setPerformanceSummary] = useState<PerformanceSummary | null>(null);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
 
   const dayRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -181,6 +260,11 @@ export default function StudysetDetailPage() {
       setAdaptive(data.adaptive || null);
       setDays(data.days || []);
       setProgress(data.progress || { total_tasks: 0, completed_tasks: 0, percent: 0 });
+      setAiBrief(data.ai_brief || null);
+      setDailyPulse(data?.analytics?.daily_pulse || null);
+      setPerformanceSummary(data?.analytics?.performance_summary || null);
+      const pendingRecs = data?.analytics?.adaptive_engine?.interventions_pending;
+      setRecommendations(Array.isArray(pendingRecs) ? pendingRecs : []);
 
       if (analyticsRes && analyticsRes.ok) {
         const analytics = await analyticsRes.json();
@@ -246,6 +330,29 @@ export default function StudysetDetailPage() {
       await loadDetail();
     } finally {
       setSavingTaskId(null);
+    }
+  };
+
+  const respondToRecommendation = async (id: string, status: 'done' | 'dismissed') => {
+    setRespondingId(id);
+    try {
+      const response = await fetch(`/api/studysets/interventions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error('Could not update recommendation');
+
+      setRecommendations((prev) => prev.filter((rec) => rec.id !== id));
+      toast({ title: status === 'done' ? 'Marked as done' : 'Recommendation dismissed' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not update recommendation',
+        description: error?.message || 'Try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRespondingId(null);
     }
   };
 
@@ -612,6 +719,41 @@ export default function StudysetDetailPage() {
         </div>
       )}
 
+      {/* AI Brief */}
+      {aiBrief && (
+        <section>
+          <h2 className={SECTION_HEADING}>ai brief</h2>
+          <div className={`${CARD} flex flex-wrap items-start justify-between gap-4`}>
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8eddf] text-[#4a5735]">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">{aiBrief.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{aiBrief.summary}</p>
+                {dailyPulse?.focus_topics && dailyPulse.focus_topics.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {dailyPulse.focus_topics.slice(0, 4).map((topic, index) => (
+                      <span
+                        key={`${topic}-${index}`}
+                        className="rounded-full bg-[#fdf3da] px-2.5 py-0.5 text-[11px] font-medium text-[#8a6a13] border border-[#f0e0b0]"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            {aiBrief.recommendation?.href && (
+              <Button asChild size="sm" className="shrink-0" style={{ backgroundColor: '#6b7c4e' }}>
+                <Link href={aiBrief.recommendation.href}>Continue: {aiBrief.recommendation.taskTitle}</Link>
+              </Button>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Today's Plan */}
       <section>
         <h2 className={SECTION_HEADING}>today&apos;s plan</h2>
@@ -634,6 +776,88 @@ export default function StudysetDetailPage() {
           </div>
         )}
       </section>
+
+      {/* AI Recommendations */}
+      {recommendations.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+              ai recommendations
+            </h2>
+            {performanceSummary?.momentum && (
+              (() => {
+                const { Icon: MomentumIcon, label, className } = momentumMeta(performanceSummary.momentum);
+                return (
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${className}`}>
+                    <MomentumIcon className="h-3.5 w-3.5" />
+                    {label}
+                  </span>
+                );
+              })()
+            )}
+          </div>
+          <div className="space-y-3">
+            {recommendations.map((rec) => {
+              const { Icon: KindIcon, label } = recommendationMeta(rec.kind);
+              const busy = respondingId === rec.id;
+              return (
+                <div key={rec.id} className={`${CARD} flex items-start gap-3`}>
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8eddf] text-[#4a5735]">
+                    <KindIcon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{rec.title}</p>
+                      <Badge variant="outline" className="text-[10px]">
+                        {label}
+                      </Badge>
+                      {rec.priority >= 90 && (
+                        <span className="rounded-full bg-[#fbe9e7] px-2 py-0.5 text-[10px] font-medium text-[#9b3a32] border border-[#f1c4bf]">
+                          Urgent
+                        </span>
+                      )}
+                    </div>
+                    {rec.reason && <p className="mt-1 text-xs text-muted-foreground">{rec.reason}</p>}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    {rec.launch_href && (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={rec.launch_href}>Start</Link>
+                      </Button>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-[var(--accent-brand)] hover:text-[var(--accent-brand)]"
+                        disabled={busy}
+                        onClick={() => void respondToRecommendation(rec.id, 'done')}
+                        aria-label="Mark recommendation as done"
+                        title="Mark as done"
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        disabled={busy}
+                        onClick={() => void respondToRecommendation(rec.id, 'dismissed')}
+                        aria-label="Dismiss recommendation"
+                        title="Dismiss"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Weak Spots */}
       {masteryTopics.length > 0 && (
