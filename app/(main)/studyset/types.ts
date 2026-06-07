@@ -203,3 +203,35 @@ export interface TodayTask {
   percentComplete: number;
   color: string;
 }
+
+export interface ChangeLog {
+  id: string;
+  studysetId: string;
+  timestamp: Date;
+  userId: string;
+  field: string;
+  before: any;
+  after: any;
+  changeType: 'edit' | 'ai-suggestion' | 'system';
+}
+
+export interface AIRecommendation {
+  id: string;
+  studysetId: string;
+  type: 'difficulty' | 'focus' | 'schedule' | 'tool-usage' | 'retention';
+  title: string;
+  description: string;
+  suggestedAction: string;
+  priority: 'low' | 'medium' | 'high';
+  createdAt: Date;
+  applied: boolean;
+}
+
+export interface MindmapTool {
+  id: string;
+  name: 'quiz' | 'flashcards' | 'notes' | 'mindmap';
+  label: string;
+  icon: string;
+  enabled: boolean;
+  settings: Record<string, any>;
+}

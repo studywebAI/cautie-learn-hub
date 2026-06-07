@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import StudysetDashboard from './dashboard';
+import MainDashboard from './main-dashboard';
 
 export const metadata = {
   title: 'Studysets',
@@ -9,7 +9,7 @@ export const metadata = {
 export default function StudysetPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <StudysetDashboard />
+      <MainDashboard />
     </Suspense>
   );
 }

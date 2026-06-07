@@ -8,6 +8,7 @@ export default function CreatePage() {
   const router = useRouter();
 
   const flows = [
+    { id: 'primary', name: 'Primaire Flow', emoji: '🚀', desc: 'Naam → Upload → Tools → Genereren', primary: true },
     { id: 'linear', name: 'Lineaire Wizard', emoji: '⬇️', desc: 'Stap voor stap door alle instellingen' },
     { id: 'workbench', name: 'Werkbank', emoji: '📐', desc: 'Zelf bepalen in welke volgorde je vult' },
     { id: 'conditional', name: 'Vragenflow', emoji: '❓', desc: 'AI bepaalt je instellingen o.b.v. antwoorden' },

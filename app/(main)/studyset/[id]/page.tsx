@@ -65,6 +65,15 @@ export default function StudysetDetailPage({ params }: { params: { id: string } 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const percentComplete = Math.round((studyset.completedCards / studyset.totalCards) * 100);
 
+  const tabs = [
+    { id: 'overview', label: '📋 Overzicht', href: `/studyset/${studyset.id}` },
+    { id: 'analytics', label: '📊 Analytics', href: `/studyset/${studyset.id}/analytics` },
+    { id: 'settings', label: '⚙️ Instellingen', href: `/studyset/${studyset.id}/edit` },
+    { id: 'history', label: '📜 Wijzigingen', href: `/studyset/${studyset.id}/history` },
+    { id: 'study', label: '🎓 Studeren', href: `/studyset/${studyset.id}/study` },
+  ];
+  const currentTab = 'overview';
+
   return (
     <div className="min-h-screen bg-[#faf9f7]">
       {/* HEADER */}
@@ -74,7 +83,7 @@ export default function StudysetDetailPage({ params }: { params: { id: string } 
           Terug naar studysets
         </Link>
 
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between mb-6">
           <div>
             <p className="text-xs font-bold uppercase text-[#6b7c4e] mb-1">{studyset.subject}</p>
             <h1 className="text-3xl font-bold text-[#18181b]">{studyset.name}</h1>
@@ -82,23 +91,23 @@ export default function StudysetDetailPage({ params }: { params: { id: string } 
               {studyset.totalCards} kaarten • {studyset.avgRetention}% retentie • 🔥 {studyset.currentStreak} streak
             </p>
           </div>
+        </div>
 
-          <div className="flex gap-2">
+        {/* TABS */}
+        <div className="flex gap-2 border-b border-[#e4e4e7]">
+          {tabs.map((tab) => (
             <Link
-              href={`/studyset/${studyset.id}/analytics`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#e4e4e7] hover:bg-[#f5f3f0] transition"
+              key={tab.id}
+              href={tab.href}
+              className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+                currentTab === tab.id
+                  ? 'border-[#6b7c4e] text-[#6b7c4e]'
+                  : 'border-transparent text-[#71717a] hover:text-[#18181b]'
+              }`}
             >
-              <BarChart3 className="h-4 w-4" />
-              Analytics
+              {tab.label}
             </Link>
-            <Link
-              href={`/studyset/${studyset.id}/study`}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#6b7c4e] text-white rounded-lg hover:bg-[#4f5d3a]"
-            >
-              <Zap className="h-4 w-4" />
-              Start
-            </Link>
-          </div>
+          ))}
         </div>
       </div>
 

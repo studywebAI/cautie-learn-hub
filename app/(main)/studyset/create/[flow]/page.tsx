@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import PrimaryFlow from '../primary-flow';
 import LinearWizard from '../linear-wizard';
 import WorkbenchFlow from '../workbench';
 import ConditionalFlow from '../conditional';
@@ -10,6 +11,7 @@ import Link from 'next/link';
 
 export default function CreateFlowPage({ params }: { params: { flow: string } }) {
   const flowMap: Record<string, React.ReactNode> = {
+    primary: <PrimaryFlow />,
     linear: <LinearWizard />,
     workbench: <WorkbenchFlow />,
     conditional: <ConditionalFlow />,
