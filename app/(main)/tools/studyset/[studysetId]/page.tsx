@@ -10,12 +10,14 @@ import {
   Check,
   CheckCircle2,
   FileText,
+  History,
   Layers,
   LineChart,
   Link2,
   Map,
   Minus,
   RefreshCcw,
+  Settings,
   Sparkles,
   Target,
   TrendingDown,
@@ -564,6 +566,16 @@ export default function StudysetDetailPage() {
           <Button asChild variant="outline" size="icon" className="h-9 w-9" aria-label="Analytics">
             <Link href={`/tools/studyset/${studysetId}/analytics`}>
               <LineChart className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="icon" className="h-9 w-9" aria-label="Changes">
+            <Link href={`/tools/studyset/${studysetId}/changes`}>
+              <History className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="icon" className="h-9 w-9" aria-label="Settings">
+            <Link href={`/tools/studyset/${studysetId}/settings`}>
+              <Settings className="h-4 w-4" />
             </Link>
           </Button>
           <Button

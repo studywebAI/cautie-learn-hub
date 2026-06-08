@@ -2,35 +2,21 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { format } from 'date-fns';
 import {
-  Atom,
-  Brain,
+  Archive,
+  BarChart3,
   BookOpen,
-  Calculator,
   ChevronLeft,
   ChevronDown,
   ChevronRight,
-  Code2,
-  Compass,
-  Dna,
-  FlaskConical,
   GraduationCap,
-  Globe,
-  Landmark,
-  Languages,
-  Lightbulb,
-  Microscope,
-  Music,
-  Palette,
-  Pencil,
-  PenTool,
+  Link2,
   Plus,
   Route,
-  Sigma,
   Upload,
   FileText,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -39,6 +25,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { PageSection } from '@/components/layout/page-section';
+import { ICON_OPTIONS, COLOR_OPTIONS, colorHex, iconForId, statusMeta } from '@/components/studyset/style-options';
+import { AgendaTemplatePicker, type AgendaTemplateSeed } from '@/components/studyset/agenda-template-picker';
+import { SubjectTopicPicker, type SubjectTopicSeed } from '@/components/studyset/subject-topic-picker';
 
 type StudysetRow = {
   id: string;
@@ -48,6 +37,27 @@ type StudysetRow = {
   status: string;
   updated_at: string;
   source_bundle?: string | null;
+  meta?: {
+    icon?: string | null;
+    color?: string | null;
+    subject?: string | null;
+    exam_date?: string | null;
+    description?: string | null;
+  } | null;
+  progress?: {
+    total_tasks: number;
+    completed_tasks: number;
+    percent: number;
+  } | null;
+  analytics_summary?: {
+    avg_score: number;
+    recent_attempts_7d: number;
+    due_today_tasks: number;
+    pending_interventions: number;
+    weakest_tool: string | null;
+  } | null;
+  next_task_id?: string | null;
+  next_task_href?: string | null;
 };
 
 type MicrosoftFileItem = {
@@ -70,58 +80,10 @@ type UploadMeta = {
   extractionStatus?: 'ready' | 'empty' | 'error';
 };
 
-type IconOption = {
-  id: string;
-  Icon: LucideIcon;
-};
-
-type ColorOption = {
-  id: string;
-  swatchClass: string;
-};
-
 const STEP_TITLES = ['Basics', 'Calendar', 'Sources'];
 
-const ICON_OPTIONS: IconOption[] = [
-  { id: 'book-open', Icon: BookOpen },
-  { id: 'flask', Icon: FlaskConical },
-  { id: 'landmark', Icon: Landmark },
-  { id: 'globe', Icon: Globe },
-  { id: 'calculator', Icon: Calculator },
-  { id: 'dna', Icon: Dna },
-  { id: 'atom', Icon: Atom },
-  { id: 'pencil', Icon: Pencil },
-  { id: 'code', Icon: Code2 },
-  { id: 'brain', Icon: Brain },
-  { id: 'graduation-cap', Icon: GraduationCap },
-  { id: 'languages', Icon: Languages },
-  { id: 'music', Icon: Music },
-  { id: 'palette', Icon: Palette },
-  { id: 'microscope', Icon: Microscope },
-  { id: 'sigma', Icon: Sigma },
-  { id: 'compass', Icon: Compass },
-  { id: 'pen-tool', Icon: PenTool },
-  { id: 'lightbulb', Icon: Lightbulb },
-];
-
-const COLOR_OPTIONS: ColorOption[] = [
-  { id: 'cobalt', swatchClass: 'bg-[#3a5be7]' },
-  { id: 'azure', swatchClass: 'bg-[#1d9bf0]' },
-  { id: 'turquoise', swatchClass: 'bg-[#19b5a5]' },
-  { id: 'mint', swatchClass: 'bg-[#25c47a]' },
-  { id: 'lime', swatchClass: 'bg-[#6ad63a]' },
-  { id: 'amber', swatchClass: 'bg-[#f4b400]' },
-  { id: 'orange', swatchClass: 'bg-[#f78422]' },
-  { id: 'coral', swatchClass: 'bg-[#ff6f61]' },
-  { id: 'rose', swatchClass: 'bg-[#ff4f8b]' },
-  { id: 'magenta', swatchClass: 'bg-[#d946ef]' },
-  { id: 'violet', swatchClass: 'bg-[#8b5cf6]' },
-  { id: 'grape', swatchClass: 'bg-[#5f3dc4]' },
-  { id: 'charcoal', swatchClass: 'bg-[#4b5563]' },
-  { id: 'slate', swatchClass: 'bg-[#64748b]' },
-];
-
 const SOFT_SURFACE = 'border border-border/60 bg-surface-1/50';
+const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
 const CALENDAR_CLASSES = {
   day_selected:
     'bg-surface-chip text-foreground hover:bg-surface-chip hover:text-foreground focus:bg-surface-chip focus:text-foreground',
@@ -183,14 +145,36 @@ export default function StudysetPage() {
   const [pastedText, setPastedText] = useState('');
   const [uploads, setUploads] = useState<UploadMeta[]>([]);
 
+  // Source method — the 3-option scheme: start from an agenda item (class template),
+  // a real subject/chapter/paragraph from the curriculum, or a basic upload.
+  const [sourceMethod, setSourceMethod] = useState<'agenda' | 'subject' | 'upload'>('upload');
+  const [linkedSeed, setLinkedSeed] = useState<{
+    sourceId: string | null;
+    label: string;
+    subject: string | null;
+    examDate: string | null;
+  } | null>(null);
+
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
 
   const [creating, setCreating] = useState(false);
   const [showNotesInput, setShowNotesInput] = useState(false);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
 
-  const madeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
+  const activeStudysets = useMemo(() => studysets.filter((row) => row.status !== 'archived'), [studysets]);
+  const archivedStudysets = useMemo(() => studysets.filter((row) => row.status === 'archived'), [studysets]);
+  const todayItems = useMemo(
+    () =>
+      activeStudysets
+        .filter((row) => Number(row.analytics_summary?.due_today_tasks || 0) > 0)
+        .sort(
+          (a, b) =>
+            Number(b.analytics_summary?.due_today_tasks || 0) - Number(a.analytics_summary?.due_today_tasks || 0)
+        ),
+    [activeStudysets]
+  );
 
   const usedMeta = useMemo(() => {
     const icons = new Set<string>();
@@ -226,6 +210,8 @@ export default function StudysetPage() {
     setPastedText('');
     setUploads([]);
     setSelectedMicrosoftFiles([]);
+    setSourceMethod('upload');
+    setLinkedSeed(null);
   };
 
   const loadStudysets = async () => {
@@ -433,6 +419,23 @@ export default function StudysetPage() {
     setSelectedMicrosoftFiles([]);
   };
 
+  // Applying a real agenda item or curriculum topic seeds the focus notes (so the
+  // generation has real context) and remembers subject/exam-date so they land on
+  // the studyset itself — not just inside the source bundle.
+  const applyAgendaSeed = (seed: AgendaTemplateSeed) => {
+    setLinkedSeed({ sourceId: seed.id, label: seed.label, subject: seed.subject, examDate: seed.examDate });
+    setNotesText(seed.focusNote);
+    setShowNotesInput(true);
+    toast({ title: 'Linked to your agenda', description: `Focus notes filled in for "${seed.title}".` });
+  };
+
+  const applySubjectSeed = (seed: SubjectTopicSeed) => {
+    setLinkedSeed({ sourceId: null, label: seed.label, subject: seed.subject, examDate: null });
+    setNotesText(seed.focusNote);
+    setShowNotesInput(true);
+    toast({ title: 'Linked to your curriculum', description: 'Focus notes filled in — feel free to adjust them.' });
+  };
+
   const createStudyset = async () => {
     if (!isStepOneReady || !isStepTwoReady || !isStepThreeReady) return;
     setCreating(true);
@@ -482,6 +485,17 @@ export default function StudysetPage() {
             microsoft_account: microsoftEmail || null,
             selected_documents: extractedMicrosoftFiles,
           },
+          // Real link back to the agenda item / curriculum topic the user picked
+          // in the "class template" / "subject pick" flow (when applicable).
+          linked_source: linkedSeed
+            ? {
+                method: sourceMethod,
+                agenda_item_id: linkedSeed.sourceId,
+                label: linkedSeed.label,
+                subject: linkedSeed.subject,
+                exam_date: linkedSeed.examDate,
+              }
+            : null,
         },
       };
 
@@ -494,6 +508,8 @@ export default function StudysetPage() {
           target_days: selectedDateStrings.length,
           minutes_per_day: 45,
           source_bundle: JSON.stringify(sourcePayload),
+          ...(linkedSeed?.subject ? { subject: linkedSeed.subject } : {}),
+          ...(linkedSeed?.examDate ? { exam_date: linkedSeed.examDate } : {}),
         }),
       });
 
@@ -539,7 +555,33 @@ export default function StudysetPage() {
   const STEP_SUBTITLES = [
     'Give your studyset a name and a look.',
     'Pick the days you plan to study.',
-    'Add your notes, files, or paste text.',
+    'Link it to your agenda or curriculum, or add your own notes and files.',
+  ];
+
+  const SOURCE_METHOD_OPTIONS: Array<{
+    id: 'agenda' | 'subject' | 'upload';
+    title: string;
+    description: string;
+    Icon: typeof GraduationCap;
+  }> = [
+    {
+      id: 'agenda',
+      title: 'From your agenda',
+      description: 'Build it around an upcoming test or assignment.',
+      Icon: GraduationCap,
+    },
+    {
+      id: 'subject',
+      title: 'Pick a subject & chapter',
+      description: 'Scope it to part of your real curriculum.',
+      Icon: BookOpen,
+    },
+    {
+      id: 'upload',
+      title: 'Upload your own',
+      description: 'Paste notes, upload files, or connect OneDrive.',
+      Icon: Upload,
+    },
   ];
 
   return (
@@ -562,7 +604,7 @@ export default function StudysetPage() {
       </div>
 
       {view === 'home' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {loadingStudysets && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
@@ -570,7 +612,8 @@ export default function StudysetPage() {
               ))}
             </div>
           )}
-          {!loadingStudysets && madeStudysets.length === 0 && (
+
+          {!loadingStudysets && studysets.length === 0 && (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6b7c4e]/10 mb-4">
                 <Route className="h-6 w-6 text-[#6b7c4e]" />
@@ -585,20 +628,162 @@ export default function StudysetPage() {
               </Button>
             </div>
           )}
-          {!loadingStudysets && madeStudysets.length > 0 && (
-            <div className="space-y-2">
-              {madeStudysets.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => router.push(`/tools/studyset/${item.id}`)}
-                  className="w-full rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-[#6b7c4e]/40 hover:shadow-sm"
-                >
-                  <p className="text-sm font-medium text-foreground">{item.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.target_days} study days planned</p>
-                </button>
-              ))}
-            </div>
+
+          {!loadingStudysets && studysets.length > 0 && (
+            <>
+              {todayItems.length > 0 && (
+                <section>
+                  <h2 className={SECTION_HEADING}>today</h2>
+                  <div className="space-y-2">
+                    {todayItems.map((item) => {
+                      const meta = item.meta || {};
+                      const hex = colorHex(meta.color);
+                      const ItemIcon = iconForId(meta.icon);
+                      const progress = item.progress || { total_tasks: 0, completed_tasks: 0, percent: 0 };
+                      const dueCount = Number(item.analytics_summary?.due_today_tasks || 0);
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 rounded-xl border border-border bg-card pl-3 pr-4 py-3"
+                          style={{ borderLeft: `4px solid ${hex}` }}
+                        >
+                          <div
+                            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: `${hex}1a`, color: hex }}
+                          >
+                            <ItemIcon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                            <div className="mt-1.5 flex items-center gap-2">
+                              <div className="h-1.5 w-full max-w-[140px] overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{ width: `${progress.percent}%`, backgroundColor: hex }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{progress.percent}% done</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-shrink-0 items-center gap-2">
+                            <span className="hidden sm:inline text-xs font-medium text-muted-foreground whitespace-nowrap">
+                              {dueCount} {dueCount === 1 ? 'task' : 'tasks'} left today
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => router.push(item.next_task_href || `/tools/studyset/${item.id}`)}
+                              style={{ backgroundColor: hex }}
+                              className="text-white hover:opacity-90"
+                            >
+                              Start
+                            </Button>
+                            <button
+                              type="button"
+                              title="View analytics"
+                              onClick={() => router.push(`/tools/studyset/${item.id}/analytics`)}
+                              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+                            >
+                              <BarChart3 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              <section>
+                <h2 className={SECTION_HEADING}>active studysets</h2>
+                {activeStudysets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No active studysets — everything is archived or done.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {activeStudysets.map((item) => {
+                      const meta = item.meta || {};
+                      const hex = colorHex(meta.color);
+                      const ItemIcon = iconForId(meta.icon);
+                      const progress = item.progress || { total_tasks: 0, completed_tasks: 0, percent: 0 };
+                      const sm = statusMeta(item.status);
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-[#6b7c4e]/40 hover:shadow-sm"
+                        >
+                          <div
+                            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: `${hex}1a`, color: hex }}
+                          >
+                            <ItemIcon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                              <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${sm.className}`}>
+                                {sm.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {progress.completed_tasks}/{progress.total_tasks} tasks done · {item.target_days} study days
+                            </p>
+                          </div>
+                          <div className="hidden sm:flex flex-shrink-0 items-center gap-2">
+                            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${progress.percent}%`, backgroundColor: hex }}
+                              />
+                            </div>
+                            <span className="w-9 text-right text-xs text-muted-foreground">{progress.percent}%</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {archivedStudysets.length > 0 && (
+                <section>
+                  <button
+                    type="button"
+                    onClick={() => setArchivedExpanded((value) => !value)}
+                    className="flex items-center gap-2 text-left"
+                  >
+                    <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className={`${SECTION_HEADING} mb-0`}>archived ({archivedStudysets.length})</span>
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${archivedExpanded ? '' : '-rotate-90'}`}
+                    />
+                  </button>
+                  {archivedExpanded && (
+                    <div className="mt-2 space-y-1.5">
+                      {archivedStudysets.map((item) => {
+                        const meta = item.meta || {};
+                        const ItemIcon = iconForId(meta.icon);
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => router.push(`/tools/studyset/${item.id}`)}
+                            className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-surface-1/40 px-4 py-2.5 text-left opacity-70 transition-colors hover:opacity-100 hover:bg-surface-1"
+                          >
+                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                              <ItemIcon className="h-3.5 w-3.5" />
+                            </div>
+                            <p className="truncate text-sm text-muted-foreground">{item.name}</p>
+                            <span className="ml-auto flex-shrink-0 text-xs text-muted-foreground">{item.target_days} days</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
+              )}
+            </>
           )}
         </div>
       )}
@@ -758,8 +943,82 @@ export default function StudysetPage() {
 
               {step === 2 && (
                 <div className="space-y-5">
+                  {/* Source method — the 3-option scheme */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">How should we build this?</label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Pick a starting point — you can still add your own notes and files either way.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {SOURCE_METHOD_OPTIONS.map((option) => {
+                        const selected = sourceMethod === option.id;
+                        const OptionIcon = option.Icon;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setSourceMethod(option.id)}
+                            className={`flex flex-col items-start gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
+                              selected
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
+                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                            }`}
+                          >
+                            <span
+                              className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
+                              }`}
+                            >
+                              <OptionIcon className="h-4 w-4" />
+                            </span>
+                            <span className="text-sm font-medium text-foreground">{option.title}</span>
+                            <span className="text-xs text-muted-foreground">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {linkedSeed && (
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[#eef1e7] px-3.5 py-2.5 text-xs text-[#4a5735]">
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <Link2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            Linked to: {linkedSeed.label}
+                            {linkedSeed.examDate
+                              ? ` · exam ${format(new Date(`${linkedSeed.examDate}T00:00:00`), 'MMM d')}`
+                              : ''}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setLinkedSeed(null)}
+                          className="shrink-0 underline hover:no-underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {sourceMethod === 'agenda' && (
+                      <div className="mt-3">
+                        <AgendaTemplatePicker selectedId={linkedSeed?.sourceId ?? null} onPick={applyAgendaSeed} />
+                      </div>
+                    )}
+                    {sourceMethod === 'subject' && (
+                      <div className="mt-3">
+                        <SubjectTopicPicker appliedLabel={linkedSeed?.label ?? null} onApply={applySubjectSeed} />
+                      </div>
+                    )}
+                  </div>
+
                   {/* Notes */}
                   <div>
+                    {sourceMethod !== 'upload' && (
+                      <p className="mb-2 text-xs text-muted-foreground">
+                        We filled in focus notes from your pick below — feel free to edit them, or add your own
+                        materials too.
+                      </p>
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-medium text-foreground">
                         Notes <span className="text-muted-foreground font-normal">(optional)</span>
