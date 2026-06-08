@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard design mockups</title>
+<style>
+  :root {
+    --background: 0 0% 92.8%;
+    --foreground: 0 0% 10.2%;
+    --muted-foreground: 0 0% 20%;
+    --border: 0 0% 94.9%;
+    --surface-1: 0 0% 98.6%;
+    --surface-2: 0 0% 97.8%;
+    --surface-3: 0 0% 97.2%;
+    --radius: 12px;
+    --font-ui: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  html[data-theme="dark"] {
+    --background: 0 0% 12.94%;
+    --foreground: 0 0% 94.12%;
+    --muted-foreground: 0 0% 78.43%;
+    --border: 0 0% 22%;
+    --surface-1: 0 0% 14%;
+    --surface-2: 0 0% 16%;
+    --surface-3: 0 0% 18%;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font-ui);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 22px 64px; }
+
+  /* header */
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  h1 { font-size: 21px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .subtitle { font-size: 13px; color: hsl(var(--muted-foreground)); margin: 0; }
+  .theme-btn {
+    flex-shrink: 0; font-size: 12px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1));
+    color: hsl(var(--foreground)); cursor: pointer; transition: background .15s ease;
+  }
+  .theme-btn:hover { background: hsl(var(--surface-2)); }
+
+  .intro-box {
+    border-radius: var(--radius); background: hsl(var(--surface-3)); padding: 13px 16px; margin-bottom: 36px;
+  }
+  .intro-box p { margin: 0; font-size: 12.5px; color: hsl(var(--muted-foreground)); line-height: 1.6; }
+  .intro-box strong { color: hsl(var(--foreground)); font-weight: 500; }
+
+  /* section headers */
+  .section { margin-bottom: 40px; }
+  .section h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .section .lead { font-size: 12.5px; color: hsl(var(--muted-foreground)); max-width: 640px; margin: 0 0 16px; }
+
+  /* tabs */
+  .tabs { display: inline-flex; gap: 2px; padding: 4px; border-radius: 10px; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-2)); margin-bottom: 18px; }
+  .tab-btn {
+    font-size: 12px; padding: 6px 14px; border-radius: 8px; border: none; cursor: pointer;
+    background: transparent; color: hsl(var(--muted-foreground)); transition: all .15s ease;
+  }
+  .tab-btn.active { background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .group-intro { font-size: 12.5px; color: hsl(var(--muted-foreground)); max-width: 620px; margin: 0 0 14px; }
+
+  /* variant grid + card */
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 920px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+  .vcard { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 16px; padding: 16px; }
+  .vcard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .vcard-name { font-size: 13px; font-weight: 500; margin: 0; }
+  .vcard-hint { flex-shrink: 0; font-size: 10px; padding: 3px 9px; border-radius: 999px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); white-space: nowrap; }
+  .well { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-2)); border-radius: 12px; padding: 20px; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+  .well > * { width: 100%; }
+
+  /* shared building blocks */
+  .panel { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 16px 20px; }
+  .chip-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; padding: 4px 10px; border-radius: 999px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); }
+  .text-fg { color: hsl(var(--foreground)); }
+  .text-muted { color: hsl(var(--muted-foreground)); }
+  .text-center { text-align: center; }
+  .hidden { display: none !important; }
+  .stack { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .micro-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin: 0 0 4px; }
+  .term-text { font-size: 16px; font-weight: 500; margin: 0; }
+  .explain-text { font-size: 13px; color: hsl(var(--muted-foreground)); margin: 6px 0 0; }
+  .hint-text { font-size: 11px; color: hsl(var(--muted-foreground)); margin: 0; }
+  hr.dashed { border: none; border-top: 1px dashed hsl(var(--border) / 1); margin: 0; }
+
+  /* buttons / inputs */
+  .btn {
+    font-size: 12px; padding: 7px 16px; border-radius: 999px; border: 1px solid transparent; cursor: pointer;
+    background: hsl(var(--foreground)); color: hsl(var(--background)); transition: opacity .15s ease; white-space: nowrap;
+  }
+  .btn:hover { opacity: .88; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-outline { background: transparent; color: hsl(var(--foreground)); border-color: hsl(var(--border) / 1); }
+  .btn-outline:hover { background: hsl(var(--surface-2)); opacity: 1; }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 6px 14px; font-size: 11.5px; }
+  .input {
+    width: 100%; height: 36px; font-size: 13px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid hsl(var(--border) / 1); background: hsl(var(--background)); color: hsl(var(--foreground)); outline: none;
+  }
+  .input:focus { border-color: hsl(var(--foreground) / .4); }
+  .input::placeholder { color: hsl(var(--muted-foreground) / .6); }
+  .link-btn {
+    background: none; border: none; cursor: pointer; font-size: 11px; color: hsl(var(--muted-foreground));
+    display: inline-flex; align-items: center; gap: 4px; transition: color .15s ease; padding: 0;
+  }
+  .link-btn:hover { color: hsl(var(--foreground)); }
+
+  /* result feedback */
+  .result { font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+  .result.correct { color: hsl(var(--foreground)); }
+  .result.incorrect { color: hsl(var(--muted-foreground)); }
+
+  /* Standard — centered flip */
+  .flip-demo {
+    width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1));
+    border-radius: 12px; padding: 30px 24px; text-align: center; cursor: pointer;
+  }
+  .flip-demo p { font-size: 17px; font-weight: 500; margin: 0; }
+
+  /* Standard — field pair badge */
+  .pair-box { width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 18px; text-align: center; cursor: pointer; }
+  .pair-box .lead { font-size: 16px; font-weight: 500; margin: 0; transition: all .15s ease; }
+  .pair-box .lead.muted { font-size: 13px; color: hsl(var(--muted-foreground)); font-weight: 400; }
+  .pair-box .trail { font-size: 16px; font-weight: 500; margin: 8px 0 0; }
+
+  /* Standard — compact row */
+  .compact-row { display: flex; align-items: center; gap: 12px; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 11px 16px; cursor: pointer; }
+  .compact-row .term-chip { flex-shrink: 0; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 8px; background: hsl(var(--surface-3)); }
+  .compact-row .answer-text { flex: 1; font-size: 13px; color: hsl(var(--muted-foreground)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compact-row .chevron { color: hsl(var(--muted-foreground)); transition: transform .15s ease; font-size: 15px; }
+  .compact-row .chevron.rotated { transform: rotate(90deg); }
+
+  /* cloze */
+  .cloze-sentence { font-size: 15px; line-height: 1.7; text-align: center; margin: 0; }
+  .blank-toggle {
+    display: inline-block; padding: 1px 8px; margin: 0 2px; border-radius: 6px; cursor: pointer;
+    border-bottom: 2px dashed hsl(var(--muted-foreground) / .5); color: transparent; background: hsl(var(--surface-2));
+    user-select: none; transition: all .15s ease;
+  }
+  .blank-toggle.revealed { border-color: transparent; background: hsl(var(--surface-3)); color: hsl(var(--foreground)); font-weight: 500; }
+  .bank-blank { display: inline-block; padding: 2px 12px; margin: 0 2px; border-radius: 6px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); border-bottom: 2px dashed hsl(var(--muted-foreground) / .5); }
+  .bank-options { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
+  .bank-btn {
+    font-size: 12px; padding: 7px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+    background: hsl(var(--surface-2)); color: hsl(var(--muted-foreground)); transition: all .15s ease;
+  }
+  .bank-btn:hover { background: hsl(var(--surface-3)); }
+  .bank-btn.correct { background: hsl(var(--surface-3)); color: hsl(var(--foreground)); border-color: hsl(var(--foreground) / .25); }
+  .bank-btn.incorrect { background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); text-decoration: line-through; border-color: hsl(var(--foreground) / .25); }
+  .inline-input {
+    width: 132px; background: transparent; border: none; border-bottom: 2px solid hsl(var(--muted-foreground) / .5);
+    outline: none; font-size: 13px; text-align: center; padding: 2px 4px; color: hsl(var(--foreground));
+  }
+  .inline-input:focus { border-color: hsl(var(--foreground) / .6); }
+  .inline-input::placeholder { color: hsl(var(--muted-foreground) / .55); }
+  .p-blank { display: inline-block; padding: 1px 7px; margin: 0 1px; border-radius: 5px; background: hsl(var(--surface-3)); color: transparent; user-select: none; }
+  .p-blank.revealed { color: hsl(var(--foreground)); font-weight: 500; }
+  .progress-label { font-size: 11px; color: hsl(var(--muted-foreground)); }
+
+  /* context */
+  .quote-strip { display: flex; align-items: flex-start; gap: 8px; border-radius: 8px; background: hsl(var(--surface-3)); padding: 9px 12px; }
+  .quote-strip p { margin: 0; font-size: 11px; font-style: italic; color: hsl(var(--muted-foreground)); line-height: 1.6; }
+  .quote-mark { flex-shrink: 0; font-size: 16px; line-height: 1; color: hsl(var(--muted-foreground)); }
+  .reveal-box { width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 18px; text-align: center; cursor: pointer; }
+  .footnote-link { background: none; border: none; cursor: pointer; font-size: 11px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; transition: color .15s ease; }
+  .footnote-link:hover { color: hsl(var(--foreground)); }
+  .split-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px; align-items: stretch; width: 100%; }
+  .split-context { border-radius: 10px; background: hsl(var(--surface-3)); padding: 12px; display: flex; align-items: center; }
+  .split-context p { margin: 0; font-size: 11px; font-style: italic; color: hsl(var(--muted-foreground)); line-height: 1.6; }
+  .split-focus { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 10px; padding: 13px 16px; display: flex; flex-direction: column; justify-content: center; }
+
+  /* mnemonic */
+  .mnem-trick { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-style: italic; color: hsl(var(--muted-foreground)); }
+  .mnem-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; background: hsl(var(--surface-3)); padding: 7px 13px; }
+  .mnem-chip p { margin: 0; font-size: 11px; }
+  .mnem-companion { display: flex; gap: 12px; align-items: stretch; width: 100%; flex-wrap: wrap; }
+  .mnem-companion .main { flex: 1; min-width: 200px; }
+  .mnem-companion .side { width: 150px; border-radius: 12px; background: hsl(var(--surface-3)); padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
+  .mnem-companion .side p:first-of-type { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin: 4px 0 0; }
+  .mnem-companion .side p:last-of-type { font-size: 11px; line-height: 1.5; margin: 0; }
+  .anchor-card { display: flex; align-items: center; gap: 16px; width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 16px 20px; }
+  .anchor-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: 999px; background: hsl(var(--surface-3)); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+  /* type-the-answer */
+  .fuzzy-box { display: inline-block; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 8px; padding: 8px 14px; }
+  .fuzzy-box p { margin: 0; font-size: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .fuzzy-mark { background: hsl(var(--surface-3)); border-radius: 3px; padding: 0 2px; }
+  .masked-word { font-size: 19px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .25em; margin: 0; }
+  .pair-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  .pair-field label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin-bottom: 4px; text-align: left; }
+
+  .icon-circle { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 999px; font-size: 10px; }
+  .icon-circle.ok { background: hsl(var(--surface-3)); }
+  .icon-circle.no { background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Flashcard design mockups</h1>
+        <p class="subtitle">Layout &amp; interaction comparisons — pick what feels right, theme stays as-is</p>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()">🌓 <span id="theme-label">Dark mode</span></button>
+    </div>
+
+    <div class="intro-box">
+      <p>
+        This is a side-by-side comparison gallery, not the live tool — every variant below renders the
+        <strong>exact same sample content</strong> ("Mitochondria" / its definition / a source sentence) so only the
+        <strong>layout and interaction</strong> differs. Colors, surfaces and type mirror the existing design tokens
+        (light/dark switch top-right uses the app's real values). Click around — flips, reveals, blanks and inputs
+        all work. Pick your favorites per group and I'll wire the chosen ones into the real Customize-Flashcards
+        options panel.
+      </p>
+    </div>
+
+    <!-- ════════════ CARD STYLES ════════════ -->
+    <div class="section">
+      <h2>Card styles</h2>
+      <p class="lead">Four families, four layout takes each — these become the "Card Style" picker on the options screen.</p>
+
+      <div class="tabs" id="style-tabs">
+        <button class="tab-btn active" data-tab-trigger="standard" onclick="showTab('style-tabs', 'standard')">Standard</button>
+        <button class="tab-btn" data-tab-trigger="cloze" onclick="showTab('style-tabs', 'cloze')">Cloze</button>
+        <button class="tab-btn" data-tab-trigger="context" onclick="showTab('style-tabs', 'context')">Context</button>
+        <button class="tab-btn" data-tab-trigger="mnemonic" onclick="showTab('style-tabs', 'mnemonic')">Mnemonic</button>
+      </div>
+
+      <!-- STANDARD -->
+      <div class="tab-panel active" data-tab-panel="standard">
+        <p class="group-intro">The classic front/back card — four takes on how the two sides relate and reveal.</p>
+        <div class="grid-2">
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Centered Flip</p><span class="vcard-hint">baseline</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="flip-demo" data-flipped="false" data-front="Mitochondria"
+                     data-back="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                     onclick="flipCard(this)">
+                  <p>Mitochondria</p>
+                </div>
+                <p class="hint-text text-center">⇄ Tap card to flip</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Stacked Reveal</p><span class="vcard-hint">no animation</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="panel">
+                  <p class="micro-label">Term</p>
+                  <p class="term-text">Mitochondria</p>
+                </div>
+                <hr class="dashed">
+                <div class="panel hidden answer-reveal-target" style="background: hsl(var(--surface-3)); border: none;">
+                  <p class="micro-label">Explanation</p>
+                  <p class="explain-text" style="margin-top:2px;">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+                <button class="btn btn-outline btn-block" onclick="revealStacked(this)">Reveal answer</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Field-Pair Badge</p><span class="vcard-hint">swap sides</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="row-between">
+                  <span class="chip-pill kind-label">Term → Explanation</span>
+                  <button class="link-btn" onclick="swapPair(this)">⇄ Swap sides</button>
+                </div>
+                <div class="pair-box"
+                     data-a="Mitochondria"
+                     data-b="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                     data-revealed="false" onclick="togglePairReveal(this)">
+                  <p class="lead">Mitochondria</p>
+                  <p class="trail hidden"></p>
+                </div>
+                <p class="hint-text text-center">AI tags each card's field pair (term/explanation, date/event…) — you choose which side leads.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Compact Row</p><span class="vcard-hint">dense scan</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="compact-row" data-revealed="false"
+                     data-answer="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                     onclick="toggleCompactRow(this)">
+                  <span class="term-chip">Mitochondria</span>
+                  <span class="answer-text">••••••••••••••••••••••••••••</span>
+                  <span class="chevron">›</span>
+                </div>
+                <p class="hint-text">Dense row layout — built for fast scan-through of long decks.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CLOZE -->
+      <div class="tab-panel" data-tab-panel="cloze">
+        <p class="group-intro">Fill-in-the-blank within a full sentence — keeps real context attached to the term.</p>
+        <div class="grid-2">
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Inline Blank</p><span class="vcard-hint">click to reveal</span></div>
+            <div class="well">
+              <div class="stack">
+                <p class="cloze-sentence">In eukaryotic cells, the
+                  <span class="blank-toggle" data-word="mitochondria" data-revealed="false" onclick="toggleBlank(this)">••••••••••••</span>
+                  acts as the powerhouse, converting nutrients into usable energy.</p>
+                <p class="hint-text text-center">Click the blank to reveal the word in place — keeps full sentence context.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Word Bank</p><span class="vcard-hint">pick from chips</span></div>
+            <div class="well">
+              <div class="stack word-bank" data-answer="mitochondria">
+                <p class="cloze-sentence">In eukaryotic cells, the <span class="bank-blank">_____</span> acts as the powerhouse, converting nutrients into usable energy.</p>
+                <div class="bank-options">
+                  <button class="bank-btn" onclick="pickBank(this)">mitochondria</button>
+                  <button class="bank-btn" onclick="pickBank(this)">nucleus</button>
+                  <button class="bank-btn" onclick="pickBank(this)">ribosome</button>
+                  <button class="bank-btn" onclick="pickBank(this)">cytoplasm</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Type-in Underline</p><span class="vcard-hint">type the word</span></div>
+            <div class="well">
+              <div class="stack type-in" data-answer="mitochondria">
+                <p class="cloze-sentence">In eukaryotic cells, the
+                  <input type="text" class="inline-input" placeholder="type the word">
+                  acts as the powerhouse, converting nutrients into usable energy.</p>
+                <div class="row">
+                  <button class="btn btn-outline btn-sm" onclick="checkTypeIn(this)">Check</button>
+                  <span class="result hidden"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Progressive Multi-Blank</p><span class="vcard-hint">reveal one by one</span></div>
+            <div class="well">
+              <div class="stack progressive" data-revealed="0">
+                <p class="cloze-sentence" style="text-align:left; font-size: 13px;">In <span class="p-blank" data-word="eukaryotic">•••••••••••</span> cells, the
+                  <span class="p-blank" data-word="mitochondria">••••••••••••</span> acts as the powerhouse, converting nutrients
+                  into <span class="p-blank" data-word="ATP">•••</span>.</p>
+                <div class="row">
+                  <button class="btn btn-outline btn-sm" onclick="revealNextBlank(this)">Reveal next blank</button>
+                  <span class="progress-label">0 / 3 revealed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CONTEXT -->
+      <div class="tab-panel" data-tab-panel="context">
+        <p class="group-intro">Shows the surrounding source material, not just the isolated term.</p>
+        <div class="grid-2">
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Context Strip</p><span class="vcard-hint">quote above card</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="quote-strip"><span class="quote-mark">"</span><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+                <div class="reveal-box" data-revealed="false"
+                     data-answer="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                     onclick="toggleContextStrip(this)">
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text hidden"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Highlighted-in-Passage</p><span class="vcard-hint">sentence is the card</span></div>
+            <div class="well">
+              <div class="stack">
+                <p class="cloze-sentence" onclick="toggleHighlightPassage(this.parentNode)" style="cursor:pointer;">In eukaryotic cells, the
+                  <span class="blank-toggle" data-word="mitochondria" data-revealed="false">••••••••••••</span>
+                  acts as the powerhouse, converting nutrients into usable energy.</p>
+                <p class="hint-text text-center">The whole original sentence IS the card — the term is highlighted where it lives.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Expandable Footnote</p><span class="vcard-hint">context on demand</span></div>
+            <div class="well">
+              <div class="stack">
+                <div class="panel text-center">
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+                <div class="text-center">
+                  <button class="footnote-link" onclick="toggleFootnote(this)">ⓘ Show source context</button>
+                </div>
+                <div class="quote-strip hidden footnote-body"><span class="quote-mark">"</span><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Side-by-Side Split</p><span class="vcard-hint">context + focus</span></div>
+            <div class="well">
+              <div class="split-grid">
+                <div class="split-context"><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+                <div class="split-focus">
+                  <p class="micro-label">Focus term</p>
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MNEMONIC -->
+      <div class="tab-panel" data-tab-panel="mnemonic">
+        <p class="group-intro">Bundles a memory trick with the card — four takes on how prominent it should be.</p>
+        <div class="grid-2">
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Footnote Trick</p><span class="vcard-hint">always visible, subtle</span></div>
+            <div class="well">
+              <div class="stack" style="text-align:center;">
+                <div class="panel">
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+                <p class="mnem-trick" style="justify-content:center;">💡 "Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Reveal Button</p><span class="vcard-hint">opt-in</span></div>
+            <div class="well">
+              <div class="stack" style="text-align:center; align-items:center;">
+                <div class="panel" style="width:100%;">
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="revealMnemonic(this)">💡 Show memory trick</button>
+                <div class="mnem-chip hidden mnem-target">💡<p>"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Companion Chip</p><span class="vcard-hint">side-by-side</span></div>
+            <div class="well">
+              <div class="mnem-companion">
+                <div class="panel main">
+                  <p class="term-text">Mitochondria</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+                <div class="side">
+                  💡
+                  <p>Memory trick</p>
+                  <p>"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcard">
+            <div class="vcard-head"><p class="vcard-name">Visual Anchor</p><span class="vcard-hint">front and center</span></div>
+            <div class="well">
+              <div class="anchor-card">
+                <div class="anchor-icon">✦</div>
+                <div>
+                  <p class="term-text">Mitochondria</p>
+                  <p class="mnem-trick" style="margin-top:4px;">"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+                  <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ TYPE THE ANSWER ════════════ -->
+    <div class="section">
+      <h2>"Type the Answer" study mode</h2>
+      <p class="lead">Four interaction takes on active recall by typing — these become the variant options once "Type" is real (it currently silently falls back to Multiple Choice).</p>
+
+      <div class="grid-2">
+
+        <div class="vcard">
+          <div class="vcard-head"><p class="vcard-name">Exact Match</p><span class="vcard-hint">classic grading</span></div>
+          <div class="well">
+            <div class="stack text-center type-exact" data-answer="mitochondria">
+              <p class="explain-text" style="margin:0;">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              <input type="text" class="input" placeholder="Type the term…">
+              <div class="row">
+                <button class="btn btn-sm" onclick="checkExact(this)">Check answer</button>
+                <span class="result hidden"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vcard">
+          <div class="vcard-head"><p class="vcard-name">Fuzzy / Typo-Tolerant</p><span class="vcard-hint">forgiving grading</span></div>
+          <div class="well">
+            <div class="stack text-center">
+              <p class="explain-text" style="margin:0;">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              <div class="row"><div class="fuzzy-box"><p><span class="text-fg">Mito</span><span class="fuzzy-mark">k</span><span class="text-fg">ondria</span></p></div></div>
+              <p class="hint-text">"Mitokondria" — close enough! One letter off is highlighted, not marked wrong outright.</p>
+              <p class="result correct" style="justify-content:center;"><span class="icon-circle ok">✓</span> Counted as correct (typo-tolerant)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="vcard">
+          <div class="vcard-head"><p class="vcard-name">Guided Hint</p><span class="vcard-hint">reveal letters</span></div>
+          <div class="well">
+            <div class="stack text-center guided-hint" data-word="Mitochondria" data-revealed="1">
+              <p class="explain-text" style="margin:0;">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              <p class="masked-word">M _ _ _ _ _ _ _ _ _ _ _</p>
+              <div class="row"><button class="btn btn-outline btn-sm" onclick="revealNextLetter(this)">Reveal next letter (1/12)</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vcard">
+          <div class="vcard-head"><p class="vcard-name">Two-Field Pair</p><span class="vcard-hint">date ⇄ event style</span></div>
+          <div class="well">
+            <div class="stack two-field" data-a="1969" data-b="Apollo 11 moon landing">
+              <span class="chip-pill" style="align-self:flex-start;">Date → Event pair — both fields graded together</span>
+              <div class="pair-fields">
+                <div class="pair-field"><label>When?</label><input type="text" class="input" placeholder="Year…" data-field="a"></div>
+                <div class="pair-field"><label>What happened?</label><input type="text" class="input" placeholder="Event…" data-field="b"></div>
+              </div>
+              <div class="row">
+                <button class="btn btn-sm" onclick="checkTwoField(this)">Check both</button>
+                <span class="result hidden"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ── theme toggle ──────────────────────────────────────────
+  function toggleTheme() {
+    var html = document.documentElement;
+    var isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-label').textContent = isDark ? 'Dark mode' : 'Light mode';
+  }
+
+  // ── tabs ──────────────────────────────────────────────────
+  function showTab(groupId, value) {
+    var group = document.getElementById(groupId);
+    var section = group.parentElement;
+    section.querySelectorAll('[data-tab-trigger]').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-tab-trigger') === value);
+    });
+    section.querySelectorAll('[data-tab-panel]').forEach(function (panel) {
+      panel.classList.toggle('active', panel.getAttribute('data-tab-panel') === value);
+    });
+  }
+
+  // ── Standard: Centered Flip ───────────────────────────────
+  function flipCard(el) {
+    var flipped = el.getAttribute('data-flipped') === 'true';
+    el.setAttribute('data-flipped', flipped ? 'false' : 'true');
+    el.querySelector('p').textContent = flipped ? el.getAttribute('data-front') : el.getAttribute('data-back');
+  }
+
+  // ── Standard: Stacked Reveal ──────────────────────────────
+  function revealStacked(btn) {
+    var stack = btn.closest('.stack');
+    stack.querySelector('.answer-reveal-target').classList.remove('hidden');
+    btn.remove();
+  }
+
+  // ── Standard: Field-Pair Badge ────────────────────────────
+  function swapPair(btn) {
+    var stack = btn.closest('.stack');
+    var label = stack.querySelector('.kind-label');
+    var box = stack.querySelector('.pair-box');
+    var lead = box.querySelector('.lead');
+    var trail = box.querySelector('.trail');
+    var termFirst = label.textContent.indexOf('Term →') === 0;
+    label.textContent = termFirst ? 'Explanation → Term' : 'Term → Explanation';
+    var a = box.getAttribute('data-a');
+    var b = box.getAttribute('data-b');
+    box.setAttribute('data-a', b);
+    box.setAttribute('data-b', a);
+    box.setAttribute('data-revealed', 'false');
+    lead.textContent = b;
+    lead.classList.remove('muted');
+    trail.textContent = a;
+    trail.classList.add('hidden');
+  }
+  function togglePairReveal(box) {
+    var lead = box.querySelector('.lead');
+    var trail = box.querySelector('.trail');
+    var revealed = box.getAttribute('data-revealed') === 'true';
+    if (!revealed) {
+      trail.textContent = box.getAttribute('data-b');
+      trail.classList.remove('hidden');
+      lead.classList.add('muted');
+    } else {
+      trail.classList.add('hidden');
+      lead.classList.remove('muted');
+    }
+    box.setAttribute('data-revealed', revealed ? 'false' : 'true');
+  }
+
+  // ── Standard: Compact Row ─────────────────────────────────
+  function toggleCompactRow(el) {
+    var revealed = el.getAttribute('data-revealed') === 'true';
+    el.setAttribute('data-revealed', revealed ? 'false' : 'true');
+    el.querySelector('.answer-text').textContent = revealed
+      ? '••••••••••••••••••••••••••••'
+      : el.getAttribute('data-answer');
+    el.querySelector('.chevron').classList.toggle('rotated', !revealed);
+  }
+
+  // ── Cloze: Inline Blank (also reused by Highlighted-in-Passage) ──
+  function toggleBlank(el) {
+    var revealed = el.getAttribute('data-revealed') === 'true';
+    el.setAttribute('data-revealed', revealed ? 'false' : 'true');
+    el.textContent = revealed ? '••••••••••••' : el.getAttribute('data-word');
+    el.classList.toggle('revealed', !revealed);
+  }
+  function toggleHighlightPassage(stack) {
+    var blank = stack.querySelector('.blank-toggle');
+    toggleBlank(blank);
+  }
+
+  // ── Cloze: Word Bank ──────────────────────────────────────
+  function pickBank(btn) {
+    var root = btn.closest('.word-bank');
+    var answer = root.getAttribute('data-answer');
+    var blank = root.querySelector('.bank-blank');
+    blank.textContent = btn.textContent.trim();
+    root.querySelectorAll('.bank-btn').forEach(function (b) { b.classList.remove('correct', 'incorrect'); });
+    btn.classList.add(btn.textContent.trim() === answer ? 'correct' : 'incorrect');
+  }
+
+  // ── Cloze: Type-in Underline ──────────────────────────────
+  function checkTypeIn(btn) {
+    var root = btn.closest('.type-in');
+    var input = root.querySelector('input');
+    var result = root.querySelector('.result');
+    var correct = input.value.trim().toLowerCase() === root.getAttribute('data-answer');
+    result.classList.remove('hidden');
+    result.classList.toggle('correct', correct);
+    result.classList.toggle('incorrect', !correct);
+    result.innerHTML = correct
+      ? '<span class="icon-circle ok">✓</span> Correct'
+      : '<span class="icon-circle no">✕</span> Answer: ' + root.getAttribute('data-answer');
+  }
+
+  // ── Cloze: Progressive Multi-Blank ────────────────────────
+  function revealNextBlank(btn) {
+    var root = btn.closest('.progressive');
+    var blanks = root.querySelectorAll('.p-blank');
+    var count = parseInt(root.getAttribute('data-revealed'), 10);
+    if (count >= blanks.length) return;
+    blanks[count].textContent = blanks[count].getAttribute('data-word');
+    blanks[count].classList.add('revealed');
+    count += 1;
+    root.setAttribute('data-revealed', String(count));
+    root.querySelector('.progress-label').textContent = count + ' / ' + blanks.length + ' revealed';
+    if (count >= blanks.length) btn.disabled = true;
+  }
+
+  // ── Context: Context Strip ────────────────────────────────
+  function toggleContextStrip(box) {
+    var revealed = box.getAttribute('data-revealed') === 'true';
+    var explain = box.querySelector('.explain-text');
+    if (!revealed) {
+      explain.textContent = box.getAttribute('data-answer');
+      explain.classList.remove('hidden');
+    } else {
+      explain.classList.add('hidden');
+    }
+    box.setAttribute('data-revealed', revealed ? 'false' : 'true');
+  }
+
+  // ── Context: Expandable Footnote ──────────────────────────
+  function toggleFootnote(btn) {
+    var stack = btn.closest('.stack');
+    var body = stack.querySelector('.footnote-body');
+    var open = !body.classList.contains('hidden');
+    body.classList.toggle('hidden', open);
+    btn.textContent = open ? 'ⓘ Show source context' : 'Hide source context';
+  }
+
+  // ── Mnemonic: Reveal Button ───────────────────────────────
+  function revealMnemonic(btn) {
+    btn.classList.add('hidden');
+    var target = btn.parentElement.querySelector('.mnem-target');
+    target.classList.remove('hidden');
+  }
+
+  // ── Type: Exact Match ─────────────────────────────────────
+  function checkExact(btn) {
+    var root = btn.closest('.type-exact');
+    var input = root.querySelector('input');
+    var result = root.querySelector('.result');
+    var correct = input.value.trim().toLowerCase() === root.getAttribute('data-answer');
+    result.classList.remove('hidden');
+    result.classList.toggle('correct', correct);
+    result.classList.toggle('incorrect', !correct);
+    result.innerHTML = correct
+      ? '<span class="icon-circle ok">✓</span> Correct!'
+      : '<span class="icon-circle no">✕</span> Answer: Mitochondria';
+  }
+
+  // ── Type: Guided Hint ─────────────────────────────────────
+  function revealNextLetter(btn) {
+    var root = btn.closest('.guided-hint');
+    var word = root.getAttribute('data-word');
+    var revealed = parseInt(root.getAttribute('data-revealed'), 10);
+    if (revealed >= word.length) return;
+    revealed += 1;
+    root.setAttribute('data-revealed', String(revealed));
+    var masked = word.split('').map(function (ch, i) { return i < revealed ? ch : '_'; }).join(' ');
+    root.querySelector('.masked-word').textContent = masked;
+    btn.textContent = 'Reveal next letter (' + revealed + '/' + word.length + ')';
+    if (revealed >= word.length) btn.disabled = true;
+  }
+
+  // ── Type: Two-Field Pair ──────────────────────────────────
+  function checkTwoField(btn) {
+    var root = btn.closest('.two-field');
+    var result = root.querySelector('.result');
+    result.classList.remove('hidden');
+    result.classList.add('text-muted');
+    result.textContent = 'Answer: ' + root.getAttribute('data-a') + ' — ' + root.getAttribute('data-b');
+  }
+</script>
+</body>
+</html>

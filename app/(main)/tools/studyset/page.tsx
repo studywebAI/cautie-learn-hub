@@ -7,11 +7,14 @@ import {
   Archive,
   BarChart3,
   BookOpen,
+  Brain,
   ChevronLeft,
   ChevronDown,
   ChevronRight,
   GraduationCap,
+  Layers,
   Link2,
+  Map,
   Plus,
   Route,
   Upload,
@@ -80,7 +83,29 @@ type UploadMeta = {
   extractionStatus?: 'ready' | 'empty' | 'error';
 };
 
-const STEP_TITLES = ['Basics', 'Calendar', 'Sources'];
+const STEP_TITLES = ['Basics', 'Calendar', 'Sources', 'Tools'];
+
+// Tool mindmap — same icons/labels the studyset detail page uses for plan tasks
+// (toolMeta: quiz=Brain, flashcards=Layers, wordweb=Map, notes=FileText), so
+// picking a tool here looks/feels exactly like seeing it later in the plan.
+const TOOL_DEFINITIONS: Array<{ id: string; label: string; description: string; Icon: typeof Brain }> = [
+  { id: 'notes', label: 'Notes', description: 'Structured study notes per topic.', Icon: FileText },
+  { id: 'flashcards', label: 'Flashcards', description: 'Spaced-repetition recall cards.', Icon: Layers },
+  { id: 'quiz', label: 'Quiz', description: 'Practice questions that test yourself.', Icon: Brain },
+  { id: 'wordweb', label: 'Concept map', description: 'Visual webs that connect ideas.', Icon: Map },
+];
+
+// A focused subset of the quiz tool's question-type catalogue — the styles that
+// translate well into a mixed day-by-day plan (no niche types needing content
+// flags). Selecting these biases what the AI leans toward for quiz sessions.
+const QUIZ_QUESTION_TYPE_OPTIONS: Array<{ value: string; label: string; description: string }> = [
+  { value: 'multiple-choice', label: 'Multiple Choice', description: 'Pick the correct answer from options.' },
+  { value: 'true-false', label: 'True / False', description: 'Is the statement true or false?' },
+  { value: 'fill-blank', label: 'Fill in the Blank', description: 'Complete the missing word or phrase.' },
+  { value: 'short-answer', label: 'Short Answer', description: 'Write a brief answer in your own words.' },
+  { value: 'matching', label: 'Matching', description: 'Connect related items from two columns.' },
+  { value: 'cloze', label: 'Cloze Test', description: 'Fill in the blanks within a passage.' },
+];
 
 const SOFT_SURFACE = 'border border-border/60 bg-surface-1/50';
 const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
@@ -155,6 +180,12 @@ export default function StudysetPage() {
     examDate: string | null;
   } | null>(null);
 
+  // Tool mindmap — which output tools the AI should lean toward when mixing the
+  // day-by-day plan, plus quiz-specific question-type preferences (mirrors the
+  // quiz tool's "options" phase, scaled down to what a studyset plan can use).
+  const [selectedTools, setSelectedTools] = useState<string[]>(['notes', 'flashcards', 'quiz', 'wordweb']);
+  const [quizQuestionTypes, setQuizQuestionTypes] = useState<string[]>(['multiple-choice', 'true-false']);
+
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
@@ -199,6 +230,7 @@ export default function StudysetPage() {
     pastedText.trim().length > 0 ||
     hasExtractedUploads ||
     hasExtractedMicrosoft;
+  const isStepFourReady = selectedTools.length > 0;
 
   const resetWizard = () => {
     setStep(0);
@@ -212,6 +244,28 @@ export default function StudysetPage() {
     setSelectedMicrosoftFiles([]);
     setSourceMethod('upload');
     setLinkedSeed(null);
+    setSelectedTools(['notes', 'flashcards', 'quiz', 'wordweb']);
+    setQuizQuestionTypes(['multiple-choice', 'true-false']);
+  };
+
+  const toggleTool = (id: string) => {
+    setSelectedTools((prev) => {
+      if (prev.includes(id)) {
+        const next = prev.filter((value) => value !== id);
+        return next.length > 0 ? next : prev; // always keep at least one tool active
+      }
+      return [...prev, id];
+    });
+  };
+
+  const toggleQuizQuestionType = (value: string) => {
+    setQuizQuestionTypes((prev) => {
+      if (prev.includes(value)) {
+        const next = prev.filter((entry) => entry !== value);
+        return next.length > 0 ? next : prev; // always keep at least one style active
+      }
+      return [...prev, value];
+    });
   };
 
   const loadStudysets = async () => {
@@ -305,7 +359,7 @@ export default function StudysetPage() {
       setView('create');
       const rawStep = Number(searchParams.get('step'));
       if (!Number.isNaN(rawStep)) {
-        setStep(Math.max(0, Math.min(2, rawStep)));
+        setStep(Math.max(0, Math.min(3, rawStep)));
       }
     }
   }, [searchParams]);
@@ -336,10 +390,12 @@ export default function StudysetPage() {
   const goNext = () => {
     if (step === 0 && !isStepOneReady) return;
     if (step === 1 && !isStepTwoReady) return;
-    setStep((value) => Math.min(2, value + 1));
+    if (step === 2 && !isStepThreeReady) return;
+    setStep((value) => Math.min(3, value + 1));
   };
 
-  const canNext = step === 0 ? isStepOneReady : step === 1 ? isStepTwoReady : false;
+  const canNext =
+    step === 0 ? isStepOneReady : step === 1 ? isStepTwoReady : step === 2 ? isStepThreeReady : false;
 
   const autoPickMeta = () => {
     const icon =
@@ -473,6 +529,13 @@ export default function StudysetPage() {
         schedule: {
           selected_dates: selectedDateStrings,
         },
+        // Tool mindmap — what the user picked in the "Tools" step. Stored here so
+        // Settings/Analytics can read it back later, and also sent straight to
+        // /generate below so the AI plan genuinely leans toward these picks.
+        preferences: {
+          tools: selectedTools,
+          quiz_question_types: selectedTools.includes('quiz') ? quizQuestionTypes : [],
+        },
         sources: {
           notes_text: notesText.trim(),
           pasted_text: pastedText.trim(),
@@ -522,12 +585,27 @@ export default function StudysetPage() {
       const studysetId = createJson?.studyset?.id;
       if (!studysetId) throw new Error('Studyset ID missing');
 
+      // Compile the tool picks into a short instruction the planner prompt can act
+      // on directly — same idea as the agenda/subject pickers seeding focus notes:
+      // a real preference, expressed in plain language the AI genuinely reads.
+      const toolLabels = TOOL_DEFINITIONS.filter((tool) => selectedTools.includes(tool.id)).map((tool) => tool.label);
+      const questionTypeLabels = QUIZ_QUESTION_TYPE_OPTIONS.filter((qt) => quizQuestionTypes.includes(qt.value)).map((qt) => qt.label);
+      const toolNotes = [
+        toolLabels.length > 0 ? `Lean the day-by-day mix toward these tools: ${toolLabels.join(', ')}.` : '',
+        selectedTools.includes('quiz') && questionTypeLabels.length > 0
+          ? `Whenever a day includes a quiz, favor these question styles: ${questionTypeLabels.join(', ')}.`
+          : '',
+      ].filter(Boolean).join(' ');
+
       const generateRes = await fetch(`/api/studysets/${studysetId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           selected_dates: selectedDateStrings,
           feedback: notesText.trim() || null,
+          preferred_tools: selectedTools,
+          quiz_question_types: selectedTools.includes('quiz') ? quizQuestionTypes : [],
+          tool_notes: toolNotes || null,
         }),
       });
 
@@ -553,9 +631,10 @@ export default function StudysetPage() {
   const selectedColorOption = COLOR_OPTIONS.find((o) => o.id === selectedColor);
 
   const STEP_SUBTITLES = [
-    'Give your studyset a name and a look.',
+    'Give your studyset a name, a look, and link it to your agenda or curriculum.',
     'Pick the days you plan to study.',
-    'Link it to your agenda or curriculum, or add your own notes and files.',
+    'Add your notes, paste material, or upload files.',
+    'Choose which tools we should mix into your plan.',
   ];
 
   const SOURCE_METHOD_OPTIONS: Array<{
@@ -578,8 +657,8 @@ export default function StudysetPage() {
     },
     {
       id: 'upload',
-      title: 'Upload your own',
-      description: 'Paste notes, upload files, or connect OneDrive.',
+      title: 'Just my own materials',
+      description: "Skip this — I'll add notes and files in the Sources step.",
       Icon: Upload,
     },
   ];
@@ -835,6 +914,77 @@ export default function StudysetPage() {
                     />
                   </div>
 
+                  {/* Link to agenda or curriculum — real data, sets the studyset's
+                      actual subject/exam date and seeds focus notes used later */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">
+                      Link it to your agenda or curriculum <span className="text-muted-foreground font-normal">(optional)</span>
+                    </label>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Build it around something real — an upcoming test, or a part of your course — and we&apos;ll line everything up for you.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      {SOURCE_METHOD_OPTIONS.map((option) => {
+                        const selected = sourceMethod === option.id;
+                        const OptionIcon = option.Icon;
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => setSourceMethod(option.id)}
+                            className={`flex flex-col items-start gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
+                              selected
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
+                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                            }`}
+                          >
+                            <span
+                              className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
+                              }`}
+                            >
+                              <OptionIcon className="h-4 w-4" />
+                            </span>
+                            <span className="text-sm font-medium text-foreground">{option.title}</span>
+                            <span className="text-xs text-muted-foreground">{option.description}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {linkedSeed && (
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[#eef1e7] px-3.5 py-2.5 text-xs text-[#4a5735]">
+                        <span className="inline-flex min-w-0 items-center gap-1.5">
+                          <Link2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">
+                            Linked to: {linkedSeed.label}
+                            {linkedSeed.examDate
+                              ? ` · exam ${format(new Date(`${linkedSeed.examDate}T00:00:00`), 'MMM d')}`
+                              : ''}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setLinkedSeed(null)}
+                          className="shrink-0 underline hover:no-underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {sourceMethod === 'agenda' && (
+                      <div className="mt-3">
+                        <AgendaTemplatePicker selectedId={linkedSeed?.sourceId ?? null} onPick={applyAgendaSeed} />
+                      </div>
+                    )}
+                    {sourceMethod === 'subject' && (
+                      <div className="mt-3">
+                        <SubjectTopicPicker appliedLabel={linkedSeed?.label ?? null} onApply={applySubjectSeed} />
+                      </div>
+                    )}
+                  </div>
+
                   {/* Icon picker */}
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-3">
@@ -943,80 +1093,11 @@ export default function StudysetPage() {
 
               {step === 2 && (
                 <div className="space-y-5">
-                  {/* Source method — the 3-option scheme */}
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">How should we build this?</label>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Pick a starting point — you can still add your own notes and files either way.
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-3">
-                      {SOURCE_METHOD_OPTIONS.map((option) => {
-                        const selected = sourceMethod === option.id;
-                        const OptionIcon = option.Icon;
-                        return (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => setSourceMethod(option.id)}
-                            className={`flex flex-col items-start gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
-                              selected
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
-                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
-                            }`}
-                          >
-                            <span
-                              className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
-                              }`}
-                            >
-                              <OptionIcon className="h-4 w-4" />
-                            </span>
-                            <span className="text-sm font-medium text-foreground">{option.title}</span>
-                            <span className="text-xs text-muted-foreground">{option.description}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {linkedSeed && (
-                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[#eef1e7] px-3.5 py-2.5 text-xs text-[#4a5735]">
-                        <span className="inline-flex min-w-0 items-center gap-1.5">
-                          <Link2 className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">
-                            Linked to: {linkedSeed.label}
-                            {linkedSeed.examDate
-                              ? ` · exam ${format(new Date(`${linkedSeed.examDate}T00:00:00`), 'MMM d')}`
-                              : ''}
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setLinkedSeed(null)}
-                          className="shrink-0 underline hover:no-underline"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-
-                    {sourceMethod === 'agenda' && (
-                      <div className="mt-3">
-                        <AgendaTemplatePicker selectedId={linkedSeed?.sourceId ?? null} onPick={applyAgendaSeed} />
-                      </div>
-                    )}
-                    {sourceMethod === 'subject' && (
-                      <div className="mt-3">
-                        <SubjectTopicPicker appliedLabel={linkedSeed?.label ?? null} onApply={applySubjectSeed} />
-                      </div>
-                    )}
-                  </div>
-
                   {/* Notes */}
                   <div>
-                    {sourceMethod !== 'upload' && (
+                    {linkedSeed && (
                       <p className="mb-2 text-xs text-muted-foreground">
-                        We filled in focus notes from your pick below — feel free to edit them, or add your own
-                        materials too.
+                        We filled in focus notes from <span className="font-medium text-foreground">{linkedSeed.label}</span> below — feel free to edit them, or add your own materials too.
                       </p>
                     )}
                     <div className="flex items-center justify-between mb-2">
@@ -1129,6 +1210,96 @@ export default function StudysetPage() {
                   </div>
                 </div>
               )}
+
+              {step === 3 && (
+                <div className="space-y-6">
+                  {/* Tool mindmap — same icons/labels the plan view uses, so picking
+                      a tool here matches exactly what shows up later in the plan */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-sm font-medium text-foreground">Which tools should we mix in?</label>
+                      <span className="text-xs text-muted-foreground">{selectedTools.length} selected</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      We always keep a healthy day-by-day mix — this just tells the AI what to lean toward.
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {TOOL_DEFINITIONS.map((tool) => {
+                        const selected = selectedTools.includes(tool.id);
+                        const ToolIcon = tool.Icon;
+                        return (
+                          <button
+                            key={tool.id}
+                            type="button"
+                            onClick={() => toggleTool(tool.id)}
+                            className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
+                              selected
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
+                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                            }`}
+                          >
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
+                              }`}
+                            >
+                              <ToolIcon className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium text-foreground">{tool.label}</span>
+                              <span className="block text-xs text-muted-foreground mt-0.5">{tool.description}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Quiz-specific settings — only appears once Quiz is part of the mix,
+                      mirroring how the quiz tool reveals question types after the input step */}
+                  {selectedTools.includes('quiz') && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-sm font-medium text-foreground">Quiz question types</label>
+                        <span className="text-xs text-muted-foreground">{quizQuestionTypes.length} selected</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        We&apos;ll favor these styles whenever the plan includes a quiz session.
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {QUIZ_QUESTION_TYPE_OPTIONS.map((qt) => {
+                          const selected = quizQuestionTypes.includes(qt.value);
+                          return (
+                            <button
+                              key={qt.value}
+                              type="button"
+                              onClick={() => toggleQuizQuestionType(qt.value)}
+                              title={qt.description}
+                              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
+                                selected
+                                  ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#4a5735]'
+                                  : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                              }`}
+                            >
+                              {qt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`rounded-xl px-4 py-3 text-sm ${SOFT_SURFACE}`}>
+                    <p className="text-muted-foreground">
+                      Ready to build your plan — we&apos;ll generate day-by-day sessions across{' '}
+                      <span className="font-medium text-foreground">
+                        {selectedDateStrings.length === 1 ? '1 study day' : `${selectedDateStrings.length} study days`}
+                      </span>{' '}
+                      using the tools and styles above.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer navigation */}
@@ -1146,7 +1317,7 @@ export default function StudysetPage() {
                 Previous
               </button>
 
-              {step < 2 ? (
+              {step < 3 ? (
                 <button
                   type="button"
                   onClick={goNext}
@@ -1161,9 +1332,9 @@ export default function StudysetPage() {
                 <button
                   type="button"
                   onClick={() => void createStudyset()}
-                  disabled={!isStepThreeReady || creating}
+                  disabled={!isStepFourReady || creating}
                   className="ml-auto rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: isStepThreeReady ? '#6b7c4e' : undefined }}
+                  style={{ backgroundColor: isStepFourReady ? '#6b7c4e' : undefined }}
                 >
                   {creating ? 'Creating studyset…' : 'Create studyset'}
                 </button>
