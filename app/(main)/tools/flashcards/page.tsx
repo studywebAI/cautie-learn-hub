@@ -434,6 +434,43 @@ function FlashcardsPageContent() {
 
   // INPUT PHASE - just textbox, no sidebar
   if (phase === 'input') {
+    const modeToggle = (
+      <div className="flex items-center gap-1">
+        {(['literal', 'research'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => {
+              setExplanationMode(m);
+              void saveAdvancedSettingsPatch({ flashcards: { explanation_mode: m } as any }, { tool: 'flashcards' });
+            }}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+              explanationMode === m
+                ? 'bg-[var(--accent-brand)] text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {m === 'literal' ? 'Literal' : 'Research'}
+          </button>
+        ))}
+        {/* Info tooltip */}
+        <div className="relative group">
+          <button
+            type="button"
+            className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
+          >
+            i
+          </button>
+          <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-60 -translate-x-1/2 rounded-xl border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+            <p className="text-[12px] font-medium text-foreground mb-1">Literal</p>
+            <p className="text-[11px] text-muted-foreground mb-2 leading-snug">Cards stick to exactly what's explicitly in your text.</p>
+            <p className="text-[12px] font-medium text-foreground mb-1">Research</p>
+            <p className="text-[11px] text-muted-foreground leading-snug">Cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+          </div>
+        </div>
+      </div>
+    );
+
     return (
       <WorkbenchShell
         title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
@@ -462,6 +499,7 @@ function FlashcardsPageContent() {
               submitLabel="Next"
               speechLanguage={language}
               hideToolSwitcher
+              bottomSlot={modeToggle}
             />
           </div>
         </div>
@@ -590,7 +628,7 @@ function FlashcardsPageContent() {
               </div>
             </div>
 
-            {/* Card extras: citations, hints, explanation mode */}
+            {/* Card extras: citations, hints */}
             <div className="space-y-3 border-t border-border pt-4">
               <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Extras</p>
 
@@ -620,36 +658,6 @@ function FlashcardsPageContent() {
                     void saveAdvancedSettingsPatch({ flashcards: { mnemonic_hints: checked } as any }, { tool: 'flashcards' });
                   }}
                 />
-              </div>
-
-              <div className="space-y-1.5">
-                <p className="text-xs text-foreground">Explanation mode</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {explanationMode === 'research'
-                    ? 'Research: the AI may connect ideas across the source and explains how each card relates to it'
-                    : 'Literal: the AI stays close to the exact wording and facts in your source text'}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { value: 'literal' as const, label: 'Literal' },
-                    { value: 'research' as const, label: 'Research' },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setExplanationMode(option.value);
-                        void saveAdvancedSettingsPatch({ flashcards: { explanation_mode: option.value } as any }, { tool: 'flashcards' });
-                      }}
-                      className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
-                        explanationMode === option.value
-                          ? 'border-border bg-background text-foreground'
-                          : 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
 
