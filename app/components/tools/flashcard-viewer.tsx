@@ -19,10 +19,14 @@ import {
   Sparkles,
   FileText,
   ListChecks,
+  Info,
+  Eye,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MultipleChoiceView } from './multiple-choice-view';
 import { normalizeForCompare } from '@/lib/study-grading';
+import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +36,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export type StudyMode = 'flip' | 'multiple-choice';
+export type StudyMode = 'flip' | 'multiple-choice' | 'fill-blank';
 
 type CardSRSState = {
   intervalDays: number;
@@ -122,6 +126,87 @@ function FlipView({ card, isFlipped, setIsFlipped, height }: { card: Flashcard; 
   );
 }
 
+function FillBlankView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [typedAnswer, setTypedAnswer] = useState('');
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl [perspective:1200px]" style={{ height: `${height}px` }}>
+        <div
+          className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
+          style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+        >
+          <div
+            className="absolute flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 surface-panel px-12 py-10 text-center shadow-sm [backface-visibility:hidden]"
+            onClick={() => { if (!isFlipped) setIsFlipped(true); }}
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">You see this side</span>
+            <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+            {!isFlipped && (
+              <span className="text-xs text-muted-foreground">Flip the card, then write down the matching answer yourself</span>
+            )}
+          </div>
+          <div className="absolute flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 surface-panel px-10 py-8 text-center shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Now write down the matching answer</span>
+            {!revealed ? (
+              <div className="flex w-full max-w-md flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                <Textarea
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  placeholder="Type your answer here, like an example..."
+                  className="min-h-[110px] text-center text-base"
+                  autoFocus
+                />
+                <Button onClick={handleReveal} className="rounded-full px-6">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Reveal the real answer
+                </Button>
+              </div>
+            ) : (
+              <div className="flex w-full max-w-md flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                <div className="w-full rounded-xl surface-chip p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">What you wrote</p>
+                  <p className="mt-1 text-sm leading-relaxed">{typedAnswer.trim() || '(left empty)'}</p>
+                </div>
+                <div className="w-full rounded-xl border border-border/80 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Correct answer</p>
+                  <p className="mt-1 text-base font-medium leading-relaxed">{card.back}</p>
+                </div>
+                <p className="text-xs text-muted-foreground">Compare the two, then mark yourself below.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {!isFlipped && (
+        <Button variant="secondary" onClick={() => setIsFlipped(true)} className="rounded-full px-6">
+          <ChevronsLeftRight className="mr-2 h-4 w-4" />
+          Flip card
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function FlashcardViewer({
   cards,
   mode,
@@ -149,6 +234,9 @@ export function FlashcardViewer({
     semanticLinking?: boolean;
     errorTagging?: boolean;
     memoryStrengthMeter?: boolean;
+    showCitations?: boolean;
+    mnemonicHints?: boolean;
+    explanationMode?: 'literal' | 'research';
   };
 }) {
   const router = useRouter();
@@ -167,10 +255,11 @@ export function FlashcardViewer({
   const [sessionComplete, setSessionComplete] = useState(false);
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const [sessionQueueIds, setSessionQueueIds] = useState<string[]>([]);
+  const [hintRevealed, setHintRevealed] = useState(false);
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
   const { toast } = useToast();
-  const effectiveMode: StudyMode = settings?.activeRecallOnly ? 'multiple-choice' : mode;
+  const effectiveMode: StudyMode = settings?.activeRecallOnly && mode === 'flip' ? 'multiple-choice' : mode;
 
   const initialQueue = React.useMemo(() => {
     const due: Flashcard[] = [];
@@ -266,6 +355,7 @@ export function FlashcardViewer({
     setAnswerCorrectness(null);
     setExplanation(null);
     setIsExplanationOpen(false);
+    setHintRevealed(false);
   }, [currentIndex]);
 
   useEffect(() => {
@@ -590,7 +680,7 @@ export function FlashcardViewer({
           break;
         case ' ':
           e.preventDefault();
-          if (effectiveMode === 'flip' || effectiveMode === 'multiple-choice') handleFlipOrCheck();
+          if (effectiveMode === 'flip' || effectiveMode === 'multiple-choice' || effectiveMode === 'fill-blank') handleFlipOrCheck();
           break;
       }
     };
@@ -729,9 +819,25 @@ export function FlashcardViewer({
     setAnswerCorrectness(Boolean(isCorrect));
   }, []);
 
+  const handleFillBlankRevealed = useCallback(() => {
+    setIsAnswered(true);
+  }, []);
+
   const renderCardContent = () => {
     if (!card) return null;
     if (effectiveMode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
+    if (effectiveMode === 'fill-blank' && displayCard) {
+      return (
+        <FillBlankView
+          key={card.id}
+          card={displayCard}
+          isFlipped={isFlipped}
+          setIsFlipped={setIsFlipped}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
     return (
       <MultipleChoiceView
         card={card}
@@ -742,6 +848,8 @@ export function FlashcardViewer({
       />
     );
   };
+
+  const cardMeta = (settings?.showCitations && card?.citation) || (settings?.mnemonicHints && card?.hint);
 
   const showExplanationButton = (effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered);
   const explanationButtonLabel = isExplanationLoading
@@ -755,7 +863,7 @@ export function FlashcardViewer({
       <CardHeader className="px-4 md:px-6 pb-2">
         <CardTitle className="font-headline">Study Flashcards</CardTitle>
         <CardDescription>
-          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {effectiveMode === 'multiple-choice' ? 'Flip, pick the correct mini card, then mark result.' : 'Flip, then mark result.'}
+          Card {queue.length === 0 ? 0 : currentIndex + 1} of {queue.length}. {effectiveMode === 'multiple-choice' ? 'Flip, pick the correct mini card, then mark result.' : effectiveMode === 'fill-blank' ? 'See one side, flip, write the matching answer yourself, then compare and mark result.' : 'Flip, then mark result.'}
         </CardDescription>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <Badge variant="outline">Deck Health {deckHealth.health}%</Badge>
@@ -791,6 +899,48 @@ export function FlashcardViewer({
             </AnimatePresence>
           </div>
         )}
+
+        {card && cardMeta ? (
+          <div className="flex w-full max-w-5xl flex-wrap items-center justify-center gap-2">
+            {settings?.showCitations && card.citation ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Show source citation"
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border/80 surface-chip px-3 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                    Source
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 text-sm" align="center">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Where this came from</p>
+                  <p className="mt-1 leading-relaxed">{card.citation}</p>
+                  {settings?.explanationMode === 'research' && card.groundingNote ? (
+                    <>
+                      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Why / how it relates</p>
+                      <p className="mt-1 leading-relaxed text-muted-foreground">{card.groundingNote}</p>
+                    </>
+                  ) : null}
+                </PopoverContent>
+              </Popover>
+            ) : null}
+            {settings?.mnemonicHints && card.hint ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setHintRevealed((v) => !v)}
+                className="h-7 rounded-full border border-border/80 surface-chip px-3 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
+                {hintRevealed ? card.hint : 'Reveal hint (ezelsbruggetje)'}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
         {settings?.semanticLinking && relatedCards.length > 0 ? (
           <div className="w-full rounded-xl surface-panel p-3">
             <p className="text-xs text-muted-foreground">Related cards</p>

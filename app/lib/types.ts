@@ -213,6 +213,9 @@ export const FlashcardSchema = z.object({
   front: z.string().describe('The front side of the flashcard, containing a key term or a question.'),
   back: z.string().describe('The back side of the flashcard, containing the definition or answer.'),
   cloze: z.string().describe('A fill-in-the-blank sentence where the "back" of the card is the missing word. The blank should be represented by "____".'),
+  citation: z.string().optional().describe('A short, literal reference to where in the Source Text this card\'s information came from (e.g. a quoted fragment or a short section description). Omit this field entirely if no specific passage can be pointed to.'),
+  hint: z.string().optional().describe('A short memory aid or mnemonic — a brief association, image cue, rhyme, or "ezelsbruggetje" — that helps recall the back of the card. Keep it to a few words, never a full explanation.'),
+  groundingNote: z.string().optional().describe('A brief (1-2 sentence) note explaining why this card was written this way and how its content relates to or derives from the Source Text. This is shown to the learner in "Research" mode to make the AI\'s reasoning transparent.'),
 });
 export type Flashcard = z.infer<typeof FlashcardSchema>;
 
