@@ -256,6 +256,7 @@ export function FlashcardViewer({
   const [srsState, setSrsState] = useState<Record<string, CardSRSState>>({});
   const [sessionQueueIds, setSessionQueueIds] = useState<string[]>([]);
   const [hintRevealed, setHintRevealed] = useState(false);
+  const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
   const { toast } = useToast();
@@ -330,6 +331,7 @@ export function FlashcardViewer({
     setCorrectCards(0);
     setSessionMetrics({});
     setSessionComplete(false);
+    setNotRelevantIds(new Set());
     startTimeRef.current = Date.now();
   }, [cards]);
 
@@ -823,6 +825,16 @@ export function FlashcardViewer({
     setIsAnswered(true);
   }, []);
 
+  const handleNotRelevant = () => {
+    if (!card) return;
+    setNotRelevantIds((prev) => {
+      const next = new Set(prev);
+      next.add(card.id);
+      return next;
+    });
+    handleNext();
+  };
+
   const renderCardContent = () => {
     if (!card) return null;
     if (effectiveMode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
@@ -1064,12 +1076,22 @@ export function FlashcardViewer({
             ) : null}
 
             <div className="rounded-xl surface-panel p-3">
-              <p className="text-sm">Per-card breakdown</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p className="text-sm">Per-card breakdown</p>
+                {notRelevantIds.size > 0 && (
+                  <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                    {notRelevantIds.size} marked not relevant
+                  </Badge>
+                )}
+              </div>
               <div className="mt-2 space-y-2">
                 {sessionAnalytics.perQuestionBreakdown.map((item, idx) => (
                   <div key={item.id} className="rounded-md bg-background p-2">
                     <p className="truncate text-xs font-medium">{idx + 1}. {item.front}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {notRelevantIds.has(item.id) && (
+                        <Badge variant="secondary" className="bg-muted text-muted-foreground">Not relevant</Badge>
+                      )}
                       {item.topics.length > 0 && item.topics.map((topic) => (
                         <Badge key={`${item.id}-${topic}`} variant="secondary">{topic}</Badge>
                       ))}
@@ -1128,6 +1150,18 @@ export function FlashcardViewer({
             {secondsLeft !== null ? (
               <Badge variant="secondary" className="mr-2">Timer {secondsLeft}s</Badge>
             ) : null}
+            {settings?.explanationMode === 'research' && card && !notRelevantIds.has(card.id) && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-9 px-3 mr-2 text-[12px] text-muted-foreground hover:text-foreground"
+                onClick={handleNotRelevant}
+                title="Mark as not relevant to your research"
+              >
+                <span className="hidden sm:inline">Not relevant</span>
+                <span className="sm:hidden">Skip</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               onClick={() => { void saveFlashcardProgress(); onRestart(); }}

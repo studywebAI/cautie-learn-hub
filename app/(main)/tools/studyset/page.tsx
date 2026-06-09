@@ -14,11 +14,14 @@ import {
   GraduationCap,
   Layers,
   Link2,
+  Link,
   Map,
   Plus,
   Route,
+  Search,
   Upload,
   FileText,
+  Youtube,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
@@ -107,6 +110,38 @@ const QUIZ_QUESTION_TYPE_OPTIONS: Array<{ value: string; label: string; descript
   { value: 'cloze', label: 'Cloze Test', description: 'Fill in the blanks within a passage.' },
 ];
 
+// ── Output-control options ────────────────────────────────────────────────
+const DIFFICULTY_OPTIONS = [
+  { value: 'beginner',     label: 'Beginner',     description: 'Simple language, introductory-level depth.' },
+  { value: 'intermediate', label: 'Intermediate', description: 'Standard course-level challenge.' },
+  { value: 'advanced',     label: 'Advanced',     description: 'Nuanced, deeper detail.' },
+  { value: 'expert',       label: 'Expert',       description: 'Exam / professional-level rigour.' },
+] as const;
+
+const DEPTH_OPTIONS = [
+  { value: 'overview',  label: 'Overview',       description: 'Key points only — fast review.' },
+  { value: 'standard',  label: 'Standard',       description: 'Balanced detail for most sessions.' },
+  { value: 'deep',      label: 'Comprehensive',  description: 'Full depth — longer output.' },
+] as const;
+
+const TONE_OPTIONS = [
+  { value: 'tutor',   label: 'Tutor',        description: 'Explains as if teaching you step by step.' },
+  { value: 'exam',    label: 'Exam trainer', description: 'Strict, test-style questions and answers.' },
+  { value: 'summary', label: 'Summary',      description: 'Concise bullet-point overview.' },
+] as const;
+
+const LANGUAGE_OPTIONS = [
+  { value: 'auto', label: 'Match source' },
+  { value: 'nl',   label: 'Dutch' },
+  { value: 'en',   label: 'English' },
+  { value: 'de',   label: 'German' },
+  { value: 'fr',   label: 'French' },
+  { value: 'es',   label: 'Spanish' },
+];
+
+// ── URL source type ──────────────────────────────────────────────────────────
+type UrlSource = { id: string; url: string; label: string };
+
 const SOFT_SURFACE = 'border border-border/60 bg-surface-1/50';
 const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
 const CALENDAR_CLASSES = {
@@ -186,6 +221,22 @@ export default function StudysetPage() {
   const [selectedTools, setSelectedTools] = useState<string[]>(['notes', 'flashcards', 'quiz', 'wordweb']);
   const [quizQuestionTypes, setQuizQuestionTypes] = useState<string[]>(['multiple-choice', 'true-false']);
 
+  // ── Output preferences (Step 3 — passed straight to /generate) ────────────
+  const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('intermediate');
+  const [depth, setDepth] = useState<'overview' | 'standard' | 'deep'>('standard');
+  const [outputLanguage, setOutputLanguage] = useState('auto');
+  const [tone, setTone] = useState<'tutor' | 'exam' | 'summary'>('tutor');
+  const [onlyMySources, setOnlyMySources] = useState(false);
+  const [includeExamples, setIncludeExamples] = useState(true);
+
+  // ── Extra source types ───────────────────────────────────────────────────
+  const [urlSources, setUrlSources] = useState<UrlSource[]>([]);
+  const [urlInput, setUrlInput] = useState('');
+
+  // ── Home search / sort ────────────────────────────────────────────────────
+  const [homeSearch, setHomeSearch] = useState('');
+  const [homeSort, setHomeSort] = useState<'recent' | 'name' | 'progress'>('recent');
+
   const [microsoftConnected, setMicrosoftConnected] = useState(false);
   const [microsoftEmail, setMicrosoftEmail] = useState('');
   const [selectedMicrosoftFiles, setSelectedMicrosoftFiles] = useState<MicrosoftFileItem[]>([]);
@@ -229,7 +280,8 @@ export default function StudysetPage() {
     notesText.trim().length > 0 ||
     pastedText.trim().length > 0 ||
     hasExtractedUploads ||
-    hasExtractedMicrosoft;
+    hasExtractedMicrosoft ||
+    urlSources.length > 0;
   const isStepFourReady = selectedTools.length > 0;
 
   const resetWizard = () => {
@@ -246,7 +298,39 @@ export default function StudysetPage() {
     setLinkedSeed(null);
     setSelectedTools(['notes', 'flashcards', 'quiz', 'wordweb']);
     setQuizQuestionTypes(['multiple-choice', 'true-false']);
+    setDifficulty('intermediate');
+    setDepth('standard');
+    setOutputLanguage('auto');
+    setTone('tutor');
+    setOnlyMySources(false);
+    setIncludeExamples(true);
+    setUrlSources([]);
+    setUrlInput('');
   };
+
+  const addUrlSource = () => {
+    const raw = urlInput.trim();
+    if (!raw) return;
+    let url = raw;
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    const isYT = /youtube\.com|youtu\.be/i.test(url);
+    setUrlSources((prev) => [...prev, { id: crypto.randomUUID(), url, label: isYT ? 'YouTube' : 'URL' }]);
+    setUrlInput('');
+  };
+
+  const removeUrlSource = (id: string) => setUrlSources((prev) => prev.filter((s) => s.id !== id));
+
+  const filteredActiveStudysets = useMemo(() => {
+    let list = activeStudysets;
+    if (homeSearch.trim()) {
+      const q = homeSearch.toLowerCase();
+      list = list.filter((row) => row.name.toLowerCase().includes(q) || (row.meta?.subject || '').toLowerCase().includes(q));
+    }
+    if (homeSort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    else if (homeSort === 'progress') list = [...list].sort((a, b) => (b.progress?.percent ?? 0) - (a.progress?.percent ?? 0));
+    // 'recent' = default API order (updated_at DESC)
+    return list;
+  }, [activeStudysets, homeSearch, homeSort]);
 
   const toggleTool = (id: string) => {
     setSelectedTools((prev) => {
@@ -535,11 +619,21 @@ export default function StudysetPage() {
         preferences: {
           tools: selectedTools,
           quiz_question_types: selectedTools.includes('quiz') ? quizQuestionTypes : [],
+          // Output control — passed to every generation call for this studyset.
+          output: {
+            difficulty,
+            depth,
+            language: outputLanguage,
+            tone,
+            only_my_sources: onlyMySources,
+            include_examples: includeExamples,
+          },
         },
         sources: {
           notes_text: notesText.trim(),
           pasted_text: pastedText.trim(),
           uploaded_files: extractedUploadFiles,
+          url_sources: urlSources.map((s) => ({ url: s.url, label: s.label })),
           imports: {
             word: false,
             powerpoint: false,
@@ -606,6 +700,15 @@ export default function StudysetPage() {
           preferred_tools: selectedTools,
           quiz_question_types: selectedTools.includes('quiz') ? quizQuestionTypes : [],
           tool_notes: toolNotes || null,
+          output_preferences: {
+            difficulty,
+            depth,
+            language: outputLanguage,
+            tone,
+            only_my_sources: onlyMySources,
+            include_examples: includeExamples,
+          },
+          url_sources: urlSources.map((s) => ({ url: s.url, label: s.label })),
         }),
       });
 
@@ -684,6 +787,38 @@ export default function StudysetPage() {
 
       {view === 'home' && (
         <div className="space-y-6">
+          {/* Search + sort row */}
+          {!loadingStudysets && studysets.length > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={homeSearch}
+                  onChange={(e) => setHomeSearch(e.target.value)}
+                  placeholder="Search studysets…"
+                  className="h-9 w-full rounded-lg border border-border bg-white pl-8 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[#6b7c4e]/60 focus:ring-1 focus:ring-[#6b7c4e]/30"
+                />
+              </div>
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-white p-1">
+                {(['recent', 'name', 'progress'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setHomeSort(s)}
+                    className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors capitalize ${
+                      homeSort === s
+                        ? 'bg-[#6b7c4e] text-white'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {loadingStudysets && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
@@ -775,11 +910,13 @@ export default function StudysetPage() {
 
               <section>
                 <h2 className={SECTION_HEADING}>active studysets</h2>
-                {activeStudysets.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No active studysets — everything is archived or done.</p>
+                {filteredActiveStudysets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {homeSearch.trim() ? 'No studysets match your search.' : 'No active studysets — everything is archived or done.'}
+                  </p>
                 ) : (
                   <div className="space-y-2">
-                    {activeStudysets.map((item) => {
+                    {filteredActiveStudysets.map((item) => {
                       const meta = item.meta || {};
                       const hex = colorHex(meta.color);
                       const ItemIcon = iconForId(meta.icon);
@@ -1165,6 +1302,58 @@ export default function StudysetPage() {
                     )}
                   </div>
 
+                  {/* URL / YouTube / audio sources */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      URLs, YouTube &amp; audio
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUrlSource(); } }}
+                        placeholder="Paste a URL, YouTube link…"
+                        className="h-9 flex-1 rounded-lg border border-border bg-white px-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[#6b7c4e]/60"
+                      />
+                      <button
+                        type="button"
+                        onClick={addUrlSource}
+                        className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition-colors hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Add
+                      </button>
+                    </div>
+                    {urlSources.length > 0 && (
+                      <div className="mt-2 space-y-1.5">
+                        {urlSources.map((src) => {
+                          const isYT = src.label === 'YouTube';
+                          return (
+                            <div key={src.id} className="flex items-center gap-2 rounded-lg border border-border bg-white px-3 py-2">
+                              {isYT ? (
+                                <Youtube className="h-4 w-4 flex-shrink-0 text-red-500" />
+                              ) : (
+                                <Link className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                              )}
+                              <p className="flex-1 truncate text-xs text-foreground">{src.url}</p>
+                              <button
+                                type="button"
+                                onClick={() => removeUrlSource(src.id)}
+                                className="flex-shrink-0 text-xs text-muted-foreground hover:text-destructive"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      YouTube transcripts, web pages, and audio files (MP3/M4A) are extracted automatically.
+                    </p>
+                  </div>
+
                   {/* OneDrive */}
                   <div className="rounded-xl border border-border/60 bg-background p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -1288,6 +1477,136 @@ export default function StudysetPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* ── Output preferences ─────────────────────────────────── */}
+                  <div className="space-y-5 border-t border-border/60 pt-5">
+                    {/* Difficulty */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-1">Difficulty</label>
+                      <p className="text-xs text-muted-foreground mb-3">How challenging should the generated content be?</p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {DIFFICULTY_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            title={opt.description}
+                            onClick={() => setDifficulty(opt.value)}
+                            className={`rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${
+                              difficulty === opt.value
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Depth */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-3">Depth</label>
+                      <div className="flex gap-2">
+                        {DEPTH_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            title={opt.description}
+                            onClick={() => setDepth(opt.value)}
+                            className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
+                              depth === opt.value
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tone */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-3">Tone / mode</label>
+                      <div className="flex gap-2">
+                        {TONE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            title={opt.description}
+                            onClick={() => setTone(opt.value)}
+                            className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
+                              tone === opt.value
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Output language */}
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Output language</label>
+                      <select
+                        value={outputLanguage}
+                        onChange={(e) => setOutputLanguage(e.target.value)}
+                        className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:border-[#6b7c4e]/60 focus:outline-none focus:ring-1 focus:ring-[#6b7c4e]/30"
+                      >
+                        {LANGUAGE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Grounding + examples toggles */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">Only my sources</p>
+                          <p className="text-xs text-muted-foreground">No outside knowledge — stick strictly to your uploaded material</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setOnlyMySources((v) => !v)}
+                          className={`relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                            onlyMySources ? 'bg-[#6b7c4e]' : 'bg-muted'
+                          }`}
+                          role="switch"
+                          aria-checked={onlyMySources}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                              onlyMySources ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">Include examples</p>
+                          <p className="text-xs text-muted-foreground">Add worked examples to notes and explanations</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIncludeExamples((v) => !v)}
+                          className={`relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                            includeExamples ? 'bg-[#6b7c4e]' : 'bg-muted'
+                          }`}
+                          role="switch"
+                          aria-checked={includeExamples}
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                              includeExamples ? 'translate-x-4' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className={`rounded-xl px-4 py-3 text-sm ${SOFT_SURFACE}`}>
                     <p className="text-muted-foreground">

@@ -461,7 +461,7 @@ function FlashcardsPageContent() {
           >
             i
           </button>
-          <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-60 -translate-x-1/2 rounded-xl border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
+          <div className="pointer-events-none absolute top-full left-1/2 mt-2 w-60 -translate-x-1/2 rounded-xl border border-black/[0.08] bg-white px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
             <p className="text-[12px] font-medium text-foreground mb-1">Literal</p>
             <p className="text-[11px] text-muted-foreground mb-2 leading-snug">Cards stick to exactly what's explicitly in your text.</p>
             <p className="text-[12px] font-medium text-foreground mb-1">Research</p>
