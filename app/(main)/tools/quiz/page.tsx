@@ -10,6 +10,7 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { PageHeader } from '@/components/ui/page-header';
@@ -721,7 +722,7 @@ function QuizPageContent() {
                 const isLast = idx === arr.length - 1;
 
                 return (
-                  <div key={typeDef.value} className={`${isFirst ? 'rounded-t-lg' : ''} ${isLast && !isExpanded ? 'rounded-b-lg overflow-hidden' : ''}`}>
+                  <div key={typeDef.value} className={`${isFirst ? 'rounded-t-lg' : ''} ${isLast && !isExpanded ? 'rounded-b-lg' : ''}`}>
                     {/* Full-row click toggles the type */}
                     <div
                       role="button"
@@ -747,18 +748,20 @@ function QuizPageContent() {
                       </span>
 
                       {/* Info circle — shows description on hover */}
-                      <div className="relative group flex-shrink-0">
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); }}
-                          className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-                        >
-                          i
-                        </button>
-                        <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                          <p className="text-[11px] text-muted-foreground">{typeDef.description}</p>
-                        </div>
-                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); }}
+                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
+                          >
+                            i
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[224px] text-[11px]">
+                          {typeDef.description}
+                        </TooltipContent>
+                      </Tooltip>
 
                       {/* Expand chevron — for variants, not description */}
                       <button
@@ -809,15 +812,17 @@ function QuizPageContent() {
             <div className="p-3 space-y-3">
 
               {/* Title */}
-              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>Quiz title (optional)</p>
-                  <div className="relative group">
-                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-border bg-popover px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] text-muted-foreground">Give your quiz a name. This appears in your results.</p>
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[224px] text-[11px]">
+                      Give your quiz a name. This appears in your results.
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 <Input
                   value={title}
@@ -829,7 +834,7 @@ function QuizPageContent() {
               </div>
 
               {/* Knowledge Level */}
-              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How much do you already know?</p>
                 </div>
@@ -845,20 +850,19 @@ function QuizPageContent() {
               </div>
 
               {/* Mode */}
-              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>What mode do you want?</p>
-                  <div className="relative group">
-                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] text-foreground mb-1">Classic</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">All answers shown at the end.</p>
-                      <p className="text-[11px] text-foreground mb-1">Assisted</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">Feedback after each question.</p>
-                      <p className="text-[11px] text-foreground mb-1">Adaptive</p>
-                      <p className="text-[10px] text-muted-foreground">Difficulty adjusts automatically.</p>
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[200px] space-y-1.5 text-[11px]">
+                      <p><span className="font-medium text-foreground">Classic</span> — all answers shown at the end.</p>
+                      <p><span className="font-medium text-foreground">Assisted</span> — feedback after each question.</p>
+                      <p><span className="font-medium text-foreground">Adaptive</span> — difficulty adjusts automatically.</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 <div className="space-y-1">
                   {modeEntries.map((e) => (
@@ -881,18 +885,18 @@ function QuizPageContent() {
               </div>
 
               {/* Answer Feedback */}
-              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>When do you want feedback?</p>
-                  <div className="relative group">
-                    <button type="button" className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors flex-shrink-0 text-[10px] font-bold leading-none">i</button>
-                    <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                      <p className="text-[11px] text-foreground mb-1">At the end</p>
-                      <p className="text-[10px] text-muted-foreground mb-2">See all answers after finishing.</p>
-                      <p className="text-[11px] text-foreground mb-1">Immediately</p>
-                      <p className="text-[10px] text-muted-foreground">Know if you're right after each question.</p>
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[200px] space-y-1.5 text-[11px]">
+                      <p><span className="font-medium text-foreground">At the end</span> — see all answers after finishing.</p>
+                      <p><span className="font-medium text-foreground">Immediately</span> — know if you're right after each question.</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
                 <div className="flex gap-1.5">
                   {([
@@ -917,7 +921,7 @@ function QuizPageContent() {
               </div>
 
               {/* Questions */}
-              <div className="rounded-lg border border-black/[0.08] bg-white px-3 py-3 space-y-2.5">
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>How many questions?</p>
                   <div className="flex items-center gap-2">
