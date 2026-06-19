@@ -7,7 +7,13 @@ import React, {
   useState,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Mic, MicOff, ArrowUp, X, Link, Image, FileText, Monitor, Paperclip, FolderOpen, Clock, LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
+import { Plus, Mic, MicOff, ArrowUp, X, FileText, ChevronDown, Loader2 } from 'lucide-react';
+import { Cast } from '@/components/animate-ui/icons/cast';
+import { Clapperboard } from '@/components/animate-ui/icons/clapperboard';
+import { Link } from '@/components/animate-ui/icons/link';
+import { Unplug } from '@/components/animate-ui/icons/unplug';
+import { Clock8 } from '@/components/animate-ui/icons/clock-8';
+import { CloudUpload } from '@/components/animate-ui/icons/cloud-upload';
 import { useScreenshotCapture } from '@/hooks/use-screenshot-capture';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import { useToast } from '@/hooks/use-toast';
@@ -691,7 +697,7 @@ export function ToolInputBox({
                   <div className="h-8 w-8 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
                     {capturing
                       ? <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
-                      : <Monitor className="h-4 w-4 text-violet-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                      : <Cast className="h-4 w-4 text-violet-500 transition-transform duration-150 group-hover:-translate-y-0.5" animateOnHover />
                     }
                   </div>
                   <span className="text-sm font-medium text-foreground">Share a page</span>
@@ -704,7 +710,7 @@ export function ToolInputBox({
                   onClick={() => setShowPlusMenu(false)}
                 >
                   <div className="h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                    <Image className="h-4 w-4 text-blue-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                    <Clapperboard className="h-4 w-4 text-blue-500 transition-transform duration-150 group-hover:-translate-y-0.5" animateOnHover />
                   </div>
                   <span className="text-sm font-medium text-foreground">Photos</span>
                 </label>
@@ -716,7 +722,7 @@ export function ToolInputBox({
                   onClick={() => setShowPlusMenu(false)}
                 >
                   <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                    <Paperclip className="h-4 w-4 text-amber-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                    <Link className="h-4 w-4 text-amber-500 transition-transform duration-150 group-hover:-translate-y-0.5" animateOnHover />
                   </div>
                   <span className="text-sm font-medium text-foreground">Files</span>
                 </label>
@@ -730,7 +736,7 @@ export function ToolInputBox({
                   onClick={() => setShowImportSubmenu(!showImportSubmenu)}
                 >
                   <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                    <FolderOpen className="h-4 w-4 text-emerald-500 transition-transform duration-150 group-hover:rotate-6" />
+                    <Unplug className="h-4 w-4 text-emerald-500 transition-transform duration-150 group-hover:rotate-6" animateOnHover />
                   </div>
                   <span className="text-sm font-medium text-foreground flex-1">Import from</span>
                   <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${showImportSubmenu ? 'rotate-180' : ''}`} />
@@ -743,7 +749,7 @@ export function ToolInputBox({
                       className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
                       onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
                     >
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
+                      <Clock8 className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" animateOnHover />
                       <span>Recents</span>
                     </button>
                     <button
@@ -751,7 +757,7 @@ export function ToolInputBox({
                       className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
                       onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
                     >
-                      <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
+                      <CloudUpload className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" animateOnHover />
                       <span>Microsoft 365</span>
                     </button>
                   </div>

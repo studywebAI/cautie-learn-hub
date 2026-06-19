@@ -14,16 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import {
-  Home,
-  Library,
-  BrainCircuit,
-  NotebookPen,
   Workflow,
-  FolderKanban,
-  Users,
-  CalendarDays,
-  BarChart2,
-  LineChart,
   Menu,
   ArrowUpRight,
   ChevronDown,
@@ -34,7 +25,17 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
+import { TimelineIcon } from '@/components/icons/custom-icons';
+import { LayoutDashboard } from '@/components/animate-ui/icons/layout-dashboard';
+import { SquareArrowOutUpRight } from '@/components/animate-ui/icons/square-arrow-out-up-right';
+import { Users } from '@/components/animate-ui/icons/users';
+import { ChartColumn } from '@/components/animate-ui/icons/chart-column';
+import { ChartSpline } from '@/components/animate-ui/icons/chart-spline';
+import { ClipboardList } from '@/components/animate-ui/icons/clipboard-list';
+import { GalleryVerticalEnd } from '@/components/animate-ui/icons/gallery-vertical-end';
+import { CircleCheck } from '@/components/animate-ui/icons/circle-check';
+import { Layers } from '@/components/animate-ui/icons/layers';
+import { Brush } from '@/components/animate-ui/icons/brush';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { Button } from './ui/button';
@@ -157,32 +158,32 @@ export function AppSidebar() {
 
   const menuItems = isTeacher
     ? [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: Library },
-        { href: teacherManageHref, label: t.manage, icon: Users },
-        { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
-        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: LineChart },
-        { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: CalendarDays },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard, animated: true },
+        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: SquareArrowOutUpRight, animated: true },
+        { href: teacherManageHref, label: t.manage, icon: Users, animated: true },
+        { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ChartColumn, animated: true },
+        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: ChartSpline, animated: true },
+        { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: ClipboardList, animated: true },
       ]
     : [
-        { href: '/', label: dictionary.sidebar.dashboard, icon: Home },
-        { href: '/subjects', label: dictionary.sidebar.subjects, icon: Library },
-        { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: BarChart2 },
-        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: LineChart },
-        { href: '/classes', label: t.classes, icon: Users },
-        { href: '/agenda', label: dictionary.sidebar.agenda, icon: CalendarDays },
+        { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard, animated: true },
+        { href: '/subjects', label: dictionary.sidebar.subjects, icon: SquareArrowOutUpRight, animated: true },
+        { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ChartColumn, animated: true },
+        { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: ChartSpline, animated: true },
+        { href: '/classes', label: t.classes, icon: Users, animated: true },
+        { href: '/agenda', label: dictionary.sidebar.agenda, icon: ClipboardList, animated: true },
       ];
 
   const toolsMenuItems = [
-    { href: '/tools/studyset', label: t.studyset, icon: FolderKanban },
-    { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: BrainCircuit },
-    { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: FlashcardIcon },
-    { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: NotebookPen },
-    { href: '/tools/wordweb', label: 'Mindmap', icon: Workflow },
-    { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: TimelineIcon },
+    { href: '/tools/studyset', label: t.studyset, icon: GalleryVerticalEnd, animated: true },
+    { href: '/tools/quiz', label: dictionary.sidebar.tools.quizGenerator, icon: CircleCheck, animated: true },
+    { href: '/tools/flashcards', label: dictionary.sidebar.tools.flashcardMaker, icon: Layers, animated: true },
+    { href: '/tools/notes', label: dictionary.sidebar.tools.notes, icon: Brush, animated: true },
+    { href: '/tools/wordweb', label: 'Mindmap', icon: Workflow, animated: false },
+    { href: '/tools/timeline', label: isDutch ? 'Tijdlijn' : 'Timeline', icon: TimelineIcon, animated: false },
   ];
 
-  const otherMenuItems: Array<{ href: string; label: string; icon: typeof FolderOpen }> = [];
+  const otherMenuItems: Array<{ href: string; label: string; icon: typeof FolderOpen; animated?: boolean }> = [];
 
   useEffect(() => {
     const warmResources = context?.warmResources;
@@ -1065,7 +1066,7 @@ export function AppSidebar() {
                       )}
                       title={item.label}
                     >
-                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                     </button>
                   </>
                 ) : (
@@ -1079,7 +1080,7 @@ export function AppSidebar() {
                     )}
                     title={item.label}
                   >
-                    <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                    <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                   </Link>
                 )}
               </div>
@@ -1097,7 +1098,7 @@ export function AppSidebar() {
                 )}
                 title={item.label}
               >
-                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
               </Link>
             ))}
             {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
@@ -1113,7 +1114,7 @@ export function AppSidebar() {
                 )}
                 title={item.label}
               >
-                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
               </Link>
             ))}
           </nav>
@@ -1150,7 +1151,7 @@ export function AppSidebar() {
                             isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                             tooltip={item.label}
                           >
-                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                             <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </SidebarMenuButton>
                         </>
@@ -1161,7 +1162,7 @@ export function AppSidebar() {
                           tooltip={item.label}
                         >
                           <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                             <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
@@ -1186,7 +1187,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                           <span className="text-[13px] font-medium leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -1209,7 +1210,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                       >
                         <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
                           <span className="text-[13px] font-medium leading-4">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -1253,7 +1254,7 @@ export function AppSidebar() {
                       tooltip={item.label}
                       className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
                     >
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" {...(item.animated === false ? {} : { animateOnHover: true })} />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </SidebarMenuButton>
                   ) : (
@@ -1264,7 +1265,7 @@ export function AppSidebar() {
                       className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
                     >
                       <Link prefetch={false} href={item.href}>
-                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" {...(item.animated === false ? {} : { animateOnHover: true })} />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -1288,7 +1289,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" {...(item.animated === false ? {} : { animateOnHover: true })} />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -1311,7 +1312,7 @@ export function AppSidebar() {
                     tooltip={item.label}
                   >
                     <Link prefetch={false} href={item.href}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
+                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" {...(item.animated === false ? {} : { animateOnHover: true })} />
                       <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>

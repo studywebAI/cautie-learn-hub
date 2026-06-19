@@ -1,18 +1,19 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect, useContext } from 'react';
 import {
-  BrainCircuit,
   ChevronRight,
-  Copy,
   FileSignature,
-  BookOpen,
-  Route,
   ChevronDown,
   ChevronUp,
-  StickyNote,
   MoreHorizontal,
 } from 'lucide-react';
+import { CircleCheck } from '@/components/animate-ui/icons/circle-check';
+import { Layers } from '@/components/animate-ui/icons/layers';
+import { Brush } from '@/components/animate-ui/icons/brush';
+import { SquareArrowOutUpRight } from '@/components/animate-ui/icons/square-arrow-out-up-right';
+import { GalleryVerticalEnd } from '@/components/animate-ui/icons/gallery-vertical-end';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
@@ -62,13 +63,13 @@ type ClassOption = {
   name: string;
 };
 
-const TYPE_ICONS: Record<string, typeof BrainCircuit> = {
-  flashcards: Copy,
-  notes: StickyNote,
-  quiz: BrainCircuit,
-  subject: BookOpen,
+const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string; animateOnHover?: boolean }>> = {
+  flashcards: Layers,
+  notes: Brush,
+  quiz: CircleCheck,
+  subject: SquareArrowOutUpRight,
   assignment: FileSignature,
-  studyset: Route,
+  studyset: GalleryVerticalEnd,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -462,7 +463,7 @@ export function RecentsSidebar() {
                 title={item.title}
                 onClick={() => handleClick(item)}
               >
-                <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" {...(item.type !== 'assignment' ? { animateOnHover: true } : {})} />
               </button>
             );
           })}
@@ -527,7 +528,7 @@ export function RecentsSidebar() {
               className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/45 transition-colors cursor-pointer group"
               onClick={() => handleClick(item)}
             >
-              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" />
+              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" {...(item.type !== 'assignment' ? { animateOnHover: true } : {})} />
               {item.source === 'studyset' ? (
                 <button
                   type="button"
