@@ -3,7 +3,8 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Lightbulb, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
 import { AppContext } from '@/contexts/app-context';
@@ -2743,7 +2744,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   };
 
   if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} onRestart={onRestart} studysetId={studysetId} taskId={taskId} />;
-  if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Spinner /></div>;
 
   const revealCurrent = feedbackImmediate && finalizedMap[currentQuestion.id] === true;
   const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
@@ -2930,7 +2931,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                       disabled={hintLoading}
                     >
                       {hintLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
+                        <Spinner size={14} />
                       ) : (
                         <Lightbulb className="h-3.5 w-3.5 opacity-70" strokeWidth={2} />
                       )}
@@ -2995,7 +2996,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                   <div className="mb-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
                     {whyIncorrectLoading && !whyIncorrect && !currentQuestion.explanation?.trim() ? (
                       <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Spinner size={14} />
                         Generating explanation…
                       </div>
                     ) : (

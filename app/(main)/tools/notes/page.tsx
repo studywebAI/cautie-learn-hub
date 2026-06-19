@@ -5,6 +5,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { Bold, Calendar, FileSignature, Italic, Loader2, Network, Paintbrush, PanelsRightBottom, Underline } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ToolInputBox } from '@/components/tools/tool-input-box';
@@ -1179,7 +1180,7 @@ function NotesPageContent() {
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
           <div className="w-full rounded-2xl border border-border surface-panel p-5 md:p-6">
             <div className="mb-3 flex items-center gap-3 text-sm text-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Spinner size={20} />
               <span className="font-medium">{currentStage.title}</span>
             </div>
             <p className="text-sm text-muted-foreground">{currentStage.detail}</p>
@@ -1791,7 +1792,7 @@ function NotesPageContent() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size={16} className="mr-2" />
                 Generating...
               </>
             ) : (

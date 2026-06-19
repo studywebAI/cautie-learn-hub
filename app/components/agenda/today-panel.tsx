@@ -2,7 +2,8 @@
 
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { BrainCircuit, BookCheck, Lightbulb, Loader2, Home, Circle, Square, BookOpen } from 'lucide-react';
+import { BrainCircuit, BookCheck, Lightbulb, Home, Circle, Square, BookOpen } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import type { CalendarEvent } from '@/lib/types';
 import type { AiSuggestion } from '@/lib/types';
 import { useDictionary } from '@/contexts/app-context';
@@ -165,7 +166,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
           <CardContent>
             {isGeneratingSuggestion ? (
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <Spinner size={20} />
                 <Skeleton className="h-4 w-[200px]" />
               </div>
             ) : suggestion?.content ? (

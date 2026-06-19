@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, ChevronRight, ArrowLeft, Trash2, 
-  Edit, Eye, Loader2, Save, Send, X, Check, ClipboardList,
+import {
+  Plus, ChevronRight, ArrowLeft, Trash2,
+  Edit, Eye, Save, Send, X, Check, ClipboardList,
   Users, Target, History, FileText
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { DEFAULT_CLASS_PREFERENCES, normalizeClassPreferences } from '@/lib/class-preferences';
@@ -330,7 +331,7 @@ export function GradesTab({ classId }: { classId: string }) {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Spinner size={32} />
         </div>
       ) : (
         <>
@@ -472,7 +473,7 @@ function GradesHistoryView({
         <h2 className="text-base">Events</h2>
         {loading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Spinner />
           </div>
         ) : filtered.length === 0 ? (
           <p className="text-sm text-muted-foreground">No grade history found.</p>
@@ -952,7 +953,7 @@ function NewGradesWizard({
             disabled={loading}
             className="flex-1"
           >
-            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : null}
+            {loading ? <Spinner size={16} className="mr-1" /> : null}
             Create
           </Button>
         </div>
@@ -1014,7 +1015,7 @@ function StudentGrader({ classId, onStudentsLoaded }: { classId: string; onStude
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4">
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <Spinner className="mr-2" />
         <span>Loading students...</span>
       </div>
     );
@@ -1068,7 +1069,7 @@ function EditGradesList({
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Spinner size={32} />
         </div>
       ) : gradeSets.length === 0 ? (
         <div className="class-panel py-10 text-center">
@@ -1421,7 +1422,7 @@ function EditGradesDetail({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Spinner size={32} />
       </div>
     );
   }
@@ -1477,7 +1478,7 @@ function EditGradesDetail({
             </Button>
           )}
           <Button onClick={saveGrades} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+            {saving ? <Spinner size={16} className="mr-1" /> : <Save className="h-4 w-4 mr-1" />}
             Save
           </Button>
         </div>

@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Trash2, Copy, Check, CalendarPlus } from 'lucide-react';
+import { Trash2, Copy, Check, CalendarPlus } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 
 type CalendarProvider = 'apple' | 'google' | 'outlook' | 'caldav';
@@ -401,7 +402,7 @@ export function CalendarConnectionDialog({
               disabled={isLoading}
               className="w-full"
             >
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading && <Spinner size={16} color="white" className="mr-2" />}
               {isLoading ? 'Connecting...' : 'Connect Calendar'}
             </Button>
           </TabsContent>
@@ -409,7 +410,7 @@ export function CalendarConnectionDialog({
           <TabsContent value="accounts" className="space-y-4">
             {isLoading && !hasLoadedAccounts ? (
               <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
+                <Spinner />
               </div>
             ) : accounts.length === 0 ? (
               <div className="text-center py-8">

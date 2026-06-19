@@ -16,7 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, Loader2 } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { PersonalTask } from '@/contexts/app-context';
@@ -161,7 +162,7 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
         <DialogFooter>
           <Button variant="secondary" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleCreateTask} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Add Task
           </Button>
         </DialogFooter>

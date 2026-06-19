@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, ArrowLeft, Play, Undo2, BookCheck, Wand2, Plus } from 'lucide-react';
+import { Trash2, ArrowLeft, Play, Undo2, BookCheck, Wand2, Plus } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AnimatePresence, motion } from 'framer-motion';
 // import { generateSingleFlashcard } from '@/ai/flows/generate-single-flashcard'; // Removed direct import
@@ -262,7 +263,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
                 </div>
                 <div className="flex justify-end gap-2">
                      <Button onClick={handleAddCardWithAI} variant="outline" disabled={isAddingCard}>
-                        {isAddingCard ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                        {isAddingCard ? <Spinner size={16} className="mr-2" /> : <Wand2 className="mr-2 h-4 w-4" />}
                         Add with AI
                     </Button>
                     <Button onClick={handleAddManualCard} disabled={!manualFront || !manualBack}>
@@ -278,7 +279,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
             Back to Setup
         </Button>
         <Button onClick={handlePrimaryAction} disabled={currentCards.length === 0 || isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PrimaryButtonIcon className="mr-2 h-4 w-4" />}
+            {isLoading ? <Spinner size={16} className="mr-2" /> : <PrimaryButtonIcon className="mr-2 h-4 w-4" />}
             {isLoading ? 'Creating...' : primaryButtonText}
         </Button>
       </CardFooter>

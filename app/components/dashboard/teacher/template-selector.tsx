@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BookTemplate, Globe, Lock } from 'lucide-react';
+import { BookTemplate, Globe, Lock } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 type Template = {
   id: string;
@@ -83,7 +84,7 @@ export function TemplateSelector({ isOpen, setIsOpen, onTemplateSelected }: Temp
         <div className="space-y-4">
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Spinner size={32} />
             </div>
           ) : templates.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

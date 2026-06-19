@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Trash2, CalendarDays } from 'lucide-react';
+import { Trash2, CalendarDays } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 
 type CalendarEvent = {
@@ -214,7 +215,7 @@ export function CalendarTab({ classId }: CalendarTabProps) {
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => void handleCreate()} disabled={submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                {submitting ? <Spinner size={16} /> : 'Save'}
               </Button>
               <Button
                 size="sm"
@@ -230,7 +231,7 @@ export function CalendarTab({ classId }: CalendarTabProps) {
 
         {loading ? (
           <div className="flex h-32 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Spinner />
           </div>
         ) : events.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">

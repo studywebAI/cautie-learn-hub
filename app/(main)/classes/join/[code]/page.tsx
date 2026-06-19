@@ -7,6 +7,7 @@ import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 
 export default function JoinClassPage() {
@@ -130,7 +131,7 @@ export default function JoinClassPage() {
             )}
           </div>
           <Button onClick={handleJoin} disabled={joining} className="w-full">
-            {joining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {joining && <Spinner size={16} className="mr-2" />}
             {session ? 'Join Class' : 'Login to Join'}
           </Button>
         </CardContent>

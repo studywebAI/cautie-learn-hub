@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { Copy, Check, Loader2, RefreshCw } from 'lucide-react';
+import { Copy, Check, RefreshCw } from 'lucide-react';
 import { InviteTab } from '@/components/class/invite-tab';
 import { ClassCalendarEvents } from '@/components/class/class-calendar-events';
 

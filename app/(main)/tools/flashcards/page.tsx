@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useContext, useCallback, useRef }
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { ChevronLeft, Copy, Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
@@ -780,7 +781,7 @@ function FlashcardsPageContent() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size={16} className="mr-2" />
                 Generating...
               </>
             ) : (

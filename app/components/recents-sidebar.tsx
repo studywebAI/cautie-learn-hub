@@ -14,6 +14,7 @@ import { Layers } from '@/components/animate-ui/icons/layers';
 import { Brush } from '@/components/animate-ui/icons/brush';
 import { SquareArrowOutUpRight } from '@/components/animate-ui/icons/square-arrow-out-up-right';
 import { GalleryVerticalEnd } from '@/components/animate-ui/icons/gallery-vertical-end';
+import { AnimateIcon } from '@/components/animate-ui/icons/icon-base';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
@@ -456,15 +457,16 @@ export function RecentsSidebar() {
           {compactItems.map((item) => {
             const Icon = TYPE_ICONS[item.type] || FileSignature;
             return (
-              <button
-                key={`${item.source}-${item.id}`}
-                type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent/55 hover:text-foreground"
-                title={item.title}
-                onClick={() => handleClick(item)}
-              >
-                <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" {...(item.type !== 'assignment' ? { animateOnHover: true } : {})} />
-              </button>
+              <AnimateIcon key={`${item.source}-${item.id}`} animateOnHover={item.type !== 'assignment'} asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/80 hover:bg-sidebar-accent/55 hover:text-foreground"
+                  title={item.title}
+                  onClick={() => handleClick(item)}
+                >
+                  <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                </button>
+              </AnimateIcon>
             );
           })}
         </div>
@@ -523,12 +525,12 @@ export function RecentsSidebar() {
           const dateStr = formatRecentTimestamp(item.date);
 
           return (
+            <AnimateIcon key={`${item.source}-${item.id}`} animateOnHover={item.type !== 'assignment'} asChild>
             <div
-              key={`${item.source}-${item.id}`}
               className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/45 transition-colors cursor-pointer group"
               onClick={() => handleClick(item)}
             >
-              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" {...(item.type !== 'assignment' ? { animateOnHover: true } : {})} />
+              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" />
               {item.source === 'studyset' ? (
                 <button
                   type="button"
@@ -598,6 +600,7 @@ export function RecentsSidebar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            </AnimateIcon>
           );
         })}
       </div>

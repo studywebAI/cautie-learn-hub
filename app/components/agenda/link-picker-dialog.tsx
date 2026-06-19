@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, BookOpen, Loader2, Search, Check, ChevronRight } from 'lucide-react';
+import { FileText, BookOpen, Search, Check, ChevronRight } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import type { MaterialReference } from '@/lib/teacher-types';
 
 type LinkPickerDialogProps = {
@@ -188,7 +189,7 @@ export function LinkPickerDialog({ isOpen, onClose, onSelect, classId }: LinkPic
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Spinner />
           </div>
         ) : (
           <Tabs defaultValue="assignments" className="w-full">

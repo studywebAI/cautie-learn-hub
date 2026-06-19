@@ -15,7 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { BrainCircuit, Copy, Loader2, Link as LinkIcon, Paperclip, X } from 'lucide-react';
+import { BrainCircuit, Copy, Link as LinkIcon, Paperclip, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Separator } from '@/components/ui/separator';
 import { AppContext, AppContextType, ClassAssignment } from '@/contexts/app-context';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
@@ -723,7 +724,7 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                 <Button onClick={() => setCreateStep((prev) => (prev === 1 ? 2 : 3))}>{t.next}</Button>
               ) : (
                 <Button onClick={handleSaveAssignment} disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoading && <Spinner size={16} className="mr-2" />}
                   {t.saveCta}
                 </Button>
               )}

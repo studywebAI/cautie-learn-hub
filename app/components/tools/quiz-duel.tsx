@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 // Removed direct import - using API route instead
 import type { QuizDuelData } from '@/ai/flows/generate-quiz-duel-data';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, RefreshCw, User, Check, X, Swords } from 'lucide-react';
+import { RefreshCw, User, Check, X, Swords } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -20,7 +21,7 @@ function LoadingDuel() {
     return (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm p-8">
             <div className="flex flex-col items-center gap-2 text-center">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <Spinner size={48} />
                 <h3 className="text-2xl font-bold tracking-tight mt-4">
                     Preparing Your Duel
                 </h3>

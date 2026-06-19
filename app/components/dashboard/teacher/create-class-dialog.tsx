@@ -15,9 +15,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Link as LinkIcon, Loader2, Share2, BookTemplate } from 'lucide-react';
+import { Copy, Link as LinkIcon, Share2, BookTemplate } from 'lucide-react';
 import type { ClassInfo } from '@/contexts/app-context';
 import { TemplateSelector } from './template-selector';
+import { Spinner } from '@/components/ui/spinner';
 
 // Import QR code library for client-side generation (PERFORMANCE FIX 2)
 import QRCode from 'qrcode';
@@ -191,7 +192,7 @@ export function CreateClassDialog({ isOpen, setIsOpen, onClassCreated }: CreateC
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose} disabled={isLoading}>Cancel</Button>
           <Button onClick={handleCreate} disabled={isLoading || !name.trim()}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Create and Get Invite Link
           </Button>
         </DialogFooter>

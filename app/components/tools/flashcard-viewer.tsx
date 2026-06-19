@@ -13,7 +13,6 @@ import {
   ArrowRight,
   RefreshCw,
   Lightbulb,
-  Loader2,
   CheckCircle2,
   XCircle,
   Sparkles,
@@ -26,6 +25,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { MultipleChoiceView } from './multiple-choice-view';
 import { normalizeForCompare } from '@/lib/study-grading';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
@@ -967,7 +967,7 @@ export function FlashcardViewer({
         {showExplanationButton && (
           <div className="w-full max-w-2xl text-center">
             <Button variant="outline" size="sm" onClick={handleGetExplanation} disabled={isExplanationLoading} className="rounded-full">
-              {isExplanationLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lightbulb className="mr-2 h-4 w-4" />}
+              {isExplanationLoading ? <Spinner size={16} className="mr-2" /> : <Lightbulb className="mr-2 h-4 w-4" />}
               {explanationButtonLabel}
             </Button>
           </div>

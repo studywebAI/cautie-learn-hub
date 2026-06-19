@@ -20,7 +20,6 @@ import {
   ChevronDown,
   Check,
   FolderOpen,
-  Loader2,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -34,6 +33,7 @@ import { ChartSpline } from '@/components/animate-ui/icons/chart-spline';
 import { ClipboardList } from '@/components/animate-ui/icons/clipboard-list';
 import { GalleryVerticalEnd } from '@/components/animate-ui/icons/gallery-vertical-end';
 import { CircleCheck } from '@/components/animate-ui/icons/circle-check';
+import { AnimateIcon } from '@/components/animate-ui/icons/icon-base';
 import { Layers } from '@/components/animate-ui/icons/layers';
 import { Brush } from '@/components/animate-ui/icons/brush';
 import { useDeviceTier } from '@/hooks/use-device-tier';
@@ -43,6 +43,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -975,7 +976,7 @@ export function AppSidebar() {
                       onClick={submitCreateClass}
                       disabled={submitting || !className.trim() || !classSubjectTitle.trim()}
                     >
-                      {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t.creatingClass}</> : t.createClass}
+                      {submitting ? <><Spinner size={16} color="white" className="mr-2" />{t.creatingClass}</> : t.createClass}
                     </Button>
                   </div>
                 </>
@@ -1051,7 +1052,7 @@ export function AppSidebar() {
             {visibleMainItems.map((item) => (
               <div key={item.href} className="relative">
                 {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                  <>
+                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
                     <button
                       type="button"
                       data-nav-dropdown-trigger="true"
@@ -1066,56 +1067,60 @@ export function AppSidebar() {
                       )}
                       title={item.label}
                     >
-                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
+                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                     </button>
-                  </>
+                  </AnimateIcon>
                 ) : (
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                      isMenuItemActive(item.href)
-                        ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                        : "text-sidebar-foreground hover:surface-interactive"
-                    )}
-                    title={item.label}
-                  >
-                    <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                  </Link>
+                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                        isMenuItemActive(item.href)
+                          ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                          : "text-sidebar-foreground hover:surface-interactive"
+                      )}
+                      title={item.label}
+                    >
+                      <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                    </Link>
+                  </AnimateIcon>
                 )}
               </div>
             ))}
             {showSectionHeaders && visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
             {visibleToolsItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                  isMenuItemActive(item.href)
-                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                    : "text-sidebar-foreground hover:surface-interactive"
-                )}
-                title={item.label}
-              >
-                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-              </Link>
+              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                    isMenuItemActive(item.href)
+                      ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                      : "text-sidebar-foreground hover:surface-interactive"
+                  )}
+                  title={item.label}
+                >
+                  <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                </Link>
+              </AnimateIcon>
             ))}
             {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
             {visibleOtherItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                  isMenuItemActive(item.href)
-                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                    : "text-sidebar-foreground hover:surface-interactive"
-                )}
-                title={item.label}
-              >
-                <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-              </Link>
+              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} asChild>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                    isMenuItemActive(item.href)
+                      ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                      : "text-sidebar-foreground hover:surface-interactive"
+                  )}
+                  title={item.label}
+                >
+                  <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                </Link>
+              </AnimateIcon>
             ))}
           </nav>
 
@@ -1142,7 +1147,7 @@ export function AppSidebar() {
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
                       {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                        <>
+                        <AnimateIcon animateOnHover={item.animated !== false} asChild>
                           <SidebarMenuButton
                             data-nav-dropdown-trigger="true"
                             onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
@@ -1151,21 +1156,23 @@ export function AppSidebar() {
                             isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
                             tooltip={item.label}
                           >
-                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
+                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                             <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </SidebarMenuButton>
-                        </>
+                        </AnimateIcon>
                       ) : (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isMenuItemActive(item.href)}
-                          tooltip={item.label}
-                        >
-                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
+                        <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={isMenuItemActive(item.href)}
+                            tooltip={item.label}
+                          >
+                            <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                              <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                              <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </AnimateIcon>
                       )}
                     </SidebarMenuItem>
                   ))}
@@ -1181,16 +1188,18 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isMenuItemActive(item.href)}
-                        tooltip={item.label}
-                      >
-                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isMenuItemActive(item.href)}
+                          tooltip={item.label}
+                        >
+                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </AnimateIcon>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -1204,16 +1213,18 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isMenuItemActive(item.href)}
-                        tooltip={item.label}
-                      >
-                        <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
-                          <item.icon className="h-4 w-4 text-[var(--accent-brand)]" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
+                      <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isMenuItemActive(item.href)}
+                          tooltip={item.label}
+                        >
+                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                            <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
+                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </AnimateIcon>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -1245,30 +1256,34 @@ export function AppSidebar() {
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
                   {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                    <SidebarMenuButton
-                      data-nav-dropdown-trigger="true"
-                      onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                      onMouseLeave={scheduleClose}
-                      onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
-                      isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
-                      tooltip={item.label}
-                      className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                    </SidebarMenuButton>
-                  ) : (
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isMenuItemActive(item.href)}
-                      tooltip={item.label}
-                      className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-                    >
-                      <Link prefetch={false} href={item.href}>
-                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" {...(item.animated === false ? {} : { animateOnHover: true })} />
+                    <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                      <SidebarMenuButton
+                        data-nav-dropdown-trigger="true"
+                        onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        onMouseLeave={scheduleClose}
+                        onClick={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
+                        isActive={isMenuItemActive(item.href) || dropdown?.kind === getDropdownKind(item.href)}
+                        tooltip={item.label}
+                        className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+                      >
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                      </SidebarMenuButton>
+                    </AnimateIcon>
+                  ) : (
+                    <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                        className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+                      >
+                        <Link prefetch={false} href={item.href}>
+                          <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
+                          <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </AnimateIcon>
                   )}
                 </SidebarMenuItem>
               ))}
@@ -1283,16 +1298,18 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isMenuItemActive(item.href)}
-                    tooltip={item.label}
-                  >
-                    <Link prefetch={false} href={item.href}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isMenuItemActive(item.href)}
+                      tooltip={item.label}
+                    >
+                      <Link prefetch={false} href={item.href}>
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
+                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </AnimateIcon>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -1306,16 +1323,18 @@ export function AppSidebar() {
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isMenuItemActive(item.href)}
-                    tooltip={item.label}
-                  >
-                    <Link prefetch={false} href={item.href}>
-                      <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" {...(item.animated === false ? {} : { animateOnHover: true })} />
-                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isMenuItemActive(item.href)}
+                      tooltip={item.label}
+                    >
+                      <Link prefetch={false} href={item.href}>
+                        <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
+                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </AnimateIcon>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

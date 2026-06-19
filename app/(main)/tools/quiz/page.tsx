@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import React, { Suspense, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -979,7 +980,7 @@ function QuizPageContent() {
             disabled={loading || !sourceText.trim()}
           >
             {loading ? (
-              <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Generating...</>
+              <><Spinner size={14} className="mr-2" />Generating...</>
             ) : (
               <><BrainCircuit className="mr-2 h-3.5 w-3.5" />Generate Quiz</>
             )}
@@ -1055,7 +1056,7 @@ function QuizPageContent() {
             {/* Image analysis indicator */}
             {imageDescLoading && (
               <div className="flex items-center gap-1.5 justify-center text-[11px] text-muted-foreground/70">
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Spinner size={12} />
                 Analysing image…
               </div>
             )}
@@ -1080,7 +1081,7 @@ function QuizPageContent() {
         breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
       >
         <div className="flex h-full flex-col items-center justify-center gap-3">
-          <Loader2 className="h-7 w-7 animate-spin text-[var(--accent-brand)]" />
+          <Spinner size={28} />
           <p className="text-sm text-muted-foreground">Analyzing your content…</p>
         </div>
       </WorkbenchShell>

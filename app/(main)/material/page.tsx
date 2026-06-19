@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { UploadCloud, FileText, ImageIcon, Loader2, BrainCircuit, BookCopy } from 'lucide-react';
+import { UploadCloud, FileText, ImageIcon, BrainCircuit, BookCopy } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 // Removed direct import - using API route instead
 import type { ProcessMaterialOutput } from '@/ai/flows/process-material';
@@ -157,7 +158,7 @@ function MaterialPageContent() {
           </div>
           <div className="flex justify-end">
             <Button onClick={handleProcess} disabled={(!uploadedFile && !inputText) || isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading ? <Spinner size={16} className="mr-2" /> : null}
               {isLoading ? materialDict.processing : materialDict.processWithAi}
             </Button>
           </div>

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ChevronRight, Search, Loader2, BookOpen, Check, Keyboard } from 'lucide-react';
+import { ChevronRight, Search, BookOpen, Check, Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -275,7 +276,7 @@ export function HierarchicalLinkPicker({ isOpen, onClose, onSelect, classId }: H
         
         <ScrollArea className="h-[320px]">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            <div className="flex items-center justify-center py-12"><Spinner /></div>
           ) : currentLevel === 'subjects' ? (
             filteredSubjects.length > 0 ? (
               <div className="space-y-2 p-1">

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Copy, Loader2 } from 'lucide-react';
+import { ChevronLeft, Copy } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { AppContext } from '@/contexts/app-context';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -224,7 +225,7 @@ function MindmapPageContent() {
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Spinner size={16} className="mr-2" />
                 Generating...
               </>
             ) : (

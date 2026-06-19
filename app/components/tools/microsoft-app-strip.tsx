@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { CheckCircle2, Clock3, Folder, Layers, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Clock3, Folder, Layers, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import { ENABLED_INTEGRATION_APPS } from '@/lib/integrations/catalog';
 
@@ -757,7 +758,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
             title="OneDrive"
           >
             {opening ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Spinner />
             ) : (
               <img src={ONEDRIVE_APP.logoPath} alt="OneDrive" className="h-5 w-5 object-contain" />
             )}
@@ -800,7 +801,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
           </div>
           {pickerStatus !== 'Ready to select' && (
             <div className="flex items-center gap-2 border-b border-border surface-panel px-4 py-2 text-xs text-muted-foreground">
-              {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Loader2 className={`h-3.5 w-3.5 ${pickerStatus === 'Import failed' ? 'hidden' : 'animate-spin'}`} />}
+              {pickerStatus === 'Ready to use in Cautie' ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Spinner size={14} className={pickerStatus === 'Import failed' ? 'hidden' : undefined} />}
               <span>{pickerStatus}</span>
             </div>
           )}
@@ -888,7 +889,7 @@ export function MicrosoftAppStrip({ returnTo, autoOpen = false, hideLauncher = f
                   <div className="min-h-0 flex-1 overflow-auto p-2">
                     {fallbackLoading ? (
                       <div className="flex h-full items-center justify-center">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        <Spinner />
                       </div>
                     ) : visibleFallbackFiles.length === 0 ? (
                       <div className="flex h-full min-h-[220px] items-center justify-center rounded-xl border border-dashed border-border surface-interactive text-xs text-muted-foreground">

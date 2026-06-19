@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Folder, Loader2 } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
   DialogContent,
@@ -118,7 +119,7 @@ export function OneDriveExportFolderPicker({ value, onChange }: OneDriveExportFo
         <div className="max-h-[340px] overflow-auto space-y-2">
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Spinner size={16} />
               Loading OneDrive folders...
             </div>
           )}

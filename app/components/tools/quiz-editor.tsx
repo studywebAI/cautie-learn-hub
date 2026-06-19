@@ -10,7 +10,7 @@ import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Trash2, ArrowLeft, Play, Undo2, BookCheck, Wand2, Plus, Edit } from 'lucide-react';
+import { Trash2, ArrowLeft, Play, Undo2, BookCheck, Wand2, Plus, Edit } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AnimatePresence, motion } from 'framer-motion';
 // import { generateSingleQuestion } from '@/ai/flows/generate-single-question';
@@ -23,6 +23,7 @@ import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Separator } from '../ui/separator';
 import { AppContext, AppContextType } from '@/contexts/app-context';
+import { Spinner } from '@/components/ui/spinner';
 
 
 const manualQuestionSchema = z.object({
@@ -453,7 +454,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
 
                     <div className="flex justify-end gap-2">
                         <Button type="button" onClick={handleAddQuestionWithAI} variant="outline" disabled={isAddingQuestion}>
-                            {isAddingQuestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                            {isAddingQuestion ? <Spinner size={16} className="mr-2" /> : <Wand2 className="mr-2 h-4 w-4" />}
                             {form.getValues("question").trim() ? "Suggest Answers with AI" : "Suggest Full Question with AI"}
                         </Button>
                         <Button type="submit">
@@ -480,7 +481,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
           </Button>
         </div>
         <Button onClick={handlePrimaryAction} disabled={currentQuiz.questions.length === 0 || isLoading}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PrimaryButtonIcon className="mr-2 h-4 w-4" />}
+            {isLoading ? <Spinner size={16} className="mr-2" /> : <PrimaryButtonIcon className="mr-2 h-4 w-4" />}
             {isLoading ? 'Creating...' : primaryButtonText}
         </Button>
       </CardFooter>

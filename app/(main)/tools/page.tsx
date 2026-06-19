@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { BrainCircuit, NotebookPen, Workflow, FolderKanban, Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
+import { BrainCircuit, NotebookPen, Workflow, FolderKanban, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import { FlashcardIcon, TimelineIcon } from '@/components/icons/custom-icons';
 
@@ -124,7 +125,7 @@ export default function ToolsPage() {
         <div className="flex flex-col items-center gap-4 pt-32">
           <div className="relative flex h-16 w-16 items-center justify-center">
             <div className="absolute inset-0 animate-ping rounded-full bg-[var(--accent-brand)]/15" />
-            <Loader2 className="h-7 w-7 animate-spin text-[var(--accent-brand)]" />
+            <Spinner size={28} />
           </div>
           <p className="text-sm font-medium text-foreground">Analysing your content…</p>
           <p className="text-xs text-muted-foreground">Figuring out which tools will work best</p>

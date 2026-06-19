@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Search, ChevronRight, Home, BookOpen, FileText, Layers, Plus } from 'lucide-react';
+import { Search, ChevronRight, Home, BookOpen, FileText, Layers, Plus } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 type LinkItem = {
   id: string;
@@ -273,7 +274,7 @@ export function HierarchicalLinkPickerV2({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-6 w-6 animate-spin" />
+            <Spinner />
           </div>
         ) : (
           <ScrollArea className="h-[420px]">

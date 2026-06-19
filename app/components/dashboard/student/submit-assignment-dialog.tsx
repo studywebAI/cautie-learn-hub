@@ -14,7 +14,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UploadCloud, FileText, X } from 'lucide-react';
+import { UploadCloud, FileText, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 
 type SubmitAssignmentDialogProps = {
   isOpen: boolean;
@@ -192,7 +193,7 @@ export function SubmitAssignmentDialog({
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isLoading || (!content.trim() && files.length === 0)}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Submit Assignment
           </Button>
         </DialogFooter>

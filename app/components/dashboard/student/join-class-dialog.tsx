@@ -14,10 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Link as LinkIcon, Camera, UserPlus } from 'lucide-react';
+import { Link as LinkIcon, Camera, UserPlus } from 'lucide-react';
 import jsQR from 'jsqr';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { ClassInfo } from '@/contexts/app-context';
+import { Spinner } from '@/components/ui/spinner';
 
 
 type JoinClassDialogProps = {
@@ -234,7 +235,7 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
               />
             </div>
             <Button onClick={() => checkCode(classCode)} disabled={isCheckingCode || !classCode}>
-                 {isCheckingCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                 {isCheckingCode && <Spinner size={16} color="white" className="mr-2" />}
                  Check Code
             </Button>
             </div>
@@ -248,7 +249,7 @@ export function JoinClassDialog({ isOpen, setIsOpen, onClassJoined, initialCode 
             <DialogFooter>
                 <Button variant="outline" onClick={() => setClassToJoin(null)}>Back</Button>
                 <Button onClick={handleJoin} disabled={isJoining}>
-                    {isJoining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isJoining && <Spinner size={16} color="white" className="mr-2" />}
                     <UserPlus className="mr-2 h-4 w-4" />
                     Confirm & Join Class
                 </Button>

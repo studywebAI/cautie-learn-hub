@@ -10,11 +10,12 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, FileSignature, BrainCircuit, Copy, File, Check } from 'lucide-react';
+import { FileSignature, BrainCircuit, Copy, File, Check } from 'lucide-react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import type { MaterialReference } from '@/lib/teacher-types';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Spinner } from '@/components/ui/spinner';
 
 const iconMap: Record<string, typeof File> = {
   NOTE: FileSignature,
@@ -63,7 +64,7 @@ export function SelectMaterialDialog({ isOpen, setIsOpen, classId, onMaterialSel
             <div className="space-y-3">
             {isLoading ? (
                 <div className="flex justify-center items-center h-48">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <Spinner size={32} />
                 </div>
             ) : materials.length > 0 ? (
                 materials.map((material) => {

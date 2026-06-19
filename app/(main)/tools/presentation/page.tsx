@@ -3,6 +3,7 @@
 import React, { Suspense, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FileUp, Loader2, Sparkles, Upload, ChevronLeft } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { AppContext } from '@/contexts/app-context';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
@@ -1283,7 +1284,7 @@ function PresentationPageContent() {
         />
         {(isPlanning || isBuilding) && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-background/70 backdrop-blur-[1px]">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Spinner size={32} />
           </div>
         )}
 
@@ -1387,7 +1388,7 @@ function PresentationPageContent() {
                     <div className="max-h-40 overflow-auto rounded-lg border border-border/60 p-2">
                       {importCatalogLoading ? (
                         <div className="flex h-16 items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Spinner size={16} />
                         </div>
                       ) : visibleRecents.length === 0 ? (
                         <p className="text-center text-xs text-muted-foreground py-4">No recents found</p>
@@ -1516,7 +1517,7 @@ function PresentationPageContent() {
                   <div className="max-h-44 overflow-auto rounded-md border border-border/60 p-2">
                     {importCatalogLoading ? (
                       <div className="flex h-20 items-center justify-center">
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Spinner size={16} />
                       </div>
                     ) : visibleRecents.length === 0 ? null : (
                       <div className="space-y-1.5">

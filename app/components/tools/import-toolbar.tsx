@@ -2,8 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Import, Loader2, ClipboardPaste } from 'lucide-react';
+import { Import, ClipboardPaste } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 type ImportToolbarProps = {
   toolType: 'quiz' | 'flashcards' | 'notes';
@@ -71,7 +72,7 @@ export function ImportToolbar({ toolType, onImport, disabled }: ImportToolbarPro
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isProcessing}
         >
-          {isProcessing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Import className="h-3 w-3" />}
+          {isProcessing ? <Spinner size={12} /> : <Import className="h-3 w-3" />}
           File
         </Button>
         <Button

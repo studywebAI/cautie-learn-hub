@@ -17,7 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Loader2, Link as LinkIcon, Search, X } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon, Search, X } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -603,7 +604,7 @@ export function TeacherDeadlineDialog({
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} className="mr-2" />}
             Create item
           </Button>
         </DialogFooter>

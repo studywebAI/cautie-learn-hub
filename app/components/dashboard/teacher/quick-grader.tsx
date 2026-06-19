@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, Clock, Save, Loader2 } from 'lucide-react';
+import { CheckCircle, Clock, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 type Submission = {
   id: string;
@@ -335,7 +336,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
             <ScrollArea className="h-full">
               {loading ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-10 text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Spinner />
                   <span className="text-xs">Loading...</span>
                 </div>
               ) : mode === 'submissions' && submissions.length === 0 ? (
@@ -522,7 +523,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                 <div className="flex gap-2">
                   <Button onClick={handleGrade} disabled={saving || !grade}>
                     {saving ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Spinner size={16} color="white" className="mr-2" />
                     ) : (
                       <Save className="mr-2 h-4 w-4" />
                     )}
@@ -534,7 +535,7 @@ export function QuickGrader({ classId, isOpen, onClose }: QuickGraderProps) {
                       onClick={handleBulkGrade}
                       disabled={saving || !grade || selectedOpenAnswerIds.length === 0}
                     >
-                      {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {saving ? <Spinner size={16} className="mr-2" /> : null}
                       Grade Selected ({selectedOpenAnswerIds.length})
                     </Button>
                   )}

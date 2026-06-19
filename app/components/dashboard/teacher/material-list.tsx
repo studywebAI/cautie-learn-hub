@@ -3,7 +3,7 @@
 import { useState, useContext, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, FileSignature, BrainCircuit, Copy, File, MoreHorizontal, Trash2, Loader2, Blocks, Upload, FileUp } from 'lucide-react';
+import { PlusCircle, FileSignature, BrainCircuit, Copy, File, MoreHorizontal, Trash2, Blocks, Upload, FileUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import type { MaterialReference } from '@/lib/teacher-types';
@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
+import { Spinner } from '@/components/ui/spinner';
 
 const iconMap = {
   NOTE: FileSignature,
@@ -151,7 +152,7 @@ function CreateNoteDialog({ isOpen, setIsOpen, classId }: CreateNoteDialogProps)
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleCreateNote} disabled={isLoading || !title || !sourceText}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Create Note with AI
           </Button>
         </DialogFooter>
@@ -295,7 +296,7 @@ function UploadFileDialog({ isOpen, setIsOpen, classId }: UploadFileDialogProps)
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleUpload} disabled={isLoading || !file || !title}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Upload File
           </Button>
         </DialogFooter>
@@ -390,7 +391,7 @@ function CreateBlockMaterialDialog({ isOpen, setIsOpen, classId }: CreateBlockMa
         <DialogFooter>
           <Button variant="outline" onClick={resetAndClose}>Cancel</Button>
           <Button onClick={handleCreateBlockMaterial} disabled={isLoading || !title}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading && <Spinner size={16} color="white" className="mr-2" />}
             Create Block Material
           </Button>
         </DialogFooter>
@@ -550,7 +551,7 @@ export function MaterialList({ materials, classId, isLoading, isTeacher = true }
           )}
            {isLoading && (
             <div className="text-center h-24 flex justify-center items-center">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <Spinner />
             </div>
           )}
         </CardContent>

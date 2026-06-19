@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Spinner } from '@/components/ui/spinner'
 
 export function AuthForm({
   signIn,
@@ -128,7 +128,7 @@ export function AuthForm({
                   <Button type="submit" disabled={isLoading || !email.trim() || !password.trim()} className="h-10 w-full">
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Spinner size={16} color="white" className="mr-2" />
                         {isSignUp ? 'Creating account...' : 'Signing in...'}
                       </>
                     ) : (
@@ -150,7 +150,7 @@ export function AuthForm({
                     className="h-10 w-full"
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Spinner size={16} className="mr-2" />
                     ) : (
                       <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                         <path
@@ -208,7 +208,7 @@ export function AuthForm({
                     <Button type="submit" disabled={isLoading || code.length !== 8} className="h-10 w-full">
                       {isLoading ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Spinner size={16} color="white" className="mr-2" />
                           Verifying...
                         </>
                       ) : (

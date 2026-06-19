@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users, GraduationCap, UserPlus, CheckSquare, Trash2, Mail, Loader2 } from 'lucide-react';
+import { MoreVertical, User, Copy, QrCode, Link as LinkIcon, Users, GraduationCap, UserPlus, CheckSquare, Trash2, Mail } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Student } from '@/lib/teacher-types';
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Spinner } from '@/components/ui/spinner';
 
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -282,7 +283,7 @@ export function StudentList({ students, isLoading, classInfo }: StudentListProps
         <div className="flex gap-2">
             {isBulkMode && selectedStudents.size > 0 && (
                 <Button variant="destructive" size="sm" onClick={removeSelectedStudents} disabled={isRemoving}>
-                    {isRemoving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    {isRemoving ? <Spinner size={16} color="white" className="mr-2" /> : <Trash2 className="mr-2 h-4 w-4" />}
                     Remove ({selectedStudents.size})
                 </Button>
             )}
