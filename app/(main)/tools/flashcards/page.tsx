@@ -22,6 +22,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
@@ -454,20 +455,20 @@ function FlashcardsPageContent() {
           </button>
         ))}
         {/* Info tooltip */}
-        <div className="relative group">
-          <button
-            type="button"
-            className="flex h-4 w-4 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-          >
-            i
-          </button>
-          <div className="pointer-events-none absolute top-full left-1/2 mt-2 w-60 -translate-x-1/2 rounded-xl border border-black/[0.08] bg-white px-3 py-2.5 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50">
-            <p className="text-[12px] font-medium text-foreground mb-1">Literal</p>
-            <p className="text-[11px] text-muted-foreground mb-2 leading-snug">Cards stick to exactly what's explicitly in your text.</p>
-            <p className="text-[12px] font-medium text-foreground mb-1">Research</p>
-            <p className="text-[11px] text-muted-foreground leading-snug">Cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
-          </div>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
+            >
+              i
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[240px] space-y-1.5 text-[11px]">
+            <p><span className="font-medium text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
+            <p><span className="font-medium text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+          </TooltipContent>
+        </Tooltip>
       </div>
     );
 
