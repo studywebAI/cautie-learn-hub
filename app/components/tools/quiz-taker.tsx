@@ -2925,17 +2925,14 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="group h-8 gap-1.5 px-3 text-[12px]"
+                      className="h-8 gap-1.5 px-3 text-[12px]"
                       onClick={loadHint}
                       disabled={hintLoading}
                     >
                       {hintLoading ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
                       ) : (
-                        <Lightbulb
-                          className="h-3.5 w-3.5 opacity-70 group-hover:animate-bulb-glow"
-                          strokeWidth={2}
-                        />
+                        <Lightbulb className="h-3.5 w-3.5 opacity-70" strokeWidth={2} />
                       )}
                       {labels.hint}
                     </Button>
@@ -3036,18 +3033,13 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             variant="outline"
-            className="group relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
+            className="relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
             <span className="hidden sm:inline">{labels.previous}</span>
             <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
-              <ChevronLeft
-                size={16}
-                strokeWidth={2}
-                className="opacity-50 group-hover:animate-nudge-left"
-                aria-hidden="true"
-              />
+              <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
             </span>
           </Button>
 
@@ -3082,16 +3074,11 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             onClick={handleNext}
-            className="group relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
+            className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
           >
             {nextButtonLabel}
             <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
-              <ChevronRight
-                size={16}
-                strokeWidth={2}
-                className="opacity-70 group-hover:animate-nudge-right"
-                aria-hidden="true"
-              />
+              <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
             </span>
           </Button>
 

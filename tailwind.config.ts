@@ -101,38 +101,11 @@ export default {
           "50%": { transform: "translateY(calc(100% + 10%))" },
           "100%": { transform: "translateY(-10%)" },
         },
-        "nudge-left": {
-          "0%, 100%": { transform: "translateX(0)" },
-          "40%": { transform: "translateX(-5px)" },
-          "70%": { transform: "translateX(-1.5px)" },
-        },
-        "nudge-right": {
-          "0%, 100%": { transform: "translateX(0)" },
-          "40%": { transform: "translateX(5px)" },
-          "70%": { transform: "translateX(1.5px)" },
-        },
-        "bulb-glow": {
-          "0%, 100%": {
-            transform: "scale(1) rotate(0deg)",
-            filter: "drop-shadow(0 0 0 hsl(var(--foreground) / 0))",
-          },
-          "35%": {
-            transform: "scale(1.22) rotate(-10deg)",
-            filter: "drop-shadow(0 0 5px hsl(var(--foreground) / 0.35))",
-          },
-          "65%": {
-            transform: "scale(1.06) rotate(5deg)",
-            filter: "drop-shadow(0 0 2px hsl(var(--foreground) / 0.2))",
-          },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         scan: "scan 3s ease-in-out infinite",
-        "nudge-left": "nudge-left 0.5s ease-out",
-        "nudge-right": "nudge-right 0.5s ease-out",
-        "bulb-glow": "bulb-glow 0.7s ease-out",
       },
     },
   },
