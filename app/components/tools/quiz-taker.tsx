@@ -2933,7 +2933,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                         <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
                       ) : (
                         <Lightbulb
-                          className="h-3.5 w-3.5 opacity-70 transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:rotate-[-8deg]"
+                          className="h-3.5 w-3.5 opacity-70 group-hover:animate-bulb-glow"
                           strokeWidth={2}
                         />
                       )}
@@ -3045,7 +3045,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <ChevronLeft
                 size={16}
                 strokeWidth={2}
-                className="opacity-50 transition-transform duration-200 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1"
+                className="opacity-50 group-hover:animate-nudge-left"
                 aria-hidden="true"
               />
             </span>
@@ -3089,7 +3089,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <ChevronRight
                 size={16}
                 strokeWidth={2}
-                className="opacity-70 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-active:translate-x-1"
+                className="opacity-70 group-hover:animate-nudge-right"
                 aria-hidden="true"
               />
             </span>
