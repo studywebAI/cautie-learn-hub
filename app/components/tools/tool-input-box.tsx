@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Mic, MicOff, ArrowUp, X, Link, Image, FileText, Camera, ChevronDown, Loader2 } from 'lucide-react';
+import { Plus, Mic, MicOff, ArrowUp, X, Link, Image, FileText, Monitor, Paperclip, FolderOpen, Clock, LayoutGrid, ChevronDown, Loader2 } from 'lucide-react';
 import { useScreenshotCapture } from '@/hooks/use-screenshot-capture';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import { useToast } from '@/hooks/use-toast';
@@ -212,13 +212,12 @@ export function ToolInputBox({
 
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
-  const [showPhotosSubmenu, setShowPhotosSubmenu] = useState(false);
   const [showImportSubmenu, setShowImportSubmenu] = useState(false);
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusButtonRef = useRef<HTMLButtonElement>(null);
@@ -658,11 +657,11 @@ export function ToolInputBox({
           </button>
 
           {showPlusMenu && (
-            <div className="fixed z-[999] w-52 rounded-lg border border-border bg-card shadow-lg py-1 text-sm" style={{
-              top: `${plusMenuPosition.top}px`,
-              left: `${plusMenuPosition.left}px`,
-            }}>
-              {/* Hidden file inputs — use <label> trick for iOS Safari compatibility */}
+            <div
+              className="fixed z-[999] w-56 rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-2xl shadow-black/10 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-150"
+              style={{ top: `${plusMenuPosition.top}px`, left: `${plusMenuPosition.left}px` }}
+            >
+              {/* Hidden file inputs */}
               <input
                 ref={fileInputRef}
                 id="tool-input-file"
@@ -673,104 +672,91 @@ export function ToolInputBox({
                 className="hidden"
               />
               <input
-                ref={cameraInputRef}
-                id="tool-input-camera"
+                ref={imageInputRef}
+                id="tool-input-image"
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleFileChange}
                 className="hidden"
               />
 
-              {/* Share a page (camera — top-level, iOS-safe via label) */}
-              <label
-                htmlFor="tool-input-camera"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50 cursor-pointer"
-                onClick={() => setShowPlusMenu(false)}
-              >
-                <Camera className="h-4 w-4 text-muted-foreground" />
-                Share a page
-              </label>
+              <div className="p-1.5 space-y-0.5">
+                {/* Share a page → screenshot */}
+                <button
+                  type="button"
+                  onClick={() => { void handleScreenshot(); }}
+                  disabled={capturing}
+                  className="group w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 text-left"
+                >
+                  <div className="h-8 w-8 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
+                    {capturing
+                      ? <Loader2 className="h-4 w-4 text-violet-500 animate-spin" />
+                      : <Monitor className="h-4 w-4 text-violet-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                    }
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Share a page</span>
+                </button>
 
-              {/* Photos submenu */}
-              <button
-                type="button"
-                className="w-full flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
-                onClick={() => { setShowPhotosSubmenu(!showPhotosSubmenu); }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Image className="h-4 w-4 text-muted-foreground" />
-                  Photos
-                </div>
-                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showPhotosSubmenu ? 'rotate-180' : ''}`} />
-              </button>
-              {showPhotosSubmenu && (
-                <>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
-                    onClick={() => {
-                      void handleScreenshot();
-                      setShowPhotosSubmenu(false);
-                    }}
-                    disabled={capturing}
-                  >
-                    {capturing ? <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" /> : <Camera className="h-4 w-4 text-muted-foreground" />}
-                    Take screenshot
-                  </button>
-                  <label
-                    htmlFor="tool-input-file"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50 cursor-pointer"
-                    onClick={() => { setShowPhotosSubmenu(false); setShowPlusMenu(false); }}
-                  >
-                    <Image className="h-4 w-4 text-muted-foreground" />
-                    Photo library
-                  </label>
-                </>
-              )}
+                {/* Photos */}
+                <label
+                  htmlFor="tool-input-image"
+                  className="group flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 cursor-pointer"
+                  onClick={() => setShowPlusMenu(false)}
+                >
+                  <div className="h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
+                    <Image className="h-4 w-4 text-blue-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Photos</span>
+                </label>
 
-              {/* Files — label for iOS Safari compatibility */}
-              <label
-                htmlFor="tool-input-file"
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50 cursor-pointer"
-                onClick={() => setShowPlusMenu(false)}
-              >
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                Files
-              </label>
+                {/* Files */}
+                <label
+                  htmlFor="tool-input-file"
+                  className="group flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 cursor-pointer"
+                  onClick={() => setShowPlusMenu(false)}
+                >
+                  <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
+                    <Paperclip className="h-4 w-4 text-amber-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Files</span>
+                </label>
 
-              {/* Import from submenu */}
-              <button
-                type="button"
-                className="w-full flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground border-b border-border/50"
-                onClick={() => { setShowImportSubmenu(!showImportSubmenu); }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  Import from
-                </div>
-                <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${showImportSubmenu ? 'rotate-180' : ''}`} />
-              </button>
-              {showImportSubmenu && (
-                <>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/30"
-                    onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    Recents
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-accent/10 transition-colors text-foreground text-sm pl-8 border-b border-border/50"
-                    onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    Microsoft 365
-                  </button>
-                </>
-              )}
+                <div className="my-1 h-px bg-border/50 mx-1" />
+
+                {/* Import from */}
+                <button
+                  type="button"
+                  className="group w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 text-left"
+                  onClick={() => setShowImportSubmenu(!showImportSubmenu)}
+                >
+                  <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
+                    <FolderOpen className="h-4 w-4 text-emerald-500 transition-transform duration-150 group-hover:rotate-6" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground flex-1">Import from</span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${showImportSubmenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showImportSubmenu && (
+                  <div className="ml-3 pl-3 border-l border-border/40 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                    <button
+                      type="button"
+                      className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
+                      onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
+                    >
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
+                      <span>Recents</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
+                      onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
+                      <span>Microsoft 365</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

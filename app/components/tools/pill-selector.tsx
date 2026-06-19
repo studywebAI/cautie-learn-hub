@@ -30,7 +30,7 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-[#666]">{label}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">{label}</p>
         {hasDescriptions && (
           <button
             type="button"
@@ -71,13 +71,13 @@ export function PillSelector({ label, options, value, onChange, disabled }: Pill
               onChange(opt.value);
             }}
             className={cn(
-              'px-[11px] py-[5px] text-[11px] rounded-[16px] border border-[#d0d0d0] outline-none transition-all duration-200',
+              'px-3 py-1 text-[11px] rounded-full border outline-none transition-all duration-200',
               'hover:border-[var(--accent-brand)]',
               'focus-visible:ring-1 focus-visible:ring-ring',
               'disabled:opacity-50 disabled:pointer-events-none',
               activeValue === opt.value
-                ? 'bg-white text-[#333] border-[#d0d0d0]'
-                : 'bg-[#f8f8f8] text-[#333]'
+                ? 'bg-card text-foreground border-border shadow-sm'
+                : 'bg-muted/40 text-muted-foreground border-border/60'
             )}
           >
             {opt.label}

@@ -17,10 +17,48 @@ type SourceBundleContext = {
   additionalNotes?: string
   contextText?: string
   selectedDates?: string[]
+  toolNotes?: string
   imports?: {
     word?: boolean
     powerpoint?: boolean
   }
+}
+
+// Translates the wizard's "Tools" step picks (stored at source_bundle.preferences)
+// into a short plain-language instruction the planner prompt can act on directly —
+// the same trick the agenda/subject pickers use to seed real focus notes.
+const TOOL_PREFERENCE_LABELS: Record<string, string> = {
+  notes: 'Notes',
+  flashcards: 'Flashcards',
+  quiz: 'Quiz',
+  wordweb: 'Concept maps',
+}
+const QUIZ_QUESTION_TYPE_LABELS: Record<string, string> = {
+  'multiple-choice': 'Multiple Choice',
+  'true-false': 'True/False',
+  'fill-blank': 'Fill in the Blank',
+  'short-answer': 'Short Answer',
+  matching: 'Matching',
+  cloze: 'Cloze Test',
+}
+
+function composeToolNotesFromPreferences(parsed: any): string | undefined {
+  const prefs = parsed?.preferences
+  if (!prefs || typeof prefs !== 'object') return undefined
+  const tools = Array.isArray(prefs.tools) ? prefs.tools.filter((value: unknown) => typeof value === 'string') : []
+  const questionTypes = Array.isArray(prefs.quiz_question_types)
+    ? prefs.quiz_question_types.filter((value: unknown) => typeof value === 'string')
+    : []
+  const parts: string[] = []
+  if (tools.length > 0) {
+    parts.push(`Lean the day-by-day mix toward these tools: ${tools.map((t: string) => TOOL_PREFERENCE_LABELS[t] || t).join(', ')}.`)
+  }
+  if (tools.includes('quiz') && questionTypes.length > 0) {
+    parts.push(
+      `Whenever a day includes a quiz, favor these question styles: ${questionTypes.map((t: string) => QUIZ_QUESTION_TYPE_LABELS[t] || t).join(', ')}.`
+    )
+  }
+  return parts.length > 0 ? parts.join(' ') : undefined
 }
 
 type AIDayPlan = {
@@ -117,6 +155,7 @@ function parseSourceBundle(raw: unknown): SourceBundleContext {
       selectedDates: Array.isArray(parsed?.schedule?.selected_dates)
         ? parsed.schedule.selected_dates
         : undefined,
+      toolNotes: composeToolNotesFromPreferences(parsed),
       imports: {
         word: parsed?.sources?.imports?.word === true,
         powerpoint: parsed?.sources?.imports?.powerpoint === true,
@@ -388,6 +427,17 @@ export async function POST(
           ? allowedSourceDates
           : buildPlanDates(startDate, requestedTargetDays, excludedWeekdays, endDate)
     const totalDays = planDates.length
+
+    // Tool-mix preferences — fresh ones from this request win (the wizard sends
+    // them right after creating the studyset); otherwise fall back to whatever
+    // was saved on the studyset's source_bundle (so a future regenerate keeps
+    // honoring the user's "Tools" step picks).
+    const requestToolNotes = typeof body?.tool_notes === 'string' ? body.tool_notes.trim() : ''
+    const combinedAdditionalNotes = [sourceContext.additionalNotes, requestToolNotes || sourceContext.toolNotes]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(' ')
+      .trim()
+
     const aiPlanDays = await tryBuildCustomAIPlan({
       studysetName: String(studyset.name || 'Studyset'),
       targetDays: totalDays,
@@ -396,7 +446,7 @@ export async function POST(
       focusTopic: fallbackTopic,
       topicCandidates,
       contextText: String(sourceContext.contextText || ''),
-      additionalNotes: String(sourceContext.additionalNotes || ''),
+      additionalNotes: combinedAdditionalNotes,
     })
 
     // Replace existing plan for deterministic regeneration.

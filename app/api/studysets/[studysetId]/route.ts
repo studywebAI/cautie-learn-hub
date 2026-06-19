@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { logAuditEntry } from '@/lib/auth/class-permissions'
 import { deriveStudysetRuntimeStatus } from '@/lib/studysets/runtime'
 import { upsertStudysetAdaptiveRuntime } from '@/lib/studysets/adaptive-engine'
 import { upsertDailyPulseForStudyset } from '@/lib/studysets/daily-pulse'
@@ -516,6 +517,184 @@ export async function GET(
         percent: completionPercent,
       },
     })
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ studysetId: string }> }
+) {
+  try {
+    const { studysetId } = await params
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: existing, error: fetchError } = await (supabase as any)
+      .from('studysets')
+      .select('id, name, status, source_bundle')
+      .eq('id', studysetId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    if (!existing) return NextResponse.json({ error: 'Studyset not found' }, { status: 404 })
+
+    const body = await req.json().catch(() => ({}))
+    const update: Record<string, any> = { updated_at: new Date().toISOString() }
+
+    // Field-level diff so the Changes/history page can show exactly what moved (and the
+    // audit trail stays meaningful — "renamed from X to Y" rather than just "name changed").
+    const changeLog: Record<string, any> = {}
+
+    let previousMeta: Record<string, any> = {}
+    let previousDates: string[] = []
+    if (existing.source_bundle) {
+      try {
+        const parsedExisting = JSON.parse(String(existing.source_bundle))
+        previousMeta = parsedExisting?.meta || {}
+        const list = parsedExisting?.schedule?.selected_dates
+        previousDates = Array.isArray(list) ? list.map((value: unknown) => String(value || '')) : []
+      } catch { /* malformed bundle — treat as empty */ }
+    }
+
+    if (typeof body?.name === 'string' && body.name.trim()) {
+      const nextName = body.name.trim().slice(0, 200)
+      if (nextName !== existing.name) {
+        changeLog.name = { from: existing.name, to: nextName }
+        update.name = nextName
+      }
+    }
+
+    if (typeof body?.status === 'string') {
+      const nextStatus = String(body.status).toLowerCase()
+      if (['draft', 'active', 'due', 'completed', 'archived'].includes(nextStatus) && nextStatus !== existing.status) {
+        changeLog.status = { from: existing.status, to: nextStatus }
+        update.status = nextStatus
+      }
+    }
+
+    // meta (icon/color/subject/exam_date/description) and study-day schedule live inside source_bundle.
+    const wantsMetaChange =
+      body?.icon !== undefined || body?.color !== undefined || body?.exam_date !== undefined ||
+      body?.subject !== undefined || body?.description !== undefined || body?.selected_dates !== undefined
+    if (wantsMetaChange) {
+      let bundle: Record<string, any> = {}
+      if (existing.source_bundle) {
+        try { bundle = JSON.parse(String(existing.source_bundle)) } catch { bundle = {} }
+      }
+      bundle.meta = { ...(bundle.meta || {}) }
+      const trackMeta = (key: string, nextValue: string | null) => {
+        const prevValue = previousMeta?.[key] ?? null
+        if ((prevValue || null) !== (nextValue || null)) {
+          changeLog[key] = { from: prevValue || null, to: nextValue || null }
+        }
+        bundle.meta[key] = nextValue
+      }
+      if (typeof body?.icon === 'string') trackMeta('icon', body.icon || null)
+      if (typeof body?.color === 'string') trackMeta('color', body.color || null)
+      if (typeof body?.subject === 'string') trackMeta('subject', body.subject.trim().slice(0, 120) || null)
+      if (typeof body?.exam_date === 'string') trackMeta('exam_date', body.exam_date || null)
+      if (typeof body?.description === 'string') trackMeta('description', body.description.trim().slice(0, 500) || null)
+      if (Array.isArray(body?.selected_dates)) {
+        const cleanDates = body.selected_dates
+          .map((value: unknown) => String(value || '').slice(0, 10))
+          .filter((value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value))
+        const sortedClean = Array.from(new Set(cleanDates)).sort()
+        const sortedPrev = Array.from(new Set(previousDates)).sort()
+        if (sortedClean.join(',') !== sortedPrev.join(',')) {
+          changeLog.study_days = { from: sortedPrev.length, to: sortedClean.length }
+        }
+        bundle.schedule = { ...(bundle.schedule || {}), selected_dates: sortedClean }
+        if (sortedClean.length > 0) update.target_days = Math.max(1, Math.min(60, sortedClean.length))
+      }
+      update.source_bundle = JSON.stringify(bundle)
+    }
+
+    if (Object.keys(update).length <= 1) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+    }
+
+    const { data: updated, error: updateError } = await (supabase as any)
+      .from('studysets')
+      .update(update)
+      .eq('id', studysetId)
+      .eq('user_id', user.id)
+      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
+      .maybeSingle()
+
+    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+    if (!updated) return NextResponse.json({ error: 'Studyset not found' }, { status: 404 })
+
+    await logAuditEntry(supabase as any, {
+      userId: user.id,
+      action: 'studyset_updated',
+      entityType: 'studyset',
+      entityId: studysetId,
+      changes: changeLog,
+      metadata: { fields: Object.keys(update).filter((key) => key !== 'updated_at') },
+    }).catch(() => {})
+
+    const { icon, color, subject, exam_date, description } = extractMeta(updated.source_bundle)
+    return NextResponse.json({
+      success: true,
+      studyset: { ...updated, subject, exam_date, description, meta: { icon, color, subject, exam_date, description } },
+    })
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ studysetId: string }> }
+) {
+  try {
+    const { studysetId } = await params
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: existing, error: fetchError } = await (supabase as any)
+      .from('studysets')
+      .select('id, name')
+      .eq('id', studysetId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
+    if (!existing) return NextResponse.json({ error: 'Studyset not found' }, { status: 404 })
+
+    // Soft delete: archive instead of hard-deleting so plans/history/analytics stay intact.
+    const { error: deleteError } = await (supabase as any)
+      .from('studysets')
+      .update({ status: 'archived', updated_at: new Date().toISOString() })
+      .eq('id', studysetId)
+      .eq('user_id', user.id)
+
+    if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 500 })
+
+    await logAuditEntry(supabase as any, {
+      userId: user.id,
+      action: 'studyset_archived',
+      entityType: 'studyset',
+      entityId: studysetId,
+      metadata: { name: existing.name },
+    }).catch(() => {})
+
+    return NextResponse.json({ success: true, studysetId })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

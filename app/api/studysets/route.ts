@@ -43,7 +43,7 @@ export async function GET() {
 
     const { data: rows, error } = await (supabase as any)
       .from('studysets')
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
+      .select('id, name, subject, description, exam_date, confidence_level, target_days, minutes_per_day, status, source_bundle, last_activity_at, created_at, updated_at')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
       .limit(100)
@@ -72,7 +72,7 @@ export async function GET() {
 
     const { data: refreshedRows } = await (supabase as any)
       .from('studysets')
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
+      .select('id, name, subject, description, exam_date, confidence_level, target_days, minutes_per_day, status, source_bundle, last_activity_at, created_at, updated_at')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
       .limit(100)
@@ -276,6 +276,9 @@ export async function POST(req: NextRequest) {
 
     const name = String(body?.name || '').trim()
     const classId = body?.class_id ? String(body.class_id) : null
+    const subject = body?.subject ? String(body.subject).trim() : null
+    const description = body?.description ? String(body.description).trim() : null
+    const examDate = body?.exam_date ? String(body.exam_date) : null
     const confidenceLevel = ['beginner', 'intermediate', 'advanced'].includes(String(body?.confidence_level))
       ? String(body.confidence_level)
       : 'beginner'
@@ -302,6 +305,9 @@ export async function POST(req: NextRequest) {
           user_id: user.id,
           class_id: classId,
           name,
+          subject,
+          description,
+          exam_date: examDate,
           confidence_level: confidenceLevel,
           target_days: targetDays,
           minutes_per_day: minutesPerDay,
@@ -309,7 +315,7 @@ export async function POST(req: NextRequest) {
           source_bundle: sourceBundle,
         },
       ])
-      .select('id, name, confidence_level, target_days, minutes_per_day, status, source_bundle, created_at, updated_at')
+      .select('id, name, subject, description, exam_date, confidence_level, target_days, minutes_per_day, status, source_bundle, last_activity_at, created_at, updated_at')
       .single()
 
     if (createError || !studyset) {

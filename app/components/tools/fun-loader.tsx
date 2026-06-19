@@ -1,11 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HelpCircle, Layers, FileText, Loader2, CheckCircle2 } from 'lucide-react';
 
-const TOOL_CONFIG = {
+// ── Per-scenario config ──────────────────────────────────────────────────────
+type ScenarioConfig = {
+  title: string;
+  steps: string[];
+};
+
+const SCENARIOS: Record<string, ScenarioConfig> = {
   quiz: {
-    icon: HelpCircle,
+    title: 'Generating Quiz',
     steps: [
       'Opening study task',
       'Retrieving source content',
@@ -15,7 +20,7 @@ const TOOL_CONFIG = {
     ],
   },
   flashcards: {
-    icon: Layers,
+    title: 'Creating Flashcards',
     steps: [
       'Opening study task',
       'Retrieving source content',
@@ -25,93 +30,145 @@ const TOOL_CONFIG = {
     ],
   },
   notes: {
-    icon: FileText,
+    title: 'Generating Notes',
     steps: [
       'Opening study task',
       'Retrieving source content',
       'Preparing note structure',
-      'Generating notes',
+      'Writing notes',
       'Finalizing workspace',
     ],
   },
-} as const;
+  mindmap: {
+    title: 'Building Mind Map',
+    steps: [
+      'Opening study task',
+      'Retrieving source content',
+      'Mapping key concepts',
+      'Generating branches',
+      'Finalizing workspace',
+    ],
+  },
+  presentation: {
+    title: 'Creating Presentation',
+    steps: [
+      'Opening study task',
+      'Retrieving source content',
+      'Planning slide structure',
+      'Generating slides',
+      'Finalizing workspace',
+    ],
+  },
+  analytics: {
+    title: 'Loading Analytics',
+    steps: [
+      'Connecting to data',
+      'Fetching records',
+      'Calculating metrics',
+      'Building overview',
+    ],
+  },
+  page: {
+    title: 'Loading',
+    steps: ['Connecting', 'Fetching data', 'Preparing view'],
+  },
+};
 
-const DEFAULT_STEPS = ['Opening task', 'Retrieving source content', 'Preparing structure', 'Generating output', 'Finalizing workspace'];
+const DEFAULT_SCENARIO: ScenarioConfig = {
+  title: 'Loading',
+  steps: ['Preparing', 'Loading data', 'Almost done'],
+};
 
+// Step-specific delays (ms) — early steps resolve faster, last step lingers
+const STEP_DELAYS = [1100, 2300, 3000, 3700, 4400];
+
+// ── Component ────────────────────────────────────────────────────────────────
 interface FunLoaderProps {
-  tool?: 'quiz' | 'flashcards' | 'notes';
+  /** Maps to a built-in scenario (quiz, flashcards, notes, mindmap, presentation, analytics, page) */
+  tool?: string;
+  /** Explicit scenario key — takes precedence over `tool` */
+  scenario?: string;
 }
 
-export function FunLoader({ tool }: FunLoaderProps) {
-  const config = tool ? TOOL_CONFIG[tool] : null;
-  const steps = config?.steps || DEFAULT_STEPS;
-  const Icon = config?.icon || FileText;
-  const [currentStep, setCurrentStep] = useState(0);
+export function FunLoader({ tool, scenario }: FunLoaderProps) {
+  const key = scenario || tool || '';
+  const config = SCENARIOS[key] ?? DEFAULT_SCENARIO;
+  const { title, steps } = config;
 
+  const [currentStep, setCurrentStep] = useState(0);
+  const [animKey, setAnimKey] = useState(0); // triggers re-animation on step change
+
+  // Reset when scenario changes
   useEffect(() => {
-    const getDelay = (step: number) => {
-      if (step === 0) return 1200;
-      if (step < steps.length - 2) return 2200 + step * 400;
-      return 3800;
-    };
-    if (currentStep < steps.length - 1) {
-      const timer = setTimeout(() => setCurrentStep((s) => s + 1), getDelay(currentStep));
-      return () => clearTimeout(timer);
-    }
+    setCurrentStep(0);
+    setAnimKey((k) => k + 1);
+  }, [key]);
+
+  // Auto-advance through steps
+  useEffect(() => {
+    if (currentStep >= steps.length - 1) return;
+    const delay = STEP_DELAYS[currentStep] ?? 3000;
+    const timer = setTimeout(() => {
+      setCurrentStep((s) => s + 1);
+      setAnimKey((k) => k + 1);
+    }, delay);
+    return () => clearTimeout(timer);
   }, [currentStep, steps.length]);
 
-  const progress = Math.min(((currentStep + 1) / steps.length) * 100, 95);
-
   return (
-    <div className="flex flex-1 items-center justify-center p-8">
-      <div className="w-full max-w-2xl rounded-2xl border border-border surface-panel p-5 md:p-6">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border surface-interactive">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">Generating {tool || 'content'}</p>
-            <p className="text-xs text-muted-foreground">Using your selected source material and settings.</p>
-          </div>
+    <div className="flex flex-1 items-center justify-center p-8 bg-background">
+      <div className="flex flex-col items-center gap-6 text-center">
+
+        {/* Spinner */}
+        <div
+          className="h-9 w-9 animate-spin rounded-full"
+          style={{
+            border: '2.5px solid rgba(0,0,0,0.08)',
+            borderTopColor: 'var(--accent-brand)',
+            animationDuration: '0.8s',
+          }}
+        />
+
+        {/* Current step — fades up on each change */}
+        <div className="space-y-1.5">
+          <p
+            key={animKey}
+            className="text-[22px] font-bold tracking-tight text-foreground fun-loader-fade-up"
+          >
+            {steps[currentStep]}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {title}&nbsp;·&nbsp;Step {currentStep + 1} of {steps.length}
+          </p>
         </div>
 
-        <div className="w-full space-y-3">
-          <div className="h-1 w-full overflow-hidden rounded-full surface-interactive">
+        {/* Breadcrumb dots */}
+        <div className="flex items-center gap-2">
+          {steps.map((_, i) => (
             <div
-              className="h-full rounded-full bg-primary transition-all duration-700 ease-out"
-              style={{ width: `${progress}%` }}
+              key={i}
+              className="h-2 rounded-full transition-all duration-300"
+              style={{
+                width: i === currentStep ? 24 : 8,
+                backgroundColor:
+                  i <= currentStep ? 'var(--accent-brand)' : 'rgba(0,0,0,0.12)',
+                opacity: i > currentStep ? 0.35 : 1,
+              }}
             />
-          </div>
-
-          <div className="space-y-2">
-            {steps.map((step, i) => {
-              const isDone = i < currentStep;
-              const isActive = i === currentStep;
-              return (
-                <div
-                  key={i}
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors ${
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : isDone
-                        ? 'bg-emerald-900/10 text-emerald-800'
-                        : 'surface-interactive text-muted-foreground'
-                  }`}
-                >
-                  {isDone ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : isActive ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Icon className="h-3.5 w-3.5" />
-                  )}
-                  <span>{step}</span>
-                </div>
-              );
-            })}
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Keyframe for step label animation */}
+      <style>{`
+        @keyframes funLoaderFadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .fun-loader-fade-up {
+          animation: funLoaderFadeUp 0.45s ease forwards;
+        }
+      `}</style>
     </div>
   );
 }

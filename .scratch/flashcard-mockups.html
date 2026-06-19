@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcard layout browser</title>
+<style>
+  :root {
+    --background: 0 0% 92.8%;
+    --foreground: 0 0% 10.2%;
+    --muted-foreground: 0 0% 20%;
+    --border: 0 0% 94.9%;
+    --surface-1: 0 0% 98.6%;
+    --surface-2: 0 0% 97.8%;
+    --surface-3: 0 0% 97.2%;
+    --radius: 12px;
+    --font-ui: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  html[data-theme="dark"] {
+    --background: 0 0% 12.94%;
+    --foreground: 0 0% 94.12%;
+    --muted-foreground: 0 0% 78.43%;
+    --border: 0 0% 22%;
+    --surface-1: 0 0% 14%;
+    --surface-2: 0 0% 16%;
+    --surface-3: 0 0% 18%;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font-ui);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  /* ═══════════ APP SHELL: sidebar + fullscreen stage ═══════════ */
+  .shell { display: flex; height: 100vh; width: 100vw; }
+
+  .sidebar {
+    width: 300px; flex-shrink: 0; height: 100%; overflow-y: auto;
+    border-right: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-2));
+    padding: 20px 16px 40px;
+  }
+  .sidebar-head { margin-bottom: 6px; }
+  .sidebar-head h1 { font-size: 16px; font-weight: 600; margin: 0 0 3px; letter-spacing: -0.01em; }
+  .sidebar-head p { font-size: 11.5px; color: hsl(var(--muted-foreground)); margin: 0; }
+  .theme-btn {
+    margin-top: 12px; width: 100%; font-size: 11.5px; padding: 7px 12px; border-radius: 999px;
+    border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1));
+    color: hsl(var(--foreground)); cursor: pointer; transition: background .15s ease;
+  }
+  .theme-btn:hover { background: hsl(var(--surface-3)); }
+
+  .sidebar-howto {
+    margin: 16px 0 18px; padding: 11px 13px; border-radius: 10px;
+    background: hsl(var(--surface-3)); font-size: 11px; color: hsl(var(--muted-foreground)); line-height: 1.6;
+  }
+  .sidebar-howto b { color: hsl(var(--foreground)); font-weight: 500; }
+
+  .nav-group { margin-bottom: 6px; }
+  .nav-group-head { padding: 14px 8px 5px; }
+  .nav-group-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: hsl(var(--foreground)); margin: 0; }
+  .nav-group-desc { font-size: 11px; color: hsl(var(--muted-foreground)); margin: 3px 0 0; line-height: 1.5; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    font-size: 12.5px; padding: 8px 10px; margin: 1px 0; border-radius: 8px; border: none; cursor: pointer;
+    background: transparent; color: hsl(var(--muted-foreground)); transition: all .12s ease;
+  }
+  .nav-item:hover { background: hsl(var(--surface-1)); color: hsl(var(--foreground)); }
+  .nav-item.active { background: hsl(var(--surface-1)); color: hsl(var(--foreground)); font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .nav-item .dot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 999px; background: hsl(var(--muted-foreground) / .35); transition: background .12s ease; }
+  .nav-item.active .dot { background: hsl(var(--foreground)); }
+  .nav-item .nav-item-tag { margin-left: auto; flex-shrink: 0; font-size: 9px; padding: 2px 7px; border-radius: 999px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); white-space: nowrap; }
+  .nav-item.active .nav-item-tag { background: hsl(var(--surface-2)); }
+
+  /* ═══════════ STAGE (fullscreen single-variant view) ═══════════ */
+  .stage { flex: 1; height: 100%; overflow-y: auto; }
+  .stage-inner { max-width: 920px; margin: 0 auto; padding: 40px 48px 80px; }
+
+  .stage-panel { display: none; }
+  .stage-panel.active { display: block; }
+
+  .stage-crumbs { display: flex; align-items: center; gap: 8px; font-size: 11px; color: hsl(var(--muted-foreground)); margin-bottom: 10px; }
+  .stage-crumbs .sep { opacity: .5; }
+  .stage-kicker {
+    display: inline-block; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+    padding: 4px 11px; border-radius: 999px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground));
+  }
+  .stage-title { font-size: 24px; font-weight: 600; margin: 14px 0 8px; letter-spacing: -0.01em; }
+  .stage-note {
+    font-size: 13px; color: hsl(var(--muted-foreground)); max-width: 620px; margin: 0 0 14px; line-height: 1.65;
+  }
+  .stage-note b { color: hsl(var(--foreground)); font-weight: 500; }
+  .stage-howbox {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; color: hsl(var(--muted-foreground));
+    background: hsl(var(--surface-2)); border: 1px solid hsl(var(--border) / 1); border-radius: 999px; padding: 6px 14px; margin-bottom: 28px;
+  }
+  .stage-howbox .pip { font-size: 13px; }
+
+  .stage-demo {
+    border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-2)); border-radius: 18px;
+    padding: 48px; min-height: 520px; display: flex; align-items: center; justify-content: center;
+  }
+  .stage-demo > * { width: 100%; max-width: 520px; }
+  .stage-demo .stack { align-items: center; }
+
+  .stage-prevnext { display: flex; align-items: center; justify-content: space-between; margin-top: 22px; }
+  .nav-arrow {
+    font-size: 12px; padding: 9px 18px; border-radius: 999px; border: 1px solid hsl(var(--border) / 1);
+    background: hsl(var(--surface-1)); color: hsl(var(--foreground)); cursor: pointer; transition: all .15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .nav-arrow:hover { background: hsl(var(--surface-3)); }
+  .nav-arrow:disabled { opacity: .35; cursor: not-allowed; }
+  .stage-progress { font-size: 11px; color: hsl(var(--muted-foreground)); }
+
+  /* shared text/utility */
+  .text-fg { color: hsl(var(--foreground)); }
+  .text-muted { color: hsl(var(--muted-foreground)); }
+  .text-center { text-align: center; }
+  .hidden { display: none !important; }
+  .stack { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+  .micro-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin: 0 0 4px; }
+  .term-text { font-size: 16px; font-weight: 500; margin: 0; }
+  .explain-text { font-size: 13px; color: hsl(var(--muted-foreground)); margin: 6px 0 0; }
+  .hint-text { font-size: 11px; color: hsl(var(--muted-foreground)); margin: 0; }
+  hr.dashed { border: none; border-top: 1px dashed hsl(var(--border) / 1); margin: 0; width: 100%; }
+  .panel { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 16px 20px; width: 100%; }
+  .chip-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; padding: 4px 10px; border-radius: 999px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); }
+
+  /* buttons / inputs */
+  .btn {
+    font-size: 12px; padding: 7px 16px; border-radius: 999px; border: 1px solid transparent; cursor: pointer;
+    background: hsl(var(--foreground)); color: hsl(var(--background)); transition: opacity .15s ease; white-space: nowrap;
+  }
+  .btn:hover { opacity: .88; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-outline { background: transparent; color: hsl(var(--foreground)); border-color: hsl(var(--border) / 1); }
+  .btn-outline:hover { background: hsl(var(--surface-1)); opacity: 1; }
+  .btn-block { width: 100%; }
+  .btn-sm { padding: 6px 14px; font-size: 11.5px; }
+  .input {
+    width: 100%; height: 36px; font-size: 13px; padding: 0 12px; border-radius: 8px;
+    border: 1px solid hsl(var(--border) / 1); background: hsl(var(--background)); color: hsl(var(--foreground)); outline: none;
+  }
+  .input:focus { border-color: hsl(var(--foreground) / .4); }
+  .input::placeholder { color: hsl(var(--muted-foreground) / .6); }
+  textarea.input { height: auto; min-height: 64px; padding: 8px 12px; resize: vertical; font-family: inherit; }
+  .link-btn {
+    background: none; border: none; cursor: pointer; font-size: 11px; color: hsl(var(--muted-foreground));
+    display: inline-flex; align-items: center; gap: 4px; transition: color .15s ease; padding: 0;
+  }
+  .link-btn:hover { color: hsl(var(--foreground)); }
+
+  .result { font-size: 12px; display: inline-flex; align-items: center; gap: 5px; }
+  .result.correct { color: hsl(var(--foreground)); }
+  .result.incorrect { color: hsl(var(--muted-foreground)); }
+  .icon-circle { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 999px; font-size: 10px; background: hsl(var(--surface-3)); }
+  .icon-circle.no { color: hsl(var(--muted-foreground)); }
+
+  /* ════════ REAL 3D FLIP CARD — portrait "drink carton" proportions ════════ */
+  /* Taller than wide on purpose, per request: "een balk, langer verticaal dan horizontaal, als pakje drinken" */
+  .flashcard3d-wrap { width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .flashcard3d {
+    width: 100%;
+    max-width: 280px;
+    height: 400px;
+    perspective: 1600px;
+    cursor: pointer;
+  }
+  .flashcard3d-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    transition: transform .55s cubic-bezier(.4,0,.2,1);
+    transform-style: preserve-3d;
+  }
+  .flashcard3d.is-flipped .flashcard3d-inner { transform: rotateY(180deg); }
+  .flashcard3d-face {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    border-radius: 20px; border: 1px solid hsl(var(--border) / 1);
+    background: hsl(var(--surface-1));
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    padding: 30px 24px;
+  }
+  .flashcard3d-face.back { transform: rotateY(180deg); }
+  .flashcard3d-face .face-eyebrow { position: absolute; top: 18px; left: 0; right: 0; text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); }
+  .flashcard3d-face p.face-text { font-size: 22px; font-weight: 500; line-height: 1.4; max-width: 96%; margin: 0; }
+  .flashcard3d-face.back p.face-text { font-size: 15px; font-weight: 400; color: hsl(var(--muted-foreground)); }
+  .flip-caption { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 11px; color: hsl(var(--muted-foreground)); margin-top: 14px; }
+
+  /* Standard — field pair badge (also nudged to portrait-ish proportions) */
+  .pair-box { width: 100%; max-width: 280px; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 18px; padding: 38px 22px; text-align: center; cursor: pointer; min-height: 230px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 14px; }
+  .pair-box .lead { font-size: 19px; font-weight: 500; margin: 0; transition: all .15s ease; }
+  .pair-box .lead.muted { font-size: 13px; color: hsl(var(--muted-foreground)); font-weight: 400; }
+  .pair-box .trail { font-size: 17px; font-weight: 500; margin: 0; }
+  .pair-box .pair-divider { width: 28px; height: 1px; background: hsl(var(--border) / 1); }
+
+  /* Standard — compact row (intentionally landscape — the point is contrast vs. the carton shape) */
+  .compact-row { display: flex; align-items: center; gap: 12px; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 14px 18px; cursor: pointer; max-width: 480px; margin: 0 auto; }
+  .compact-row .term-chip { flex-shrink: 0; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 8px; background: hsl(var(--surface-3)); }
+  .compact-row .answer-text { flex: 1; font-size: 13px; color: hsl(var(--muted-foreground)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .compact-row .chevron { color: hsl(var(--muted-foreground)); transition: transform .15s ease; font-size: 15px; }
+  .compact-row .chevron.rotated { transform: rotate(90deg); }
+
+  /* cloze */
+  .cloze-sentence { font-size: 16px; line-height: 1.75; text-align: center; margin: 0; }
+  .blank-toggle {
+    display: inline-block; padding: 1px 8px; margin: 0 2px; border-radius: 6px; cursor: pointer;
+    border-bottom: 2px dashed hsl(var(--muted-foreground) / .5); color: transparent; background: hsl(var(--surface-1));
+    user-select: none; transition: all .15s ease;
+  }
+  .blank-toggle.revealed { border-color: transparent; background: hsl(var(--surface-3)); color: hsl(var(--foreground)); font-weight: 500; }
+  .bank-blank { display: inline-block; padding: 2px 12px; margin: 0 2px; border-radius: 6px; background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); border-bottom: 2px dashed hsl(var(--muted-foreground) / .5); }
+  .bank-options { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
+  .bank-btn {
+    font-size: 12px; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+    background: hsl(var(--surface-1)); color: hsl(var(--muted-foreground)); transition: all .15s ease;
+  }
+  .bank-btn:hover { background: hsl(var(--surface-3)); }
+  .bank-btn.correct { background: hsl(var(--surface-3)); color: hsl(var(--foreground)); border-color: hsl(var(--foreground) / .25); }
+  .bank-btn.incorrect { background: hsl(var(--surface-3)); color: hsl(var(--muted-foreground)); text-decoration: line-through; border-color: hsl(var(--foreground) / .25); }
+  .inline-input {
+    width: 140px; background: transparent; border: none; border-bottom: 2px solid hsl(var(--muted-foreground) / .5);
+    outline: none; font-size: 14px; text-align: center; padding: 2px 4px; color: hsl(var(--foreground));
+  }
+  .inline-input:focus { border-color: hsl(var(--foreground) / .6); }
+  .inline-input::placeholder { color: hsl(var(--muted-foreground) / .55); }
+  .p-blank { display: inline-block; padding: 1px 7px; margin: 0 1px; border-radius: 5px; background: hsl(var(--surface-3)); color: transparent; user-select: none; }
+  .p-blank.revealed { color: hsl(var(--foreground)); font-weight: 500; }
+  .progress-label { font-size: 11px; color: hsl(var(--muted-foreground)); }
+
+  /* context */
+  .quote-strip { display: flex; align-items: flex-start; gap: 8px; border-radius: 8px; background: hsl(var(--surface-3)); padding: 12px 16px; width: 100%; }
+  .quote-strip p { margin: 0; font-size: 12px; font-style: italic; color: hsl(var(--muted-foreground)); line-height: 1.6; }
+  .quote-mark { flex-shrink: 0; font-size: 17px; line-height: 1; color: hsl(var(--muted-foreground)); }
+  .reveal-box { width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 14px; padding: 26px; text-align: center; cursor: pointer; }
+  .footnote-link { background: none; border: none; cursor: pointer; font-size: 11.5px; color: hsl(var(--muted-foreground)); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 4px; transition: color .15s ease; }
+  .footnote-link:hover { color: hsl(var(--foreground)); }
+  .split-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px; align-items: stretch; width: 100%; min-height: 220px; }
+  .split-context { border-radius: 12px; background: hsl(var(--surface-3)); padding: 18px; display: flex; align-items: center; }
+  .split-context p { margin: 0; font-size: 12px; font-style: italic; color: hsl(var(--muted-foreground)); line-height: 1.7; }
+  .split-focus { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 12px; padding: 20px 22px; display: flex; flex-direction: column; justify-content: center; }
+
+  /* mnemonic */
+  .mnem-trick { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-style: italic; color: hsl(var(--muted-foreground)); }
+  .mnem-chip { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; background: hsl(var(--surface-3)); padding: 10px 16px; }
+  .mnem-chip p { margin: 0; font-size: 12px; }
+  .mnem-companion { display: flex; gap: 16px; align-items: stretch; width: 100%; flex-wrap: wrap; }
+  .mnem-companion .main { flex: 1; min-width: 220px; }
+  .mnem-companion .side { width: 180px; border-radius: 14px; background: hsl(var(--surface-3)); padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 4px; }
+  .mnem-companion .side p:first-of-type { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin: 4px 0 0; }
+  .mnem-companion .side p:last-of-type { font-size: 12px; line-height: 1.5; margin: 0; }
+  .anchor-card { display: flex; align-items: center; gap: 20px; width: 100%; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); border-radius: 14px; padding: 24px 28px; }
+  .anchor-icon { flex-shrink: 0; width: 56px; height: 56px; border-radius: 999px; background: hsl(var(--surface-3)); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+
+  /* type-the-answer (flip-centric) */
+  .compare-grid { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100%; text-align: left; }
+  .compare-box { border-radius: 10px; padding: 11px 14px; }
+  .compare-box.yours { background: hsl(var(--surface-3)); }
+  .compare-box.real { border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); }
+  .compare-box p:first-child { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: hsl(var(--muted-foreground)); margin: 0 0 4px; }
+  .compare-box p:last-child { font-size: 12px; margin: 0; line-height: 1.5; }
+  .grade-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .grade-btn { font-size: 11.5px; padding: 7px 14px; border-radius: 999px; border: 1px solid hsl(var(--border) / 1); background: hsl(var(--surface-1)); color: hsl(var(--foreground)); cursor: pointer; transition: all .15s ease; }
+  .grade-btn:hover { background: hsl(var(--surface-3)); }
+  .grade-btn.chosen { background: hsl(var(--foreground)); color: hsl(var(--background)); border-color: transparent; }
+  .masked-word { font-size: 19px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .25em; margin: 0; }
+</style>
+</head>
+<body>
+  <div class="shell">
+
+    <!-- ═══════════ SIDEBAR: pick a flashcard family, then a layout ═══════════ -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <h1>Flashcard layouts</h1>
+        <p>Browse by family → pick a layout to view it full-size</p>
+      </div>
+      <button class="theme-btn" onclick="toggleTheme()">🌓 <span id="theme-label">Switch to dark mode</span></button>
+
+      <div class="sidebar-howto">
+        Every layout below shows the <b>same sample card</b> ("Mitochondria") so only the
+        shape/interaction changes. Click a name on the left — the matching layout opens
+        full-size on the right with a plain-language note on what it's for.
+      </div>
+
+      <!-- Group 1: Standard -->
+      <div class="nav-group">
+        <div class="nav-group-head">
+          <p class="nav-group-label">1 · Regular flashcards</p>
+          <p class="nav-group-desc">The classic front ↔ back card. These 4 differ only in HOW the back is revealed.</p>
+        </div>
+        <button class="nav-item active" data-target="standard-0" onclick="showPanel('standard-0')"><span class="dot"></span>Centered Flip<span class="nav-item-tag">3D flip</span></button>
+        <button class="nav-item" data-target="standard-1" onclick="showPanel('standard-1')"><span class="dot"></span>Stacked Reveal<span class="nav-item-tag">expands</span></button>
+        <button class="nav-item" data-target="standard-2" onclick="showPanel('standard-2')"><span class="dot"></span>Field-Pair Badge<span class="nav-item-tag">swap sides</span></button>
+        <button class="nav-item" data-target="standard-3" onclick="showPanel('standard-3')"><span class="dot"></span>Compact Row<span class="nav-item-tag">list scan</span></button>
+      </div>
+
+      <!-- Group 2: Cloze -->
+      <div class="nav-group">
+        <div class="nav-group-head">
+          <p class="nav-group-label">2 · Fill-in-the-blank (Cloze)</p>
+          <p class="nav-group-desc">The term is hidden INSIDE a full sentence instead of standing alone. These 4 differ in how you fill the gap.</p>
+        </div>
+        <button class="nav-item" data-target="cloze-0" onclick="showPanel('cloze-0')"><span class="dot"></span>Inline Blank<span class="nav-item-tag">click to reveal</span></button>
+        <button class="nav-item" data-target="cloze-1" onclick="showPanel('cloze-1')"><span class="dot"></span>Word Bank<span class="nav-item-tag">pick a chip</span></button>
+        <button class="nav-item" data-target="cloze-2" onclick="showPanel('cloze-2')"><span class="dot"></span>Type-in Underline<span class="nav-item-tag">type the word</span></button>
+        <button class="nav-item" data-target="cloze-3" onclick="showPanel('cloze-3')"><span class="dot"></span>Progressive Multi-Blank<span class="nav-item-tag">whole passage</span></button>
+      </div>
+
+      <!-- Group 3: Context -->
+      <div class="nav-group">
+        <div class="nav-group-head">
+          <p class="nav-group-label">3 · Context-aware cards</p>
+          <p class="nav-group-desc">The original source sentence travels with the card, not just the isolated term. These 4 differ in how prominent that source text is.</p>
+        </div>
+        <button class="nav-item" data-target="context-0" onclick="showPanel('context-0')"><span class="dot"></span>Context Strip<span class="nav-item-tag">quote on top</span></button>
+        <button class="nav-item" data-target="context-1" onclick="showPanel('context-1')"><span class="dot"></span>Highlighted-in-Passage<span class="nav-item-tag">sentence is the card</span></button>
+        <button class="nav-item" data-target="context-2" onclick="showPanel('context-2')"><span class="dot"></span>Expandable Footnote<span class="nav-item-tag">tucked away</span></button>
+        <button class="nav-item" data-target="context-3" onclick="showPanel('context-3')"><span class="dot"></span>Side-by-Side Split<span class="nav-item-tag">both at once</span></button>
+      </div>
+
+      <!-- Group 4: Mnemonic -->
+      <div class="nav-group">
+        <div class="nav-group-head">
+          <p class="nav-group-label">4 · Mnemonic (memory-trick) cards</p>
+          <p class="nav-group-desc">Bundles a memory trick (rhyme / association / image-in-words) with the card. These 4 differ in how prominent that trick is.</p>
+        </div>
+        <button class="nav-item" data-target="mnem-0" onclick="showPanel('mnem-0')"><span class="dot"></span>Footnote Trick<span class="nav-item-tag">subtle, always-on</span></button>
+        <button class="nav-item" data-target="mnem-1" onclick="showPanel('mnem-1')"><span class="dot"></span>Reveal Button<span class="nav-item-tag">opt-in</span></button>
+        <button class="nav-item" data-target="mnem-2" onclick="showPanel('mnem-2')"><span class="dot"></span>Companion Chip<span class="nav-item-tag">side panel</span></button>
+        <button class="nav-item" data-target="mnem-3" onclick="showPanel('mnem-3')"><span class="dot"></span>Visual Anchor<span class="nav-item-tag">front and center</span></button>
+      </div>
+
+      <!-- Group 5: Type the answer -->
+      <div class="nav-group">
+        <div class="nav-group-head">
+          <p class="nav-group-label">5 · "Type the answer" study mode</p>
+          <p class="nav-group-desc">Not a separate card style — a STUDY MODE: you see one side, type your own recall attempt, then flip to compare. These 4 differ in what you're asked to recall and how you're checked.</p>
+        </div>
+        <button class="nav-item" data-target="type-0" onclick="showPanel('type-0')"><span class="dot"></span>Recall → Flip → Auto-Check<span class="nav-item-tag">app grades</span></button>
+        <button class="nav-item" data-target="type-1" onclick="showPanel('type-1')"><span class="dot"></span>Recall → Flip → Self-Grade<span class="nav-item-tag">you grade</span></button>
+        <button class="nav-item" data-target="type-2" onclick="showPanel('type-2')"><span class="dot"></span>Stuck? Peek a Letter<span class="nav-item-tag">guided</span></button>
+        <button class="nav-item" data-target="type-3" onclick="showPanel('type-3')"><span class="dot"></span>Pair Recall<span class="nav-item-tag">date ⇄ event</span></button>
+      </div>
+    </aside>
+
+    <!-- ═══════════ STAGE: one layout at a time, full-size ═══════════ -->
+    <main class="stage">
+      <div class="stage-inner">
+
+        <!-- ───────── 1 · STANDARD ───────── -->
+        <div class="stage-panel active" data-panel="standard-0">
+          <div class="stage-crumbs"><span>1 · Regular flashcards</span><span class="sep">›</span><span>Layout 1 of 4</span></div>
+          <span class="stage-kicker">Regular flashcard</span>
+          <h2 class="stage-title">Centered Flip</h2>
+          <p class="stage-note">This is <b>the real flip animation</b> the live tool already uses (3D rotateY rotation, both faces actually exist in 3D space — not a text swap), just shown here at the bigger, more vertical "drink carton" proportions you asked for so you can judge the real shape.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click the card — it physically rotates to show its back face</div>
+          <div class="stage-demo">
+            <div class="flashcard3d-wrap">
+              <div class="flashcard3d" onclick="flip3D(this)">
+                <div class="flashcard3d-inner">
+                  <div class="flashcard3d-face front">
+                    <span class="face-eyebrow">Front</span>
+                    <p class="face-text">Mitochondria</p>
+                  </div>
+                  <div class="flashcard3d-face back">
+                    <span class="face-eyebrow">Back</span>
+                    <p class="face-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                  </div>
+                </div>
+              </div>
+              <p class="flip-caption">⇄ Click the card to flip it over</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" disabled>← Previous</button><span class="stage-progress">Regular flashcards — 1 / 4</span><button class="nav-arrow" onclick="showPanel('standard-1')">Next: Stacked Reveal →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="standard-1">
+          <div class="stage-crumbs"><span>1 · Regular flashcards</span><span class="sep">›</span><span>Layout 2 of 4</span></div>
+          <span class="stage-kicker">Regular flashcard</span>
+          <h2 class="stage-title">Stacked Reveal</h2>
+          <p class="stage-note">Deliberately <b>not a flip</b> — an alternative for people the 3D rotation distracts. The term stays fixed in place and the answer simply expands underneath it when you press the button below.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Press "Reveal answer" — it expands in place, card never moves</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:340px;">
+              <div class="panel">
+                <p class="micro-label">Term</p>
+                <p class="term-text">Mitochondria</p>
+              </div>
+              <hr class="dashed">
+              <div class="panel hidden answer-reveal-target" style="background: hsl(var(--surface-3)); border: none;">
+                <p class="micro-label">Explanation</p>
+                <p class="explain-text" style="margin-top:2px;">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+              <button class="btn btn-outline btn-block" onclick="revealStacked(this)">Reveal answer</button>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('standard-0')">← Previous</button><span class="stage-progress">Regular flashcards — 2 / 4</span><button class="nav-arrow" onclick="showPanel('standard-2')">Next: Field-Pair Badge →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="standard-2">
+          <div class="stage-crumbs"><span>1 · Regular flashcards</span><span class="sep">›</span><span>Layout 3 of 4</span></div>
+          <span class="stage-kicker">Regular flashcard</span>
+          <h2 class="stage-title">Field-Pair Badge</h2>
+          <p class="stage-note">No flip here either — instead the AI <b>names what kind of pair this card is</b> ("Term → Explanation", "Date → Event", "Cause → Effect"…) and a single tap lets you swap which side leads. This idea is what would replace a separate "Reversed" mode entirely.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Tap the card to reveal the other side · tap "Swap sides" to flip which one leads</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:300px;">
+              <div class="row-between">
+                <span class="chip-pill kind-label">Term → Explanation</span>
+                <button class="link-btn" onclick="swapPair(this)">⇄ Swap sides</button>
+              </div>
+              <div class="pair-box"
+                   data-a="Mitochondria"
+                   data-b="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                   data-revealed="false" onclick="togglePairReveal(this)">
+                <p class="lead">Mitochondria</p>
+                <div class="pair-divider hidden"></div>
+                <p class="trail hidden"></p>
+              </div>
+              <p class="hint-text text-center">Tap the card to reveal the other side of the pair.</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('standard-1')">← Previous</button><span class="stage-progress">Regular flashcards — 3 / 4</span><button class="nav-arrow" onclick="showPanel('standard-3')">Next: Compact Row →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="standard-3">
+          <div class="stage-crumbs"><span>1 · Regular flashcards</span><span class="sep">›</span><span>Layout 4 of 4</span></div>
+          <span class="stage-kicker">Regular flashcard</span>
+          <h2 class="stage-title">Compact Row</h2>
+          <p class="stage-note">The odd one out on purpose: instead of one tall card at a time, this renders as a <b>dense horizontal list row</b> — built for scanning through a long deck quickly like a glossary, not for slow single-card focus. Shown landscape deliberately, as a contrast to the "drink carton" shape used elsewhere.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click the row — the answer appears inline, row stays put</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:480px;">
+              <div class="compact-row" data-revealed="false"
+                   data-answer="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                   onclick="toggleCompactRow(this)">
+                <span class="term-chip">Mitochondria</span>
+                <span class="answer-text">••••••••••••••••••••••••••••</span>
+                <span class="chevron">›</span>
+              </div>
+              <p class="hint-text text-center">Click the row to reveal the answer inline — for fast scan-through of long decks.</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('standard-2')">← Previous</button><span class="stage-progress">Regular flashcards — 4 / 4</span><button class="nav-arrow" onclick="showPanel('cloze-0')">Next group: Fill-in-the-blank →</button></div>
+        </div>
+
+        <!-- ───────── 2 · CLOZE ───────── -->
+        <div class="stage-panel" data-panel="cloze-0">
+          <div class="stage-crumbs"><span>2 · Fill-in-the-blank (Cloze)</span><span class="sep">›</span><span>Layout 1 of 4</span></div>
+          <span class="stage-kicker">Fill-in-the-blank</span>
+          <h2 class="stage-title">Inline Blank</h2>
+          <p class="stage-note">The term is hidden <b>inside its own full sentence</b> rather than isolated on a bare card — the surrounding context stays attached. Click the dashed blank and the word appears right there, highlighted, nothing else moves.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click the dashed blank to reveal the word in place</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:440px;">
+              <p class="cloze-sentence">In eukaryotic cells, the
+                <span class="blank-toggle" data-word="mitochondria" data-revealed="false" onclick="toggleBlank(this)">••••••••••••</span>
+                acts as the powerhouse, converting nutrients into usable energy.</p>
+              <p class="hint-text text-center">Click the blank to reveal the word in place — keeps full sentence context intact.</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('standard-3')">← Previous</button><span class="stage-progress">Fill-in-the-blank — 1 / 4</span><button class="nav-arrow" onclick="showPanel('cloze-1')">Next: Word Bank →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="cloze-1">
+          <div class="stage-crumbs"><span>2 · Fill-in-the-blank (Cloze)</span><span class="sep">›</span><span>Layout 2 of 4</span></div>
+          <span class="stage-kicker">Fill-in-the-blank</span>
+          <h2 class="stage-title">Word Bank</h2>
+          <p class="stage-note">Same hidden-in-sentence idea, but easier: instead of free recall you <b>pick from 3-4 chip options</b> below the sentence. Good for early review passes or lower-difficulty settings. Try a wrong chip first, then the right one — both states are visible.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click any chip — right answers highlight, wrong ones strike through</div>
+          <div class="stage-demo">
+            <div class="stack word-bank" data-answer="mitochondria" style="max-width:440px;">
+              <p class="cloze-sentence">In eukaryotic cells, the <span class="bank-blank">_____</span> acts as the powerhouse, converting nutrients into usable energy.</p>
+              <div class="bank-options">
+                <button class="bank-btn" onclick="pickBank(this)">mitochondria</button>
+                <button class="bank-btn" onclick="pickBank(this)">nucleus</button>
+                <button class="bank-btn" onclick="pickBank(this)">ribosome</button>
+                <button class="bank-btn" onclick="pickBank(this)">cytoplasm</button>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('cloze-0')">← Previous</button><span class="stage-progress">Fill-in-the-blank — 2 / 4</span><button class="nav-arrow" onclick="showPanel('cloze-2')">Next: Type-in Underline →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="cloze-2">
+          <div class="stage-crumbs"><span>2 · Fill-in-the-blank (Cloze)</span><span class="sep">›</span><span>Layout 3 of 4</span></div>
+          <span class="stage-kicker">Fill-in-the-blank</span>
+          <h2 class="stage-title">Type-in Underline</h2>
+          <p class="stage-note">The hardest of the cloze layouts — the blank is a <b>live text field sitting inline with the sentence itself</b>. You type the missing word from memory and press Check for instant ✓ / ✕ feedback, right where the blank was.</p>
+          <div class="stage-howbox"><span class="pip">⌨️</span> Type the missing word, then press Check</div>
+          <div class="stage-demo">
+            <div class="stack type-in" data-answer="mitochondria" style="max-width:460px;">
+              <p class="cloze-sentence">In eukaryotic cells, the
+                <input type="text" class="inline-input" placeholder="type the word">
+                acts as the powerhouse, converting nutrients into usable energy.</p>
+              <div class="row">
+                <button class="btn btn-outline btn-sm" onclick="checkTypeIn(this)">Check</button>
+                <span class="result hidden"></span>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('cloze-1')">← Previous</button><span class="stage-progress">Fill-in-the-blank — 3 / 4</span><button class="nav-arrow" onclick="showPanel('cloze-3')">Next: Progressive Multi-Blank →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="cloze-3">
+          <div class="stage-crumbs"><span>2 · Fill-in-the-blank (Cloze)</span><span class="sep">›</span><span>Layout 4 of 4</span></div>
+          <span class="stage-kicker">Fill-in-the-blank</span>
+          <h2 class="stage-title">Progressive Multi-Blank</h2>
+          <p class="stage-note">Scales the same idea up to a <b>whole passage with several blanks</b>, revealed one click at a time with a running counter — for paragraph-level recall practice instead of single isolated terms.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Press "Reveal next blank" repeatedly — counter tracks progress</div>
+          <div class="stage-demo">
+            <div class="stack progressive" data-revealed="0" style="max-width:480px;">
+              <p class="cloze-sentence" style="text-align:left; font-size: 14px;">In <span class="p-blank" data-word="eukaryotic">•••••••••••</span> cells, the
+                <span class="p-blank" data-word="mitochondria">••••••••••••</span> acts as the powerhouse, converting nutrients
+                into <span class="p-blank" data-word="ATP">•••</span>.</p>
+              <div class="row">
+                <button class="btn btn-outline btn-sm" onclick="revealNextBlank(this)">Reveal next blank</button>
+                <span class="progress-label">0 / 3 revealed</span>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('cloze-2')">← Previous</button><span class="stage-progress">Fill-in-the-blank — 4 / 4</span><button class="nav-arrow" onclick="showPanel('context-0')">Next group: Context-aware →</button></div>
+        </div>
+
+        <!-- ───────── 3 · CONTEXT ───────── -->
+        <div class="stage-panel" data-panel="context-0">
+          <div class="stage-crumbs"><span>3 · Context-aware cards</span><span class="sep">›</span><span>Layout 1 of 4</span></div>
+          <span class="stage-kicker">Context-aware</span>
+          <h2 class="stage-title">Context Strip</h2>
+          <p class="stage-note">A normal term/explanation card, but with the <b>original source sentence quoted in a muted strip above it</b> — so you always see exactly where the term came from before testing yourself on it.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click the card below the quote to reveal the explanation</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:440px;">
+              <div class="quote-strip"><span class="quote-mark">"</span><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+              <div class="reveal-box" data-revealed="false"
+                   data-answer="The organelle that converts nutrients into usable energy (ATP) for the cell."
+                   onclick="toggleContextStrip(this)">
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text hidden"></p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('cloze-3')">← Previous</button><span class="stage-progress">Context-aware — 1 / 4</span><button class="nav-arrow" onclick="showPanel('context-1')">Next: Highlighted-in-Passage →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="context-1">
+          <div class="stage-crumbs"><span>3 · Context-aware cards</span><span class="sep">›</span><span>Layout 2 of 4</span></div>
+          <span class="stage-kicker">Context-aware</span>
+          <h2 class="stage-title">Highlighted-in-Passage</h2>
+          <p class="stage-note">Goes one step further — there's no separate "term" element at all. The <b>full original sentence IS the card</b>, with the key word blanked out and highlighted exactly where it naturally occurs in the passage.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click anywhere in the sentence to reveal the highlighted word</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:440px;">
+              <p class="cloze-sentence" onclick="toggleHighlightPassage(this.parentNode)" style="cursor:pointer;">In eukaryotic cells, the
+                <span class="blank-toggle" data-word="mitochondria" data-revealed="false">••••••••••••</span>
+                acts as the powerhouse, converting nutrients into usable energy.</p>
+              <p class="hint-text text-center">Click anywhere on the sentence to reveal the highlighted word in place.</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('context-0')">← Previous</button><span class="stage-progress">Context-aware — 2 / 4</span><button class="nav-arrow" onclick="showPanel('context-2')">Next: Expandable Footnote →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="context-2">
+          <div class="stage-crumbs"><span>3 · Context-aware cards</span><span class="sep">›</span><span>Layout 3 of 4</span></div>
+          <span class="stage-kicker">Context-aware</span>
+          <h2 class="stage-title">Expandable Footnote</h2>
+          <p class="stage-note">Looks like a totally normal card by default — the source sentence is <b>tucked away behind a small "Show source context" link</b> underneath, so it never clutters the main view unless you actively want it.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Click "Show source context" to expand the quoted passage below</div>
+          <div class="stage-demo">
+            <div class="stack" style="max-width:420px;">
+              <div class="panel text-center">
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+              <div class="text-center">
+                <button class="footnote-link" onclick="toggleFootnote(this)">ⓘ Show source context</button>
+              </div>
+              <div class="quote-strip hidden footnote-body"><span class="quote-mark">"</span><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('context-1')">← Previous</button><span class="stage-progress">Context-aware — 3 / 4</span><button class="nav-arrow" onclick="showPanel('context-3')">Next: Side-by-Side Split →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="context-3">
+          <div class="stage-crumbs"><span>3 · Context-aware cards</span><span class="sep">›</span><span>Layout 4 of 4</span></div>
+          <span class="stage-kicker">Context-aware</span>
+          <h2 class="stage-title">Side-by-Side Split</h2>
+          <p class="stage-note">No clicking needed — both halves are <b>always visible at once</b> in two columns: the muted source passage on the left, the focused term and definition on the right. For people who'd rather see everything up front than reveal it step by step.</p>
+          <div class="stage-howbox"><span class="pip">👁️</span> Static layout — both context and focus term are shown together, nothing to click</div>
+          <div class="stage-demo">
+            <div class="split-grid" style="max-width:560px;">
+              <div class="split-context"><p>In eukaryotic cells, the mitochondria acts as the powerhouse, converting nutrients into ATP through cellular respiration.</p></div>
+              <div class="split-focus">
+                <p class="micro-label">Focus term</p>
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('context-2')">← Previous</button><span class="stage-progress">Context-aware — 4 / 4</span><button class="nav-arrow" onclick="showPanel('mnem-0')">Next group: Mnemonic →</button></div>
+        </div>
+
+        <!-- ───────── 4 · MNEMONIC ───────── -->
+        <div class="stage-panel" data-panel="mnem-0">
+          <div class="stage-crumbs"><span>4 · Mnemonic cards</span><span class="sep">›</span><span>Layout 1 of 4</span></div>
+          <span class="stage-kicker">Mnemonic</span>
+          <h2 class="stage-title">Footnote Trick</h2>
+          <p class="stage-note">The memory trick is <b>always visible in small italic text</b> below the answer — present, but quiet, so it never competes with or overshadows the real definition.</p>
+          <div class="stage-howbox"><span class="pip">👁️</span> Static — the trick is always shown in italics beneath the card</div>
+          <div class="stage-demo">
+            <div class="stack" style="text-align:center; max-width:420px;">
+              <div class="panel">
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+              <p class="mnem-trick" style="justify-content:center;">💡 "Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('context-3')">← Previous</button><span class="stage-progress">Mnemonic — 1 / 4</span><button class="nav-arrow" onclick="showPanel('mnem-1')">Next: Reveal Button →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="mnem-1">
+          <div class="stage-crumbs"><span>4 · Mnemonic cards</span><span class="sep">›</span><span>Layout 2 of 4</span></div>
+          <span class="stage-kicker">Mnemonic</span>
+          <h2 class="stage-title">Reveal Button</h2>
+          <p class="stage-note">The trick is <b>hidden behind a "Show memory trick" button</b> — for learners who'd rather try recalling the answer on their own first, and only peek at the trick if they get stuck.</p>
+          <div class="stage-howbox"><span class="pip">👆</span> Press "Show memory trick" to reveal the chip below</div>
+          <div class="stage-demo">
+            <div class="stack" style="text-align:center; align-items:center; max-width:420px;">
+              <div class="panel" style="width:100%;">
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="revealMnemonic(this)">💡 Show memory trick</button>
+              <div class="mnem-chip hidden mnem-target">💡<p>"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p></div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('mnem-0')">← Previous</button><span class="stage-progress">Mnemonic — 2 / 4</span><button class="nav-arrow" onclick="showPanel('mnem-2')">Next: Companion Chip →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="mnem-2">
+          <div class="stage-crumbs"><span>4 · Mnemonic cards</span><span class="sep">›</span><span>Layout 3 of 4</span></div>
+          <span class="stage-kicker">Mnemonic</span>
+          <h2 class="stage-title">Companion Chip</h2>
+          <p class="stage-note">The trick lives in its <b>own small chip beside the main card</b> — visually separated as "extra help" rather than mixed directly into the core term/definition content.</p>
+          <div class="stage-howbox"><span class="pip">👁️</span> Static — trick sits in a separate side panel next to the card</div>
+          <div class="stage-demo">
+            <div class="mnem-companion" style="max-width:560px;">
+              <div class="panel main">
+                <p class="term-text">Mitochondria</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+              <div class="side">
+                💡
+                <p>Memory trick</p>
+                <p>"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('mnem-1')">← Previous</button><span class="stage-progress">Mnemonic — 3 / 4</span><button class="nav-arrow" onclick="showPanel('mnem-3')">Next: Visual Anchor →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="mnem-3">
+          <div class="stage-crumbs"><span>4 · Mnemonic cards</span><span class="sep">›</span><span>Layout 4 of 4</span></div>
+          <span class="stage-kicker">Mnemonic</span>
+          <h2 class="stage-title">Visual Anchor</h2>
+          <p class="stage-note">The most prominent treatment of the four — the trick sits <b>directly under the term as a primary element</b>, paired with an icon "anchor," instead of being tucked away. Built for learners who lean heavily on association to remember things.</p>
+          <div class="stage-howbox"><span class="pip">👁️</span> Static — trick is the second thing you read, right after the term</div>
+          <div class="stage-demo">
+            <div class="anchor-card" style="max-width:480px;">
+              <div class="anchor-icon">✦</div>
+              <div>
+                <p class="term-text">Mitochondria</p>
+                <p class="mnem-trick" style="margin-top:4px;">"Mighty-condria" — the MIGHTY powerhouse that keeps the cell running.</p>
+                <p class="explain-text">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('mnem-2')">← Previous</button><span class="stage-progress">Mnemonic — 4 / 4</span><button class="nav-arrow" onclick="showPanel('type-0')">Next group: "Type the answer" mode →</button></div>
+        </div>
+
+        <!-- ───────── 5 · TYPE THE ANSWER (study mode, flip-centric) ───────── -->
+        <div class="stage-panel" data-panel="type-0">
+          <div class="stage-crumbs"><span>5 · "Type the answer" mode</span><span class="sep">›</span><span>Layout 1 of 4</span></div>
+          <span class="stage-kicker">Study mode, not a card style</span>
+          <h2 class="stage-title">Recall → Flip → Auto-Check</h2>
+          <p class="stage-note">
+            Rebuilt around the flip per your note — this is <b>not a quiz input box</b>. The flow is: you see only
+            "Mitochondria", you type what <i>you</i> think it means in your own words, then you flip the card —
+            the back shows your answer next to the real one so you can see how close your memory was.
+          </p>
+          <div class="stage-howbox"><span class="pip">⌨️</span> Type your own explanation first → then press "Flip to compare"</div>
+          <div class="stage-demo">
+            <div class="stack flip-type-a" style="max-width:300px;">
+              <div class="flashcard3d-wrap">
+                <div class="flashcard3d" data-stage="front">
+                  <div class="flashcard3d-inner">
+                    <div class="flashcard3d-face front">
+                      <span class="face-eyebrow">Front — what you see first</span>
+                      <p class="face-text">Mitochondria</p>
+                    </div>
+                    <div class="flashcard3d-face back">
+                      <span class="face-eyebrow">Back — your answer vs. the real one</span>
+                      <div class="compare-grid">
+                        <div class="compare-box yours"><p>You typed</p><p class="your-answer-text">—</p></div>
+                        <div class="compare-box real"><p>Actual answer</p><p>Converts nutrients into usable energy (ATP) for the cell.</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <textarea class="input recall-input" rows="2" placeholder="Type what you remember about Mitochondria, in your own words…"></textarea>
+              <div class="row"><button class="btn btn-sm" onclick="flipTypeA(this)">Flip to compare</button></div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('mnem-3')">← Previous</button><span class="stage-progress">"Type the answer" — 1 / 4</span><button class="nav-arrow" onclick="showPanel('type-1')">Next: Self-Grade →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="type-1">
+          <div class="stage-crumbs"><span>5 · "Type the answer" mode</span><span class="sep">›</span><span>Layout 2 of 4</span></div>
+          <span class="stage-kicker">Study mode, not a card style</span>
+          <h2 class="stage-title">Recall → Flip → Self-Grade</h2>
+          <p class="stage-note">
+            Same see-it → type-it → flip-it flow, but instead of the app auto-judging your wording, <b>you</b> compare your
+            own attempt against the real answer after flipping and grade yourself honestly (Got it / Close / Missed it) —
+            this mirrors how flashcard recall actually works in real study, more than an auto-graded quiz check would.
+          </p>
+          <div class="stage-howbox"><span class="pip">⌨️</span> Type → flip → then judge your own attempt with the grade buttons</div>
+          <div class="stage-demo">
+            <div class="stack flip-type-b" style="max-width:300px;">
+              <div class="flashcard3d-wrap">
+                <div class="flashcard3d" data-stage="front">
+                  <div class="flashcard3d-inner">
+                    <div class="flashcard3d-face front">
+                      <span class="face-eyebrow">Front — what you see first</span>
+                      <p class="face-text">Mitochondria</p>
+                    </div>
+                    <div class="flashcard3d-face back">
+                      <span class="face-eyebrow">Back — how did you do?</span>
+                      <div class="compare-grid">
+                        <div class="compare-box yours"><p>You typed</p><p class="your-answer-text">—</p></div>
+                        <div class="compare-box real"><p>Actual answer</p><p>Converts nutrients into usable energy (ATP) for the cell.</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <textarea class="input recall-input" rows="2" placeholder="Type what you remember about Mitochondria, in your own words…"></textarea>
+              <div class="row"><button class="btn btn-sm" onclick="flipTypeB(this)">Flip to compare</button></div>
+              <div class="row grade-row hidden grade-target">
+                <span class="hint-text">Be honest:</span>
+                <button class="grade-btn" onclick="chooseGrade(this)">Got it</button>
+                <button class="grade-btn" onclick="chooseGrade(this)">Close</button>
+                <button class="grade-btn" onclick="chooseGrade(this)">Missed it</button>
+              </div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('type-0')">← Previous</button><span class="stage-progress">"Type the answer" — 2 / 4</span><button class="nav-arrow" onclick="showPanel('type-2')">Next: Stuck? Peek a Letter →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="type-2">
+          <div class="stage-crumbs"><span>5 · "Type the answer" mode</span><span class="sep">›</span><span>Layout 3 of 4</span></div>
+          <span class="stage-kicker">Study mode, not a card style</span>
+          <h2 class="stage-title">Stuck? Peek a Letter, Then Flip</h2>
+          <p class="stage-note">
+            Runs the recall in the <b>opposite direction</b>: the front shows the explanation, and you try to recall the
+            <i>term</i>. If you genuinely can't remember it, you can reveal it one letter at a time as a nudge — then flip
+            to see the full term and confirm.
+          </p>
+          <div class="stage-howbox"><span class="pip">⌨️</span> Type the term you think this describes → optionally peek letters → flip to check</div>
+          <div class="stage-demo">
+            <div class="stack flip-type-c" style="max-width:300px;">
+              <div class="flashcard3d-wrap">
+                <div class="flashcard3d" data-stage="front">
+                  <div class="flashcard3d-inner">
+                    <div class="flashcard3d-face front">
+                      <span class="face-eyebrow">Front — what's the term?</span>
+                      <p class="face-text" style="font-size:15px; font-weight:400; color:hsl(var(--muted-foreground));">The organelle that converts nutrients into usable energy (ATP) for the cell.</p>
+                    </div>
+                    <div class="flashcard3d-face back">
+                      <span class="face-eyebrow">Back</span>
+                      <p class="face-text">Mitochondria</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="text" class="input recall-input" placeholder="Type the term you think this describes…">
+              <div class="row">
+                <button class="btn btn-outline btn-sm hint-btn" data-word="Mitochondria" data-revealed="0" onclick="revealHintLetter(this)">Need a hint? Reveal a letter</button>
+                <button class="btn btn-sm" onclick="flipTypeC(this)">Flip to check</button>
+              </div>
+              <p class="masked-word hint hidden text-center"></p>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('type-1')">← Previous</button><span class="stage-progress">"Type the answer" — 3 / 4</span><button class="nav-arrow" onclick="showPanel('type-3')">Next: Pair Recall →</button></div>
+        </div>
+
+        <div class="stage-panel" data-panel="type-3">
+          <div class="stage-crumbs"><span>5 · "Type the answer" mode</span><span class="sep">›</span><span>Layout 4 of 4</span></div>
+          <span class="stage-kicker">Study mode, not a card style</span>
+          <h2 class="stage-title">Pair Recall: Given One, Type the Other</h2>
+          <p class="stage-note">
+            For AI-detected pairs (date↔event, cause↔effect, name↔role…): the front shows <b>only one half</b> of the pair
+            ("1969"), you type your guess for the matching half, then flip to reveal the true pair side-by-side with what
+            you guessed.
+          </p>
+          <div class="stage-howbox"><span class="pip">⌨️</span> Guess the missing half of the pair → flip to see the real pairing next to your guess</div>
+          <div class="stage-demo">
+            <div class="stack flip-type-d" style="max-width:300px;">
+              <div class="flashcard3d-wrap">
+                <div class="flashcard3d" data-stage="front">
+                  <div class="flashcard3d-inner">
+                    <div class="flashcard3d-face front">
+                      <span class="face-eyebrow">Front — Date → Event pair</span>
+                      <p class="face-text">1969</p>
+                    </div>
+                    <div class="flashcard3d-face back">
+                      <span class="face-eyebrow">Back — the full pair</span>
+                      <div class="compare-grid">
+                        <div class="compare-box yours"><p>You guessed</p><p class="your-answer-text">—</p></div>
+                        <div class="compare-box real"><p>What happened in 1969</p><p>Apollo 11 moon landing</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="text" class="input recall-input" placeholder="What do you think happened in 1969?">
+              <div class="row"><button class="btn btn-sm" onclick="flipTypeD(this)">Flip to reveal the pair</button></div>
+            </div>
+          </div>
+          <div class="stage-prevnext"><button class="nav-arrow" onclick="showPanel('type-2')">← Previous</button><span class="stage-progress">"Type the answer" — 4 / 4</span><button class="nav-arrow" disabled>You've reached the end →</button></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+<script>
+  // ── theme toggle ──────────────────────────────────────────
+  function toggleTheme() {
+    var html = document.documentElement;
+    var isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.getElementById('theme-label').textContent = isDark ? 'Switch to dark mode' : 'Switch to light mode';
+  }
+
+  // ── sidebar ↔ stage panel switcher ────────────────────────
+  function showPanel(id) {
+    document.querySelectorAll('.nav-item').forEach(function (btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-target') === id);
+    });
+    document.querySelectorAll('.stage-panel').forEach(function (panel) {
+      panel.classList.toggle('active', panel.getAttribute('data-panel') === id);
+    });
+    document.querySelector('.stage').scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  // ── real 3D flip (generic) ────────────────────────────────
+  function flip3D(el) {
+    el.classList.toggle('is-flipped');
+  }
+
+  // ── Standard: Stacked Reveal ──────────────────────────────
+  function revealStacked(btn) {
+    var stack = btn.closest('.stack');
+    stack.querySelector('.answer-reveal-target').classList.remove('hidden');
+    btn.remove();
+  }
+
+  // ── Standard: Field-Pair Badge ────────────────────────────
+  function swapPair(btn) {
+    var stack = btn.closest('.stack');
+    var label = stack.querySelector('.kind-label');
+    var box = stack.querySelector('.pair-box');
+    var lead = box.querySelector('.lead');
+    var trail = box.querySelector('.trail');
+    var divider = box.querySelector('.pair-divider');
+    var termFirst = label.textContent.indexOf('Term →') === 0;
+    label.textContent = termFirst ? 'Explanation → Term' : 'Term → Explanation';
+    var a = box.getAttribute('data-a');
+    var b = box.getAttribute('data-b');
+    box.setAttribute('data-a', b);
+    box.setAttribute('data-b', a);
+    box.setAttribute('data-revealed', 'false');
+    lead.textContent = b;
+    lead.classList.remove('muted');
+    trail.textContent = a;
+    trail.classList.add('hidden');
+    divider.classList.add('hidden');
+  }
+  function togglePairReveal(box) {
+    var lead = box.querySelector('.lead');
+    var trail = box.querySelector('.trail');
+    var divider = box.querySelector('.pair-divider');
+    var revealed = box.getAttribute('data-revealed') === 'true';
+    if (!revealed) {
+      trail.textContent = box.getAttribute('data-b');
+      trail.classList.remove('hidden');
+      divider.classList.remove('hidden');
+      lead.classList.add('muted');
+    } else {
+      trail.classList.add('hidden');
+      divider.classList.add('hidden');
+      lead.classList.remove('muted');
+    }
+    box.setAttribute('data-revealed', revealed ? 'false' : 'true');
+  }
+
+  // ── Standard: Compact Row ─────────────────────────────────
+  function toggleCompactRow(el) {
+    var revealed = el.getAttribute('data-revealed') === 'true';
+    el.setAttribute('data-revealed', revealed ? 'false' : 'true');
+    el.querySelector('.answer-text').textContent = revealed
+      ? '••••••••••••••••••••••••••••'
+      : el.getAttribute('data-answer');
+    el.querySelector('.chevron').classList.toggle('rotated', !revealed);
+  }
+
+  // ── Cloze: Inline Blank (also reused by Highlighted-in-Passage) ──
+  function toggleBlank(el) {
+    var revealed = el.getAttribute('data-revealed') === 'true';
+    el.setAttribute('data-revealed', revealed ? 'false' : 'true');
+    el.textContent = revealed ? '••••••••••••' : el.getAttribute('data-word');
+    el.classList.toggle('revealed', !revealed);
+  }
+  function toggleHighlightPassage(stack) {
+    var blank = stack.querySelector('.blank-toggle');
+    toggleBlank(blank);
+  }
+
+  // ── Cloze: Word Bank ──────────────────────────────────────
+  function pickBank(btn) {
+    var root = btn.closest('.word-bank');
+    var answer = root.getAttribute('data-answer');
+    var blank = root.querySelector('.bank-blank');
+    blank.textContent = btn.textContent.trim();
+    root.querySelectorAll('.bank-btn').forEach(function (b) { b.classList.remove('correct', 'incorrect'); });
+    btn.classList.add(btn.textContent.trim() === answer ? 'correct' : 'incorrect');
+  }
+
+  // ── Cloze: Type-in Underline ──────────────────────────────
+  function checkTypeIn(btn) {
+    var root = btn.closest('.type-in');
+    var input = root.querySelector('input');
+    var result = root.querySelector('.result');
+    var correct = input.value.trim().toLowerCase() === root.getAttribute('data-answer');
+    result.classList.remove('hidden');
+    result.classList.toggle('correct', correct);
+    result.classList.toggle('incorrect', !correct);
+    result.innerHTML = correct
+      ? '<span class="icon-circle">✓</span> Correct'
+      : '<span class="icon-circle no">✕</span> Answer: ' + root.getAttribute('data-answer');
+  }
+
+  // ── Cloze: Progressive Multi-Blank ────────────────────────
+  function revealNextBlank(btn) {
+    var root = btn.closest('.progressive');
+    var blanks = root.querySelectorAll('.p-blank');
+    var count = parseInt(root.getAttribute('data-revealed'), 10);
+    if (count >= blanks.length) return;
+    blanks[count].textContent = blanks[count].getAttribute('data-word');
+    blanks[count].classList.add('revealed');
+    count += 1;
+    root.setAttribute('data-revealed', String(count));
+    root.querySelector('.progress-label').textContent = count + ' / ' + blanks.length + ' revealed';
+    if (count >= blanks.length) btn.disabled = true;
+  }
+
+  // ── Context: Context Strip ────────────────────────────────
+  function toggleContextStrip(box) {
+    var revealed = box.getAttribute('data-revealed') === 'true';
+    var explain = box.querySelector('.explain-text');
+    if (!revealed) {
+      explain.textContent = box.getAttribute('data-answer');
+      explain.classList.remove('hidden');
+    } else {
+      explain.classList.add('hidden');
+    }
+    box.setAttribute('data-revealed', revealed ? 'false' : 'true');
+  }
+
+  // ── Context: Expandable Footnote ──────────────────────────
+  function toggleFootnote(btn) {
+    var stack = btn.closest('.stack');
+    var body = stack.querySelector('.footnote-body');
+    var open = !body.classList.contains('hidden');
+    body.classList.toggle('hidden', open);
+    btn.textContent = open ? 'ⓘ Show source context' : 'Hide source context';
+  }
+
+  // ── Mnemonic: Reveal Button ───────────────────────────────
+  function revealMnemonic(btn) {
+    btn.classList.add('hidden');
+    var target = btn.parentElement.querySelector('.mnem-target');
+    target.classList.remove('hidden');
+  }
+
+  // ── Type-the-Answer (flip-centric) helpers ───────────────
+  function flipTypeA(btn) {
+    var stack = btn.closest('.flip-type-a');
+    var card = stack.querySelector('.flashcard3d');
+    var input = stack.querySelector('.recall-input');
+    stack.querySelector('.your-answer-text').textContent = input.value.trim() || '(left blank)';
+    card.classList.add('is-flipped');
+    btn.textContent = 'Flip back to front';
+    btn.setAttribute('onclick', 'card3DBack(this)');
+  }
+  function flipTypeB(btn) {
+    var stack = btn.closest('.flip-type-b');
+    var card = stack.querySelector('.flashcard3d');
+    var input = stack.querySelector('.recall-input');
+    stack.querySelector('.your-answer-text').textContent = input.value.trim() || '(left blank)';
+    card.classList.add('is-flipped');
+    stack.querySelector('.grade-target').classList.remove('hidden');
+    btn.classList.add('hidden');
+  }
+  function chooseGrade(btn) {
+    var row = btn.closest('.grade-row');
+    row.querySelectorAll('.grade-btn').forEach(function (b) { b.classList.remove('chosen'); });
+    btn.classList.add('chosen');
+  }
+  function revealHintLetter(btn) {
+    var word = btn.getAttribute('data-word');
+    var revealed = parseInt(btn.getAttribute('data-revealed'), 10) + 1;
+    btn.setAttribute('data-revealed', String(Math.min(revealed, word.length)));
+    var stack = btn.closest('.flip-type-c');
+    var hint = stack.querySelector('.hint');
+    hint.classList.remove('hidden');
+    hint.textContent = word.split('').map(function (ch, i) { return i < revealed ? ch : '_'; }).join(' ');
+    if (revealed >= word.length) btn.disabled = true;
+  }
+  function flipTypeC(btn) {
+    var stack = btn.closest('.flip-type-c');
+    var card = stack.querySelector('.flashcard3d');
+    card.classList.add('is-flipped');
+  }
+  function flipTypeD(btn) {
+    var stack = btn.closest('.flip-type-d');
+    var card = stack.querySelector('.flashcard3d');
+    var input = stack.querySelector('.recall-input');
+    stack.querySelector('.your-answer-text').textContent = input.value.trim() || '(left blank)';
+    card.classList.add('is-flipped');
+  }
+  function card3DBack(btn) {
+    var stack = btn.closest('.stack');
+    var card = stack.querySelector('.flashcard3d');
+    card.classList.remove('is-flipped');
+    btn.textContent = 'Flip to compare';
+    btn.setAttribute('onclick', 'flipTypeA(this)');
+  }
+</script>
+</body>
+</html>

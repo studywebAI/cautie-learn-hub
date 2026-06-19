@@ -21,6 +21,10 @@ const GenerateFlashcardsInputSchema = z.object({
   studyMode: z.string().optional().describe('Selected study mode in the UI.'),
   existingFlashcardIds: z.array(z.string()).optional().describe('An array of flashcard front texts that should not be regenerated.'),
   groundingInstruction: z.string().optional().describe('Mandatory grounding constraints for factual outputs.'),
+  explanationMode: z.enum(['literal', 'research']).optional().describe('"literal" = stick tightly to the wording and facts in the Source Text with minimal elaboration. "research" = you may connect ideas across the Source Text and must explain your reasoning via groundingNote.'),
+  includeCitations: z.boolean().optional().describe('If true, populate the optional "citation" field on each card with a short reference to where in the Source Text the info came from.'),
+  includeHints: z.boolean().optional().describe('If true, populate the optional "hint" field on each card with a brief memory aid / mnemonic.'),
+  isResearchMode: z.boolean().optional().describe('Internal derived flag — true when explanationMode is "research". Used for template branching only.'),
 });
 type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
 
@@ -74,12 +78,27 @@ Output style rules:
 - Adapt examples/terminology to region conventions when possible (e.g., grade naming and local curriculum wording).
 - If any profile value is missing, default to concise medium-level student language.
 
+{{#if isResearchMode}}
+Explanation mode: "research"
+- You may connect related ideas that appear across different parts of the Source Text, and for every card you MUST fill in "groundingNote" — a short 1-2 sentence note explaining *why* you wrote the card this way and *how* it relates to or derives from the Source Text. Be transparent about your reasoning so the learner can verify it.
+{{else}}
+{{#if explanationMode}}
+Explanation mode: "literal"
+- Stay tightly anchored to the exact wording and facts as they appear in the Source Text. Avoid elaboration, inference, or connecting separate passages. Only fill in "groundingNote" when it adds real clarity (otherwise omit it), and keep it to a single short sentence that simply points back to the source wording.
+{{/if}}
+{{/if}}
+
 For each flashcard, you must provide:
 1.  **id**: a unique, short, kebab-case string based on the front of the card.
 2.  **front**: A key term or a question.
 3.  **back**: The corresponding definition or answer.
 4.  **cloze**: A "fill-in-the-blank" sentence where the "back" of the card is the missing word. The blank should be represented by "____".
-5.  **source_info**: (Optional) Source reference that points only to the provided Source Text.
+{{#if includeCitations}}
+5.  **citation**: A short, literal reference to where in the Source Text this card's info came from (e.g. a short quoted fragment or a brief description of the section it came from). Omit this field for a card if you cannot point to a specific passage — never invent one.
+{{/if}}
+{{#if includeHints}}
+6.  **hint**: A short memory aid or mnemonic (a brief association, image cue, rhyme, or "ezelsbruggetje") that helps recall the back of the card — a few words, not a full sentence or explanation.
+{{/if}}
 
 {{#if existingFlashcardIds}}
 Do not generate flashcards with front text that is identical or very similar to the text from this list: {{{existingFlashcardIds}}}.
@@ -90,6 +109,8 @@ Example:
 - front: "Mitochondria"
 - back: "powerhouse of the cell"
 - cloze: "The mitochondria is often called the ____."
+- citation: "From the paragraph introducing cell organelles"
+- hint: "Power + house = energy factory"
 
 Source Text:
 {{{sourceText}}}
@@ -100,7 +121,10 @@ Image Context:
 {{/if}}
 `,
     });
-    const { output } = await prompt(input);
+    const { output } = await prompt({
+      ...input,
+      isResearchMode: input.explanationMode === 'research',
+    });
     return output!;
   }
 );

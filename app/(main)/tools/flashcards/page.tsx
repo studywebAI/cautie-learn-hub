@@ -22,6 +22,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
@@ -37,7 +38,7 @@ type Phase = 'input' | 'options' | 'study';
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
   if (value === 'write' || value === 'type') return 'multiple-choice';
-  if (value === 'flip' || value === 'multiple-choice') return value;
+  if (value === 'flip' || value === 'multiple-choice' || value === 'fill-blank') return value;
   return 'flip';
 };
 
@@ -81,6 +82,9 @@ function FlashcardsPageContent() {
   const [memoryStrengthMeter, setMemoryStrengthMeter] = useState(true);
   const [timePerCardSeconds, setTimePerCardSeconds] = useState(0);
   const [autoFlipDelayMs, setAutoFlipDelayMs] = useState(0);
+  const [showCitations, setShowCitations] = useState(true);
+  const [mnemonicHints, setMnemonicHints] = useState(true);
+  const [explanationMode, setExplanationMode] = useState<'literal' | 'research'>('literal');
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
@@ -115,16 +119,22 @@ function FlashcardsPageContent() {
 
 
   const modeOptions = React.useMemo(
-    () =>
-      t.flashcards.studyModeOptions
+    () => [
+      ...t.flashcards.studyModeOptions
         .filter((option) => option.value === 'flip' || option.value === 'multiple-choice')
         .map((option) =>
           option.value === 'flip'
-            ? { ...option, label: 'Standard' }
+            ? { ...option, label: 'Standard', description: 'Classic flip card — see one side, flip to reveal the other' }
             : option.value === 'multiple-choice'
               ? { ...option, label: 'Multiple choice' }
               : option
         ),
+      {
+        value: 'fill-blank',
+        label: 'Fill in the blank',
+        description: 'See one side of a pair (e.g. a year), flip, then write down the matching answer (e.g. the event) yourself before checking',
+      },
+    ],
     [t.flashcards.studyModeOptions]
   );
 
@@ -196,6 +206,9 @@ function FlashcardsPageContent() {
             educationLevel: schoolingLevel,
             regionCode: String(region || 'global').toUpperCase(),
             studyMode: requestedMode,
+            explanationMode,
+            includeCitations: showCitations,
+            includeHints: mnemonicHints,
             flashcardsOptions: {
               activeRecallOnly,
               interleavingMode,
@@ -204,6 +217,9 @@ function FlashcardsPageContent() {
               memoryStrengthMeter,
               timePerCardSeconds,
               autoFlipDelayMs,
+              showCitations,
+              mnemonicHints,
+              explanationMode,
             },
             sourcePolicy: {
               wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
@@ -242,7 +258,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, errorTagging, flashcardCount, imageDataUri, interleavingMode, language, memoryStrengthMeter, region, saveToRecents, schoolingLevel, semanticLinking, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
+  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, errorTagging, explanationMode, flashcardCount, imageDataUri, interleavingMode, language, memoryStrengthMeter, mnemonicHints, region, saveToRecents, schoolingLevel, semanticLinking, showCitations, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -329,6 +345,9 @@ function FlashcardsPageContent() {
     if (s('memoryStrengthMeter') === 'false') setMemoryStrengthMeter(false);
     if (s('timePerCardSeconds') && !Number.isNaN(Number(s('timePerCardSeconds')))) setTimePerCardSeconds(Number(s('timePerCardSeconds')));
     if (s('autoFlipDelayMs') && !Number.isNaN(Number(s('autoFlipDelayMs')))) setAutoFlipDelayMs(Number(s('autoFlipDelayMs')));
+    if (s('showCitations') === 'false') setShowCitations(false);
+    if (s('mnemonicHints') === 'false') setMnemonicHints(false);
+    if (s('explanationMode') === 'research') setExplanationMode('research');
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
@@ -342,6 +361,9 @@ function FlashcardsPageContent() {
   useEffect(() => { localStorage.setItem('tools.flashcards.memoryStrengthMeter', String(memoryStrengthMeter)); }, [memoryStrengthMeter]);
   useEffect(() => { localStorage.setItem('tools.flashcards.timePerCardSeconds', String(timePerCardSeconds)); }, [timePerCardSeconds]);
   useEffect(() => { localStorage.setItem('tools.flashcards.autoFlipDelayMs', String(autoFlipDelayMs)); }, [autoFlipDelayMs]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.showCitations', String(showCitations)); }, [showCitations]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.mnemonicHints', String(mnemonicHints)); }, [mnemonicHints]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.explanationMode', explanationMode); }, [explanationMode]);
 
   useEffect(() => {
     if (!advancedSettings || advancedHydratedRef.current) return;
@@ -353,6 +375,9 @@ function FlashcardsPageContent() {
     setMemoryStrengthMeter(Boolean(advancedSettings.flashcards.memory_strength_meter));
     setTimePerCardSeconds(Number(advancedSettings.flashcards.time_per_card_seconds || 0));
     setAutoFlipDelayMs(Number(advancedSettings.flashcards.auto_flip_delay_ms || 0));
+    setShowCitations(Boolean(advancedSettings.flashcards.show_citations));
+    setMnemonicHints(Boolean(advancedSettings.flashcards.mnemonic_hints));
+    setExplanationMode(advancedSettings.flashcards.explanation_mode === 'research' ? 'research' : 'literal');
   }, [advancedSettings]);
 
   const handleRestart = () => {
@@ -410,6 +435,43 @@ function FlashcardsPageContent() {
 
   // INPUT PHASE - just textbox, no sidebar
   if (phase === 'input') {
+    const modeToggle = (
+      <div className="flex items-center gap-1">
+        {(['literal', 'research'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => {
+              setExplanationMode(m);
+              void saveAdvancedSettingsPatch({ flashcards: { explanation_mode: m } as any }, { tool: 'flashcards' });
+            }}
+            className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+              explanationMode === m
+                ? 'bg-[var(--accent-brand)] text-white shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {m === 'literal' ? 'Literal' : 'Research'}
+          </button>
+        ))}
+        {/* Info tooltip */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
+            >
+              i
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[240px] space-y-1.5 text-[11px]">
+            <p><span className="font-medium text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
+            <p><span className="font-medium text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+
     return (
       <WorkbenchShell
         title={isAssignmentContext ? t.flashcards.createFlashcards : 'Flashcards'}
@@ -438,6 +500,7 @@ function FlashcardsPageContent() {
               submitLabel="Next"
               speechLanguage={language}
               hideToolSwitcher
+              bottomSlot={modeToggle}
             />
           </div>
         </div>
@@ -491,6 +554,9 @@ function FlashcardsPageContent() {
                 memoryStrengthMeter,
                 timePerCardSeconds,
                 autoFlipDelayMs,
+                showCitations,
+                mnemonicHints,
+                explanationMode,
               }}
             />
           </div>
@@ -560,6 +626,39 @@ function FlashcardsPageContent() {
                     {option.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Card extras: citations, hints */}
+            <div className="space-y-3 border-t border-border pt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Extras</p>
+
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-foreground">Source citations</p>
+                  <p className="text-[11px] text-muted-foreground">Show a small "i" on each card that reveals where its info came from</p>
+                </div>
+                <Switch
+                  checked={showCitations}
+                  onCheckedChange={(checked) => {
+                    setShowCitations(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { show_citations: checked } as any }, { tool: 'flashcards' });
+                  }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-foreground">Mnemonic hints</p>
+                  <p className="text-[11px] text-muted-foreground">Add a "Reveal hint" button with a simple memory aid (ezelsbruggetje) per card</p>
+                </div>
+                <Switch
+                  checked={mnemonicHints}
+                  onCheckedChange={(checked) => {
+                    setMnemonicHints(checked);
+                    void saveAdvancedSettingsPatch({ flashcards: { mnemonic_hints: checked } as any }, { tool: 'flashcards' });
+                  }}
+                />
               </div>
             </div>
 

@@ -14,6 +14,7 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
+import { CalendarSubscribePanel } from '@/components/agenda/calendar-subscribe-panel';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageSection } from '@/components/layout/page-section';
 import { PlusCircle, SlidersHorizontal, Calendar } from 'lucide-react';
@@ -679,6 +680,10 @@ function AgendaPageContent() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
+              <CalendarSubscribePanel
+                role={role || ''}
+                classes={(classes || []).filter((c) => c.status !== 'archived').map((c) => ({ id: c.id, name: c.name }))}
+              />
               <Button
                 variant="outline"
                 size="sm"

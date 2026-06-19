@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 
     const { data: studysets, error: studysetsError } = await (supabase as any)
       .from('studysets')
-      .select('id, name, status, updated_at')
+      .select('id, name, status, exam_date, subject, updated_at')
       .eq('user_id', user.id)
       .neq('status', 'archived')
       .order('updated_at', { ascending: false })
@@ -175,9 +175,37 @@ export async function GET(req: NextRequest) {
       const percent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100)
       const sortScore = Number(interventions.length > 0) * 1000 + dueTodayTasks * 10 + Math.max(0, 100 - percent)
 
+      // Streak: count consecutive days with completed=true going backwards from today
+      const completedDates = new Set(
+        days
+          .filter((d: any) => d?.completed === true && d?.plan_date)
+          .map((d: any) => String(d.plan_date).slice(0, 10))
+      )
+      let streak = 0
+      const msPerDay = 24 * 60 * 60 * 1000
+      const todayMs = new Date(todayIso).getTime()
+      for (let i = 0; i < 365; i++) {
+        const checkDate = new Date(todayMs - i * msPerDay).toISOString().slice(0, 10)
+        if (completedDates.has(checkDate)) {
+          streak += 1
+        } else if (i > 0) {
+          break
+        }
+      }
+
+      // Exam countdown
+      const examDate = studyset.exam_date ? String(studyset.exam_date).slice(0, 10) : null
+      const examDaysLeft = examDate
+        ? Math.round((new Date(examDate).getTime() - todayMs) / msPerDay)
+        : null
+
       return {
         id: studysetId,
         title: String(studyset.name || 'Studyset'),
+        subject: studyset.subject ? String(studyset.subject) : null,
+        exam_date: examDate,
+        exam_days_left: examDaysLeft,
+        streak,
         updated_at: String(studyset.updated_at || new Date().toISOString()),
         status: String(studyset.status || 'draft'),
         progress: {

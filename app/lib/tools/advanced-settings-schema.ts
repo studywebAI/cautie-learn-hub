@@ -114,6 +114,9 @@ const FlashcardsSchema = z.object({
   semantic_linking: z.boolean().default(true),
   error_tagging: z.boolean().default(true),
   memory_strength_meter: z.boolean().default(true),
+  show_citations: z.boolean().default(true),
+  mnemonic_hints: z.boolean().default(true),
+  explanation_mode: z.enum(["literal", "research"]).default("literal"),
 });
 
 const NotesSchema = z.object({
@@ -123,6 +126,7 @@ const NotesSchema = z.object({
   argument_map_mode: z.boolean().default(false),
   redundancy_cleanup: z.boolean().default(true),
   exam_prediction: z.boolean().default(false),
+  explanation_mode: z.enum(["literal", "research"]).default("literal"),
 });
 
 const SafetySchema = z.object({
