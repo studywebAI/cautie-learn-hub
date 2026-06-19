@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lightbulb, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
+import { AppContext } from '@/contexts/app-context';
 
 // ─── Variant selection ────────────────────────────────────────────────────────
 // Deterministic: same question always gets same variant (seeded from question ID).
@@ -408,6 +409,20 @@ function MatchingClickPairs({ question, answer, disabled, onChange }: {
     </div>
   );
 }
+
+// ─── Localized quiz nav button labels ─────────────────────────────────────────
+const QUIZ_NAV_LABELS: Record<string, { check: string; next: string; finish: string; hint: string; previous: string; stop: string }> = {
+  en: { check: 'Check answer', next: 'Next', finish: 'Finish', hint: 'Hint', previous: 'Previous', stop: 'Stop' },
+  nl: { check: 'Nakijken', next: 'Volgende', finish: 'Afronden', hint: 'Hint', previous: 'Vorige', stop: 'Stoppen' },
+  es: { check: 'Comprobar', next: 'Siguiente', finish: 'Finalizar', hint: 'Pista', previous: 'Anterior', stop: 'Detener' },
+  de: { check: 'Überprüfen', next: 'Weiter', finish: 'Beenden', hint: 'Tipp', previous: 'Zurück', stop: 'Stoppen' },
+  fr: { check: 'Vérifier', next: 'Suivant', finish: 'Terminer', hint: 'Indice', previous: 'Précédent', stop: 'Arrêter' },
+  pl: { check: 'Sprawdź', next: 'Dalej', finish: 'Zakończ', hint: 'Podpowiedź', previous: 'Wstecz', stop: 'Zatrzymaj' },
+  ru: { check: 'Проверить', next: 'Далее', finish: 'Завершить', hint: 'Подсказка', previous: 'Назад', stop: 'Стоп' },
+  zh: { check: '检查答案', next: '下一个', finish: '完成', hint: '提示', previous: '上一个', stop: '停止' },
+  ar: { check: 'تحقق', next: 'التالي', finish: 'إنهاء', hint: 'تلميح', previous: 'السابق', stop: 'إيقاف' },
+  hi: { check: 'जांचें', next: 'आगे', finish: 'समाप्त करें', hint: 'संकेत', previous: 'पिछला', stop: 'रोकें' },
+};
 
 export type QuizMode = 'classic' | 'assisted' | 'adaptive' | 'practice';
 type QuizRuntimeSettings = {
@@ -2472,6 +2487,8 @@ function getTypePrompt(type: string): string {
 
 export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, quizTitle, inputMode, studysetId, taskId }: { quiz: Quiz; mode: QuizMode; sourceText: string; onRestart: () => void; runtimeSettings?: QuizRuntimeSettings; quizTitle?: string; inputMode?: 'literal' | 'research'; studysetId?: string; taskId?: string }) {
   const { toast } = useToast();
+  const appContext = useContext(AppContext);
+  const labels = QUIZ_NAV_LABELS[appContext?.language || 'en'] || QUIZ_NAV_LABELS.en;
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz.questions || []);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
@@ -2489,6 +2506,8 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
   const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
+  const [hintText, setHintText] = useState('');
+  const [hintLoading, setHintLoading] = useState(false);
   const pendingAdvance = useRef(false);
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
@@ -2496,7 +2515,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const selectedTypes = runtimeSettings?.questionTypes?.length ? runtimeSettings.questionTypes : ['multiple-choice'];
   const adaptiveStorageKey = getAdaptiveStorageKey(sourceText, selectedTypes);
   const sessionStorageKey = getSessionStorageKey(sourceText, effectiveMode);
-  const shouldHideCorrectnessUntilEnd = runtimeSettings?.answerFeedback === 'end';
+  // Feedback timing is independent of mode: 'immediate' locks the question and reveals
+  // correctness right after checking; 'end' only reveals results on the summary screen.
+  const feedbackImmediate = runtimeSettings?.answerFeedback === 'immediate';
 
   const currentQuestion = questions[currentIndex];
   const currentAnswer = currentQuestion ? answers[currentQuestion.id] : undefined;
@@ -2506,6 +2527,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     setQuestionStartedAt(Date.now());
     setShowWhy(false);
     setWhyIncorrect('');
+    setHintText('');
   }, [currentIndex, currentQuestion?.id]);
 
   useEffect(() => {
@@ -2660,6 +2682,36 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     }
   };
 
+  const loadHint = async () => {
+    if (!currentQuestion || hintLoading || hintText) return;
+    setHintLoading(true);
+    try {
+      const response = await fetch('/api/ai/handle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flowName: 'explainAnswer',
+          model: 'gpt-5.4-mini',
+          input: {
+            question: currentQuestion.question,
+            selectedAnswer: '',
+            correctAnswer: getCorrectAnswerText(currentQuestion),
+            isHint: true,
+            sourceText,
+          },
+        }),
+      });
+      if (!response.ok) throw new Error('Could not generate hint');
+      const payload = await response.json();
+      setHintText(String(payload?.explanation || payload?.output?.explanation || '').trim() || 'No hint available for this question.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not generate hint now.';
+      setHintText(message);
+    } finally {
+      setHintLoading(false);
+    }
+  };
+
   const advanceQuestion = () => {
     if (!currentQuestion) return;
     if (effectiveMode === 'adaptive') {
@@ -2693,15 +2745,15 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   if (isFinished) return <QuizResults quiz={{ ...quiz, questions }} answers={answers} signals={adaptiveSignals} runtimeSettings={runtimeSettings} sourceText={sourceText} notRelevantIds={notRelevantIds} onRestart={onRestart} studysetId={studysetId} taskId={taskId} />;
   if (!currentQuestion) return <div className="flex h-full items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
-  const revealCurrent = !shouldHideCorrectnessUntilEnd && finalizedMap[currentQuestion.id] === true;
+  const revealCurrent = feedbackImmediate && finalizedMap[currentQuestion.id] === true;
   const progressPct = Math.round(((currentIndex + 1) / Math.max(1, questions.length)) * 100);
   const isLastQuestion = effectiveMode !== 'adaptive' && currentIndex >= questions.length - 1;
 
   const handleNext = () => {
-    if (effectiveMode === 'assisted' && !isAnswered) {
+    if (feedbackImmediate && !isAnswered) {
       if (canAdvance) {
         handleAnswerPress();
-        // Don't advance yet — let user see feedback, they'll click Next again
+        // Don't advance yet — let user see feedback, they'll click Next/Check again
         return;
       }
       advanceQuestion();
@@ -2710,6 +2762,9 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
     if (!isAnswered && canAdvance) handleAnswerPress();
     advanceQuestion();
   };
+
+  const showCheckLabel = feedbackImmediate && !isAnswered && canAdvance;
+  const nextButtonLabel = showCheckLabel ? labels.check : isLastQuestion ? labels.finish : labels.next;
 
   const handlePrevious = () => {
     if (currentIndex <= 0) return;
@@ -2831,13 +2886,13 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
 
       {/* Scrollable question area */}
       <div className="flex-1 overflow-auto bg-muted/30">
-        <div className="mx-auto max-w-[700px] px-5 pt-6 pb-24">
+        <div className="mx-auto max-w-[920px] px-5 sm:px-8 pt-8 sm:pt-10 pb-24">
 
           {/* Question card */}
           <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
 
             {/* Card header: number badge + type badge */}
-            <div className="flex items-center gap-2 border-b border-border/60 bg-muted/20 px-5 py-3">
+            <div className="flex items-center gap-2 border-b border-border/60 bg-muted/20 px-6 sm:px-8 py-3.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] font-bold text-white">
                 {currentIndex + 1}
               </span>
@@ -2846,21 +2901,49 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               </span>
             </div>
 
-            <div className="px-5 pt-5 pb-5">
+            <div className="px-6 sm:px-8 pt-7 pb-7">
               {/* Question text — skip for fill-blank/cloze with blanks to avoid duplicate */}
               {!(
                 (currentQuestion.type === 'fill-blank' || currentQuestion.type === 'cloze') &&
                 /_{3,}/.test(currentQuestion.question)
               ) && (
-                <p className="mb-3 text-[15.5px] font-semibold leading-[1.7] text-foreground">
+                <p className="mb-4 text-[18px] sm:text-[20px] font-semibold leading-[1.6] text-foreground">
                   {currentQuestion.question.replace(/_{3,}/g, '____')}
                 </p>
               )}
 
               {/* Sub-prompt */}
-              <p className="mb-5 text-[12px] text-muted-foreground">
+              <p className="mb-5 text-[13px] text-muted-foreground">
                 {getTypePrompt(currentQuestion.type ?? 'multiple-choice')}
               </p>
+
+              {/* Hint (assisted mode only, before answering) */}
+              {effectiveMode === 'assisted' && !isAnswered && (
+                <div className="mb-5">
+                  {!hintText ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 px-3 text-[12px]"
+                      onClick={loadHint}
+                      disabled={hintLoading}
+                    >
+                      {hintLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Lightbulb className="h-3.5 w-3.5" />
+                      )}
+                      {labels.hint}
+                    </Button>
+                  ) : (
+                    <div className="flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/15 px-3.5 py-2.5">
+                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <p className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-200">{hintText}</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Media */}
               <MediaPrompt question={currentQuestion} />
@@ -2870,7 +2953,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 <QuestionView
                   question={currentQuestion}
                   answer={currentAnswer}
-                  disabled={effectiveMode !== 'classic' && isAnswered}
+                  disabled={feedbackImmediate && isAnswered}
                   onChange={handleSetAnswer}
                   reveal={revealCurrent}
                   knowledgeScore={runtimeSettings?.knowledgeScore ?? 50}
@@ -2880,7 +2963,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           </div>
 
           {/* ── Feedback overlay (cleaner, inside card bottom) ── */}
-          {effectiveMode !== 'classic' && isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
+          {isAnswered && revealCurrent && lastAnsweredQuestionId === currentQuestion.id ? (
             <div className={`mt-3 rounded-2xl overflow-hidden shadow-sm border ${isCurrentCorrect ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800'}`}>
               {/* Result bar */}
               <div className={`flex items-center gap-2.5 px-5 py-3 ${isCurrentCorrect ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
@@ -2954,7 +3037,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
-            <span className="hidden sm:inline">Previous</span>
+            <span className="hidden sm:inline">{labels.previous}</span>
             <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
               <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
             </span>
@@ -2966,11 +3049,11 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 px-3 text-[12px] text-muted-foreground hover:text-foreground border-border"
+                className="h-10 px-4 sm:px-5 text-[13px] text-muted-foreground hover:text-foreground border-border"
                 onClick={() => setIsFinished(true)}
                 title="Stop and see results"
               >
-                Stop
+                {labels.stop}
               </Button>
             )}
             {inputMode === 'research' && !notRelevantIds.has(currentQuestion.id) && (
@@ -2993,7 +3076,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             onClick={handleNext}
             className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
           >
-            {isLastQuestion ? 'Finish' : 'Next'}
+            {nextButtonLabel}
             <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
               <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
             </span>

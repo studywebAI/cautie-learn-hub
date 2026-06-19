@@ -46,7 +46,11 @@ const explainAnswerFlow = ai.defineFlow(
       model,
       input: { schema: ExplainAnswerInputSchema },
       output: { schema: ExplainAnswerOutputSchema },
-      prompt: `You are an expert educational tutor. Provide accurate, factual information, and avoid making things up. {{#if isHint}}Provide a subtle hint to help the student think about the question without giving away the answer. The hint should be based on the question and source text.{{/if}}{{#if followUpQuestion}}The user has asked a follow-up question: "{{{followUpQuestion}}}". First, check if this question is related to the subject matter from the source text. If it is not related to schoolwork or the topic, politely refuse to answer and explain that you can only answer questions related to the subject. If it is related, answer it helpfully based on the source text and question context.{{/if}}{{#unless isHint}}{{#unless followUpQuestion}}{{#if isFlashcard}}You are explaining a flashcard to help the student understand the concept. Do NOT refer to "answers", "correct/incorrect", or quiz terminology. Simply explain the concept on this flashcard clearly and concisely.
+      prompt: `You are an expert educational tutor. Provide accurate, factual information, and avoid making things up. {{#if isHint}}Provide a short, subtle hint to help the student think about the question without giving away the answer. Do not state or imply the correct answer.
+
+Question: "{{{question}}}"
+
+Give one concise, helpful hint (1-2 sentences).{{/if}}{{#if followUpQuestion}}The user has asked a follow-up question: "{{{followUpQuestion}}}". First, check if this question is related to the subject matter from the source text. If it is not related to schoolwork or the topic, politely refuse to answer and explain that you can only answer questions related to the subject. If it is related, answer it helpfully based on the source text and question context.{{/if}}{{#unless isHint}}{{#unless followUpQuestion}}{{#if isFlashcard}}You are explaining a flashcard to help the student understand the concept. Do NOT refer to "answers", "correct/incorrect", or quiz terminology. Simply explain the concept on this flashcard clearly and concisely.
 
 Term: "{{{question}}}"
 Definition: "{{{correctAnswer}}}"
