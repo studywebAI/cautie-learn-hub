@@ -8,7 +8,7 @@ import {
   useAnimateIconContext,
   IconWrapper,
   type IconProps,
-} from '@/components/animate-ui/icons/icon';
+} from '@/components/animate-ui/icons/icon-base';
 
 type CloudUploadProps = IconProps<keyof typeof animations>;
 
