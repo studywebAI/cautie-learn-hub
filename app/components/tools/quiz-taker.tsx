@@ -2925,21 +2925,24 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 gap-1.5 px-3 text-[12px]"
+                      className="group h-8 gap-1.5 px-3 text-[12px]"
                       onClick={loadHint}
                       disabled={hintLoading}
                     >
                       {hintLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin opacity-70" />
                       ) : (
-                        <Lightbulb className="h-3.5 w-3.5" />
+                        <Lightbulb
+                          className="h-3.5 w-3.5 opacity-70 transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:rotate-[-8deg]"
+                          strokeWidth={2}
+                        />
                       )}
                       {labels.hint}
                     </Button>
                   ) : (
-                    <div className="flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/60 dark:bg-amber-900/15 px-3.5 py-2.5">
-                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-                      <p className="text-[12.5px] leading-relaxed text-amber-900 dark:text-amber-200">{hintText}</p>
+                    <div className="flex items-start gap-2 rounded-xl border border-border/60 bg-muted/30 px-3.5 py-2.5">
+                      <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={2} />
+                      <p className="text-[12.5px] leading-relaxed text-foreground/80">{hintText}</p>
                     </div>
                   )}
                 </div>
@@ -3033,13 +3036,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             variant="outline"
-            className="relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
+            className="group relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
             <span className="hidden sm:inline">{labels.previous}</span>
             <span className="pointer-events-none absolute inset-y-0 start-0 flex w-9 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
-              <ChevronLeft size={16} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+              <ChevronLeft
+                size={16}
+                strokeWidth={2}
+                className="opacity-50 transition-transform duration-200 ease-out group-hover:-translate-x-0.5 group-active:-translate-x-1"
+                aria-hidden="true"
+              />
             </span>
           </Button>
 
@@ -3074,11 +3082,16 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           <Button
             type="button"
             onClick={handleNext}
-            className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
+            className="group relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
           >
             {nextButtonLabel}
             <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
-              <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
+              <ChevronRight
+                size={16}
+                strokeWidth={2}
+                className="opacity-70 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-active:translate-x-1"
+                aria-hidden="true"
+              />
             </span>
           </Button>
 
