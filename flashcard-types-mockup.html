@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cautie — Flashcard Types &amp; Options Mockup</title>
+<style>
+  :root {
+    --accent: #7f8962;
+    --accent-10: rgba(127, 137, 98, 0.10);
+    --accent-15: rgba(127, 137, 98, 0.15);
+    --accent-30: rgba(127, 137, 98, 0.30);
+    --border: #e3e3e0;
+    --muted: #8a8a85;
+    --card: #ffffff;
+    --bg: #f4f4f2;
+    --fg: #1c1c1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    padding: 28px 24px 80px;
+  }
+  .intro {
+    max-width: 880px;
+    margin: 0 auto 36px;
+  }
+  .intro h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .intro p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 8px; }
+  .intro .tag {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+    text-transform: uppercase; color: var(--accent); background: var(--accent-10);
+    padding: 3px 8px; border-radius: 999px; margin-bottom: 10px;
+  }
+
+  h2.section-title {
+    max-width: 1180px; margin: 48px auto 14px; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg);
+    display: flex; align-items: center; gap: 8px;
+  }
+  h2.section-title .num {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: white;
+    font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: 700;
+  }
+  p.section-sub { max-width: 1180px; margin: 0 auto 18px; font-size: 12px; color: var(--muted); }
+
+  /* ───────── Section 1: Options panel layout (mirrors Quiz) ───────── */
+  .panel-frame {
+    max-width: 1180px; margin: 0 auto; background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .crumb {
+    background: #f7f7f5; padding: 0 16px; min-height: 44px; display: flex; align-items: center;
+    font-size: 12.5px; font-weight: 500; color: #555; gap: 6px; border-bottom: 1px solid var(--border);
+  }
+  .crumb .sep { color: #ccc; }
+  .crumb .cur { display: flex; align-items: center; gap: 6px; color: var(--fg); }
+
+  .panel-body { display: flex; min-height: 560px; }
+  .panel-left { flex: 1; padding: 16px; overflow: auto; }
+  .panel-left-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .panel-left-head p.label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); }
+  .panel-left-head span.count { font-size: 11px; color: var(--muted); }
+
+  .type-list { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .type-row {
+    display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-bottom: 1px solid #eee;
+    cursor: pointer; transition: background .15s;
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-row:hover { background: #fafafa; }
+  .type-row.selected { background: var(--accent-10); }
+  .radio {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d8d8d3; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .type-row.selected .radio { border-color: var(--accent); background: var(--accent); }
+  .radio .dot { width: 6px; height: 6px; border-radius: 50%; background: white; display: none; }
+  .type-row.selected .radio .dot { display: block; }
+  .type-row .icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+  .type-row .name { flex: 1; font-size: 13px; color: var(--fg); }
+  .type-row.selected .name { font-weight: 500; }
+  .type-row .badge {
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
+    background: #f0f0ec; color: var(--muted);
+  }
+  .type-row.selected .badge { background: var(--accent-15); color: var(--accent); }
+  .type-row .chev { color: #bbb; font-size: 11px; }
+
+  .panel-right {
+    width: 290px; flex-shrink: 0; border-left: 1px solid var(--border); background: #fbfbfa;
+    padding: 14px; display: flex; flex-direction: column; gap: 12px; overflow: auto;
+  }
+  .setting-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 13px;
+    display: flex; flex-direction: column; gap: 9px;
+  }
+  .setting-card .label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
+  .setting-card input[type=text] {
+    border: 1px solid #ddd; border-radius: 7px; padding: 7px 9px; font-size: 12.5px; font-family: inherit; outline: none;
+  }
+  .setting-card input[type=text]:focus { border-color: var(--accent); }
+  .slider-track { height: 5px; background: #e9e9e5; border-radius: 99px; position: relative; }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); border-radius: 99px; }
+  .slider-thumb { position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); border: 2px solid white; box-shadow: 0 0 0 1px var(--accent); transform: translate(-50%, -50%); }
+  .slider-minmax { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+
+  /* ── Field-pair swap control (the core new concept) ── */
+  .fieldpair-row { display: flex; align-items: center; gap: 6px; }
+  .fieldpair-pill {
+    flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px;
+    font-size: 12px; text-align: center; background: #fff; color: var(--fg); font-weight: 500;
+  }
+  .fieldpair-swap {
+    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--accent-30); background: var(--accent-10);
+    display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 13px; flex-shrink: 0;
+    cursor: pointer;
+  }
+  .fieldpair-presets { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+  .fieldpair-preset {
+    font-size: 10.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted);
+    background: #fff; cursor: pointer;
+  }
+  .fieldpair-preset.active { border-color: var(--accent); color: var(--accent); background: var(--accent-10); font-weight: 600; }
+
+  .mini-preview { display: flex; gap: 6px; }
+  .mini-card {
+    flex: 1; border: 1px solid var(--border); border-radius: 8px; background: #fff; padding: 8px 9px;
+    font-size: 10.5px; color: var(--muted); min-height: 46px; display: flex; flex-direction: column; gap: 3px;
+  }
+  .mini-card .side-label { font-size: 8.5px; font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: .4px; }
+  .mini-card .content { font-size: 11px; color: var(--fg); }
+
+  .footer-bar {
+    border-top: 1px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .btn {
+    font-size: 12.5px; font-weight: 500; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: #fff; color: var(--fg); cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* ───────── Section 2: type gallery ───────── */
+  .gallery {
+    max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 14px;
+  }
+  .type-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .type-card .head { display: flex; align-items: center; gap: 8px; }
+  .type-card .head .ic {
+    width: 28px; height: 28px; border-radius: 8px; background: var(--accent-10); color: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+  }
+  .type-card .head .name { font-size: 13px; font-weight: 600; }
+  .type-card .head .src {
+    margin-left: auto; font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted);
+    background: #f0f0ec; padding: 2px 6px; border-radius: 999px;
+  }
+  .type-card .desc { font-size: 11px; color: var(--muted); line-height: 1.5; min-height: 32px; }
+  .type-card .demo {
+    border: 1px dashed var(--border); border-radius: 8px; padding: 9px; background: #fafaf8;
+  }
+
+  /* per-type demo variants */
+  .demo-pair { display: flex; align-items: center; gap: 6px; }
+  .demo-pill { flex: 1; font-size: 11px; text-align: center; padding: 6px 4px; border-radius: 6px; background: #fff; border: 1px solid var(--border); color: var(--fg); }
+  .demo-pill.front { border-color: var(--accent-30); background: var(--accent-10); color: var(--accent); font-weight: 600; }
+  .demo-swap { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-10); color: var(--accent); display:flex; align-items:center; justify-content:center; font-size: 11px; flex-shrink: 0; }
+  .demo-example { margin-top: 7px; font-size: 10.5px; color: var(--muted); }
+  .demo-example b { color: var(--fg); font-weight: 500; }
+
+  .cloze-text { font-size: 11.5px; line-height: 1.6; color: var(--fg); }
+  .cloze-blank { display: inline-block; min-width: 46px; border-bottom: 2px solid var(--accent); color: var(--accent); font-weight: 600; text-align: center; }
+
+  .occ-img { position: relative; height: 70px; border-radius: 6px; background: linear-gradient(135deg,#e8e8e3,#d8d8d0); overflow: hidden; }
+  .occ-box { position: absolute; background: var(--accent); opacity: 0.85; border-radius: 3px; }
+  .occ-box span { color: white; font-size: 8px; font-weight: 700; position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; }
+
+  .mc-opts { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .mc-opt { font-size: 10.5px; padding: 4px 7px; border-radius: 5px; border: 1px solid var(--border); background: #fff; color: var(--fg); display: flex; align-items: center; gap: 6px; }
+  .mc-opt.correct { border-color: var(--accent); background: var(--accent-10); color: var(--accent); font-weight: 600; }
+  .mc-opt .dot { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--muted); flex-shrink: 0; }
+  .mc-opt.correct .dot { background: var(--accent); border-color: var(--accent); }
+
+  .tf-row { display: flex; gap: 6px; margin-top: 6px; }
+  .tf-btn { flex: 1; text-align: center; font-size: 11px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: #fff; color: var(--muted); }
+  .tf-btn.correct { border-color: var(--accent); background: var(--accent-10); color: var(--accent); font-weight: 600; }
+
+  .match-cols { display: flex; gap: 8px; margin-top: 4px; }
+  .match-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .match-chip { font-size: 10px; padding: 5px 7px; border-radius: 6px; border: 1px solid var(--border); background: #fff; text-align: center; }
+  .match-line { position: relative; }
+
+  .legend {
+    max-width: 1180px; margin: 28px auto 0; font-size: 11.5px; color: var(--muted); line-height: 1.6;
+    border-top: 1px solid var(--border); padding-top: 16px;
+  }
+  .legend b { color: var(--fg); }
+</style>
+</head>
+<body>
+
+  <div class="intro">
+    <span class="tag">Mockup — not implemented</span>
+    <h1>Flashcard types &amp; the new options panel</h1>
+    <p>Section 1 shows the proposed Flashcards options screen, rebuilt with the exact same layout language as the Quiz options screen (breadcrumb header, left type list, right settings rail). The new piece is the <b style="color:#1c1c1a">field-pair swap control</b> — two labels with a swap button between them, so the same "two-sided card" mechanic can represent Term↔Definition, Event↔Date, Question↔Answer, etc. Whatever pair you pick is just sent as two field labels in the AI generation request — the AI fills them in per card, no extra logic needed per type.</p>
+    <p>Section 2 is a gallery of every flashcard type I could find used in real tools (Anki, Quizlet, RemNote, Notion flashcards) plus the ones already proposed earlier in <code>TOOL_SETTINGS_MOCKUP.md</code>. Some are just label-pair presets (swap-style). Others — Cloze, Image Occlusion, Multiple Choice, True/False, Matching — need a genuinely different card shape, not just a label swap, so they're shown separately with their own little demo.</p>
+  </div>
+
+  <h2 class="section-title"><span class="num">1</span> Options panel layout — same shell as Quiz</h2>
+  <p class="section-sub">Left: pick which flashcard type(s) to generate. Right: title, the field-pair swap, count, etc. — identical card styling to the Quiz settings rail.</p>
+
+  <div class="panel-frame">
+    <div class="crumb">
+      Joper <span class="sep">/</span> <span class="cur">🗂 Flashcards</span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-left">
+        <div class="panel-left-head">
+          <p class="label">Flashcard Types</p>
+          <span class="count">1 selected</span>
+        </div>
+        <div class="type-list">
+          <div class="type-row selected">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">🔁</span>
+            <span class="name">Basic (term ↔ definition)</span>
+            <span class="badge">Default</span>
+            <span class="chev">⌄</span>
+          </div>
+          <div class="type-row">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">✂️</span>
+            <span class="name">Cloze deletion</span>
+            <span class="chev">⌄</span>
+          </div>
+          <div class="type-row">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">🖼️</span>
+            <span class="name">Image occlusion</span>
+            <span class="chev">⌄</span>
+          </div>
+          <div class="type-row">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">☑️</span>
+            <span class="name">Multiple choice</span>
+            <span class="chev">⌄</span>
+          </div>
+          <div class="type-row">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">⚖️</span>
+            <span class="name">True / False</span>
+            <span class="chev">⌄</span>
+          </div>
+          <div class="type-row">
+            <div class="radio"><span class="dot"></span></div>
+            <span class="icon">🔗</span>
+            <span class="name">Matching pairs</span>
+            <span class="chev">⌄</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-right">
+        <div class="setting-card">
+          <p class="label">Flashcard title (optional)</p>
+          <input type="text" placeholder="e.g. Chapter 4 — Photosynthesis" />
+        </div>
+
+        <div class="setting-card">
+          <p class="label">Card sides</p>
+          <div class="fieldpair-row">
+            <div class="fieldpair-pill">Event</div>
+            <div class="fieldpair-swap">⇄</div>
+            <div class="fieldpair-pill">Date</div>
+          </div>
+          <div class="fieldpair-presets">
+            <span class="fieldpair-preset">Term ↔ Definition</span>
+            <span class="fieldpair-preset active">Event ↔ Date</span>
+            <span class="fieldpair-preset">Question ↔ Answer</span>
+            <span class="fieldpair-preset">Word ↔ Translation</span>
+            <span class="fieldpair-preset">Cause ↔ Effect</span>
+            <span class="fieldpair-preset">Custom…</span>
+          </div>
+        </div>
+
+        <div class="setting-card">
+          <p class="label">How many cards?</p>
+          <div class="slider-track"><div class="slider-fill" style="width:44%"></div><div class="slider-thumb" style="left:44%"></div></div>
+          <div class="slider-minmax"><span>1</span><span style="color:var(--accent);font-weight:600">22</span><span>50</span></div>
+        </div>
+
+        <div class="setting-card">
+          <p class="label">Start side</p>
+          <div class="fieldpair-presets">
+            <span class="fieldpair-preset active">Event first</span>
+            <span class="fieldpair-preset">Date first</span>
+            <span class="fieldpair-preset">Shuffle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bar">
+      <button class="btn">← Back</button>
+      <button class="btn primary">Generate flashcards →</button>
+    </div>
+  </div>
+
+  <h2 class="section-title"><span class="num">2</span> Flashcard type gallery</h2>
+  <p class="section-sub">Researched from Anki note types, Quizlet study/test modes, RemNote, and the earlier <code>TOOL_SETTINGS_MOCKUP.md</code> proposal. Pick whichever ones should ship — they don't all need to launch at once.</p>
+
+  <div class="gallery">
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🔁</span><span class="name">Basic</span><span class="src">Anki · Quizlet</span></div>
+      <div class="desc">The default. Any two-field pair, swappable. Covers most use cases on its own.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Term</div><div class="demo-swap">⇄</div><div class="demo-pill">Definition</div></div>
+        <div class="demo-example"><b>Mitochondria</b> ↔ "the powerhouse of the cell"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">📅</span><span class="name">Event ↔ Date</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Same mechanic as Basic, just a history-flavoured label preset.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Event</div><div class="demo-swap">⇄</div><div class="demo-pill">Date</div></div>
+        <div class="demo-example"><b>Fall of the Berlin Wall</b> ↔ "9 November 1989"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">❓</span><span class="name">Question ↔ Answer</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Generic Q&amp;A framing instead of term/definition — reads more naturally for facts.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Question</div><div class="demo-swap">⇄</div><div class="demo-pill">Answer</div></div>
+        <div class="demo-example"><b>What organ pumps blood?</b> ↔ "The heart"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🌍</span><span class="name">Word ↔ Translation</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Language learning preset — can add an example sentence as a 3rd field.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Word</div><div class="demo-swap">⇄</div><div class="demo-pill">Translation</div></div>
+        <div class="demo-example"><b>maison</b> ↔ "house" — <i>"J'habite dans une maison."</i></div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🧮</span><span class="name">Formula ↔ Name</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Math/science preset — formula on one side, what it's for on the other.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Formula</div><div class="demo-swap">⇄</div><div class="demo-pill">Name / use</div></div>
+        <div class="demo-example"><b>E = mc²</b> ↔ "Mass–energy equivalence"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">⚡</span><span class="name">Cause ↔ Effect</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Good for history, biology, economics chains.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Cause</div><div class="demo-swap">⇄</div><div class="demo-pill">Effect</div></div>
+        <div class="demo-example"><b>Deforestation</b> ↔ "Soil erosion increases"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🔢</span><span class="name">Process step</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Ordered steps in a process — "step N" vs its description.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Step 3</div><div class="demo-swap">⇄</div><div class="demo-pill">Description</div></div>
+        <div class="demo-example"><b>Step 3</b> ↔ "Light reactions split water, releasing O₂"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">⚖️</span><span class="name">Compare / contrast</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Two related concepts, one differentiating fact per card.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Mitosis</div><div class="demo-swap">⇄</div><div class="demo-pill">Meiosis</div></div>
+        <div class="demo-example">"produces 2 identical cells" ↔ "produces 4 genetically varied cells"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">👤</span><span class="name">Person ↔ Fact</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Biography/history preset — person's name vs their key achievement.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Person</div><div class="demo-swap">⇄</div><div class="demo-pill">Known for</div></div>
+        <div class="demo-example"><b>Marie Curie</b> ↔ "Discovered radium and polonium"</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">⚛️</span><span class="name">Symbol ↔ Meaning</span><span class="src">Preset of Basic</span></div>
+      <div class="desc">Chemistry elements, math/physics symbols, units.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">Na</div><div class="demo-swap">⇄</div><div class="demo-pill">Sodium</div></div>
+        <div class="demo-example"><b>Na</b> ↔ "Sodium, atomic number 11"</div>
+      </div>
+    </div>
+
+    <!-- structural types below: not just a label swap -->
+
+    <div class="type-card">
+      <div class="head"><span class="ic">✂️</span><span class="name">Cloze deletion</span><span class="src">Anki staple</span></div>
+      <div class="desc">A sentence with a key word/phrase blanked out — recall in context instead of isolated terms.</div>
+      <div class="demo">
+        <div class="cloze-text">Humans first landed on the Moon in <span class="cloze-blank">[...]</span>, during the Apollo 11 mission.</div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🖼️</span><span class="name">Image occlusion</span><span class="src">Anki Image Occlusion</span></div>
+      <div class="desc">An image (diagram, map, anatomy) with regions hidden — reveal one at a time. Needs an image source, so only available when one's attached.</div>
+      <div class="demo">
+        <div class="occ-img">
+          <div class="occ-box" style="left:10px;top:10px;width:40px;height:18px;"><span>?</span></div>
+          <div class="occ-box" style="left:60px;top:38px;width:50px;height:16px;"><span>?</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">☑️</span><span class="name">Multiple choice</span><span class="src">Quizlet Test mode</span></div>
+      <div class="desc">Front shows the prompt + 4 options instead of a free-form back — useful right before a test.</div>
+      <div class="demo">
+        <div class="demo-example" style="margin-top:0">What is the powerhouse of the cell?</div>
+        <div class="mc-opts">
+          <div class="mc-opt"><span class="dot"></span>Nucleus</div>
+          <div class="mc-opt correct"><span class="dot"></span>Mitochondria</div>
+          <div class="mc-opt"><span class="dot"></span>Ribosome</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">⚖️</span><span class="name">True / False</span><span class="src">Quizlet</span></div>
+      <div class="desc">A statement card — fastest possible recall check, good for quick drilling.</div>
+      <div class="demo">
+        <div class="demo-example" style="margin-top:0">"Mitochondria produce ATP."</div>
+        <div class="tf-row"><div class="tf-btn correct">True</div><div class="tf-btn">False</div></div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🔗</span><span class="name">Matching pairs</span><span class="src">Quizlet Match mode</span></div>
+      <div class="desc">Whole-set type, not per-card — a shuffled board where you connect terms to definitions. Built from the same Basic cards, just a different study mode.</div>
+      <div class="demo">
+        <div class="match-cols">
+          <div class="match-col"><div class="match-chip">Mitochondria</div><div class="match-chip">Nucleus</div></div>
+          <div class="match-col"><div class="match-chip">Cell control center</div><div class="match-chip">Powerhouse of the cell</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="type-card">
+      <div class="head"><span class="ic">🎧</span><span class="name">Listening comprehension</span><span class="src">From TOOL_SETTINGS_MOCKUP.md</span></div>
+      <div class="desc">Audio clip (TTS of the term) on the front, transcription/meaning on the back — for language learning. Lower priority, needs TTS.</div>
+      <div class="demo">
+        <div class="demo-pair"><div class="demo-pill front">🔊 Audio</div><div class="demo-swap">⇄</div><div class="demo-pill">Transcript</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <p><b>What's already decided vs. what needs your pick:</b></p>
+    <p>• The right-rail <b>layout shell</b> (breadcrumb, card styling, slider style) is just copied 1:1 from Quiz — not really a decision point, more a "yes this is the direction" check.</p>
+    <p>• The <b>field-pair swap control</b> is the one genuinely new UI piece — confirm the interaction (pill · swap-button · pill, with presets underneath) feels right before I wire it up.</p>
+    <p>• Everything in the gallery is a <b>pick list</b> — tell me which types should actually ship (Basic + a couple of presets is enough for v1; the structural ones — Cloze / Image occlusion / Multiple choice / True-False / Matching — are each a separate chunk of generation + UI work, so flag which of those you actually want now vs. later).</p>
+  </div>
+
+</body>
+</html>

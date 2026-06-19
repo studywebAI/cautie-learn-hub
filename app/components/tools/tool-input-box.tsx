@@ -32,7 +32,19 @@ export type Attachment = {
   dataUri?: string;       // images & screenshots
   mimeType?: string;
   compiledText?: string;  // extracted text for files/urls
+  url?: string;           // raw source url — url attachments only
 };
+
+function formatUrlForDisplay(url: string): string {
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '');
+    const path = u.pathname === '/' ? '' : u.pathname;
+    return `${host}${path}`;
+  } catch {
+    return url;
+  }
+}
 
 type ToolInputBoxProps = {
   toolId: string;
@@ -153,8 +165,8 @@ function AttachmentCard({
     <div className={`relative flex-shrink-0 group w-[120px] h-[72px] rounded-lg border border-muted/40 p-2 flex flex-col justify-between overflow-hidden transition-colors ${
       attachment.kind === 'url' ? 'bg-muted/20' : 'bg-muted/10'
     }`}>
-      <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3 flex-1">
-        {attachment.kind === 'url' ? attachment.compiledText?.slice(0, 50) : (attachment.previewText || attachment.label)}
+      <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3 flex-1 break-all">
+        {attachment.kind === 'url' ? (attachment.url ? formatUrlForDisplay(attachment.url) : attachment.label) : (attachment.previewText || attachment.label)}
       </p>
       <div className="flex items-center gap-1 mt-1">
         {attachment.kind === 'file' && <FileText className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />}
@@ -538,6 +550,7 @@ export function ToolInputBox({
         kind: 'url',
         label: (() => { try { return new URL(url).hostname; } catch { return url; } })(),
         previewText: 'Importing…',
+        url,
       },
     ]);
     try {
