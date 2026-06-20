@@ -258,6 +258,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fan-btn.outline{border-color:#2a2a2a;background:transparent;color:#888}
 .fan-btn.brand{background:var(--brand);border-color:var(--brand);color:#fff}
 
+/* ─── NEW CONCEPT: WEAK-SPOT SOURCE HIGHLIGHT ─── */
+.src-card{border-radius:12px;border:1px solid var(--border);background:var(--surface2);padding:16px 18px;margin-bottom:14px}
+.src-card-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:10px}
+.src-text{font-size:13px;line-height:1.85;color:#999}
+.src-hl{padding:1px 3px;border-radius:4px;color:#ddd}
+.src-hl.weak{background:var(--red-bg);border-bottom:2px solid var(--red)}
+.src-hl.ok{background:var(--green-bg);border-bottom:2px solid var(--green)}
+.src-legend{display:flex;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.src-legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3)}
+.src-legend-dot{width:9px;height:9px;border-radius:2px}
+.src-legend-dot.weak{background:var(--red)}
+.src-legend-dot.ok{background:var(--green)}
+.retest-cta{display:flex;align-items:center;justify-content:space-between;border-radius:12px;border:1px solid var(--brand-border);background:var(--brand-bg);padding:14px 18px}
+.retest-cta-text{font-size:12px;color:#ccc;max-width:420px;line-height:1.55}
+.retest-cta-text b{color:var(--brand)}
+.retest-cta-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.retest-btn{padding:9px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--brand);background:var(--brand);color:#fff;white-space:nowrap}
+
+/* ─── NEW CONCEPT: ONE-CLICK CONTINUE ─── */
+.continue-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.continue-card{border-radius:12px;border:1px solid var(--border);background:var(--surface2);padding:16px;text-align:center;cursor:pointer;transition:all .15s}
+.continue-card:hover{border-color:var(--brand-border);background:rgba(127,137,98,.06)}
+.continue-icon{font-size:22px;margin-bottom:8px}
+.continue-title{font-size:13px;font-weight:600;color:#ddd;margin-bottom:4px}
+.continue-sub{font-size:10px;color:var(--text3);line-height:1.5}
+.continue-note{font-size:11px;color:var(--text3);text-align:center;margin-top:12px;line-height:1.6}
+.continue-note b{color:var(--brand)}
+.continue-spinner-card{border-radius:12px;border:1px solid var(--brand-border);background:var(--brand-bg);padding:16px;display:flex;align-items:center;gap:10px}
+.spinner-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── NEW CONCEPT: SELF-GRADE APPROVE/REJECT ─── */
+.sg-card{border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:14px}
+.sg-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.sg-row{padding:13px 14px;border-bottom:1px solid #161616;display:flex;align-items:flex-start;gap:12px}
+.sg-row:last-child{border-bottom:none}
+.sg-row-main{flex:1;min-width:0}
+.sg-q{font-size:12px;color:#bbb;line-height:1.5;margin-bottom:6px}
+.sg-answer{font-size:11px;color:#888;line-height:1.5;margin-bottom:8px;padding:8px 10px;border-radius:8px;background:var(--surface2);border-left:2px solid var(--border)}
+.sg-suggest{display:flex;align-items:center;gap:8px}
+.sg-suggest-label{font-size:10px;color:var(--text3)}
+.sg-suggest-pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid}
+.sg-suggest-pill.high{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.sg-suggest-pill.mid{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.sg-suggest-pill.low{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.sg-actions{display:flex;gap:6px;flex-shrink:0;margin-top:2px}
+.thumb-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text3);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.thumb-btn.approve.active{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.thumb-btn.reject.active{background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+.thumb-btn:hover{border-color:var(--brand-border)}
+
 </style>
 </head>
 <body>
@@ -278,6 +329,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <a class="nav-item" href="#comp-topics"><span class="nav-num">—</span> Topics Overview</a>
   <a class="nav-item" href="#comp-train"><span class="nav-num">—</span> Keep Training</a>
   <a class="nav-item" href="#comp-extra"><span class="nav-num">—</span> Extra Insights</a>
+  <div class="nav-section">New Concepts (2026-06-20)</div>
+  <a class="nav-item" href="#concept-highlight"><span class="nav-num">—</span> Weak-Spot Highlight + Retest</a>
+  <a class="nav-item" href="#concept-continue"><span class="nav-num">—</span> One-Click Continue</a>
+  <a class="nav-item" href="#concept-selfgrade"><span class="nav-num">—</span> Self-Grade Approve/Reject</a>
 </nav>
 
 <div class="main">
@@ -1036,6 +1091,149 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div class="stat-bar-item"><div class="sbi-label">Speed</div><div class="sbi-val">2.5s</div><div class="sbi-sub">avg</div></div>
           <div class="stat-bar-item"><div class="sbi-label">Completed</div><div class="sbi-val">100%</div><div class="sbi-sub">11 done</div></div>
           <div class="stat-bar-item" style="border-right:none"><div class="sbi-label">Retry</div><div class="sbi-val">Today</div><div class="sbi-sub">&lt;50% score</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- NEW CONCEPT — Weak-spot source highlight + retest          -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="concept-highlight">
+  <div class="section-badge">New Concept — 2026-06-20</div>
+  <div class="section-title">Weak-Spot Highlight + Retest</div>
+  <div class="section-desc">Shows the original source text with passages highlighted by outcome — red for passages tied to questions you got wrong, green for passages you nailed. Below it, one button regenerates a short retest using the full source as context but writes new questions specifically about the red passages. No settings screen.</div>
+  <div class="variants">
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">Source passage with outcome highlights</span><span class="vtag">Recommended</span></div>
+      <div class="vbody">
+        <div class="src-card">
+          <div class="src-card-label">Source passage</div>
+          <div class="src-text">
+            Switzerland is a landlocked country in Central Europe. It borders <span class="src-hl ok">Germany to the north, France to the west, and Italy to the south</span>. The largest lake entirely within Switzerland is <span class="src-hl weak">Lake Neuchâtel, though Lake Geneva is larger overall but shared with France</span>. According to the 2020 census, <span class="src-hl weak">roughly 25% of Swiss residents are foreign nationals</span>, one of the highest shares in Europe. Bern, the de facto capital, sits at the confluence of the Aare and several smaller rivers.
+          </div>
+          <div class="src-legend">
+            <div class="src-legend-item"><span class="src-legend-dot ok"></span> Answered correctly (2 passages)</div>
+            <div class="src-legend-item"><span class="src-legend-dot weak"></span> Answered wrong — will be retested (2 passages)</div>
+          </div>
+        </div>
+        <div class="retest-cta">
+          <div>
+            <div class="retest-cta-text">Retest <b>2 weak passages</b> — new questions, full source context, same difficulty.</div>
+            <div class="retest-cta-sub">Generates immediately. No settings shown.</div>
+          </div>
+          <button class="retest-btn">Retest weak spots</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- NEW CONCEPT — One-click continue, no settings               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="concept-continue">
+  <div class="section-badge">New Concept — 2026-06-20</div>
+  <div class="section-title">One-Click Continue (No Settings)</div>
+  <div class="section-desc">Today "Keep training" routes to the tool's settings page pre-filled with the source + focus instructions, requiring one more click to actually generate. This skips that: clicking a tile here generates immediately in the background and drops you straight into the result, biased toward your weak topics automatically.</div>
+  <div class="variants">
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">Idle state — 3 tiles</span></div>
+      <div class="vbody">
+        <div class="continue-row">
+          <div class="continue-card">
+            <div class="continue-icon">📝</div>
+            <div class="continue-title">Continue with Quiz</div>
+            <div class="continue-sub">8 new questions, focused on geography &amp; demography</div>
+          </div>
+          <div class="continue-card">
+            <div class="continue-icon">🗂️</div>
+            <div class="continue-title">Continue with Flashcards</div>
+            <div class="continue-sub">Cards built from your 2 weak topics</div>
+          </div>
+          <div class="continue-card">
+            <div class="continue-icon">📄</div>
+            <div class="continue-title">Continue with Notes</div>
+            <div class="continue-sub">Summary notes on what you missed</div>
+          </div>
+        </div>
+        <div class="continue-note">No setup screen — uses the same source text, automatically scoped to <b>geography</b> and <b>demography</b> (your 2 weakest topics this attempt).</div>
+      </div>
+    </div>
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">Generating state (clicked "Continue with Quiz")</span></div>
+      <div class="vbody">
+        <div class="continue-spinner-card">
+          <span class="spinner-dot"></span>
+          <span style="font-size:12px;color:#ccc">Building your next quiz from weak spots — opens automatically when ready…</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- NEW CONCEPT — Self-grade approve/reject                     -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section class="section" id="concept-selfgrade">
+  <div class="section-badge">New Concept — 2026-06-20</div>
+  <div class="section-title">Self-Grade Approve / Reject</div>
+  <div class="section-desc">For open-ended / short-answer questions graded subjectively by AI, show the AI's suggested correctness as a confidence pill next to your own answer. Tap ✓ or ✗ to confirm or override — overriding updates your score immediately. Ties into the deferred-grading plan (see docs/unapplied-future-things.md item 7): this is the human-in-the-loop check on the AI grader.</div>
+  <div class="variants">
+    <div class="variant wide">
+      <div class="vhead"><span class="vname">Mixed states — approved correct, overridden, pending</span><span class="vtag">Recommended</span></div>
+      <div class="vbody" style="padding:0">
+        <div class="sg-card" style="border:none;border-radius:0;margin:0">
+          <div class="sg-header">Open-answer review — confirm AI grading</div>
+          <div class="sg-row">
+            <div class="sg-row-main">
+              <div class="sg-q">Q6 — What geographical term was used by cartographer Ortelius in 1570?</div>
+              <div class="sg-answer">Your answer: "Theatre of the world, kind of an early atlas term"</div>
+              <div class="sg-suggest">
+                <span class="sg-suggest-label">AI suggests:</span>
+                <span class="sg-suggest-pill high">Correct — minor phrasing diff</span>
+              </div>
+            </div>
+            <div class="sg-actions">
+              <button class="thumb-btn approve active">✓</button>
+              <button class="thumb-btn reject">✗</button>
+            </div>
+          </div>
+          <div class="sg-row">
+            <div class="sg-row-main">
+              <div class="sg-q">Q9 — Explain why Switzerland remained neutral during both World Wars.</div>
+              <div class="sg-answer">Your answer: "Because they make good chocolate and didn't want trouble"</div>
+              <div class="sg-suggest">
+                <span class="sg-suggest-label">AI suggests:</span>
+                <span class="sg-suggest-pill low">Incorrect — surface-level, no real reasoning</span>
+              </div>
+            </div>
+            <div class="sg-actions">
+              <button class="thumb-btn approve">✓</button>
+              <button class="thumb-btn reject active">✗</button>
+            </div>
+          </div>
+          <div class="sg-row">
+            <div class="sg-row-main">
+              <div class="sg-q">Q14 — What percentage of Swiss residents are foreign nationals per the 2020 census?</div>
+              <div class="sg-answer">Your answer: "around 20-25%, I don't remember exactly"</div>
+              <div class="sg-suggest">
+                <span class="sg-suggest-label">AI suggests:</span>
+                <span class="sg-suggest-pill mid">Partially correct — close but not exact</span>
+              </div>
+            </div>
+            <div class="sg-actions">
+              <button class="thumb-btn approve">✓</button>
+              <button class="thumb-btn reject">✗</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
