@@ -16,72 +16,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .nav-item:hover{background:#1a1a1a;color:#ccc}
 .nav-item.active{background:rgba(127,137,98,.15);color:#7f8962}
 .nav-num{font-size:10px;color:#444;min-width:18px}
-.main{flex:1;padding:40px 48px;max-width:1100px}
+.main{flex:1;padding:40px 48px;max-width:1180px}
 .page-header{margin-bottom:56px}
 .page-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
-.page-header p{font-size:14px;color:#666;max-width:640px;line-height:1.6}
+.page-header p{font-size:14px;color:#666;max-width:680px;line-height:1.6}
 .section{margin-bottom:80px;scroll-margin-top:40px}
 .section-title{font-size:20px;font-weight:700;margin-bottom:6px}
 .section-badge{display:inline-block;font-size:11px;font-weight:600;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 10px;border-radius:4px;margin-bottom:10px}
-.section-desc{font-size:13px;color:#555;margin-bottom:28px;line-height:1.6}
-.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
-.variant{background:#141414;border:1px solid #1c1c1c;border-radius:14px;overflow:hidden}
-.vhead{padding:14px 18px 12px;border-bottom:1px solid #191919;display:flex;align-items:center;justify-content:space-between}
-.vname{font-size:12px;font-weight:600;color:#888}
-.vtag{font-size:10px;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px}
-.vbody{padding:22px 18px}
-.qlabel{font-size:10px;font-weight:600;color:#444;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+.section-desc{font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;max-width:760px}
+.hint-row{font-size:10.5px;color:#3e3e3e;margin-bottom:18px}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
 
-/* ─── CARD FACE ─── */
-.card-face{border:1px solid #1e1e1e;border-radius:14px;background:#161616;padding:34px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:170px;text-align:center}
-.cf-img{width:100%;max-height:120px;border-radius:10px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;color:#3a3a3a;font-size:11px;overflow:hidden}
-.cf-side-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#3e3e3e}
-.cf-front{font-size:18px;font-weight:500;color:#e5e5e5;line-height:1.35}
-.cf-back{font-size:15px;color:#bbb;line-height:1.4}
-.cf-flip-hint{font-size:10px;color:#3e3e3e;margin-top:2px}
+/* ─── FLIP CARD ─── */
+.fc-wrap{perspective:1200px}
+.fc-tag{font-size:10px;font-weight:600;color:#666;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.fc-tag span.t{color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px;font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+.flipcard{position:relative;width:100%;height:190px;cursor:pointer}
+.flipcard-inner{position:absolute;inset:0;transition:transform .45s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.flipcard.flipped .flipcard-inner{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;border-radius:14px;border:1px solid #1e1e1e;background:#161616;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center}
+.fc-face.back{transform:rotateY(180deg);background:#171c14;border-color:rgba(127,137,98,.35)}
+.fc-side-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#3e3e3e;position:absolute;top:12px;left:14px}
+.fc-front-text{font-size:16px;font-weight:500;color:#e5e5e5;line-height:1.35}
+.fc-back-text{font-size:14px;color:#cfe0c8;line-height:1.4}
+.fc-flip-hint{font-size:9px;color:#333;position:absolute;bottom:10px}
+.fc-img{width:90%;max-height:78px;border-radius:8px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;color:#3a3a3a;font-size:10px;overflow:hidden}
+.fc-chip{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid rgba(127,137,98,.3);color:#7f8962;background:rgba(127,137,98,.08)}
+.fc-mcq{display:flex;flex-direction:column;gap:5px;width:100%;margin-top:4px}
+.fc-mcq-opt{font-size:11px;padding:6px 10px;border-radius:7px;border:1px solid #232323;color:#aaa;background:#1a1a1a;text-align:left;display:flex;align-items:center;gap:6px}
+.fc-mcq-opt.cor{border-color:#4ade80;background:rgba(74,222,128,.08);color:#cdebcd}
+.fc-tf-row{display:flex;gap:10px;margin-top:4px}
+.fc-tf-btn{font-size:11px;font-weight:700;padding:6px 16px;border-radius:8px;border:1.5px solid}
+.fc-tf-true{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.06)}
+.fc-tf-false{color:#f87171;border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.06)}
+.fc-tf-correct{font-size:10px;color:#666;margin-top:2px}
 
-/* Bad example styling */
-.bad{position:relative}
-.bad::after{content:"✗ Not allowed";position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#f87171;background:rgba(248,113,113,.1);padding:2px 8px;border-radius:5px}
-.bad .card-face{border-color:rgba(248,113,113,.3)}
-.good::before{content:"✓ Correct";position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#4ade80;background:rgba(74,222,128,.1);padding:2px 8px;border-radius:5px}
-.good{position:relative}
-
-/* ─── ALT CHIPS ─── */
-.alt-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin-top:14px}
-.alt-tag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#444}
-.alt-chip{padding:4px 11px;border-radius:20px;font-size:11px;border:1px solid #262626;color:#777;cursor:pointer;transition:all .15s;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ─── ALT CHIPS (interactive demo) ─── */
+.alt-demo{border:1px solid #1c1c1c;border-radius:14px;background:#141414;padding:20px}
+.alt-card{border-radius:12px;background:#161616;border:1px solid #1e1e1e;padding:24px;text-align:center;margin-bottom:14px;font-size:17px;color:#e5e5e5}
+.alt-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:16px}
+.alt-tag-label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#444;align-self:center;margin-right:2px}
+.alt-chip{padding:4px 11px;border-radius:20px;font-size:11px;border:1px solid #262626;color:#777;cursor:pointer;transition:all .15s}
 .alt-chip:hover{border-color:#3a3a3a;color:#aaa}
 .alt-chip.sel{background:#7f8962;border-color:#7f8962;color:#fff}
 
-/* ─── MCQ ─── */
-.mcq-grid{display:grid;grid-template-columns:1fr;gap:8px;width:100%;margin-top:6px}
-.mc-opt{padding:11px 14px;background:#1a1a1a;border:1.5px solid #222;border-radius:9px;font-size:12px;color:#bbb;display:flex;align-items:center;gap:9px;transition:all .15s}
-.mc-opt:hover{border-color:#7f8962}
-.mc-opt.cor{border-color:#4ade80;background:rgba(74,222,128,.07);color:#cdebcd}
-.mc-letter{width:22px;height:22px;background:#252525;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#555;flex-shrink:0}
-.mc-opt.cor .mc-letter{background:#4ade80;color:#0d0d0d}
-
-/* ─── TYPE PICKER (mirrors quiz picker) ─── */
-.tpicker{border-radius:8px;border:1px solid rgba(255,255,255,.09);background:#141414;overflow:hidden}
-.tp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);transition:background .15s}
-.tp-row:last-child{border-bottom:none}
-.tp-row.sel{background:rgba(127,137,98,.1)}
-.tp-row:hover:not(.sel){background:rgba(255,255,255,.03)}
-.tp-circle{width:18px;height:18px;border-radius:50%;border:2px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.tp-row.sel .tp-circle{border-color:#7f8962;background:#7f8962}
-.tp-circle-dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:0}
-.tp-row.sel .tp-circle-dot{opacity:1}
-.tp-label{font-size:13px;color:#ddd;flex:1}
-.tp-info{width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.2);font-size:10px;font-weight:700;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tp-locked{opacity:.4}
-.tp-locked .tp-label{color:#777}
-.tp-tag{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 7px;border-radius:4px;flex-shrink:0}
-.tp-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:8px}
-.tp-helper{font-size:11px;color:#4a4a4a;margin-top:10px;line-height:1.6}
-
 /* Divider */
-.divider{border:none;border-top:1px solid #1a1a1a;margin:56px 0}
+.divider{border:none;border-top:1px solid #1a1a1a;margin:50px 0}
 </style>
 </head>
 <body>
@@ -95,12 +75,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <a class="nav-item active" href="#termdef"><span class="nav-num">01</span> Term &amp; Definition</a>
   <a class="nav-item" href="#mcq"><span class="nav-num">02</span> Multiple Choice</a>
   <a class="nav-item" href="#image"><span class="nav-num">03</span> Image Card</a>
-  <div class="nav-section">Phrasing Rule</div>
-  <a class="nav-item" href="#rule"><span class="nav-num">↗</span> Fragment vs Question</a>
-  <div class="nav-section">Alternates</div>
-  <a class="nav-item" href="#alts"><span class="nav-num">↗</span> Suggested Phrasings</a>
-  <div class="nav-section">Setup UI</div>
-  <a class="nav-item" href="#picker"><span class="nav-num">↗</span> Card Type Picker</a>
+  <a class="nav-item" href="#cloze"><span class="nav-num">04</span> Cloze / Fill Blank</a>
+  <a class="nav-item" href="#example"><span class="nav-num">05</span> Example Sentence</a>
+  <a class="nav-item" href="#tf"><span class="nav-num">06</span> True / False</a>
+  <a class="nav-item" href="#compare"><span class="nav-num">07</span> Compare Pair</a>
+  <a class="nav-item" href="#mnemonic"><span class="nav-num">08</span> Mnemonic / Hint</a>
+  <a class="nav-item" href="#formula"><span class="nav-num">09</span> Formula / Equation</a>
+  <a class="nav-item" href="#process"><span class="nav-num">10</span> Process Step</a>
+  <a class="nav-item" href="#timeline"><span class="nav-num">11</span> Date / Event</a>
+  <a class="nav-item" href="#reverse"><span class="nav-num">12</span> Reversed Direction</a>
+  <div class="nav-section" style="margin-top:20px">Interaction</div>
+  <a class="nav-item" href="#alts"><span class="nav-num">↗</span> Alternate Phrasings</a>
+  <a class="nav-item" href="#deck"><span class="nav-num">↗</span> Deck Grid View</a>
 </nav>
 
 <!-- MAIN -->
@@ -108,64 +94,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="page-header">
   <h2>Flashcard Type Mockups</h2>
-  <p>Card "types" pick the best-fitting format per card during generation. Front/back always read as short fragments — never as a quiz question — so flashcards stay distinct from the Quiz tool.</p>
+  <p>Every card below is a real flip card — click it to flip front/back. Each type shows 3 layout variants. Front/back are always short fragments, never phrased as a quiz question.</p>
 </div>
 
-<!-- ════════════════════════════════════════ -->
-<!-- RULE -->
-<!-- ════════════════════════════════════════ -->
-<section class="section" id="rule">
-  <div class="section-badge">Rule</div>
-  <div class="section-title">Fragment vs Question</div>
-  <div class="section-desc">Flashcard sides are never phrased as a question + answer pair — that would just be a quiz. Both sides read as matching fragments: a term/cue on one side, a description/fact on the other.</div>
-  <div class="variants">
-    <div class="variant bad">
-      <div class="vhead"><span class="vname">Wrong — Question Phrasing</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Front</div>
-          <div class="cf-front">What organ pumps blood?</div>
-        </div>
-      </div>
-    </div>
-    <div class="variant good">
-      <div class="vhead"><span class="vname">Correct — Fragment Phrasing</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Front</div>
-          <div class="cf-front">the organ that pumps blood</div>
-          <div class="cf-flip-hint">↻ tap to flip</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<hr class="divider">
-
-<!-- ════════════════════════════════════════ -->
-<!-- 01. TERM & DEFINITION -->
-<!-- ════════════════════════════════════════ -->
+<!-- 01 TERM & DEFINITION -->
 <section class="section" id="termdef">
   <div class="section-badge">01</div>
   <div class="section-title">Term &amp; Definition</div>
-  <div class="section-desc">The default card type. Front is a short cue/term fragment, back is the matching description fragment — no question marks, no "What/Which/Who" starters on either side.</div>
+  <div class="section-desc">The default type. A term/cue fragment on front, matching description fragment on back.</div>
+  <div class="hint-row">click any card to flip ↻</div>
   <div class="variants">
-    <div class="variant">
-      <div class="vhead"><span class="vname">Front</span><span class="vtag">term-definition</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Front</div>
-          <div class="cf-front">the organ that pumps blood</div>
-          <div class="cf-flip-hint">↻ tap to flip</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Plain<span class="t">term-definition</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">the organ that pumps blood</div><span class="fc-flip-hint">↻ tap to flip</span></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the heart</div></div>
         </div>
       </div>
     </div>
-    <div class="variant">
-      <div class="vhead"><span class="vname">Back</span><span class="vtag">term-definition</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Back</div>
-          <div class="cf-back">the heart</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">With hint chip<span class="t">term-definition</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">powerhouse of the cell</div><span class="fc-chip">💡 power + house</span></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the mitochondria</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">With citation footer<span class="t">term-definition</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">capital of France</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Paris</div><span class="fc-chip">📖 ¶2 — European capitals</span></div>
         </div>
       </div>
     </div>
@@ -173,25 +135,55 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </section>
 <hr class="divider">
 
-<!-- ════════════════════════════════════════ -->
-<!-- 02. MULTIPLE CHOICE -->
-<!-- ════════════════════════════════════════ -->
+<!-- 02 MULTIPLE CHOICE -->
 <section class="section" id="mcq">
   <div class="section-badge">02</div>
   <div class="section-title">Multiple Choice</div>
-  <div class="section-desc">Same fragment style as Term &amp; Definition, but the back is also expressed as 3 answer choices in <code>mcqOptions</code> — one matching "back" exactly, two same-domain distractors written by the AI specifically for this card (instead of generic siblings pulled from other cards in the deck).</div>
+  <div class="section-desc">Flip reveals the back as 3 answer choices — one correct, two same-domain distractors written by the AI for this specific card.</div>
+  <div class="hint-row">click any card to flip ↻</div>
   <div class="variants">
-    <div class="variant" style="grid-column:1/-1">
-      <div class="vhead"><span class="vname">Flipped — Choices Revealed</span><span class="vtag">multiple-choice</span></div>
-      <div class="vbody">
-        <div class="card-face" style="padding:24px 24px">
-          <div class="cf-side-label">Front</div>
-          <div class="cf-front" style="font-size:15px">the organ that pumps blood</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">the organ that pumps blood</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ the heart</div>
+              <div class="fc-mcq-opt">the liver</div>
+              <div class="fc-mcq-opt">the kidneys</div>
+            </div>
+          </div>
         </div>
-        <div class="mcq-grid">
-          <div class="mc-opt cor"><span class="mc-letter">✓</span>the heart</div>
-          <div class="mc-opt"><span class="mc-letter">·</span>the liver</div>
-          <div class="mc-opt"><span class="mc-letter">·</span>the kidneys</div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">History<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">year the Eighty Years' War began</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ 1568</div>
+              <div class="fc-mcq-opt">1648</div>
+              <div class="fc-mcq-opt">1492</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Vocab<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">ubiquitous</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ present everywhere</div>
+              <div class="fc-mcq-opt">rare and unusual</div>
+              <div class="fc-mcq-opt">loud and abrasive</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -199,31 +191,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </section>
 <hr class="divider">
 
-<!-- ════════════════════════════════════════ -->
-<!-- 03. IMAGE CARD -->
-<!-- ════════════════════════════════════════ -->
+<!-- 03 IMAGE CARD -->
 <section class="section" id="image">
   <div class="section-badge">03</div>
   <div class="section-title">Image Card</div>
-  <div class="section-desc">Only available in <strong style="color:#7f8962">Research mode</strong>. Front names a concrete, photographable subject; the AI looks up a real photo of it (no invented images) and shows it above the term. Back stays a short description fragment, same as Term &amp; Definition.</div>
-  <div class="cat-note" style="margin-bottom:14px"><span class="tp-tag">Research mode only</span></div>
+  <div class="section-desc">Research mode only. AI looks up a real photo of the named subject — front shows photo + term, back is a short description fragment.</div>
+  <div class="hint-row">click any card to flip ↻ · Research mode only</div>
   <div class="variants">
-    <div class="variant">
-      <div class="vhead"><span class="vname">Front — Photo + Term</span><span class="vtag">image-card</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-img">[ photo from image search ]</div>
-          <div class="cf-front" style="font-size:16px">mitochondria</div>
-          <div class="cf-flip-hint">↻ tap to flip</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">image-card</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-img">[ photo ]</div><div class="fc-front-text" style="font-size:14px">mitochondria</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the powerhouse of the cell, makes ATP</div></div>
         </div>
       </div>
     </div>
-    <div class="variant">
-      <div class="vhead"><span class="vname">Back — Description Fragment</span><span class="vtag">image-card</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Back</div>
-          <div class="cf-back">the powerhouse of the cell, makes ATP</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Geography<span class="t">image-card</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-img">[ photo ]</div><div class="fc-front-text" style="font-size:14px">the Eiffel Tower</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">iron lattice tower in Paris, built 1889</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Art history<span class="t">image-card</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-img">[ photo ]</div><div class="fc-front-text" style="font-size:14px">the Mona Lisa</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">portrait by Leonardo da Vinci, c. 1503</div></div>
         </div>
       </div>
     </div>
@@ -231,91 +229,413 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </section>
 <hr class="divider">
 
-<!-- ════════════════════════════════════════ -->
-<!-- ALTERNATES -->
-<!-- ════════════════════════════════════════ -->
+<!-- 04 CLOZE -->
+<section class="section" id="cloze">
+  <div class="section-badge">04</div>
+  <div class="section-title">Cloze / Fill in the Blank</div>
+  <div class="section-desc">Front shows a sentence with a blank, back shows the same sentence completed. Tests recall in context instead of isolated terms.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">cloze</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">The ____ is often called the powerhouse of the cell.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">The <u>mitochondria</u> is often called the powerhouse of the cell.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">History<span class="t">cloze</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">The Eighty Years' War began in ____.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">The Eighty Years' War began in <u>1568</u>.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Chemistry<span class="t">cloze</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Water has the chemical formula ____.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Water has the chemical formula <u>H₂O</u>.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 05 EXAMPLE SENTENCE -->
+<section class="section" id="example">
+  <div class="section-badge">05</div>
+  <div class="section-title">Example Sentence</div>
+  <div class="section-desc">For vocabulary / language learning. Front is the word/term, back is a natural example sentence using it — not a definition.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">English vocab<span class="t">example-sentence</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">meticulous</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">She kept meticulous notes on every experiment.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Spanish<span class="t">example-sentence</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">aunque</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Aunque llueve, vamos a salir.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Legal term<span class="t">example-sentence</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">negligence</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">The driver's negligence caused the accident.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 06 TRUE/FALSE -->
+<section class="section" id="tf">
+  <div class="section-badge">06</div>
+  <div class="section-title">True / False Statement</div>
+  <div class="section-desc">Front is a factual statement, flip reveals whether it's true or false plus a one-line correction if false.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">True example<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">The heart has four chambers.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-true">✓ True</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">False example<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">The Peace of Westphalia was signed in 1581.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-false">✗ False</span></div>
+            <div class="fc-tf-correct">Correct year: 1648</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Science<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">Mitochondria produce ATP for the cell.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-true">✓ True</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 07 COMPARE PAIR -->
+<section class="section" id="compare">
+  <div class="section-badge">07</div>
+  <div class="section-title">Compare Pair</div>
+  <div class="section-desc">Front shows two related terms side by side, back reveals the key distinction between them — good for easily-confused concept pairs.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">compare-pair</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">mitosis <span style="color:#444">vs</span> meiosis</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">mitosis makes 2 identical cells; meiosis makes 4 genetically varied cells</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Grammar<span class="t">compare-pair</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">affect <span style="color:#444">vs</span> effect</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">"affect" is usually a verb; "effect" is usually a noun</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">History<span class="t">compare-pair</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Eighty Years' War <span style="color:#444">vs</span> Thirty Years' War</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the former was Dutch vs Spain; the latter was a broader European conflict</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 08 MNEMONIC -->
+<section class="section" id="mnemonic">
+  <div class="section-badge">08</div>
+  <div class="section-title">Mnemonic / Hint</div>
+  <div class="section-desc">Same as Term &amp; Definition, but the back always carries a small memory-aid chip alongside the answer.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Music theory<span class="t">mnemonic</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">notes on the treble clef lines</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">E G B D F</div><span class="fc-chip">🎵 Every Good Boy Does Fine</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Astronomy<span class="t">mnemonic</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">order of the planets from the sun</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Mercury, Venus, Earth, Mars...</div><span class="fc-chip">🚀 My Very Educated Mother...</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Geography<span class="t">mnemonic</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Great Lakes of North America</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Huron, Ontario, Michigan, Erie, Superior</div><span class="fc-chip">🌊 HOMES</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 09 FORMULA -->
+<section class="section" id="formula">
+  <div class="section-badge">09</div>
+  <div class="section-title">Formula / Equation</div>
+  <div class="section-desc">For math/science/finance decks. Front names the concept, back shows the formula itself as a fragment, not an explanation.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Physics<span class="t">formula</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Newton's second law</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text" style="font-size:20px;font-weight:600">F = ma</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Geometry<span class="t">formula</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">area of a circle</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text" style="font-size:20px;font-weight:600">A = πr²</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Finance<span class="t">formula</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">simple interest</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text" style="font-size:20px;font-weight:600">I = P·r·t</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 10 PROCESS STEP -->
+<section class="section" id="process">
+  <div class="section-badge">10</div>
+  <div class="section-title">Process Step</div>
+  <div class="section-desc">Front names a step or stage in a sequence, back is the description fragment of what happens at that step.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">process-step</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">step 1 of photosynthesis</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">light absorption by chlorophyll</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Cooking<span class="t">process-step</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">step 2 of making bread dough</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">kneading to develop gluten</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Software<span class="t">process-step</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">first phase of the SDLC</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">requirements gathering</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 11 DATE / EVENT -->
+<section class="section" id="timeline">
+  <div class="section-badge">11</div>
+  <div class="section-title">Date / Event</div>
+  <div class="section-desc">Front is an event name, back is its date — or vice versa depending on which direction is harder to recall.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Event → Date<span class="t">date-event</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Peace of Westphalia</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text" style="font-size:20px;font-weight:600">1648</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Date → Event<span class="t">date-event</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text" style="font-size:20px;font-weight:600">1969</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Apollo 11 moon landing</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Birth year<span class="t">date-event</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Albert Einstein, born</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text" style="font-size:20px;font-weight:600">1879</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 12 REVERSED -->
+<section class="section" id="reverse">
+  <div class="section-badge">12</div>
+  <div class="section-title">Reversed Direction</div>
+  <div class="section-desc">Same underlying card, but the study session can start from either side — useful for two-way recall (e.g. language pairs).</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Forward<span class="t">term → definition</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">huis</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">house</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Reversed<span class="t">definition → term</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">house</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">huis</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ALTERNATE PHRASINGS -->
 <section class="section" id="alts">
-  <div class="section-badge">Alternates</div>
-  <div class="section-title">Suggested Phrasings</div>
-  <div class="section-desc">The AI auto-fills the best-fitting phrasing per side, but also suggests up to 2 alternative phrasings (same fragment style). Chips under each side let the learner swap to an alternate, or go back to the original — applies to any card type.</div>
-  <div class="variants">
-    <div class="variant" style="grid-column:1/-1">
-      <div class="vhead"><span class="vname">Front + Back with Swap Chips</span><span class="vtag">term-definition</span></div>
-      <div class="vbody">
-        <div class="card-face">
-          <div class="cf-side-label">Front</div>
-          <div class="cf-front">the organ that pumps blood</div>
-        </div>
-        <div class="alt-row">
-          <span class="alt-tag">Front:</span>
-          <span class="alt-chip sel">Original</span>
-          <span class="alt-chip">muscular organ circulating blood</span>
-          <span class="alt-chip">four-chambered pump in the chest</span>
-        </div>
-        <div class="card-face" style="margin-top:16px">
-          <div class="cf-side-label">Back</div>
-          <div class="cf-back">the heart</div>
-        </div>
-        <div class="alt-row">
-          <span class="alt-tag">Back:</span>
-          <span class="alt-chip">Original</span>
-          <span class="alt-chip sel">cardiac muscle organ</span>
-          <span class="alt-chip">the human heart</span>
-        </div>
-      </div>
+  <div class="section-badge">Interaction</div>
+  <div class="section-title">Alternate Phrasings</div>
+  <div class="section-desc">The AI auto-fills the best phrasing per side, plus up to 2 alternates. Click a chip below to swap the card's text live — this works on any card type above.</div>
+  <div class="alt-demo">
+    <div class="alt-card" id="altCardText">the organ that pumps blood</div>
+    <div class="alt-row">
+      <span class="alt-tag-label">Front:</span>
+      <span class="alt-chip sel" data-alt="the organ that pumps blood">Original</span>
+      <span class="alt-chip" data-alt="muscular organ circulating blood">muscular organ circulating blood</span>
+      <span class="alt-chip" data-alt="four-chambered pump in the chest">four-chambered pump in the chest</span>
     </div>
   </div>
 </section>
 <hr class="divider">
 
-<!-- ════════════════════════════════════════ -->
-<!-- TYPE PICKER -->
-<!-- ════════════════════════════════════════ -->
-<section class="section" id="picker">
-  <div class="section-badge">Setup UI</div>
-  <div class="section-title">Card Type Picker</div>
-  <div class="section-desc">Lives in the flashcard Options step, styled identically to the Quiz question-type picker (same row layout, circle indicator, info tooltip, text size, casing). "Image Card" is hidden entirely — not grayed out — unless Explanation Mode is set to Research.</div>
+<!-- DECK GRID VIEW -->
+<section class="section" id="deck">
+  <div class="section-badge">Interaction</div>
+  <div class="section-title">Deck Grid View</div>
+  <div class="section-desc">A mixed deck — multiple card types together in one grid, each independently flippable, the way a real study set would look.</div>
+  <div class="hint-row">click any card to flip ↻</div>
   <div class="variants">
-    <div class="variant" style="grid-column:1/-1;max-width:420px">
-      <div class="vhead"><span class="vname">Card Types</span><span class="vtag">Literal mode active</span></div>
-      <div class="vbody">
-        <div class="tpicker">
-          <div class="tp-row sel">
-            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
-            <span class="tp-label">Term &amp; Definition</span>
-            <div class="tp-info">i</div>
-          </div>
-          <div class="tp-row sel">
-            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
-            <span class="tp-label">Multiple Choice</span>
-            <div class="tp-info">i</div>
-          </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Card 1<span class="t">term-definition</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">capital of Japan</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">Tokyo</div></div>
         </div>
-        <div class="tp-helper">The AI picks the best-fitting type per card from your selection — cards stay as term/cue fragments, never phrased as quiz questions.</div>
       </div>
     </div>
-    <div class="variant" style="grid-column:1/-1;max-width:420px">
-      <div class="vhead"><span class="vname">Card Types</span><span class="vtag">Research mode active</span></div>
-      <div class="vbody">
-        <div class="tpicker">
-          <div class="tp-row sel">
-            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
-            <span class="tp-label">Term &amp; Definition</span>
-            <div class="tp-info">i</div>
-          </div>
-          <div class="tp-row">
-            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
-            <span class="tp-label">Multiple Choice</span>
-            <div class="tp-info">i</div>
-          </div>
-          <div class="tp-row sel">
-            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
-            <span class="tp-label">Image Card</span>
-            <span class="tp-tag">Research</span>
-            <div class="tp-info">i</div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Card 2<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">largest planet in the solar system</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ Jupiter</div>
+              <div class="fc-mcq-opt">Saturn</div>
+              <div class="fc-mcq-opt">Neptune</div>
+            </div>
           </div>
         </div>
-        <div class="tp-helper">"Image Card" only appears here when Explanation Mode is Research — it's removed from the list otherwise, not just disabled.</div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Card 3<span class="t">image-card</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-img">[ photo ]</div><div class="fc-front-text" style="font-size:14px">the Great Wall</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">fortification across northern China</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Card 4<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">Sharks are mammals.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-false">✗ False</span></div>
+            <div class="fc-tf-correct">Sharks are fish</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -323,5 +643,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </main>
 </div>
+
+<script>
+document.querySelectorAll('[data-flip]').forEach((el) => {
+  el.addEventListener('click', () => el.classList.toggle('flipped'));
+});
+
+const altCardText = document.getElementById('altCardText');
+document.querySelectorAll('.alt-chip').forEach((chip) => {
+  chip.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.alt-chip').forEach((c) => c.classList.remove('sel'));
+    chip.classList.add('sel');
+    altCardText.textContent = chip.getAttribute('data-alt');
+  });
+});
+
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) cur = s.id; });
+  navItems.forEach(n => n.classList.toggle('active', n.getAttribute('href') === '#' + cur));
+});
+</script>
 </body>
 </html>
