@@ -36,7 +36,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export type StudyMode = 'flip' | 'multiple-choice' | 'fill-blank';
+export type StudyMode = 'flip' | 'multiple-choice' | 'fill-blank' | 'assisted';
 
 type CardSRSState = {
   intervalDays: number;
@@ -873,7 +873,7 @@ export function FlashcardViewer({
     );
   };
 
-  const cardMeta = (settings?.showCitations && card?.citation) || (settings?.mnemonicHints && card?.hint);
+  const cardMeta = (settings?.showCitations && card?.citation) || (settings?.mnemonicHints && (effectiveMode === 'assisted' ? card?.assistedHint : card?.hint));
 
   const showExplanationButton = (effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered);
   const explanationButtonLabel = isExplanationLoading
@@ -993,7 +993,7 @@ export function FlashcardViewer({
                 </PopoverContent>
               </Popover>
             ) : null}
-            {settings?.mnemonicHints && card.hint ? (
+            {settings?.mnemonicHints && (effectiveMode === 'assisted' ? card.assistedHint : card.hint) ? (
               <Button
                 type="button"
                 variant="ghost"
@@ -1002,7 +1002,7 @@ export function FlashcardViewer({
                 className="h-7 rounded-full border border-border/80 surface-chip px-3 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 <Lightbulb className="mr-1.5 h-3.5 w-3.5" />
-                {hintRevealed ? card.hint : 'Reveal hint (ezelsbruggetje)'}
+                {hintRevealed ? (effectiveMode === 'assisted' ? card.assistedHint : card.hint) : `Reveal hint${effectiveMode === 'assisted' ? '' : ' (ezelsbruggetje)'}`}
               </Button>
             ) : null}
           </div>
