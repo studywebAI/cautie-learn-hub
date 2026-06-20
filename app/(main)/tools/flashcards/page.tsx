@@ -149,7 +149,7 @@ function FlashcardsPageContent() {
   const modeOptions = React.useMemo(
     () => [
       ...t.flashcards.studyModeOptions
-        .filter((option) => option.value === 'flip' || option.value === 'multiple-choice')
+        .filter((option) => option.value === 'flip' || option.value === 'multiple-choice' || option.value === 'assisted')
         .map((option) =>
           option.value === 'flip'
             ? { ...option, label: 'Standard', description: 'Classic flip card — see one side, flip to reveal the other' }
