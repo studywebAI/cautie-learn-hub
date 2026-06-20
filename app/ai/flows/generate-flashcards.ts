@@ -25,6 +25,7 @@ const GenerateFlashcardsInputSchema = z.object({
   explanationMode: z.enum(['literal', 'research']).optional().describe('"literal" = stick tightly to the wording and facts in the Source Text with minimal elaboration. "research" = you may connect ideas across the Source Text and must explain your reasoning via groundingNote.'),
   includeCitations: z.boolean().optional().describe('If true, populate the optional "citation" field on each card with a short reference to where in the Source Text the info came from.'),
   includeHints: z.boolean().optional().describe('If true, populate the optional "hint" field on each card with a brief memory aid / mnemonic.'),
+  includeAssistedHints: z.boolean().optional().describe('If true (assisted study mode only), populate the optional "assistedHint" field on each card with a short, logical hint that nudges recall without giving away the answer.'),
   enabledTypes: z.array(z.enum(FLASHCARD_TYPES)).optional().describe('Which card types are enabled for this generation run — the AI must pick one best-fitting type per card only from this set.'),
   isResearchMode: z.boolean().optional().describe('Internal derived flag — true when explanationMode is "research". Used for template branching only.'),
 });
@@ -77,16 +78,24 @@ Critical phrasing rule — flashcards are NOT quiz questions:
 - Both sides must read as short fragments: a term/cue on one side, a matching description/fact fragment on the other — not a question paired with its answer.
 - Correct example: front "the organ that pumps blood", back "the heart".
 - Wrong example: front "What organ pumps blood?", back "The heart".
-- This rule applies to "frontAlternatives" and "backAlternatives" too.
 
 {{#if enabledTypes}}
 Card types — for every card, pick exactly one best-fitting type from this enabled set only: {{{enabledTypes}}}. Set the "type" field accordingly.
-- "term-definition": front and back are both short fragments as described above.
+- "term-definition": front and back are both short fragments as described above. The default type.
 - "multiple-choice": same fragment style, but also fill "mcqOptions" with exactly 3 answer choices in shuffled order — one with text identical to "back", and two plausible same-domain distractors.
 {{#if isResearchMode}}
 - "image-card": only choose this when "front" names a concrete, photographable subject (an object, place, organism, artifact). front = the bare term/name only, back = a short description fragment. Leave "imageUrl" empty — it is filled in automatically afterward from a real image search.
 {{/if}}
-Vary the type across the deck instead of defaulting every card to the same type, but only when the content genuinely fits — never force a multiple-choice or image-card type onto content that does not suit it.
+- "cloze": front = the same fragment as term-definition; "cloze" field = a short sentence from the source with the key term replaced by "____"; back = the missing word/phrase.
+- "example-sentence": front = a natural sentence using the term in context with the term itself replaced by "____" (reuse the "cloze" field for this sentence); back = the term itself.
+- "true-false": front = a single short declarative statement that is either true or false (NOT a question); "correctAnswer" = true or false; back = the corrected/clarifying fact (if false) or a short confirming fragment (if true).
+- "compare-pair": front = names both items being compared as a short fragment (e.g. "mitosis vs meiosis"); back = the single key distinguishing fact between them.
+- "mnemonic": front = the term; back = the fact fragment; additionally fill "hint" with a creative memory aid (association, rhyme, image cue) — this type exists specifically to showcase a strong mnemonic.
+- "formula": front = the name of the formula/law/equation; back = the formula or expression itself, written as plain text.
+- "process-step": front = a fragment naming the step and its position (e.g. "step 2 of mitosis"); back = what happens during that step.
+- "date-event": front = a date or time period fragment; back = the event fragment that happened then (or reverse the pairing if more natural — always two short fragments).
+- "reversed-direction": same fragment-pair style as term-definition, just flagged as a type intentionally meant to also be studied back-to-front for variety.
+Vary the type across the deck instead of defaulting every card to the same type, but only when the content genuinely fits — never force a type onto content that does not suit it.
 {{/if}}
 
 Match wording to this profile:
@@ -113,13 +122,16 @@ For each flashcard, you must provide:
 2.  **type**: the chosen card type (see "Card types" above).
 3.  **front**: A short term or cue fragment — never a question.
 4.  **back**: The corresponding definition or fact fragment — never an answer sentence.
-5.  **cloze**: A "fill-in-the-blank" sentence where the "back" of the card is the missing word. The blank should be represented by "____".
-6.  **frontAlternatives** / **backAlternatives**: up to 2 alternative phrasings each, same fragment style, never questions. Omit a field entirely if you cannot find a genuinely different phrasing.
+5.  **cloze**: Only fill this in when "type" is "cloze" or "example-sentence" — a sentence with the key term replaced by "____". Omit for other types.
+6.  **correctAnswer**: Only fill this in when "type" is "true-false" — true or false.
 {{#if includeCitations}}
 7.  **citation**: A short, literal reference to where in the Source Text this card's info came from (e.g. a short quoted fragment or a brief description of the section it came from). Omit this field for a card if you cannot point to a specific passage — never invent one.
 {{/if}}
 {{#if includeHints}}
 8.  **hint**: A short memory aid or mnemonic (a brief association, image cue, rhyme, or "ezelsbruggetje") that helps recall the back of the card — a few words, not a full sentence or explanation.
+{{/if}}
+{{#if includeAssistedHints}}
+9.  **assistedHint**: A short, logical hint for "assisted" study mode — a contextual nudge or pattern that helps the learner think their way to the answer, without revealing it and without being a riddle. Must be simple, directly relevant to this specific card's content, and varied across cards (never reuse the same phrasing pattern repeatedly across the deck).
 {{/if}}
 
 {{#if existingFlashcardIds}}
@@ -131,11 +143,23 @@ Example (term-definition):
 - type: "term-definition"
 - front: "the powerhouse of the cell"
 - back: "the mitochondria"
-- frontAlternatives: ["organelle that makes ATP for the cell"]
-- backAlternatives: ["mitochondrion"]
-- cloze: "The mitochondria is often called the ____."
 - citation: "From the paragraph introducing cell organelles"
 - hint: "Power + house = energy factory"
+- assistedHint: "Think about what every cell needs a constant supply of to function"
+
+Example (true-false):
+- id: "neutrality-wwii"
+- type: "true-false"
+- front: "Switzerland joined the Allied powers during World War II"
+- back: "Switzerland remained neutral throughout World War II"
+- correctAnswer: false
+
+Example (cloze):
+- id: "photosynthesis-product"
+- type: "cloze"
+- front: "the product of photosynthesis that plants release"
+- back: "oxygen"
+- cloze: "During photosynthesis, plants release ____ as a byproduct."
 
 Source Text:
 {{{sourceText}}}

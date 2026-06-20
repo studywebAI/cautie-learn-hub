@@ -261,7 +261,6 @@ export function FlashcardViewer({
   const [sessionQueueIds, setSessionQueueIds] = useState<string[]>([]);
   const [hintRevealed, setHintRevealed] = useState(false);
   const [notRelevantIds, setNotRelevantIds] = useState<Set<string>>(new Set());
-  const [altSelection, setAltSelection] = useState<Record<string, { front?: number; back?: number }>>({});
   const startTimeRef = React.useRef(Date.now());
   const cardStartedAtRef = React.useRef(Date.now());
   const { toast } = useToast();
@@ -698,20 +697,13 @@ export function FlashcardViewer({
   }, [currentIndex, queue.length, effectiveMode, isAnswered]);
 
   const card = queue[currentIndex];
-  const effectiveCard = React.useMemo(() => {
-    if (!card) return null;
-    const sel = altSelection[card.id];
-    const front = typeof sel?.front === 'number' ? card.frontAlternatives?.[sel.front] ?? card.front : card.front;
-    const back = typeof sel?.back === 'number' ? card.backAlternatives?.[sel.back] ?? card.back : card.back;
-    return { ...card, front, back };
-  }, [card, altSelection]);
   const displayCard = React.useMemo(() => {
-    if (!effectiveCard) return null;
+    if (!card) return null;
     if (cardStartSide === 'explanation') {
-      return { ...effectiveCard, front: effectiveCard.back, back: effectiveCard.front };
+      return { ...card, front: card.back, back: card.front };
     }
-    return effectiveCard;
-  }, [effectiveCard, cardStartSide]);
+    return card;
+  }, [card, cardStartSide]);
   const deckHealth = computeDeckHealth();
   const canRate = !!card && ((effectiveMode === 'flip' && isFlipped) || (effectiveMode !== 'flip' && isAnswered));
   const currentFlipHeight = React.useMemo(() => {
@@ -864,7 +856,7 @@ export function FlashcardViewer({
     }
     return (
       <MultipleChoiceView
-        card={effectiveCard!}
+        card={card!}
         allCards={queue}
         isFlipped={isFlipped}
         setIsFlipped={setIsFlipped}
@@ -923,49 +915,6 @@ export function FlashcardViewer({
             </AnimatePresence>
           </div>
         )}
-
-        {card && ((card.frontAlternatives?.length ?? 0) > 0 || (card.backAlternatives?.length ?? 0) > 0) ? (
-          <div className="flex w-full max-w-5xl flex-col items-center gap-1.5">
-            {card.frontAlternatives && card.frontAlternatives.length > 0 ? (
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground/70">Front:</span>
-                {[{ label: 'Original', idx: undefined as number | undefined }, ...card.frontAlternatives.map((alt, idx) => ({ label: alt, idx }))].map((opt) => {
-                  const isActive = altSelection[card.id]?.front === opt.idx;
-                  return (
-                    <button
-                      key={`front-${opt.idx ?? 'original'}`}
-                      type="button"
-                      title={opt.label}
-                      onClick={() => setAltSelection((prev) => ({ ...prev, [card.id]: { ...prev[card.id], front: opt.idx } }))}
-                      className={`max-w-[180px] truncate rounded-full px-2.5 py-1 text-[11px] transition-colors ${isActive ? 'bg-[var(--accent-brand)] text-white' : 'border border-border/60 text-muted-foreground hover:text-foreground'}`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-            {card.backAlternatives && card.backAlternatives.length > 0 ? (
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground/70">Back:</span>
-                {[{ label: 'Original', idx: undefined as number | undefined }, ...card.backAlternatives.map((alt, idx) => ({ label: alt, idx }))].map((opt) => {
-                  const isActive = altSelection[card.id]?.back === opt.idx;
-                  return (
-                    <button
-                      key={`back-${opt.idx ?? 'original'}`}
-                      type="button"
-                      title={opt.label}
-                      onClick={() => setAltSelection((prev) => ({ ...prev, [card.id]: { ...prev[card.id], back: opt.idx } }))}
-                      className={`max-w-[180px] truncate rounded-full px-2.5 py-1 text-[11px] transition-colors ${isActive ? 'bg-[var(--accent-brand)] text-white' : 'border border-border/60 text-muted-foreground hover:text-foreground'}`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
 
         {card && cardMeta ? (
           <div className="flex w-full max-w-5xl flex-wrap items-center justify-center gap-2">
