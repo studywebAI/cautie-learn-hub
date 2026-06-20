@@ -340,30 +340,104 @@ each get their own chunk number regardless of size.
   written in a different language as correct." Not foolproof, but better than
   nothing.
 
+### Detailed chunking & input encoding scheme (literal mode)
+
+Pre-process source text into numbered chunks before generation. Each chunk is ~40–60 tokens
+(semantic/paragraph boundaries, not fixed sentence counts). Non-text inputs (photos, files)
+each get their own chunk number regardless of size. Chunks are encoded as:
+
+```
+1(Netherlands is a beautiful country. Netherlands loves football)
+2(John loves pizza. Lisa loves fries)
+...
+```
+
+Where:
+- `1`, `2`, etc. are chunk identifiers.
+- Everything between parentheses is the chunk content.
+- Chunks are identified by exact parenthesis-pair boundaries.
+- Length/semantic coherence of each chunk is important; algorithmic chunking (token
+  budget + paragraph boundaries) should be favored over "every 2 sentences."
+
+**During question generation (literal mode):**
+When the AI generates a question whose correct answer must come literally from the source,
+instead of writing a `suggested_answer`, the AI returns chunk indices, e.g.:
+```json
+{
+  "question": "Which countries does this text mention?",
+  "relevant": [1, 2],
+  "answer_type": "short"
+}
+```
+
+**System behavior:**
+When the student submits an answer, the system retrieves the chunks cited in `relevant`
+(e.g., chunks 1 and 2) and sends them verbatim to the grading LLM along with the student's
+answer and the question. This ensures grading stays grounded in source text.
+
+**During question generation (research mode):**
+The AI writes a `suggested_answer` — as short as possible while still being a complete,
+understandable reference — because the answer extends beyond a single passage and chunking
+won't suffice. This is carried to the grading step to anchor grading and prevent the grader
+from hallucinating what's "correct."
+
 ### Alternatives to `suggested_answer` (user asked for these before deciding)
+
 - **(A) User's original proposal** — research mode: free-text `suggested_answer`
   string carried to grading. Literal mode: chunk-citation indices only.
   Risk: a single canonical phrasing can bias the grader against a correct
   answer phrased differently, and if the generation-time AI got the
   `suggested_answer` itself subtly wrong, that error propagates uncorrected
   into every grading call for that question.
+
 - **(B) Always cite + short "reasoning notes"** — use chunk citations in both
   modes (research mode chunks may just be empty/sparse since the answer extends
   beyond source), and replace `suggested_answer` with a short, internal-only
   `reasoning_notes` field that explains why a fact is true rather than asserting
   one canonical phrasing. The grading LLM uses cited source text + reasoning
   notes + rubric, never a single fixed "the answer is X" string.
+
 - **(C, recommended) Acceptance-criteria list instead of one suggested answer** —
   at generation time, instead of one `suggested_answer` string, produce a short
-  list of 1-3 required facts/keywords the answer must contain (e.g.
+  list of 1–3 required facts/keywords the answer must contain (e.g.
   `criteria: ["mentions 1842", "mentions the Treaty of ..."]`). Grading checks each
   criterion against the student's answer rather than fuzzy-matching one
   reference phrasing. More robust for open/short-answer grading, more resistant
   to "trust me" social engineering (correctness is criteria-based, not
   plausibility-based), and combines cleanly with literal-mode chunk citations for
   full traceability (teacher review / audit later).
-- Decision needed from user: pick (A), (B), (C), or a hybrid before this gets
-  built. Until then, current (eager, non-deferred) grading behavior stays as-is.
+
+- **Decision pending:** User must pick (A), (B), (C), or a hybrid before implementation.
+  Until then, current (eager, non-deferred) grading behavior stays as-is.
+
+### Grading rubric & anti-manipulation hardening
+
+**Semantic vs. literal grading:**
+- Grading must be **subjective**, not exact-match. If a student spells "Netherlands" as
+  "Ntherlands" but clearly means the same country, mark it correct.
+- Minor non-substantive mistakes (spelling, grammar, punctuation) CAN be forgiven.
+- The grading prompt must be explicit and emphatic: it can NEVER be swayed by
+  surface-level appeals like "I learned this so mark it right." This is a critical
+  anti-manipulation safeguard.
+
+**Language-mismatch leniency:**
+- If all answers are in a different language than expected, and the quiz subject is NOT
+  about that language itself (e.g., "Geography of the Netherlands"), surface an in-app
+  notification: "Detected answers in [language]. Switch app language?" Clicking this
+  deep-links to Settings → Language Preferences. This UX already exists.
+- **Exception:** If the quiz IS about a language (e.g., "German Vocabulary"), answering in
+  French must NOT be auto-accepted since the language itself is the thing being tested.
+  Add a rule to the grading prompt: "This test is about [language] — do not grade answers
+  written in a different language as correct unless they are quotes or proper nouns."
+  (Not foolproof, but better than nothing.)
+
+### Special cases for `answerFeedback` setting
+
+- If `answerFeedback === 'immediate'`: Grade and return feedback for that one question
+  right away, per-question, not batched.
+- If `answerFeedback === 'end'` (default): Collect all answers and defer grading to the
+  final results screen. Batch-grade all questions in one API call to reduce cost and
+  improve consistency.
 
 ## 8) Analytics for students AND teachers (reminder — not specced yet)
 
@@ -375,4 +449,26 @@ pass is done. User wants:
   new tools about that to finish it 100%" — vague/aspirational, not yet
   specced. Needs a follow-up conversation before scoping.
 - Applies to both the student-facing and teacher-facing analytics views.
+
+## 9) Typography rules: bold, caps, font-weight (living standard)
+
+**Status:** Partially applied (main user-facing pages cleaned); full enforcement is a living
+rule applied incrementally as files are touched.
+
+**Rule (clarified 2026-06-20):**
+- **No `font-bold`, `font-semibold`, `uppercase` Tailwind classes** as emphasis signals
+  (visual weight/caps should not be the only way to show emphasis).
+- **Exception for semantic/logical uses:**
+  - Individual capitals mid-word (e.g., `iPhone`, `JavaScript`, `macOS`) are fine; these
+    are not Tailwind classes and happen naturally in content.
+  - Whole words in CAPS (e.g., "API", "PDF") are acceptable only if they are acronyms
+    or standard abbreviations that are conventionally capitalized.
+  - CAPS at the start of sentences or in proper nouns are fine (standard grammar).
+- **When bold/caps WAS the emphasis signal:** bump text size one step (e.g.,
+  `text-[13px]` → `text-[14px]` or `text-[15px]`) instead. Larger, clearer text is
+  the preferred emphasis method app-wide.
+- **Files still containing these classes (2026-06-20):**
+  - `export-toolbar.tsx` and `grade-export.ts`: contain raw CSS strings (PDF export);
+    Tailwind classes don't apply. Left as-is.
+  - Other files: sweep is ongoing; rule is applied per-file-touch.
 
