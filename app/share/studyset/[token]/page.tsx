@@ -80,7 +80,7 @@ export default function ShareStudysetPage() {
         <div className="max-w-sm text-center space-y-4">
           <BookOpen className="mx-auto h-12 w-12 text-muted-foreground/40" />
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Studyset not found</h1>
+            <h1 className="text-xl text-foreground">Studyset not found</h1>
             <p className="mt-1 text-sm text-muted-foreground">{error || 'This studyset is no longer available.'}</p>
           </div>
           <Button asChild style={{ backgroundColor: '#6b7c4e' }}>
@@ -103,7 +103,7 @@ export default function ShareStudysetPage() {
         <div className="max-w-3xl mx-auto px-4 py-6 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight truncate">
+              <h1 className="text-2xl sm:text-3xl text-foreground leading-tight truncate">
                 {studyset.name}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -164,7 +164,7 @@ export default function ShareStudysetPage() {
 
         {/* Study Plan */}
         <div>
-          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+          <h2 className="text-xl text-foreground mb-4 flex items-center gap-2">
             <Clock className="h-5 w-5 text-[#6b7c4e]" />
             Study Plan
           </h2>
@@ -192,7 +192,7 @@ export default function ShareStudysetPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline gap-2 mb-1">
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-[15px] text-foreground">
                               Day {day.day_number}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -203,7 +203,7 @@ export default function ShareStudysetPage() {
                               })}
                             </p>
                             {isToday && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#6b7c4e] text-white">
+                              <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-[#6b7c4e] text-white">
                                 TODAY
                               </span>
                             )}
@@ -247,7 +247,7 @@ export default function ShareStudysetPage() {
         {/* Footer CTA */}
         <div className="border-t border-border pt-8 flex flex-col items-center text-center gap-4">
           <div>
-            <h3 className="font-semibold text-foreground">Want to study this?</h3>
+            <h3 className="text-[17px] text-foreground">Want to study this?</h3>
             <p className="text-sm text-muted-foreground mt-1">
               Sign up or log in to create your own copy and start studying.
             </p>
