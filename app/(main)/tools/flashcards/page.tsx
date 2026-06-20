@@ -65,7 +65,7 @@ const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
   if (value === 'write' || value === 'type') return 'multiple-choice';
-  if (value === 'flip' || value === 'multiple-choice' || value === 'fill-blank') return value;
+  if (value === 'flip' || value === 'multiple-choice' || value === 'fill-blank' || value === 'assisted') return value;
   return 'flip';
 };
 
