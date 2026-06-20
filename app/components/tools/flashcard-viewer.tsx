@@ -211,6 +211,138 @@ function FillBlankView({
   );
 }
 
+function TrueFalseView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onAnswered,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onAnswered: (correct: boolean) => void;
+}) {
+  const [answered, setAnswered] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
+
+  const handleSelectAnswer = (value: boolean) => {
+    setSelectedAnswer(value);
+    setAnswered(true);
+    const isCorrect = value === card.correctAnswer;
+    onAnswered(isCorrect);
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+          {!answered ? (
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => handleSelectAnswer(true)}
+                className="rounded-xl px-8 min-w-[120px]"
+              >
+                True
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => handleSelectAnswer(false)}
+                className="rounded-xl px-8 min-w-[120px]"
+              >
+                False
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <div className={`flex items-center gap-2 px-6 py-3 rounded-xl ${selectedAnswer === card.correctAnswer ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'}`}>
+                {selectedAnswer === card.correctAnswer ? (
+                  <>
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span className="font-medium">Correct!</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-5 w-5" />
+                    <span className="font-medium">Incorrect</span>
+                  </>
+                )}
+              </div>
+              <div className="max-w-[92%] rounded-xl surface-chip p-4">
+                <p className="text-[10px] text-muted-foreground mb-2">Correct answer</p>
+                <p className="text-base leading-relaxed">{card.back}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClozeView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          {card.cloze && (
+            <p className="max-w-[92%] text-xl leading-[1.5] text-foreground md:text-2xl">
+              {card.cloze.split('____').map((part, i) => (
+                <React.Fragment key={i}>
+                  {part}
+                  {i < card.cloze!.split('____').length - 1 && (
+                    <span className={`inline-block px-2 py-1 mx-1 rounded ${revealed ? 'bg-transparent' : 'bg-muted'}`}>
+                      {revealed ? card.back : '____'}
+                    </span>
+                  )}
+                </React.Fragment>
+              ))}
+            </p>
+          )}
+          {!revealed ? (
+            <Button onClick={handleReveal} className="rounded-full px-6">
+              <Eye className="mr-2 h-4 w-4" />
+              Reveal answer
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <div className="rounded-xl surface-chip p-4 max-w-xs">
+                <p className="text-[10px] text-muted-foreground mb-1">The missing word</p>
+                <p className="text-lg font-medium">{card.back}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FlashcardViewer({
   cards,
   mode,
@@ -841,6 +973,35 @@ export function FlashcardViewer({
 
   const renderCardContent = () => {
     if (!card) return null;
+
+    // Type-specific rendering
+    if (card.type === 'true-false') {
+      return (
+        <TrueFalseView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onAnswered={(correct) => handleCardAnswered(correct)}
+        />
+      );
+    }
+
+    if (card.type === 'cloze' || card.type === 'example-sentence') {
+      return (
+        <ClozeView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    // Mode-based rendering (for term-definition, multiple-choice card types)
     if (effectiveMode === 'flip' && displayCard) return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
     if (effectiveMode === 'fill-blank' && displayCard) {
       return (

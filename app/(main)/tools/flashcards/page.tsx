@@ -256,6 +256,7 @@ function FlashcardsPageContent() {
             explanationMode,
             includeCitations: showCitations,
             includeHints: mnemonicHints,
+            includeAssistedHints: mnemonicHints && requestedMode === 'assisted',
             enabledTypes: enabledCardTypes,
             flashcardsOptions: {
               activeRecallOnly,
