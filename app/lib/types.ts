@@ -208,23 +208,35 @@ export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 export type Quiz = z.infer<typeof QuizSchema>;
 
 // Types for Flashcards
-export const FLASHCARD_TYPES = ['term-definition', 'multiple-choice', 'image-card'] as const;
+export const FLASHCARD_TYPES = [
+  'term-definition',
+  'multiple-choice',
+  'image-card',
+  'cloze',
+  'example-sentence',
+  'true-false',
+  'compare-pair',
+  'mnemonic',
+  'formula',
+  'process-step',
+  'date-event',
+  'reversed-direction'
+] as const;
 export const FlashcardMcqOptionSchema = z.object({
   id: z.string().describe('Unique identifier for the option (e.g., "a", "b", "c").'),
   text: z.string().describe('The text of the answer option.'),
 });
 export const FlashcardSchema = z.object({
   id: z.string().describe('A unique, short, kebab-case identifier for the flashcard.'),
-  type: z.enum(FLASHCARD_TYPES).default('term-definition').describe('Card format. "term-definition": front and back are both short fragments (a term/cue and a matching description), never a question. "multiple-choice": same fragment style, but the back is also expressed as answer choices in "mcqOptions". "image-card": front is the bare term naming a concrete, photographable subject; back is a short description fragment; only used in Research mode.'),
+  type: z.enum(FLASHCARD_TYPES).default('term-definition').describe('Card format: term-definition (front/back fragments), multiple-choice (front + 3 choices), image-card (front term + back description), cloze (fill-blank sentence), example-sentence (context + word), true-false (statement + correctness), compare-pair (2 items to compare), mnemonic (memory aid), formula (math/science expression), process-step (sequential instruction), date-event (date/event pair), reversed-direction (front/back swappable).'),
   front: z.string().describe('The front side of the flashcard: a short term or cue fragment. Never phrase this as a question.'),
   back: z.string().describe('The back side of the flashcard: a matching definition or fact fragment. Never phrase this as an answer to a question — it should read as a fragment, not a sentence responding to "front".'),
-  cloze: z.string().describe('A fill-in-the-blank sentence where the "back" of the card is the missing word. The blank should be represented by "____".'),
+  cloze: z.string().optional().describe('A fill-in-the-blank sentence where the "back" of the card is the missing word. The blank should be represented by "____". Only relevant when "type" is "cloze".'),
   mcqOptions: z.array(FlashcardMcqOptionSchema).max(3).optional().describe('Exactly 3 answer choices (one with text identical to "back", two plausible same-domain distractors), only present when "type" is "multiple-choice".'),
+  correctAnswer: z.boolean().optional().describe('For true-false type: whether the statement on front is correct (true) or incorrect (false).'),
   imageUrl: z.string().optional().describe('URL of a representative photo for "front". Only relevant when "type" is "image-card" — leave empty when generating, it is filled in automatically afterward from a real image search. Never invent a URL.'),
-  frontAlternatives: z.array(z.string()).max(2).optional().describe('Up to 2 alternative phrasings for "front", in the same fragment style, offered to the learner as swappable options.'),
-  backAlternatives: z.array(z.string()).max(2).optional().describe('Up to 2 alternative phrasings for "back", in the same fragment style.'),
   citation: z.string().optional().describe('A short, literal reference to where in the Source Text this card\'s information came from (e.g. a quoted fragment or a short section description). Omit this field entirely if no specific passage can be pointed to.'),
-  hint: z.string().optional().describe('A short memory aid or mnemonic — a brief association, image cue, rhyme, or "ezelsbruggetje" — that helps recall the back of the card. Keep it to a few words, never a full explanation.'),
+  assistedHint: z.string().optional().describe('A short, logical memory aid for assisted mode only — a brief association, pattern, or contextual connection that helps recall the back without revealing it. Keep it to a few words. Only generated and shown when learner selects "assisted" mode. Must be simple and help thinking, not a riddle.'),
   groundingNote: z.string().optional().describe('A brief (1-2 sentence) note explaining why this card was written this way and how its content relates to or derives from the Source Text. This is shown to the learner in "Research" mode to make the AI\'s reasoning transparent.'),
 });
 export type FlashcardType = (typeof FLASHCARD_TYPES)[number];
