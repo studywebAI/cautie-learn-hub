@@ -57,7 +57,7 @@ function MCQCardGrid({ question, answer, disabled, onChange, reveal, correctOpti
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[92px] items-center justify-center rounded-xl px-5 py-5 text-center text-[14px] ${cls}`}
+            className={`flex min-h-[110px] items-center justify-center rounded-xl px-6 py-6 text-center text-[15px] ${cls}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -88,12 +88,12 @@ function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOpt
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex w-full items-center gap-3 rounded-lg px-5 py-4 text-left ${cls}`}
+            className={`flex w-full items-center gap-3 rounded-lg px-6 py-5 text-left ${cls}`}
           >
-            <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/40'}`}>
-              {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/40'}`}>
+              {selected && <span className="h-2 w-2 rounded-full bg-white" />}
             </span>
-            <span className="text-[14px] text-foreground">{cleanOptionText(option.text)}</span>
+            <span className="text-[15px] text-foreground">{cleanOptionText(option.text)}</span>
           </button>
         );
       })}
@@ -129,7 +129,7 @@ function MCQColorBlocks({ question, answer, disabled, onChange, reveal, correctO
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[92px] items-center justify-center rounded-xl px-5 py-5 text-center text-[14px] ${cls} ${disabled && !selected ? 'opacity-70' : 'opacity-100'}`}
+            className={`flex min-h-[110px] items-center justify-center rounded-xl px-6 py-6 text-center text-[15px] ${cls} ${disabled && !selected ? 'opacity-70' : 'opacity-100'}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -212,7 +212,7 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {displayItems.map((item, idx) => (
         <div
           key={item}
@@ -242,18 +242,19 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
             setTouchDragItem(null);
           }}
           className={[
-            'flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3.5 select-none transition-all',
+            'flex items-center gap-4 rounded-lg border border-border bg-background px-4 py-4 select-none transition-all',
             disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
             draggingItem === item ? 'opacity-50 scale-[0.98]' : '',
+            overItem === item && draggingItem ? 'bg-[var(--accent-brand)]/5 border-[var(--accent-brand)]/30' : '',
           ].join(' ')}
         >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[13px] leading-none text-[var(--accent-brand)]">
             {idx + 1}
           </span>
-          <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+          <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
             <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
           </svg>
-          <span className="text-[14px] text-foreground">{item}</span>
+          <span className="text-[15px] text-foreground">{item}</span>
         </div>
       ))}
     </div>
@@ -1286,15 +1287,35 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
     : [...items];
 
   const dragIdx = useRef<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const displayList = dragIdx.current !== null && dragOverIdx !== null && dragIdx.current !== dragOverIdx
+    ? (() => {
+        const temp = [...current];
+        const [moved] = temp.splice(dragIdx.current!, 1);
+        temp.splice(dragOverIdx, 0, moved);
+        return temp;
+      })()
+    : current;
 
   const handleDragStart = (idx: number) => { dragIdx.current = idx; };
+  const handleDragOver = (idx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+  const handleDragLeave = () => { setDragOverIdx(null); };
   const handleDrop = (dropIdx: number) => {
-    if (dragIdx.current === null || dragIdx.current === dropIdx) return;
+    if (dragIdx.current === null || dragIdx.current === dropIdx) {
+      dragIdx.current = null;
+      setDragOverIdx(null);
+      return;
+    }
     const next = [...current];
     const [moved] = next.splice(dragIdx.current, 1);
     next.splice(dropIdx, 0, moved);
     onChange({ kind: 'ordering', value: next });
     dragIdx.current = null;
+    setDragOverIdx(null);
   };
 
   return (
@@ -1305,23 +1326,28 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
         </div>
       ) : null}
       <p className="text-[11px] text-muted-foreground">Drag to reorder from #1 (top) to last (bottom).</p>
-      <div className="space-y-2">
-        {current.map((item, idx) => (
+      <div className="space-y-3">
+        {displayList.map((item, idx) => (
           <div
             key={item}
             draggable={!disabled}
-            onDragStart={() => handleDragStart(idx)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => handleDrop(idx)}
-            className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 cursor-grab active:cursor-grabbing select-none"
+            onDragStart={() => handleDragStart(displayList.indexOf(item))}
+            onDragOver={(e) => handleDragOver(displayList.indexOf(item), e)}
+            onDragLeave={handleDragLeave}
+            onDrop={() => handleDrop(displayList.indexOf(item))}
+            className={`flex items-center gap-4 rounded-lg border px-4 py-4 cursor-grab active:cursor-grabbing select-none transition-all ${
+              dragOverIdx === displayList.indexOf(item)
+                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/20'
+                : 'border-border bg-background'
+            }`}
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] leading-none text-[var(--accent-brand)]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
               #{idx + 1}
             </span>
-            <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+            <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
               <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
             </svg>
-            <span className="text-[13px] text-foreground">{item}</span>
+            <span className="text-[15px] text-foreground">{item}</span>
           </div>
         ))}
       </div>
@@ -2843,7 +2869,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           {navMode === 'circles' ? (
             <div
               ref={circleRowRef}
-              className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px]"
+              className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[320px] sm:max-w-[400px] md:max-w-[550px] lg:max-w-[700px]"
             >
               {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions)
                 .map((q, idx) => ({ q, idx }))
