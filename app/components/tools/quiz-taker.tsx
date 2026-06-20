@@ -3119,7 +3119,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <Button
                 type="button"
                 variant="ghost"
-                className="h-9 px-3 text-[12px] text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/10 hover:text-[var(--accent-brand)]"
+                className="h-9 px-3 text-[12px] text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 onClick={handleNotRelevant}
                 title="Mark as not relevant to your research"
               >
