@@ -135,6 +135,7 @@ export const QuizQuestionSchema = z.object({
   orderingItems: z.array(z.string()).optional(),
   hint: z.string().optional(),
   explanation: z.string().optional(),
+  citation: z.string().optional().describe('A short, literal quoted fragment from the Source Text that this question is grounded in. Omit if the question cannot be tied to one specific passage.'),
   // Cloze test
   clozeWordBank: z.array(z.string()).optional().describe('Word pool for cloze word-bank variant (correct answers + distractors).'),
   // Hotspot

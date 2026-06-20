@@ -175,6 +175,8 @@ function NotesPageContent() {
   const taskId = searchParams.get('taskId');
   const studysetId = searchParams.get('studysetId');
   const launchRequested = searchParams.get('launch') === '1';
+  const sourceTextFromParams = searchParams.get('sourceText') || '';
+  const autostartRequested = searchParams.get('autostart') === '1';
   const { run: savedRun } = useSavedRun(runId);
   const appContext = useContext(AppContext);
   const language = appContext?.language ?? 'en';
@@ -899,6 +901,17 @@ function NotesPageContent() {
 
     void runLaunch();
   }, [launchRequested, runNotesGeneration, studysetId, taskId, toast]);
+
+  // One-click continue — generate immediately from a pre-filled sourceText param,
+  // skipping the settings screen (used by "Continue with Notes" from quiz results).
+  const autostartHandledRef = useRef(false);
+  useEffect(() => {
+    if (!autostartRequested || !sourceTextFromParams.trim() || autostartHandledRef.current) return;
+    autostartHandledRef.current = true;
+    setSourceText(sourceTextFromParams);
+    setPhase('study');
+    void runNotesGeneration(sourceTextFromParams, { background: false });
+  }, [autostartRequested, sourceTextFromParams, runNotesGeneration]);
 
   const stopListening = useCallback(async (options?: { finalize?: boolean }) => {
     keepListeningRef.current = false;

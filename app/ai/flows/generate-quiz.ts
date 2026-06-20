@@ -133,6 +133,7 @@ function normalizeQuestionShape(
     difficulty,
     options: [],
     explanation: typeof question?.explanation === 'string' ? question.explanation.trim() : undefined,
+    citation: typeof question?.citation === 'string' && question.citation.trim() ? question.citation.trim() : undefined,
   };
 
   if (type === 'fill-blank' || type === 'short-answer' || type === 'numeric') {
@@ -580,6 +581,7 @@ Each question must include:
 - category (short topic label, e.g. "start-of-ww1")
 - difficulty (integer 1-10)
 - explanation (1-2 short lines on why the correct answer is correct, strictly from source text)
+- citation: a short literal fragment (5-20 words) quoted directly from the Source Text that this question is grounded in. Must be an exact substring of the Source Text so it can be located later. Omit this field only if the question genuinely cannot be tied to one specific passage (e.g. it synthesizes the whole text).
 If type is multiple-choice/true-false/scenario/image-analysis/video-analysis/drawing-analysis, include 3-4 options and exactly one correct answer.
 If type is scenario, also include scenarioContext (1-3 sentence case/scenario text that sets up the question).
 If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.

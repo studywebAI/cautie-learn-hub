@@ -2045,13 +2045,67 @@ function IconX({ size = 10, strokeWidth = 1.8 }: { size?: number; strokeWidth?: 
   );
 }
 
+type SourceHighlightSpan = { start: number; end: number; correct: boolean };
+
+// Locates each scored question's citation inside the raw source text and groups
+// matches into merged, non-overlapping spans so the passage can be painted by outcome.
+function buildSourceHighlights(
+  sourceText: string,
+  rows: Array<{ correct: boolean; isNotRelevant: boolean; question: QuizQuestion }>
+) {
+  const haystack = sourceText.toLowerCase();
+  const spans: SourceHighlightSpan[] = [];
+  for (const row of rows) {
+    if (row.isNotRelevant) continue;
+    const citation = String(row.question.citation || '').trim();
+    if (citation.length < 8) continue;
+    const start = haystack.indexOf(citation.toLowerCase());
+    if (start === -1) continue;
+    spans.push({ start, end: start + citation.length, correct: row.correct });
+  }
+  if (spans.length === 0) return null;
+  spans.sort((a, b) => a.start - b.start || a.end - b.end);
+  const merged: SourceHighlightSpan[] = [];
+  for (const span of spans) {
+    const last = merged[merged.length - 1];
+    if (last && span.start < last.end) {
+      last.end = Math.max(last.end, span.end);
+      if (!span.correct) last.correct = false;
+      continue;
+    }
+    merged.push({ ...span });
+  }
+  const segments: Array<{ text: string; correct?: boolean }> = [];
+  let cursor = 0;
+  for (const span of merged) {
+    if (span.start > cursor) segments.push({ text: sourceText.slice(cursor, span.start) });
+    segments.push({ text: sourceText.slice(span.start, span.end), correct: span.correct });
+    cursor = span.end;
+  }
+  if (cursor < sourceText.length) segments.push({ text: sourceText.slice(cursor) });
+  return {
+    segments,
+    weakCount: merged.filter((s) => !s.correct).length,
+    okCount: merged.filter((s) => s.correct).length,
+  };
+}
+
 function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRestart, studysetId, taskId }: { quiz: Quiz; answers: AnswerMap; signals: AdaptivePerformanceSignal[]; runtimeSettings?: QuizRuntimeSettings; sourceText: string; notRelevantIds?: Set<string>; onRestart?: () => void; studysetId?: string; taskId?: string }) {
+  // Self-grade overrides: lets the learner approve/reject the auto-graded verdict
+  // on short-answer questions, which are matched with strict normalized string
+  // equality and can false-negative on a correct answer phrased differently.
+  const [selfGradeOverrides, setSelfGradeOverrides] = useState<Record<string, boolean>>({});
+
   const rows = useMemo(
     () =>
       quiz.questions.map((question, index) => {
         const answer = answers[question.id];
         const acc = getQuestionAccuracy(question, answer);
         const isNotRelevant = notRelevantIds?.has(question.id) ?? false;
+        const override = selfGradeOverrides[question.id];
+        const correct = override !== undefined ? override : acc.correct;
+        const accuracy = override !== undefined ? (override ? 100 : 0) : acc.accuracy;
+        const partsCorrect = override !== undefined ? (override ? acc.partsTotal : 0) : acc.partsCorrect;
         return {
           idx: index,
           id: question.id,
@@ -2062,15 +2116,17 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
           difficulty: question.difficulty || 5,
           given: formatAnswer(question, answer),
           correctValue: getCorrectAnswerText(question),
-          accuracy: acc.accuracy,
-          partsCorrect: acc.partsCorrect,
+          accuracy,
+          partsCorrect,
           partsTotal: acc.partsTotal,
-          correct: acc.correct,
+          correct,
+          autoCorrect: acc.correct,
+          overridden: override !== undefined,
           responseMs: Number(signals[index]?.responseMs || 0),
           isNotRelevant,
         };
       }),
-    [answers, notRelevantIds, quiz.questions, signals]
+    [answers, notRelevantIds, quiz.questions, signals, selfGradeOverrides]
   );
 
   const scoredRows = rows.filter((r) => !r.isNotRelevant);
@@ -2148,14 +2204,33 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
     .map(([type, s]) => ({ type, score: Math.round(s.scoreSum / Math.max(1, s.total)) }))
     .sort((a, b) => a.score - b.score);
 
-  // ── Combined keep-training (all wrong questions together) ─────────────────────
+  // ── One-click continue (all wrong questions together, generates immediately) ──
   const allWrongQTexts = wrongRows.map((r) => r.question.question);
+  const weakestCategories = categoryScores.filter((c) => c.score < 80).map((c) => c.cat).slice(0, 2);
+  // Flashcards already auto-generates from a bare ?sourceText= param; quiz and notes
+  // need &autostart=1 to skip their settings screen and generate right away.
   const openTrainTool = (tool: 'quiz' | 'flashcards' | 'notes') => {
     const focusBlock = allWrongQTexts.length
       ? `\n\nFocus on these incorrectly answered questions — make sure to cover these specific concepts:\n${allWrongQTexts.map((q, i) => `${i + 1}. ${q}`).join('\n')}`
       : '';
-    window.location.href = `/tools/${tool}?sourceText=${encodeURIComponent(sourceText + focusBlock)}`;
+    const autostart = tool === 'flashcards' ? '' : '&autostart=1';
+    window.location.href = `/tools/${tool}?sourceText=${encodeURIComponent(sourceText + focusBlock)}${autostart}`;
   };
+
+  // ── Weak-spot source highlighting + one-click retest ──────────────────────────
+  const sourceHighlights = useMemo(() => buildSourceHighlights(sourceText, rows), [sourceText, rows]);
+  const weakCitations = scoredRows
+    .filter((r) => !r.correct && r.question.citation)
+    .map((r) => r.question.citation as string);
+  const retestWeakSpots = () => {
+    const focusBlock = weakCitations.length
+      ? `\n\nRetest focus — write NEW questions specifically about these passages (do not repeat earlier questions):\n${weakCitations.map((c, i) => `${i + 1}. "${c}"`).join('\n')}`
+      : (weakestCategories.length ? `\n\nRetest focus — write NEW questions specifically about these topics: ${weakestCategories.join(', ')}.` : '');
+    window.location.href = `/tools/quiz?sourceText=${encodeURIComponent(sourceText + focusBlock)}&autostart=1`;
+  };
+
+  // ── Self-grade approve/reject for short-answer questions ──────────────────────
+  const shortAnswerRows = scoredRows.filter((r) => r.type === 'short-answer' && r.answer !== undefined);
 
   // ── Modal question expand ─────────────────────────────────────────────────────
   const [modalIdx, setModalIdx] = useState<number | null>(null);
@@ -2339,6 +2414,47 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
             </div>
           </div>
 
+          {/* ── Weak-spot source highlights + retest ─────────────────────────── */}
+          {sourceHighlights && (
+            <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+              <div className="border-b border-border/60 bg-muted/20 px-5 py-3">
+                <p className="text-[12px] text-muted-foreground">Source passage — answered correctly vs. answered wrong</p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="max-h-[220px] overflow-auto whitespace-pre-wrap text-[13px] leading-[1.7] text-foreground/80">
+                  {sourceHighlights.segments.map((seg, i) =>
+                    seg.correct === undefined ? (
+                      <span key={i}>{seg.text}</span>
+                    ) : (
+                      <span
+                        key={i}
+                        className={seg.correct
+                          ? 'rounded bg-emerald-100 px-0.5 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                          : 'rounded bg-red-100 px-0.5 text-red-700 dark:bg-red-900/40 dark:text-red-300'}
+                      >
+                        {seg.text}
+                      </span>
+                    )
+                  )}
+                </p>
+                <div className="mt-3 flex items-center gap-4 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" /> Answered correctly ({sourceHighlights.okCount})</span>
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red-400" /> Answered wrong — will be retested ({sourceHighlights.weakCount})</span>
+                </div>
+                {sourceHighlights.weakCount > 0 && (
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/[0.06] px-4 py-3">
+                    <p className="text-[12px] text-foreground">
+                      Retest <span className="text-[var(--accent-brand)]">{sourceHighlights.weakCount} weak passage{sourceHighlights.weakCount > 1 ? 's' : ''}</span> — new questions, full source context. Generates immediately, no settings shown.
+                    </p>
+                    <Button size="sm" className="h-8 shrink-0 text-[12px]" onClick={retestWeakSpots}>
+                      Retest weak spots
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ── 2-column body ─────────────────────────────────────────────────── */}
           <div className="grid grid-cols-[1fr_300px] gap-4 items-start">
 
@@ -2436,10 +2552,10 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                 )}
               </div>
 
-              {/* Keep training — ALL wrong combined */}
+              {/* Continue — one-click, no settings screen, biased toward weak topics */}
               <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
                 <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
-                  <p className="text-[12px] text-muted-foreground">Keep training</p>
+                  <p className="text-[12px] text-muted-foreground">Continue</p>
                 </div>
                 {wrongRows.length === 0 ? (
                   <div className="px-4 py-4 text-center">
@@ -2447,25 +2563,66 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                     <p className="mt-0.5 text-[10px] text-muted-foreground">Nothing to retrain.</p>
                   </div>
                 ) : (
-                  <div className="px-4 py-3.5">
-                    <p className="text-[11px] text-muted-foreground mb-3 leading-relaxed">
-                      {wrongRows.length} incorrect question{wrongRows.length > 1 ? 's' : ''} — practise all of them together:
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {(['quiz', 'flashcards', 'notes'] as const).map((tool) => (
-                        <button
-                          key={tool}
-                          type="button"
-                          onClick={() => openTrainTool(tool)}
-                          className="rounded-lg border border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/[0.07] px-3 py-2 text-[12px] text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.13] capitalize transition-colors"
-                        >
-                          {tool === 'quiz' ? 'New quiz' : tool === 'flashcards' ? 'Flashcards' : 'Notes'}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="px-4 py-3.5 space-y-2">
+                    {([
+                      { tool: 'quiz' as const, label: 'Continue with Quiz', sub: `${wrongRows.length} new question${wrongRows.length > 1 ? 's' : ''}${weakestCategories.length ? `, focused on ${weakestCategories.join(' & ')}` : ''}` },
+                      { tool: 'flashcards' as const, label: 'Continue with Flashcards', sub: weakestCategories.length ? `Cards built from ${weakestCategories.join(' & ')}` : 'Cards built from your missed questions' },
+                      { tool: 'notes' as const, label: 'Continue with Notes', sub: 'Summary notes on what you missed' },
+                    ]).map((tile) => (
+                      <button
+                        key={tile.tool}
+                        type="button"
+                        onClick={() => openTrainTool(tile.tool)}
+                        className="block w-full rounded-xl border border-border bg-muted/10 px-3 py-2.5 text-left hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/[0.06] transition-colors"
+                      >
+                        <p className="text-[12.5px] text-foreground">{tile.label}</p>
+                        <p className="mt-0.5 text-[10.5px] text-muted-foreground">{tile.sub}</p>
+                      </button>
+                    ))}
+                    <p className="pt-1 text-[10px] text-muted-foreground">No setup screen — generates immediately and opens when ready.</p>
                   </div>
                 )}
               </div>
+
+              {/* Open-answer review — self-grade approve/reject */}
+              {shortAnswerRows.length > 0 && (
+                <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
+                  <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
+                    <p className="text-[12px] text-muted-foreground">Open-answer review</p>
+                  </div>
+                  <div className="divide-y divide-border/40">
+                    {shortAnswerRows.map((row) => (
+                      <div key={row.id} className="px-4 py-3">
+                        <p className="text-[11.5px] text-foreground line-clamp-2">Q{row.idx + 1} — {row.question.question}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground line-clamp-1">Your answer: &ldquo;{row.given || '—'}&rdquo;</p>
+                        <div className="mt-1.5 flex items-center justify-between gap-2">
+                          <span className={`text-[10px] ${row.correct ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                            {row.overridden ? 'You marked: ' : 'Auto-graded: '}{row.correct ? 'Correct' : 'Incorrect'}{!row.overridden ? ' (exact match)' : ''}
+                          </span>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label="Approve as correct"
+                              onClick={() => setSelfGradeOverrides((prev) => ({ ...prev, [row.id]: true }))}
+                              className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${row.correct ? 'border-emerald-400 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'border-border bg-background text-muted-foreground hover:text-emerald-600'}`}
+                            >
+                              <IconCheck size={9} strokeWidth={2} />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label="Reject as incorrect"
+                              onClick={() => setSelfGradeOverrides((prev) => ({ ...prev, [row.id]: false }))}
+                              className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${!row.correct ? 'border-red-400 bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'border-border bg-background text-muted-foreground hover:text-red-600'}`}
+                            >
+                              <IconX size={9} strokeWidth={2} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* By question type */}
               {typeScores.length > 1 && (

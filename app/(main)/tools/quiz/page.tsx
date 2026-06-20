@@ -191,6 +191,7 @@ function QuizPageContent() {
   const studysetId = searchParams.get('studysetId');
   const launchRequested = searchParams.get('launch') === '1';
   const launchMode = searchParams.get('mode') || '';
+  const autostartRequested = searchParams.get('autostart') === '1';
 
   const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
@@ -229,6 +230,7 @@ function QuizPageContent() {
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
   const launchHandledRef = useRef(false);
+  const autostartHandledRef = useRef(false);
 
   // Classify source text after user stops typing (800 ms debounce — instant regex)
   useEffect(() => {
@@ -590,6 +592,15 @@ function QuizPageContent() {
 
     void runLaunch();
   }, [handleGenerate, launchMode, launchRequested, studysetId, taskId, toast]);
+
+  // One-click continue — generate immediately from a pre-filled sourceText param,
+  // skipping the settings screen (used by "Continue with Quiz" / "Retest weak spots").
+  useEffect(() => {
+    if (!autostartRequested || !sourceText.trim() || autostartHandledRef.current) return;
+    autostartHandledRef.current = true;
+    setPhase('study');
+    void handleGenerate(sourceText);
+  }, [autostartRequested, sourceText, handleGenerate]);
 
   const handleRestart = useCallback(() => {
     setQuiz(null);

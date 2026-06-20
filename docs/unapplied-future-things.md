@@ -410,6 +410,17 @@ from hallucinating what's "correct."
 - **Decision pending:** User must pick (A), (B), (C), or a hybrid before implementation.
   Until then, current (eager, non-deferred) grading behavior stays as-is.
 
+- **Lightweight override added 2026-06-20 (NOT the deferred architecture above):**
+  `QuizResults` (`app/components/tools/quiz-taker.tsx`) now has an "Open-answer
+  review" panel for `short-answer` questions with approve/reject (✓/✗) buttons.
+  This does NOT add AI grading — `short-answer` is still graded by strict
+  normalized string match against `acceptableAnswers`, exactly as before. The
+  panel just lets the learner override that strict-match verdict client-side
+  (e.g. when they phrased a correct answer differently), recomputing their own
+  score/accuracy/topic breakdown for the session. No new AI calls, no chunking,
+  no `suggested_answer`/`criteria` field — those still require the decision
+  above before being built.
+
 ### Grading rubric & anti-manipulation hardening
 
 **Semantic vs. literal grading:**
