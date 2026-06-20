@@ -86,6 +86,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
     }
     const newCard: Flashcard = {
       id: `manual-${Date.now()}`,
+      type: 'term-definition',
       front: manualFront.trim(),
       back: manualBack.trim(),
       cloze: `____ is ${manualBack.trim()}.` // Simple default cloze

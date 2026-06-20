@@ -8,7 +8,8 @@
 
 import { ai, getGoogleAIModel } from '@/ai/genkit';
 import { z } from 'genkit';
-import { FlashcardSchema } from '@/lib/types';
+import { FlashcardSchema, FLASHCARD_TYPES } from '@/lib/types';
+import { imageSearchForQuestionContext } from './image-search-for-question-context';
 
 const GenerateFlashcardsInputSchema = z.object({
   sourceText: z.string().describe('The source text from which to generate flashcards.'),
@@ -24,6 +25,7 @@ const GenerateFlashcardsInputSchema = z.object({
   explanationMode: z.enum(['literal', 'research']).optional().describe('"literal" = stick tightly to the wording and facts in the Source Text with minimal elaboration. "research" = you may connect ideas across the Source Text and must explain your reasoning via groundingNote.'),
   includeCitations: z.boolean().optional().describe('If true, populate the optional "citation" field on each card with a short reference to where in the Source Text the info came from.'),
   includeHints: z.boolean().optional().describe('If true, populate the optional "hint" field on each card with a brief memory aid / mnemonic.'),
+  enabledTypes: z.array(z.enum(FLASHCARD_TYPES)).optional().describe('Which card types are enabled for this generation run — the AI must pick one best-fitting type per card only from this set.'),
   isResearchMode: z.boolean().optional().describe('Internal derived flag — true when explanationMode is "research". Used for template branching only.'),
 });
 type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
@@ -69,7 +71,25 @@ Output style rules:
 - Keep language direct and practical. Avoid overly academic, lecture-like, or inflated wording.
 - Prefer short answers: normally 1-2 sentences on the back, max 3 only if unavoidable.
 - Keep one idea per card. Avoid long multi-part cards.
-- Match wording to this profile:
+
+Critical phrasing rule — flashcards are NOT quiz questions:
+- NEVER phrase "front" or "back" as a question. Do not use "?", and do not start with "What/Which/Who/How/When/Where/Why".
+- Both sides must read as short fragments: a term/cue on one side, a matching description/fact fragment on the other — not a question paired with its answer.
+- Correct example: front "the organ that pumps blood", back "the heart".
+- Wrong example: front "What organ pumps blood?", back "The heart".
+- This rule applies to "frontAlternatives" and "backAlternatives" too.
+
+{{#if enabledTypes}}
+Card types — for every card, pick exactly one best-fitting type from this enabled set only: {{{enabledTypes}}}. Set the "type" field accordingly.
+- "term-definition": front and back are both short fragments as described above.
+- "multiple-choice": same fragment style, but also fill "mcqOptions" with exactly 3 answer choices in shuffled order — one with text identical to "back", and two plausible same-domain distractors.
+{{#if isResearchMode}}
+- "image-card": only choose this when "front" names a concrete, photographable subject (an object, place, organism, artifact). front = the bare term/name only, back = a short description fragment. Leave "imageUrl" empty — it is filled in automatically afterward from a real image search.
+{{/if}}
+Vary the type across the deck instead of defaulting every card to the same type, but only when the content genuinely fits — never force a multiple-choice or image-card type onto content that does not suit it.
+{{/if}}
+
+Match wording to this profile:
   - Complexity: {{{complexity}}}
   - Education level (1-4): {{{educationLevel}}}
   - Region: {{{regionCode}}}
@@ -90,24 +110,29 @@ Explanation mode: "literal"
 
 For each flashcard, you must provide:
 1.  **id**: a unique, short, kebab-case string based on the front of the card.
-2.  **front**: A key term or a question.
-3.  **back**: The corresponding definition or answer.
-4.  **cloze**: A "fill-in-the-blank" sentence where the "back" of the card is the missing word. The blank should be represented by "____".
+2.  **type**: the chosen card type (see "Card types" above).
+3.  **front**: A short term or cue fragment — never a question.
+4.  **back**: The corresponding definition or fact fragment — never an answer sentence.
+5.  **cloze**: A "fill-in-the-blank" sentence where the "back" of the card is the missing word. The blank should be represented by "____".
+6.  **frontAlternatives** / **backAlternatives**: up to 2 alternative phrasings each, same fragment style, never questions. Omit a field entirely if you cannot find a genuinely different phrasing.
 {{#if includeCitations}}
-5.  **citation**: A short, literal reference to where in the Source Text this card's info came from (e.g. a short quoted fragment or a brief description of the section it came from). Omit this field for a card if you cannot point to a specific passage — never invent one.
+7.  **citation**: A short, literal reference to where in the Source Text this card's info came from (e.g. a short quoted fragment or a brief description of the section it came from). Omit this field for a card if you cannot point to a specific passage — never invent one.
 {{/if}}
 {{#if includeHints}}
-6.  **hint**: A short memory aid or mnemonic (a brief association, image cue, rhyme, or "ezelsbruggetje") that helps recall the back of the card — a few words, not a full sentence or explanation.
+8.  **hint**: A short memory aid or mnemonic (a brief association, image cue, rhyme, or "ezelsbruggetje") that helps recall the back of the card — a few words, not a full sentence or explanation.
 {{/if}}
 
 {{#if existingFlashcardIds}}
 Do not generate flashcards with front text that is identical or very similar to the text from this list: {{{existingFlashcardIds}}}.
 {{/if}}
 
-Example:
+Example (term-definition):
 - id: "mitochondria"
-- front: "Mitochondria"
-- back: "powerhouse of the cell"
+- type: "term-definition"
+- front: "the powerhouse of the cell"
+- back: "the mitochondria"
+- frontAlternatives: ["organelle that makes ATP for the cell"]
+- backAlternatives: ["mitochondrion"]
 - cloze: "The mitochondria is often called the ____."
 - citation: "From the paragraph introducing cell organelles"
 - hint: "Power + house = energy factory"
@@ -125,6 +150,26 @@ Image Context:
       ...input,
       isResearchMode: input.explanationMode === 'research',
     });
-    return output!;
+    const result = output!;
+
+    const imageCards = result.flashcards.filter((card) => card.type === 'image-card');
+    if (imageCards.length > 0) {
+      await Promise.all(
+        imageCards.map(async (card) => {
+          try {
+            const { results } = await imageSearchForQuestionContext({ sourceText: card.front, limit: 3 });
+            if (results[0]?.imageUrl) {
+              card.imageUrl = results[0].imageUrl;
+            } else {
+              card.type = 'term-definition';
+            }
+          } catch {
+            card.type = 'term-definition';
+          }
+        })
+      );
+    }
+
+    return result;
   }
 );

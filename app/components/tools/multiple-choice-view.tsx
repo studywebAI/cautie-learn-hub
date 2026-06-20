@@ -29,6 +29,14 @@ const hashString = (value: string) => {
 };
 
 function buildChoices(card: Flashcard, allCards: Flashcard[]): ChoiceOption[] {
+  if (card.type === 'multiple-choice' && card.mcqOptions && card.mcqOptions.length > 0) {
+    return card.mcqOptions.map((option) => ({
+      id: option.id,
+      text: option.text,
+      isCorrect: option.text.trim() === card.back.trim(),
+    }));
+  }
+
   const pool = allCards.filter((item) => item.id !== card.id && item.back?.trim());
 
   const sortedPool = [...pool].sort((a, b) => {

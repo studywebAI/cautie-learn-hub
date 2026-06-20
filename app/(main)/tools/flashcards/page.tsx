@@ -36,6 +36,32 @@ import { SkeletonGroup, SkeletonCard } from '@/components/ui/skeleton';
 
 type Phase = 'input' | 'options' | 'study';
 
+type FlashcardTypeDefinition = {
+  value: 'term-definition' | 'multiple-choice' | 'image-card';
+  label: string;
+  description: string;
+  requiresResearchMode?: boolean;
+};
+
+const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
+  {
+    value: 'term-definition',
+    label: 'Term & Definition',
+    description: 'A term/cue fragment on one side, a matching description fragment on the other',
+  },
+  {
+    value: 'multiple-choice',
+    label: 'Multiple Choice',
+    description: 'Same term/cue fragment, but the back is also offered as answer choices to pick from',
+  },
+  {
+    value: 'image-card',
+    label: 'Image Card',
+    description: 'Front shows a photo of the term, back is a short description — only available in Research mode',
+    requiresResearchMode: true,
+  },
+];
+
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
   if (!value) return 'flip';
   if (value === 'write' || value === 'type') return 'multiple-choice';
@@ -86,6 +112,7 @@ function FlashcardsPageContent() {
   const [showCitations, setShowCitations] = useState(true);
   const [mnemonicHints, setMnemonicHints] = useState(true);
   const [explanationMode, setExplanationMode] = useState<'literal' | 'research'>('literal');
+  const [enabledCardTypes, setEnabledCardTypes] = useState<string[]>(['term-definition']);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
@@ -154,6 +181,25 @@ function FlashcardsPageContent() {
     []
   );
 
+  const visibleCardTypes = React.useMemo(
+    () => FLASHCARD_TYPE_DEFINITIONS.filter((t) => !t.requiresResearchMode || explanationMode === 'research'),
+    [explanationMode]
+  );
+
+  useEffect(() => {
+    setEnabledCardTypes((prev) => {
+      const allowed = prev.filter((v) => visibleCardTypes.some((t) => t.value === v));
+      return allowed.length > 0 ? allowed : ['term-definition'];
+    });
+  }, [visibleCardTypes]);
+
+  const toggleCardType = (value: string) => {
+    setEnabledCardTypes((prev) => {
+      const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+      return next.length > 0 ? next : prev;
+    });
+  };
+
   const handleGenerate = useCallback(async (
     text: string,
     overrides?: Partial<{
@@ -210,6 +256,7 @@ function FlashcardsPageContent() {
             explanationMode,
             includeCitations: showCitations,
             includeHints: mnemonicHints,
+            enabledTypes: enabledCardTypes,
             flashcardsOptions: {
               activeRecallOnly,
               interleavingMode,
@@ -259,7 +306,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, errorTagging, explanationMode, flashcardCount, imageDataUri, interleavingMode, language, memoryStrengthMeter, mnemonicHints, region, saveToRecents, schoolingLevel, semanticLinking, showCitations, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
+  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, enabledCardTypes, errorTagging, explanationMode, flashcardCount, imageDataUri, interleavingMode, language, memoryStrengthMeter, mnemonicHints, region, saveToRecents, schoolingLevel, semanticLinking, showCitations, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -349,6 +396,15 @@ function FlashcardsPageContent() {
     if (s('showCitations') === 'false') setShowCitations(false);
     if (s('mnemonicHints') === 'false') setMnemonicHints(false);
     if (s('explanationMode') === 'research') setExplanationMode('research');
+    const storedTypes = s('enabledCardTypes');
+    if (storedTypes) {
+      try {
+        const parsed = JSON.parse(storedTypes);
+        if (Array.isArray(parsed) && parsed.length > 0) setEnabledCardTypes(parsed);
+      } catch {
+        // ignore malformed value
+      }
+    }
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
@@ -365,6 +421,7 @@ function FlashcardsPageContent() {
   useEffect(() => { localStorage.setItem('tools.flashcards.showCitations', String(showCitations)); }, [showCitations]);
   useEffect(() => { localStorage.setItem('tools.flashcards.mnemonicHints', String(mnemonicHints)); }, [mnemonicHints]);
   useEffect(() => { localStorage.setItem('tools.flashcards.explanationMode', explanationMode); }, [explanationMode]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.enabledCardTypes', JSON.stringify(enabledCardTypes)); }, [enabledCardTypes]);
 
   useEffect(() => {
     if (!advancedSettings || advancedHydratedRef.current) return;
@@ -628,6 +685,59 @@ function FlashcardsPageContent() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Card Types */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Types</p>
+                <span className="text-[11px] text-muted-foreground">{enabledCardTypes.length} selected</span>
+              </div>
+              <div className="rounded-lg border border-border/60 overflow-visible bg-card">
+                {visibleCardTypes.map((typeDef, idx, arr) => {
+                  const isSelected = enabledCardTypes.includes(typeDef.value);
+                  const isFirst = idx === 0;
+                  const isLast = idx === arr.length - 1;
+                  return (
+                    <div
+                      key={typeDef.value}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleCardType(typeDef.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && toggleCardType(typeDef.value)}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-b-0 transition-all ${isFirst ? 'rounded-t-lg' : ''} ${isLast ? 'rounded-b-lg' : ''} ${isSelected ? 'bg-[var(--accent-brand)]/10' : 'hover:bg-muted/40'}`}
+                    >
+                      <div
+                        className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                          isSelected
+                            ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
+                            : 'border-muted-foreground/25 hover:border-[var(--accent-brand)]/50'
+                        }`}
+                      >
+                        {isSelected && <span className="block h-[6px] w-[6px] rounded-full bg-white" />}
+                      </div>
+                      <span className={`text-[13px] flex-1 ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {typeDef.label}
+                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); }}
+                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
+                          >
+                            i
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[224px] text-[11px]">
+                          {typeDef.description}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground/70">The AI picks the best-fitting type per card from your selection — cards stay as term/cue fragments, never phrased as quiz questions.</p>
             </div>
 
             {/* Card extras: citations, hints */}
