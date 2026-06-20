@@ -319,14 +319,6 @@ function NotesPageContent() {
     }
   }, [state1LinkUrl, toast]);
 
-  const launchStages: Array<{ title: string; detail: string }> = [
-    { title: 'Opening study task', detail: 'Loading your saved studyset plan and task settings.' },
-    { title: 'Retrieving context sources', detail: 'Collecting source text and selected materials.' },
-    { title: 'Preparing note structure', detail: 'Applying title, style, audience, and length settings.' },
-    { title: 'Generating notes', detail: 'Building clean notes from your selected study content.' },
-    { title: 'Finalizing workspace', detail: 'Opening notes with the generated output ready to edit.' },
-  ];
-
   const resolveComputeClass = (textLength: number): 'light' | 'standard' | 'heavy' => {
     const budget = advancedSettings?.safety.performance_budget || 'auto';
     if (budget === 'low') return 'light';
@@ -1173,18 +1165,11 @@ function NotesPageContent() {
 
 
   if (showLaunchScreen) {
-    const currentStage = launchStages[Math.min(launchStageIndex, launchStages.length - 1)];
     return (
       <>
       <div className="h-full overflow-auto p-4 md:p-6">
         <div className="mx-auto flex min-h-[52vh] w-full max-w-3xl items-center justify-center">
-          <div className="w-full rounded-2xl border border-border surface-panel p-5 md:p-6">
-            <div className="mb-3 flex items-center gap-3 text-sm text-foreground">
-              <Spinner size={20} />
-              <span className="font-medium">{currentStage.title}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">{currentStage.detail}</p>
-          </div>
+          <Spinner size={28} />
         </div>
       </div>
       </>

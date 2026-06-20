@@ -110,7 +110,7 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         scan: "scan 3s ease-in-out infinite",
-        "fade-spin": "fade-spin 1.2s linear infinite",
+        "fade-spin": "fade-spin 0.8s linear infinite",
       },
     },
   },

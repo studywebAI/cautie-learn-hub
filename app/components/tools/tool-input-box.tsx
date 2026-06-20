@@ -146,8 +146,8 @@ function AttachmentCard({
           className="h-[72px] w-[96px] object-cover rounded-lg border border-border"
         />
         {attachment.kind === 'screenshot' && (
-          <span className="absolute bottom-1 left-1 text-[9px] font-semibold bg-black/60 text-white px-1 rounded">
-            SCREENSHOT
+          <span className="absolute bottom-1 left-1 text-[10px] bg-black/60 text-white px-1 rounded">
+            Screenshot
           </span>
         )}
         <button
@@ -166,14 +166,14 @@ function AttachmentCard({
     <div className={`relative flex-shrink-0 group w-[120px] h-[72px] rounded-lg border border-muted/40 p-2 flex flex-col justify-between overflow-hidden transition-colors ${
       attachment.kind === 'url' ? 'bg-muted/20' : 'bg-muted/10'
     }`}>
-      <p className="text-[10px] text-muted-foreground leading-snug line-clamp-3 flex-1 break-all">
+      <p className="text-[9px] text-muted-foreground leading-snug line-clamp-4 flex-1 break-words [overflow-wrap:break-word] [word-break:normal]">
         {attachment.kind === 'url' ? (attachment.url ? formatUrlForDisplay(attachment.url) : attachment.label) : (attachment.previewText || attachment.label)}
       </p>
       <div className="flex items-center gap-1 mt-1">
         {attachment.kind === 'file' && <FileText className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />}
         {attachment.kind === 'url' && <Link className="h-2.5 w-2.5 text-muted-foreground flex-shrink-0" />}
-        <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wide truncate">
-          {attachment.kind === 'pasted' ? 'PASTED' : attachment.kind === 'url' ? 'LINK' : attachment.kind.toUpperCase()}
+        <span className="text-[10px] text-muted-foreground truncate">
+          {attachment.kind === 'pasted' ? 'Pasted' : attachment.kind === 'url' ? 'Link' : attachment.kind.charAt(0).toUpperCase() + attachment.kind.slice(1).toLowerCase()}
         </span>
       </div>
       <button

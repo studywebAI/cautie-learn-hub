@@ -127,8 +127,6 @@ export default function ToolsPage() {
             <div className="absolute inset-0 animate-ping rounded-full bg-[var(--accent-brand)]/15" />
             <Spinner size={28} />
           </div>
-          <p className="text-sm font-medium text-foreground">Analysing your content…</p>
-          <p className="text-xs text-muted-foreground">Figuring out which tools will work best</p>
         </div>
       )}
 

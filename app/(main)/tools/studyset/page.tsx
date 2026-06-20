@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { PageSection } from '@/components/layout/page-section';
@@ -204,6 +205,7 @@ export default function StudysetPage() {
   const [notesText, setNotesText] = useState('');
   const [pastedText, setPastedText] = useState('');
   const [uploads, setUploads] = useState<UploadMeta[]>([]);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
 
   // Source method — the 3-option scheme: start from an agenda item (class template),
   // a real subject/chapter/paragraph from the curriculum, or a basic upload.
@@ -493,6 +495,7 @@ export default function StudysetPage() {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
+    setIsUploadingFiles(true);
     const mapped = await Promise.all(
       files.map(async (file) => {
         try {
@@ -549,6 +552,7 @@ export default function StudysetPage() {
         description: `${missingTextCount} file${missingTextCount === 1 ? '' : 's'} will be ignored until extraction succeeds.`,
       });
     }
+    setIsUploadingFiles(false);
   };
 
   const disconnectMicrosoft = async () => {
@@ -1287,7 +1291,12 @@ export default function StudysetPage() {
                         onChange={handleUploadChange}
                       />
                     </label>
-                    {uploads.length > 0 && (
+                    {isUploadingFiles && (
+                      <div className="mt-3 flex items-center justify-center rounded-lg border border-border bg-background px-3 py-4">
+                        <Spinner size={18} />
+                      </div>
+                    )}
+                    {!isUploadingFiles && uploads.length > 0 && (
                       <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3">
                         {uploads.map((file) => (
                           <div key={`${file.name}-${file.size}`} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">

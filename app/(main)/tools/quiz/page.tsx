@@ -11,7 +11,7 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { PageHeader } from '@/components/ui/page-header';
@@ -679,8 +679,8 @@ function QuizPageContent() {
       { value: 'adaptive', label: 'Adaptive', desc: 'Automatically adjust difficulty' },
     ] as const;
 
-    // shared section header style — same as sidebar labels
-    const S = 'text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground';
+    // shared section header style — slightly larger than body text, no bold/caps
+    const S = 'text-[14px] text-foreground/90';
 
     return (
       <div className="h-full flex flex-col">
@@ -748,21 +748,10 @@ function QuizPageContent() {
                         {typeDef.label}
                       </span>
 
-                      {/* Info circle — shows description on hover */}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); }}
-                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-                          >
-                            i
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[224px] text-[11px]">
-                          {typeDef.description}
-                        </TooltipContent>
-                      </Tooltip>
+                      {/* Info circle — shows description on click */}
+                      <InfoTooltip contentClassName="max-w-[224px]">
+                        {typeDef.description}
+                      </InfoTooltip>
 
                       {/* Expand chevron — for variants, not description */}
                       <button
@@ -816,14 +805,9 @@ function QuizPageContent() {
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className={S}>Quiz title (optional)</p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[224px] text-[11px]">
-                      Give your quiz a name. This appears in your results.
-                    </TooltipContent>
-                  </Tooltip>
+                  <InfoTooltip contentClassName="max-w-[224px]">
+                    Give your quiz a name. This appears in your results.
+                  </InfoTooltip>
                 </div>
                 <Input
                   value={title}
@@ -854,16 +838,11 @@ function QuizPageContent() {
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>What mode do you want?</p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[200px] space-y-1.5 text-[11px]">
-                      <p><span className="font-medium text-foreground">Classic</span> — all answers shown at the end.</p>
-                      <p><span className="font-medium text-foreground">Assisted</span> — feedback after each question.</p>
-                      <p><span className="font-medium text-foreground">Adaptive</span> — difficulty adjusts automatically.</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <InfoTooltip contentClassName="max-w-[200px]">
+                    <p><span className="text-foreground">Classic</span> — all answers shown at the end.</p>
+                    <p><span className="text-foreground">Assisted</span> — feedback after each question.</p>
+                    <p><span className="text-foreground">Adaptive</span> — difficulty adjusts automatically.</p>
+                  </InfoTooltip>
                 </div>
                 <div className="space-y-1">
                   {modeEntries.map((e) => (
@@ -889,15 +868,10 @@ function QuizPageContent() {
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
                   <p className={S}>When do you want feedback?</p>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[200px] space-y-1.5 text-[11px]">
-                      <p><span className="font-medium text-foreground">At the end</span> — see all answers after finishing.</p>
-                      <p><span className="font-medium text-foreground">Immediately</span> — know if you're right after each question.</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <InfoTooltip contentClassName="max-w-[200px]">
+                    <p><span className="text-foreground">At the end</span> — see all answers after finishing.</p>
+                    <p><span className="text-foreground">Immediately</span> — know if you're right after each question.</p>
+                  </InfoTooltip>
                 </div>
                 <div className="flex gap-1.5">
                   {([
@@ -929,14 +903,9 @@ function QuizPageContent() {
                     <span className="text-[13px] font-medium text-[var(--accent-brand)]">
                       {mode === 'adaptive' ? '∞' : questionCount}
                     </span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button type="button" className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none">i</button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-[224px] text-[11px]">
-                        {mode === 'adaptive' ? 'Unlimited in adaptive mode.' : 'Minimum 3, maximum 25. Adaptive mode overrides this to unlimited.'}
-                      </TooltipContent>
-                    </Tooltip>
+                    <InfoTooltip contentClassName="max-w-[224px]">
+                      {mode === 'adaptive' ? 'Unlimited in adaptive mode.' : 'Minimum 3, maximum 25. Adaptive mode overrides this to unlimited.'}
+                    </InfoTooltip>
                   </div>
                 </div>
                 <Slider
@@ -1009,20 +978,10 @@ function QuizPageContent() {
           </button>
         ))}
         {/* Info tooltip */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-            >
-              i
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[240px] space-y-1.5 text-[11px]">
-            <p><span className="font-medium text-foreground">Literal</span> — questions only test what's explicitly in your text.</p>
-            <p><span className="font-medium text-foreground">Research</span> — questions may go beyond your text. You can skip irrelevant ones.</p>
-          </TooltipContent>
-        </Tooltip>
+        <InfoTooltip contentClassName="max-w-[240px]">
+          <p><span className="text-foreground">Literal</span> — questions only test what's explicitly in your text.</p>
+          <p><span className="text-foreground">Research</span> — questions may go beyond your text. You can skip irrelevant ones.</p>
+        </InfoTooltip>
       </div>
     );
 
@@ -1036,7 +995,7 @@ function QuizPageContent() {
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">Create a Quiz</h1>
+              <h1 className="text-2xl tracking-tight">Create a Quiz</h1>
               <p className="text-sm text-muted-foreground">
                 Paste your notes, upload a file, or drop a link
               </p>
@@ -1082,7 +1041,6 @@ function QuizPageContent() {
       >
         <div className="flex h-full flex-col items-center justify-center gap-3">
           <Spinner size={28} />
-          <p className="text-sm text-muted-foreground">Analyzing your content…</p>
         </div>
       </WorkbenchShell>
     );
@@ -1128,10 +1086,7 @@ function QuizPageContent() {
   // Fallback - should not reach here
   return (
     <div className="h-full flex items-center justify-center">
-      <div className="text-center space-y-2">
-        <h2 className="text-lg font-semibold">Quiz Generator</h2>
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+      <Spinner size={28} />
     </div>
   );
 }

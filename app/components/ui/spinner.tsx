@@ -6,9 +6,10 @@ type SpinnerProps = {
   className?: string;
 };
 
-const bars = Array.from({ length: 12 }, (_, i) => ({
-  rotate: i * 30,
-  delay: i * 0.1,
+const BAR_COUNT = 16;
+const bars = Array.from({ length: BAR_COUNT }, (_, i) => ({
+  rotate: i * (360 / BAR_COUNT),
+  delay: i * (0.8 / BAR_COUNT),
 }));
 
 export function Spinner({ size = 20, color = 'var(--accent-brand)', className }: SpinnerProps) {

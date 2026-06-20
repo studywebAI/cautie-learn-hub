@@ -8,20 +8,34 @@
 
 ## Typography
 
-### Heading Sizes
-- **Page Title (H1):** `text-2xl md:text-3xl font-semibold` (32px / 48px on desktop)
-- **Section Title (H2):** `text-xl font-semibold` (20px)
-- **Subsection (H3):** `text-lg font-semibold` (18px)
-- **Label/Overline:** `text-[10px] font-semibold uppercase tracking-[0.5px]` (10px, all caps)
+### Core rule: no bold, no all-caps — use size to emphasize
+
+Never use `font-bold`/`font-semibold` and never use `uppercase` to highlight a
+heading, label, or category. Emphasis is expressed only by making the text
+**slightly larger** than the text around it, with normal weight and normal
+case (sentence case, except where grammar requires capitals — e.g. proper
+nouns, the start of a sentence). This applies everywhere: sidebar, box
+headers inside cards, page titles, settings labels, badges/tags.
+
+The only exception is the active/selected state of a pill or chip button,
+where a filled background + white text already provides contrast — even
+there, do not add `font-semibold` on top.
+
+### Heading Sizes (relative to whatever body text sits inside the same box)
+- **Page Title (H1):** `text-2xl md:text-3xl` (no weight class)
+- **Section Title (H2):** `text-xl` (no weight class)
+- **Subsection / box header (H3):** one step larger than the box's own body
+  text — e.g. if body in the box is `text-[13px]`, the header is `text-[14px]`;
+  if body is `text-sm`, header is `text-base`. Plain sentence case.
 - **Body Text:** `text-sm` (14px) or `text-base` (16px)
 - **Small Text:** `text-xs` (12px)
-- **Caption:** `text-[10px]` (10px)
+- **Caption:** `text-[10px]`–`text-[11px]`, plain case, no weight class
 
 **Color Rules:**
 - Green accent only on username in sidebar/profiles
-- Use `text-foreground` for primary content
-- Use `text-muted-foreground` for secondary content
-- Use `text-[#666]` or `text-muted-foreground` for labels/overlines
+- Use `text-foreground` (or `text-foreground/90` for a header that should
+  read as slightly more prominent than muted body copy) for primary content
+- Use `text-muted-foreground` for secondary content and helper text
 - No other accent colors in body text
 
 ---
@@ -43,13 +57,13 @@
 ```tsx
 // Text input with label
 <div className="space-y-1.5">
-  <p className="text-[10px] font-semibold uppercase">Label</p>
+  <p className="text-[13px] text-foreground/90">Label</p>
   <Input className="h-9" /> // 36px height
 </div>
 
 // Pill selector with spacing
 <div className="space-y-2">
-  <p className="text-xs">Label</p>
+  <p className="text-xs text-muted-foreground">Label</p>
   <div className="flex gap-2"> {/* 8px between buttons */}
     <button />
     <button />
@@ -59,7 +73,7 @@
 // Slider with label
 <div className="space-y-2">
   <div className="flex justify-between">
-    <p className="text-[10px] uppercase">Label</p>
+    <p className="text-xs text-muted-foreground">Label</p>
     <span className="text-xs font-mono">{value}</span>
   </div>
   <Slider />
@@ -70,7 +84,7 @@
 ```tsx
 <div className="space-y-6"> {/* Major sections: 24px */}
   <div className="space-y-1.5"> {/* Title + content: 6px */}
-    <h2 className="text-sm font-semibold">Section</h2>
+    <h2 className="text-sm text-foreground/90">Section</h2>
     <p className="text-xs text-muted-foreground">Content</p>
   </div>
   
@@ -84,7 +98,7 @@
 ```tsx
 <div className="rounded-lg border border-border p-4"> {/* 16px padding */}
   <div className="space-y-3">
-    <h3 className="text-sm font-semibold">Card Title</h3>
+    <h3 className="text-sm text-foreground/90">Card Title</h3>
     <p className="text-xs text-muted-foreground">Content</p>
   </div>
 </div>
@@ -150,7 +164,7 @@ Based on Flashcards State 1, which is the approved good design:
     <div className="w-full max-w-2xl space-y-4">
       {/* Heading section */}
       <div className="space-y-1.5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl tracking-tight">
           Create Flashcards
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -383,16 +397,24 @@ Use these classes for smooth animations:
 
 ## Common Mistakes to Avoid
 
-1. **❌ Different text sizes per page** → Use `text-2xl` for all State 1 titles
-2. **❌ Inconsistent spacing** → Always use `space-y-*` classes for vertical gaps
-3. **❌ Too much green** → Restrict to username only
-4. **❌ Fast animations** → 300-400ms minimum for sidebar, 150-200ms for buttons
-5. **❌ Hard shadows** → Use subtle shadows only: `shadow-sm` or subtle borders
-6. **❌ Too many padding values** → Pick one from the spacing scale, stick to it
-7. **❌ Missing breadcrumbs** → Include on all State 2 and State 3 pages
-8. **❌ Jarring skeleton animations** → Use gentle pulse, never harsh shimmer
-9. **❌ Variable button heights** → Use `h-10` for primary, `h-9` for secondary consistently
-10. **❌ Inconsistent input heights** → Use `h-9` for normal, `h-8` for dense
+1. **❌ Bold text anywhere** → No `font-bold`/`font-semibold` on headings, labels, or
+   body text. Emphasize with a slightly larger size instead.
+2. **❌ ALL-CAPS labels/headers** → No `uppercase` styling, ever, unless the literal
+   text is a proper noun/acronym that is naturally capitalized.
+3. **❌ Different text sizes per page** → Use `text-2xl` for all State 1 titles
+4. **❌ Inconsistent spacing** → Always use `space-y-*` classes for vertical gaps
+5. **❌ Too much green** → Restrict to username only
+6. **❌ Fast animations** → 300-400ms minimum for sidebar, 150-200ms for buttons
+7. **❌ Hard shadows** → Use subtle shadows only: `shadow-sm` or subtle borders
+8. **❌ Too many padding values** → Pick one from the spacing scale, stick to it
+9. **❌ Missing breadcrumbs** → Include on all State 2 and State 3 pages
+10. **❌ Jarring skeleton animations** → Use gentle pulse, never harsh shimmer
+11. **❌ Variable button heights** → Use `h-10` for primary, `h-9` for secondary consistently
+12. **❌ Inconsistent input heights** → Use `h-9` for normal, `h-8` for dense
+13. **❌ Hover-only info tooltips** → Info-circle ("i") tooltips must open on click
+    (use `@/components/ui/info-tooltip`), never on hover only.
+14. **❌ Text next to a loading spinner** → Loaders show zero text, just the
+    spinning `Spinner` component.
 
 ---
 

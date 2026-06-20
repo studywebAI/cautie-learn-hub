@@ -23,7 +23,7 @@ import { ImportToolbar } from '@/components/tools/import-toolbar';
 import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
@@ -513,20 +513,10 @@ function FlashcardsPageContent() {
           </button>
         ))}
         {/* Info tooltip */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-            >
-              i
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-[240px] space-y-1.5 text-[11px]">
-            <p><span className="font-medium text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
-            <p><span className="font-medium text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
-          </TooltipContent>
-        </Tooltip>
+        <InfoTooltip side="bottom" contentClassName="max-w-[240px]">
+          <p><span className="text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
+          <p><span className="text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+        </InfoTooltip>
       </div>
     );
 
@@ -540,7 +530,7 @@ function FlashcardsPageContent() {
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">Create Flashcards</h1>
+              <h1 className="text-2xl tracking-tight">Create Flashcards</h1>
               <p className="text-sm text-muted-foreground">
                 Paste your notes, upload a file, or drop a link
               </p>
@@ -637,7 +627,7 @@ function FlashcardsPageContent() {
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             {/* Title section */}
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+              <p className="text-[14px] text-foreground/90">Title</p>
               <Input
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
@@ -649,7 +639,7 @@ function FlashcardsPageContent() {
 
             {/* Study Mode */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Study Mode</p>
+              <p className="text-[14px] text-foreground/90">Study Mode</p>
               <div className="flex flex-wrap gap-2">
                 {modeOptions.map((option) => (
                   <button
@@ -669,7 +659,7 @@ function FlashcardsPageContent() {
 
             {/* Card Side */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Side</p>
+              <p className="text-[14px] text-foreground/90">Card Side</p>
               <div className="flex flex-wrap gap-2">
                 {startSideOptions.map((option) => (
                   <button
@@ -690,7 +680,7 @@ function FlashcardsPageContent() {
             {/* Card Types */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Types</p>
+                <p className="text-[14px] text-foreground/90">Card Types</p>
                 <span className="text-[11px] text-muted-foreground">{enabledCardTypes.length} selected</span>
               </div>
               <div className="rounded-lg border border-border/60 overflow-visible bg-card">
@@ -719,20 +709,9 @@ function FlashcardsPageContent() {
                       <span className={`text-[13px] flex-1 ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
                         {typeDef.label}
                       </span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); }}
-                            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground/50 hover:border-[var(--accent-brand)]/40 hover:text-[var(--accent-brand)] transition-colors text-[10px] font-bold leading-none"
-                          >
-                            i
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[224px] text-[11px]">
-                          {typeDef.description}
-                        </TooltipContent>
-                      </Tooltip>
+                      <InfoTooltip contentClassName="max-w-[224px]">
+                        {typeDef.description}
+                      </InfoTooltip>
                     </div>
                   );
                 })}
@@ -742,7 +721,7 @@ function FlashcardsPageContent() {
 
             {/* Card extras: citations, hints */}
             <div className="space-y-3 border-t border-border pt-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Extras</p>
+              <p className="text-[14px] text-foreground/90">Card Extras</p>
 
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -797,7 +776,7 @@ function FlashcardsPageContent() {
             {/* Card Count */}
             <div className="space-y-2 border-t border-border pt-4">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Card Count</p>
+                <p className="text-[14px] text-foreground/90">Card Count</p>
                 <span className="text-xs font-mono">{flashcardCount}</span>
               </div>
               <Slider
@@ -812,7 +791,7 @@ function FlashcardsPageContent() {
 
             {/* Save to recents */}
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Save to Recents</p>
+              <p className="text-[14px] text-foreground/90">Save to Recents</p>
               <Switch
                 checked={saveToRecents}
                 onCheckedChange={setSaveToRecents}
@@ -821,7 +800,7 @@ function FlashcardsPageContent() {
 
             {/* Advanced settings collapse */}
             <div className="border-t border-border pt-4 space-y-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Advanced Options</p>
+              <p className="text-[14px] text-foreground/90">Advanced Options</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">Active Recall Only</p>
@@ -909,10 +888,7 @@ function FlashcardsPageContent() {
   // Fallback (should not reach here if all phases are covered)
   return (
     <div className="h-full flex items-center justify-center">
-      <div className="text-center space-y-2">
-        <h2 className="text-lg font-semibold">Flashcards</h2>
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
+      <Spinner size={28} />
     </div>
   );
 }
