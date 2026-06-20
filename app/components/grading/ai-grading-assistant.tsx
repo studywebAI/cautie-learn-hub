@@ -170,7 +170,7 @@ export function AIGradingAssistant({ submissionId, onGradingComplete, className 
           <div className="space-y-6">
             {/* Overall Score */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
+              <div className="text-4xl text-primary mb-2">
                 {result.overall_score}/100
               </div>
               <Badge className={getConfidenceColor(result.confidence_level)}>
@@ -193,7 +193,7 @@ export function AIGradingAssistant({ submissionId, onGradingComplete, className 
 
             {/* Detailed Breakdown */}
             <div>
-              <h4 className="text-lg font-semibold mb-3 flex items-center">
+              <h4 className="text-xl mb-3 flex items-center">
                 <Target className="mr-2 h-4 w-4" />
                 Criteria Breakdown
               </h4>

@@ -64,7 +64,7 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
   return (
     <div className="rounded-lg surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <p className="text-sm font-semibold">What grade do I need?</p>
+        <p className="text-sm">What grade do I need?</p>
       </div>
       <p className="text-xs text-muted-foreground">
         Calculate what you need on the next assessment to reach your target average.
@@ -98,12 +98,12 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Current average in {selectedClass}</p>
-              <p className="text-sm font-semibold">{currentAvg.toFixed(1)} over {classGrades.length} grade{classGrades.length !== 1 ? 's' : ''}</p>
+              <p className="text-sm">{currentAvg.toFixed(1)} over {classGrades.length} grade{classGrades.length !== 1 ? 's' : ''}</p>
             </div>
             {needed !== null && (
               <div className="text-right">
                 <p className="text-xs text-muted-foreground mb-0.5">Need on next test</p>
-                <p className={`text-xl font-bold ${needed > 10 ? 'text-destructive' : gradeColor(needed)}`}>
+                <p className={`text-xl ${needed > 10 ? 'text-destructive' : gradeColor(needed)}`}>
                   {needed > 10 ? 'Not possible' : needed < 0 ? 'Already there!' : needed.toFixed(1)}
                 </p>
               </div>
@@ -183,7 +183,7 @@ export default function StudentGradesPage() {
         <p className="page-subtitle mt-0.5">
           {grades.length} published grade{grades.length !== 1 ? 's' : ''}
           {overallAvg !== null && (
-            <> · overall average <span className={`font-semibold ${gradeColor(overallAvg)}`}>{overallAvg.toFixed(1)}</span></>
+            <> · overall average <span className={gradeColor(overallAvg)}>{overallAvg.toFixed(1)}</span></>
           )}
         </p>
       </div>
@@ -244,9 +244,9 @@ export default function StudentGradesPage() {
               return (
                 <div key={className} className="rounded-lg surface-panel border border-border overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                    <p className="text-sm font-semibold">{className}</p>
+                    <p className="text-base">{className}</p>
                     {classAvg !== null && (
-                      <span className={`text-sm font-bold ${gradeColor(classAvg)}`}>
+                      <span className={`text-sm ${gradeColor(classAvg)}`}>
                         avg {classAvg.toFixed(1)}
                       </span>
                     )}
@@ -270,11 +270,11 @@ export default function StudentGradesPage() {
                             {trend === 'up' && <TrendingUp className="h-3.5 w-3.5 text-green-600" />}
                             {trend === 'down' && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
                             {trend === 'flat' && idx < classGrades.length - 1 && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
-                            <span className={`text-lg font-bold tabular-nums w-12 text-right ${gradeColor(g.grade_numeric)}`}>
+                            <span className={`text-lg tabular-nums w-12 text-right ${gradeColor(g.grade_numeric)}`}>
                               {g.grade_numeric !== null ? g.grade_numeric.toFixed(1) : (g.grade_value ?? '—')}
                             </span>
                             {g.grade_numeric !== null && (
-                              <span className="text-[10px] font-semibold text-muted-foreground w-4">
+                              <span className="text-[10px] text-muted-foreground w-4">
                                 {gradeLabel(g.grade_numeric)}
                               </span>
                             )}

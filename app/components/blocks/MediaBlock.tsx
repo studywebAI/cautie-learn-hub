@@ -154,10 +154,10 @@ export const MediaBlock: React.FC<MediaBlockProps> = ({
             <div className="github-repo-card bg-white border rounded-lg p-4 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-bold">{owner[0].toUpperCase()}</span>
+                  <span className="text-sm">{owner[0].toUpperCase()}</span>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{owner}/{repo}</h3>
+                  <h3>{owner}/{repo}</h3>
                   <p className="text-sm text-gray-600">GitHub Repository</p>
                 </div>
               </div>

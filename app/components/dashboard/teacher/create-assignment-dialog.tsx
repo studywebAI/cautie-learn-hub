@@ -505,11 +505,11 @@ export function CreateAssignmentDialog({ isOpen, setIsOpen, classId }: CreateAss
                           </div>
                         </div>
                         {preset.recommended && (
-                          <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase">{t.recommended}</span>
+                          <span className="rounded-full border px-2 py-0.5 text-[11px]">{t.recommended}</span>
                         )}
                       </div>
                       <div className="mt-3 rounded-xl border border-border/80 bg-background p-2.5">
-                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                        <p className="text-[11px] font-medium text-muted-foreground">
                           {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
                         </p>
                         <div className="mt-2 space-y-2 rounded-lg border border-border/70 surface-chip p-2">

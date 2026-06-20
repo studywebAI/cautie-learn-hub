@@ -145,7 +145,7 @@ export function TodaysStudysetTasks() {
               <StreakBadge streak={primary.streak} />
             </div>
 
-            <p className="text-sm font-semibold truncate text-foreground">{primary.title}</p>
+            <p className="text-sm truncate text-foreground">{primary.title}</p>
 
             {/* Progress */}
             <div className="mt-2.5">

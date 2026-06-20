@@ -49,7 +49,7 @@ export function PageHeader({
           <div className="flex-1 min-w-0">
             <h1
               className={cn(
-                'text-xl md:text-2xl font-semibold tracking-tight leading-tight',
+                'text-xl md:text-2xl tracking-tight leading-tight',
                 'text-foreground'
               )}
             >

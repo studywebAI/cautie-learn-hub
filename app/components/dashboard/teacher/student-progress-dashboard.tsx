@@ -119,16 +119,16 @@ export function StudentProgressDashboard({ classId }: ProgressDashboardProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Student Progress</h2>
+          <h2 className="text-2xl">Student Progress</h2>
           <p className="text-muted-foreground">{data.className}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold">{data.students.length}</div>
+            <div className="text-2xl">{data.students.length}</div>
             <div className="text-sm text-muted-foreground">Students</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold">{data.assignments.length}</div>
+            <div className="text-2xl">{data.assignments.length}</div>
             <div className="text-sm text-muted-foreground">Assignments</div>
           </div>
         </div>

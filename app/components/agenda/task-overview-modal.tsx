@@ -108,11 +108,11 @@ export function TaskOverviewModal({ event, isOpen, onClose, onCompletionToggle }
                 />
               )}
               <div className={`flex-shrink-0 w-10 h-10 rounded ${style.iconBg} flex items-center justify-center ${isCompleted ? 'opacity-50' : ''}`}>
-                <span className={`text-sm font-bold ${style.iconColor}`}>{style.label}</span>
+                <span className={`text-sm ${style.iconColor}`}>{style.label}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-xl">
-                  <p className={`font-bold ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                  <p className={isCompleted ? 'line-through text-muted-foreground' : ''}>
                     {event.title}
                   </p>
                 </DialogTitle>
@@ -140,7 +140,7 @@ export function TaskOverviewModal({ event, isOpen, onClose, onCompletionToggle }
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold mb-2">Description</h4>
+              <h4 className="text-base mb-2">Description</h4>
               <p className="text-sm text-muted-foreground">
                 {(event as any).description || 'No description provided.'}
               </p>
@@ -148,7 +148,7 @@ export function TaskOverviewModal({ event, isOpen, onClose, onCompletionToggle }
 
             {(event as any).linked_content && (event as any).linked_content.length > 0 && (
               <div>
-                <h4 className="font-semibold mb-2">Linked Content</h4>
+                <h4 className="text-base mb-2">Linked Content</h4>
                 <div className="space-y-2">
                   {(event as any).linked_content.map((item: any, idx: number) => (
                     <div key={idx} className="flex items-center gap-2 text-sm">

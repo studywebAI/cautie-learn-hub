@@ -778,6 +778,14 @@
 }
 
 @layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
   .agenda-clean :is([class*="border"], [class*="divide-"]) {
     border-color: transparent !important;
     border-width: 0 !important;

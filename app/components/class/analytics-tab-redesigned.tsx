@@ -97,7 +97,7 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
     <div className="overflow-hidden rounded-[10px] border border-border bg-background">
       {/* Topbar */}
       <div className="flex items-center gap-1.5 border-b border-border bg-muted px-4 py-2.5 text-[12px] text-muted-foreground">
-        <span className="font-semibold text-foreground">
+        <span className="text-foreground">
           {isDutch ? 'Analyse' : 'Analytics'}
         </span>
       </div>
@@ -157,7 +157,7 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
           <div className="rounded-[8px] border border-border bg-background">
             {/* Column headers */}
             <div
-              className="grid gap-2 border-b border-border px-4 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60"
+              className="grid gap-2 border-b border-border px-4 py-2 text-[11px] text-muted-foreground/60"
               style={{ gridTemplateColumns: '1fr 40px 80px 48px' }}
             >
               <div>{isDutch ? 'Vak' : 'Subject'}</div>
@@ -183,12 +183,12 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
                   style={{ gridTemplateColumns: '1fr 40px 80px 48px' }}
                 >
                   {/* Subject name */}
-                  <div className="text-[13px] font-semibold text-foreground">
+                  <div className="text-[13px] text-foreground">
                     {s.name}
                   </div>
 
                   {/* Average */}
-                  <div className="text-right text-[14px] font-bold text-[var(--accent-brand)]">
+                  <div className="text-right text-[14px] text-[var(--accent-brand)]">
                     {s.avg !== null ? s.avg.toFixed(1) : '—'}
                   </div>
 
@@ -203,7 +203,7 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
                   </div>
 
                   {/* Trend */}
-                  <div className={cn('text-right text-[11px] font-semibold', trendColor)}>
+                  <div className={cn('text-right text-[11px]', trendColor)}>
                     {trendLabel}
                   </div>
                 </div>
@@ -215,7 +215,7 @@ export function AnalyticsTabRedesigned({ classId }: { classId: string }) {
         {/* Alert box (if any subject is below 5.5) */}
         {subjects.some(s => (s.avg ?? 0) < 5.5) && (
           <div className="mt-4 rounded-[6px] bg-[var(--accent-brand)]/10 px-3 py-2.5 text-[12px] text-[var(--accent-brand)]">
-            <p className="font-semibold">
+            <p className="text-[13px]">
               {isDutch
                 ? 'Let op: Sommige vakken scoren onder gemiddeld.'
                 : 'Alert: Some subjects are underperforming.'}

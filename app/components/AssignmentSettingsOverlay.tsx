@@ -45,7 +45,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           onClick={() => setOpenSection(id)}
           className="flex w-full items-center justify-between px-3 py-2 text-left"
         >
-          <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{title}</span>
+          <span className="text-xs font-medium text-muted-foreground">{title}</span>
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
         {isOpen && <div className="space-y-2 px-3 pb-3">{children}</div>}

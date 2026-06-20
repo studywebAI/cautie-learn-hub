@@ -161,7 +161,7 @@ export default function BulkImportDialog({
         <div className="space-y-4">
           {/* File upload */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">
+            <label className="text-sm">
               {isDutch ? 'CSV-bestand' : 'CSV File'}
             </label>
             <div className="flex gap-2">
@@ -185,7 +185,7 @@ export default function BulkImportDialog({
 
           {/* Text area for paste */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold">
+            <label className="text-sm">
               {isDutch ? 'Of plak CSV-inhoud' : 'Or paste CSV content'}
             </label>
             <textarea
@@ -204,7 +204,7 @@ export default function BulkImportDialog({
           {parsedData.length > 0 && (
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <label className="text-sm font-semibold">
+                <label className="text-sm">
                   {isDutch ? 'Voorbeeld' : 'Preview'} ({validRows} / {totalRows})
                 </label>
                 {validRows > 0 && <CheckCircle className="h-4 w-4 text-green-600" />}
@@ -214,16 +214,16 @@ export default function BulkImportDialog({
                 <table className="w-full text-xs">
                   <thead className="bg-muted border-b border-border">
                     <tr>
-                      <th className="text-left p-2 font-semibold text-muted-foreground">
+                      <th className="text-left p-2 text-muted-foreground">
                         {isDutch ? 'Student' : 'Student'}
                       </th>
-                      <th className="text-center p-2 font-semibold text-muted-foreground">
+                      <th className="text-center p-2 text-muted-foreground">
                         {isDutch ? 'Cijfer' : 'Grade'}
                       </th>
-                      <th className="text-center p-2 font-semibold text-muted-foreground">
+                      <th className="text-center p-2 text-muted-foreground">
                         {isDutch ? 'Gewicht' : 'Weight'}
                       </th>
-                      <th className="text-left p-2 font-semibold text-muted-foreground">
+                      <th className="text-left p-2 text-muted-foreground">
                         {isDutch ? 'Status' : 'Status'}
                       </th>
                     </tr>
@@ -252,7 +252,7 @@ export default function BulkImportDialog({
                               <span className="text-[10px]">{row.error}</span>
                             </div>
                           ) : (
-                            <div className="text-green-600 text-[10px] font-semibold">
+                            <div className="text-green-600 text-[10px]">
                               ✓ {isDutch ? 'Geldig' : 'Valid'}
                             </div>
                           )}
@@ -275,7 +275,7 @@ export default function BulkImportDialog({
 
           {/* Instructions */}
           <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
-            <p className="font-semibold">
+            <p>
               {isDutch ? 'CSV Formaat:' : 'CSV Format:'}
             </p>
             <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">

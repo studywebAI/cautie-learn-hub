@@ -113,7 +113,7 @@ export function TodayPanel({ selectedDay, events, suggestion, isGeneratingSugges
         <div className='flex justify-between items-start gap-3'>
           <div className="flex items-start gap-3 flex-1">
             <div className={`flex-shrink-0 w-8 h-8 rounded ${style.iconBg} flex items-center justify-center`}>
-              <span className={`text-xs font-bold ${style.iconColor}`}>{style.label}</span>
+              <span className={`text-xs ${style.iconColor}`}>{style.label}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{event.title}</p>

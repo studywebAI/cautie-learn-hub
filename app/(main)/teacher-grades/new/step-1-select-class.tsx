@@ -45,7 +45,7 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
     <div className="space-y-4">
       {/* Title */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold">
+        <label className="text-sm">
           {isDutch ? 'Titel' : 'Title'}
         </label>
         <Input
@@ -60,7 +60,7 @@ export default function StepOneNameInfo({ onNext, data }: StepOneProps) {
 
       {/* Description */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold">
+        <label className="text-sm">
           {isDutch ? 'Beschrijving' : 'Description'} <span className="text-muted-foreground text-xs font-normal">({isDutch ? 'optioneel' : 'optional'})</span>
         </label>
         <Textarea

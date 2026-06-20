@@ -143,7 +143,7 @@ export function TeacherDashboard() {
     <div className="flex flex-col gap-6">
       <section className="rounded-xl border border-border/70 surface-panel p-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-base font-semibold">Class Access</h2>
+          <h2 className="text-base">Class Access</h2>
           <p className="text-sm text-muted-foreground">
             Create a new class or join an existing class with a teacher code.
           </p>
@@ -175,7 +175,7 @@ export function TeacherDashboard() {
 
       <section className="rounded-xl border border-border/70 surface-panel p-4">
         <div className="mb-4 flex flex-col gap-1">
-          <h2 className="text-base font-semibold">Manage Classes</h2>
+          <h2 className="text-base">Manage Classes</h2>
           <p className="text-sm text-muted-foreground">
             Keep class settings organized from one place.
           </p>
@@ -220,7 +220,7 @@ export function TeacherDashboard() {
         {activeClasses.length === 0 && archivedClasses.length === 0 ? (
           <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed p-12 text-center">
             <div className="flex flex-col items-center gap-2">
-              <h3 className="text-2xl font-bold tracking-tight">
+              <h3 className="text-2xl tracking-tight">
                 You haven't created any classes yet.
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -252,7 +252,7 @@ export function TeacherDashboard() {
                 </div>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-border/70">
-                  <div className="grid grid-cols-[minmax(0,1fr)_130px] items-center border-b surface-interactive px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:grid-cols-[minmax(0,1.2fr)_220px_130px]">
+                  <div className="grid grid-cols-[minmax(0,1fr)_130px] items-center border-b surface-interactive px-3 py-2 text-xs font-medium text-muted-foreground md:grid-cols-[minmax(0,1.2fr)_220px_130px]">
                     <span>Class</span>
                     <span className="hidden md:block">Status</span>
                     <span className="text-right">Action</span>
@@ -319,7 +319,7 @@ export function TeacherDashboard() {
 
                 {showArchived && (
                   <div className="mt-8 space-y-4">
-                    <h2 className="text-xl font-semibold text-muted-foreground">Archived Classes</h2>
+                    <h2 className="text-xl text-muted-foreground">Archived Classes</h2>
                     {manageView === 'grid' ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {archivedClasses.map((classInfo) => (

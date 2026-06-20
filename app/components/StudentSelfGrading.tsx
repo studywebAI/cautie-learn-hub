@@ -101,7 +101,7 @@ export function StudentSelfGrading({
   return (
     <Card className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Self-Grading</h2>
+        <h2 className="text-lg mb-2">Self-Grading</h2>
         <p className="text-sm text-muted-foreground">
           Compare your answer with the correct answer and rate your performance.
         </p>

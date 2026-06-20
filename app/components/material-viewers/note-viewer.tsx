@@ -692,25 +692,25 @@ function SWOTRenderer({ data }: { data: SWOTData }) {
   return (
     <div className="grid grid-cols-2 gap-4">
       <div className="border-2 border-green-500 p-4 rounded">
-        <h3 className="text-green-700 font-bold text-center mb-2">Strengths</h3>
+        <h3 className="text-green-700 text-center mb-2">Strengths</h3>
         <ul className="list-disc list-inside">
           {data.strengths.map((item, index) => <li key={index}>{item}</li>)}
         </ul>
       </div>
       <div className="border-2 border-red-500 p-4 rounded">
-        <h3 className="text-red-700 font-bold text-center mb-2">Weaknesses</h3>
+        <h3 className="text-red-700 text-center mb-2">Weaknesses</h3>
         <ul className="list-disc list-inside">
           {data.weaknesses.map((item, index) => <li key={index}>{item}</li>)}
         </ul>
       </div>
       <div className="border-2 border-blue-500 p-4 rounded">
-        <h3 className="text-blue-700 font-bold text-center mb-2">Opportunities</h3>
+        <h3 className="text-blue-700 text-center mb-2">Opportunities</h3>
         <ul className="list-disc list-inside">
           {data.opportunities.map((item, index) => <li key={index}>{item}</li>)}
         </ul>
       </div>
       <div className="border-2 border-yellow-500 p-4 rounded">
-        <h3 className="text-yellow-700 font-bold text-center mb-2">Threats</h3>
+        <h3 className="text-yellow-700 text-center mb-2">Threats</h3>
         <ul className="list-disc list-inside">
           {data.threats.map((item, index) => <li key={index}>{item}</li>)}
         </ul>
@@ -733,7 +733,7 @@ function PESTELRenderer({ data }: { data: PESTELData }) {
     <div className="grid grid-cols-2 gap-4">
       {categories.map((category, index) => (
         <div key={index} className={`border-2 border-${category.color}-500 p-4 rounded`}>
-          <h3 className={`text-${category.color}-700 font-bold text-center mb-2`}>{category.name}</h3>
+          <h3 className={`text-${category.color}-700 text-center mb-2`}>{category.name}</h3>
           <ul className="list-disc list-inside">
             {category.items.map((item, itemIndex) => <li key={itemIndex}>{item}</li>)}
           </ul>
@@ -748,7 +748,7 @@ function KanbanRenderer({ data }: { data: KanbanData }) {
     <div className="flex gap-4 overflow-x-auto">
       {data.columns.map((column, index) => (
         <div key={index} className="min-w-64 bg-gray-100 p-4 rounded-lg">
-          <h3 className="font-bold text-center mb-3">{column.name}</h3>
+          <h3 className="text-center mb-3">{column.name}</h3>
           <div className="space-y-2">
             {column.cards.map((card, cardIndex) => (
               <div key={cardIndex} className="bg-white p-3 rounded shadow-sm border">
@@ -772,7 +772,7 @@ function VocabularyRenderer({ data }: { data: VocabularyListData }) {
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-bold text-lg text-gray-800">{word.term}</h3>
+                <h3 className="text-lg text-gray-800">{word.term}</h3>
                 {word.partOfSpeech && (
                   <span className="text-sm text-gray-500 italic">({word.partOfSpeech})</span>
                 )}

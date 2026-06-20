@@ -79,7 +79,7 @@ function LaunchPageContent() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
+            <h1 className="text-2xl leading-tight tracking-tight text-foreground">
               {taskTitle || 'Ready to study?'}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -118,7 +118,7 @@ function LaunchPageContent() {
               <BookOpen className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <p className="text-base font-semibold text-foreground">Full session</p>
+              <p className="text-base text-foreground">Full session</p>
               <p className="text-sm text-muted-foreground">Complete the planned session</p>
             </div>
           </button>

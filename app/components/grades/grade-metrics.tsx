@@ -143,7 +143,7 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
       {/* Average Grade Curve */}
       {metricsData.length > 0 && (
         <Card className="p-4">
-          <h3 className="text-sm font-semibold mb-4">
+          <h3 className="text-[15px] mb-4">
             {isDutch ? 'Gemiddelde Cijfers Vergelijking' : 'Average Grade Comparison'}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -179,7 +179,7 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
       {/* Grade Distribution */}
       {metricsData.length > 0 && (
         <Card className="p-4">
-          <h3 className="text-sm font-semibold mb-4">
+          <h3 className="text-[15px] mb-4">
             {isDutch ? 'Cijferverdeling' : 'Grade Distribution'}
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -201,29 +201,29 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
 
       {/* Statistics Table */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">
+        <h3 className="text-[15px]">
           {isDutch ? 'Statistieken' : 'Statistics'}
         </h3>
         <div className="overflow-x-auto border border-border rounded-lg">
           <table className="w-full text-xs">
             <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="text-left p-3 font-semibold text-muted-foreground">
+                <th className="text-left p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Cijferlijst' : 'Grade Set'}
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
+                <th className="text-center p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Gemiddelde' : 'Average'}
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
+                <th className="text-center p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Mediaan' : 'Median'}
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
+                <th className="text-center p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Std Dev' : 'Std Dev'}
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
+                <th className="text-center p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Min-Max' : 'Min-Max'}
                 </th>
-                <th className="text-center p-3 font-semibold text-muted-foreground">
+                <th className="text-center p-3 text-[13px] text-muted-foreground">
                   {isDutch ? 'Aantal' : 'Count'}
                 </th>
               </tr>

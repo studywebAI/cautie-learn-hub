@@ -99,7 +99,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       <div className="space-y-3">
         {!selectedClassId ? (
           <>
-            <p className="text-sm font-semibold">
+            <p className="text-sm">
               {isDutch ? 'Selecteer Klas' : 'Select Class'}
             </p>
 
@@ -116,7 +116,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold">{cls.name}</p>
+                      <p className="text-sm">{cls.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {cls.student_count || 0} {isDutch ? 'studenten' : 'students'}
                       </p>
@@ -144,7 +144,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
               </Button>
             </div>
             <div className="p-3 rounded-lg border border-[var(--accent-brand)] bg-[var(--accent-brand)]/5">
-              <p className="text-sm font-semibold">{selectedClass?.name}</p>
+              <p className="text-sm">{selectedClass?.name}</p>
               <p className="text-xs text-muted-foreground">
                 {selectedClass?.student_count || 0} {isDutch ? 'studenten' : 'students'}
               </p>
@@ -156,7 +156,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       {/* Subject Pills */}
       {selectedClassId && (
         <div className="space-y-3 pt-3 border-t border-border">
-          <p className="text-sm font-semibold">
+          <p className="text-sm">
             {isDutch ? 'Vak' : 'Subject'}
           </p>
 
@@ -189,7 +189,7 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
       {/* Weight */}
       {selectedClassId && (
         <div className="space-y-3 pt-3 border-t border-border">
-          <label className="text-sm font-semibold">
+          <label className="text-sm">
             {isDutch ? 'Gewicht/Punten' : 'Weight/Points'}
           </label>
           <Input

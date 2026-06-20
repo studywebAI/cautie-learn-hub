@@ -1461,7 +1461,7 @@ function NotesPageContent() {
   const sidebar = (
     <div className="space-y-6">
       <div className="space-y-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+        <p className="text-[10px] text-muted-foreground">Title</p>
         <Input
           value={customTitle}
           onChange={(e) => setCustomTitle(e.target.value)}
@@ -1478,7 +1478,7 @@ function NotesPageContent() {
 
       <div className="space-y-2 border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Length</p>
+          <p className="text-[10px] text-muted-foreground">Length</p>
           <span className="text-xs font-mono capitalize">{lengthLabels[length]}</span>
         </div>
         <Slider
@@ -1492,7 +1492,7 @@ function NotesPageContent() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Save to recents</p>
+        <p className="text-[10px] text-muted-foreground">Save to recents</p>
         <Switch
           checked={saveToRecents}
           onCheckedChange={setSaveToRecents}
@@ -1644,7 +1644,7 @@ function NotesPageContent() {
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">Create {pageTitle}</h1>
+              <h1 className="text-2xl tracking-tight">Create {pageTitle}</h1>
               <p className="text-sm text-muted-foreground">
                 Paste your content, upload a file, or drop a link
               </p>
@@ -1684,7 +1684,7 @@ function NotesPageContent() {
             {/* Style selection */}
             {!isWordwebPreset && !isTimelinePreset && (
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Note Style</p>
+                <p className="text-[10px] text-muted-foreground">Note Style</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {noteStyleOptions.map((option) => (
                     <button
@@ -1706,7 +1706,7 @@ function NotesPageContent() {
 
             {/* Length selection */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Length</p>
+              <p className="text-[10px] text-muted-foreground">Length</p>
               <div className="flex flex-wrap gap-2">
                 {['short', 'medium', 'long'].map((option) => (
                   <button
@@ -1726,7 +1726,7 @@ function NotesPageContent() {
 
             {/* Audience selection */}
             <div className="space-y-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Target Audience</p>
+              <p className="text-[10px] text-muted-foreground">Target Audience</p>
               <div className="flex flex-wrap gap-2">
                 {['student', 'teacher', 'parent'].map((option) => (
                   <button
@@ -1746,7 +1746,7 @@ function NotesPageContent() {
 
             {/* Title input */}
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+              <p className="text-[10px] text-muted-foreground">Title</p>
               <Input
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
@@ -2024,7 +2024,7 @@ function NotesPageContent() {
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center space-y-2">
-        <h2 className="text-lg font-semibold">{pageTitle}</h2>
+        <h2 className="text-lg">{pageTitle}</h2>
         <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </div>

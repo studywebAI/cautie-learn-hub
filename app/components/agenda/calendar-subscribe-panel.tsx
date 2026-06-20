@@ -101,7 +101,7 @@ export function CalendarSubscribePanel({ role, classes = [] }: Props) {
       <PopoverContent className="w-96 rounded-xl border border-border bg-card p-4 shadow-lg" align="end">
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Subscribe to calendar</h3>
+            <h3 className="text-sm text-foreground">Subscribe to calendar</h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Add these links to any calendar app — they auto-sync, no setup needed after that.
             </p>

@@ -44,7 +44,7 @@ export function Alerts({ alerts }: AlertsProps) {
             return (
               <AlertUI key={alert.id} className={cn(variantClasses[alert.variant])}>
                 <Icon className="h-4 w-4" />
-                <AlertTitle className="font-semibold">{alert.title}</AlertTitle>
+                <AlertTitle>{alert.title}</AlertTitle>
                 <AlertDescription>{alert.description}</AlertDescription>
               </AlertUI>
             );

@@ -88,7 +88,7 @@ export function WorkbenchShell({ title, description, children, sidebar, topAcces
                 )}
               >
                 <div className="flex items-center justify-between border-b px-4 pb-2 pt-3">
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Settings</p>
+                  <p className="text-sm font-medium text-muted-foreground">Settings</p>
                   <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setSidebarOpen(false)}>
                     Done
                   </Button>

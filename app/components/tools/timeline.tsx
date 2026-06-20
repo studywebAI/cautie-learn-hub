@@ -96,7 +96,7 @@ export function Timeline({ title = 'Timeline', initialEvents = [], onSave }: Tim
     <div className="flex flex-col gap-4 h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-3 bg-background rounded-lg border border-border">
-        <h2 className="text-sm font-semibold flex-1">{title}</h2>
+        <h2 className="text-sm flex-1">{title}</h2>
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={handleAddEvent}>
             <Plus className="h-3.5 w-3.5 mr-1.5" />

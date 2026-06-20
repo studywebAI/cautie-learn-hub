@@ -160,7 +160,7 @@ export function SubjectTopicPicker({
       </p>
 
       <div>
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Subject</p>
+        <p className="mb-2 text-[12px] font-medium text-muted-foreground">Subject</p>
         <div className="flex flex-wrap gap-2">
           {subjects.map((s) => {
             const selected = subjectId === s.id;
@@ -184,7 +184,7 @@ export function SubjectTopicPicker({
 
       {subjectId && (
         <div>
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Chapter</p>
+          <p className="mb-2 text-[12px] font-medium text-muted-foreground">Chapter</p>
           {loadingChapters ? (
             <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-6">
               <CautieLoader />
@@ -220,8 +220,8 @@ export function SubjectTopicPicker({
 
       {chapterId && (
         <div>
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-            Paragraphs <span className="font-normal normal-case text-muted-foreground/80">(optional — pick up to 6 to narrow the focus)</span>
+          <p className="mb-2 text-[12px] font-medium text-muted-foreground">
+            Paragraphs <span className="font-normal text-muted-foreground/80">(optional — pick up to 6 to narrow the focus)</span>
           </p>
           {loadingParagraphs ? (
             <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-6">
@@ -270,7 +270,7 @@ export function SubjectTopicPicker({
           <button
             type="button"
             onClick={apply}
-            className="shrink-0 rounded-lg px-4 py-2 text-xs font-semibold text-white transition-colors"
+            className="shrink-0 rounded-lg px-4 py-2 text-xs text-white transition-colors"
             style={{ backgroundColor: '#6b7c4e' }}
           >
             {appliedLabel ? 'Update focus' : 'Use this topic'}

@@ -70,7 +70,7 @@ export function TypeView({ card, onAnswered }: TypeViewProps) {
                  />
                  {isSubmitted && !isCorrect && (
                      <p className="text-sm text-center text-muted-foreground">
-                         Correct answer: <span className="font-semibold text-foreground">{card.back}</span>
+                         Correct answer: <span className="text-[15px] text-foreground">{card.back}</span>
                      </p>
                  )}
                  {isSubmitted && (

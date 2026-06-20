@@ -287,7 +287,7 @@ export function AssignmentDetailsPanel({
       {/* Content */}
       <div className="space-y-4 p-4">
         {/* Subject/Class line */}
-        <div className="text-xs uppercase tracking-[0.03em] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {subjectLine}
         </div>
 
@@ -296,11 +296,11 @@ export function AssignmentDetailsPanel({
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="h-9 text-lg font-bold"
+            className="h-9 text-lg"
             placeholder="Task title"
           />
         ) : (
-          <h2 className="text-xl font-bold text-foreground">{event.title}</h2>
+          <h2 className="text-xl text-foreground">{event.title}</h2>
         )}
 
         {/* Info block */}
@@ -367,7 +367,7 @@ export function AssignmentDetailsPanel({
         {/* Resources */}
         {resourceLinks.length > 0 && (
           <div className="space-y-2 pt-2">
-            <p className="text-xs uppercase tracking-[0.03em] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Resources
             </p>
             {resourceLinks.map((link, index) => (

@@ -119,7 +119,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(analytics.totalStudyTime / 60 * 10) / 10}h</div>
+            <div className="text-2xl">{Math.round(analytics.totalStudyTime / 60 * 10) / 10}h</div>
             <p className="text-xs text-muted-foreground">
               {analytics.totalStudyTime} minutes total
             </p>
@@ -132,7 +132,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.avgProgress}%</div>
+            <div className="text-2xl">{analytics.avgProgress}%</div>
             <Progress value={analytics.avgProgress} className="mt-2" />
           </CardContent>
         </Card>
@@ -143,7 +143,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.assignmentCompletionRate}%</div>
+            <div className="text-2xl">{analytics.assignmentCompletionRate}%</div>
             <p className="text-xs text-muted-foreground">
               {analytics.completedAssignments}/{analytics.totalAssignments} completed
             </p>
@@ -156,7 +156,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.quizPerformance.averageScore}%</div>
+            <div className="text-2xl">{analytics.quizPerformance.averageScore}%</div>
             <p className="text-xs text-muted-foreground">
               {analytics.quizPerformance.correctAnswers}/{analytics.quizPerformance.totalQuestions} correct
             </p>

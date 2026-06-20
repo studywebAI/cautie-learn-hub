@@ -297,7 +297,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         onClick={(e) => { e.stopPropagation(); void mark(s.id, 'isPresent', true); }}
                         title={isDutch ? 'Aanwezig' : 'Present'}
                         className={cn(
-                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px] font-semibold',
+                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px]',
                           att.isPresent === true
                             ? 'bg-[var(--accent-brand)] text-background'
                             : 'bg-muted text-[var(--accent-brand)] hover:bg-muted/80',
@@ -314,7 +314,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         onClick={(e) => { e.stopPropagation(); void mark(s.id, 'isPresent', false); }}
                         title={isDutch ? 'Afwezig' : 'Absent'}
                         className={cn(
-                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px] font-semibold',
+                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px]',
                           att.isPresent === false
                             ? 'bg-red-600 text-white'
                             : 'bg-muted text-red-600 hover:bg-muted/80',
@@ -334,7 +334,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         onClick={(e) => { e.stopPropagation(); void mark(s.id, 'wasTooLate', !att.wasTooLate); }}
                         title={isDutch ? 'Te laat' : 'Late'}
                         className={cn(
-                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px] font-semibold',
+                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px]',
                           att.wasTooLate
                             ? 'bg-amber-500 text-white'
                             : 'bg-muted text-amber-600 hover:bg-muted/80',
@@ -351,7 +351,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         onClick={(e) => { e.stopPropagation(); void mark(s.id, 'hasHomeworkIncomplete', !att.hasHomeworkIncomplete); }}
                         title={isDutch ? 'HW vergeten' : 'Forgot HW'}
                         className={cn(
-                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px] font-semibold',
+                          'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px]',
                           att.hasHomeworkIncomplete
                             ? 'bg-slate-600 text-white'
                             : 'bg-muted text-slate-600 hover:bg-muted/80',
@@ -369,7 +369,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                   <div className="border-t border-border/40 bg-[hsl(var(--interactive-hover))] px-4 py-3">
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Afwezigheid' : 'Absences'}</p>
+                        <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Afwezigheid' : 'Absences'}</p>
                         <p className={cn('text-[16px] mt-1',
                           absences > 2 ? 'text-red-600' : absences > 0 ? 'text-amber-600' : 'text-[var(--accent-brand)]'
                         )}>
@@ -377,7 +377,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Gemiddelde' : 'Average'}</p>
+                        <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Gemiddelde' : 'Average'}</p>
                         <p className={cn('text-[16px] mt-1',
                           avg === null ? 'text-muted-foreground' : avg >= 7 ? 'text-[var(--accent-brand)]' : avg >= 5.5 ? 'text-amber-600' : 'text-red-600'
                         )}>
@@ -385,7 +385,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         </p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide">{isDutch ? 'Status' : 'Status'}</p>
+                        <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Status' : 'Status'}</p>
                         <p className="text-[12px] mt-2">
                           {att.isPresent === true && <span className="text-[var(--accent-brand)]">✓ {isDutch ? 'Aanwezig' : 'Present'}</span>}
                           {att.isPresent === false && <span className="text-red-600">✗ {isDutch ? 'Afwezig' : 'Absent'}</span>}

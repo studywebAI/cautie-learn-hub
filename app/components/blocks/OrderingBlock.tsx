@@ -62,7 +62,7 @@ export function OrderingBlock({ data, onSubmit, submitted, isCorrect }: Ordering
   return (
     <Card className="p-4">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{data.prompt}</h3>
+        <h3 className="text-lg">{data.prompt}</h3>
 
         <div className="space-y-2">
           {order.map((itemIndex, displayIndex) => {

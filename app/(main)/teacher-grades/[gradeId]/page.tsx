@@ -191,11 +191,11 @@ export default function GradeDetailPage() {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{isDutch ? 'Gewicht' : 'Weight'}:</span>
-          <span className="font-semibold">{gradeSet.weight} pts</span>
+          <span>{gradeSet.weight} pts</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">{isDutch ? 'Gemaakt' : 'Created'}:</span>
-          <span className="font-semibold text-xs">{fmtDate(gradeSet.created_at)}</span>
+          <span className="text-xs">{fmtDate(gradeSet.created_at)}</span>
         </div>
         {gradeSet.description && (
           <div className="border-t border-border pt-1.5">
@@ -208,12 +208,12 @@ export default function GradeDetailPage() {
       {/* Stats */}
       {stats && (
         <Card className="p-3 surface-panel border border-border space-y-2">
-          <h3 className="font-semibold text-sm">{isDutch ? 'Beoordelingsvoortgang' : 'Grading Progress'}</h3>
+          <h3 className="text-sm">{isDutch ? 'Beoordelingsvoortgang' : 'Grading Progress'}</h3>
 
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</span>
-              <span className="font-semibold">{stats.graded} / {stats.total}</span>
+              <span>{stats.graded} / {stats.total}</span>
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div
@@ -229,11 +229,11 @@ export default function GradeDetailPage() {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <p className="text-muted-foreground text-xs">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-                  <p className="font-bold text-base">{stats.average.toFixed(1)}</p>
+                  <p className="text-base">{stats.average.toFixed(1)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-xs">{isDutch ? 'Range' : 'Range'}</p>
-                  <p className="font-bold text-base">
+                  <p className="text-base">
                     {stats.lowest?.toFixed(1)}-{stats.highest?.toFixed(1)}
                   </p>
                 </div>
@@ -241,7 +241,7 @@ export default function GradeDetailPage() {
 
               {Object.keys(stats.distribution).length > 0 && (
                 <div className="border-t border-border pt-2">
-                  <p className="text-xs font-semibold mb-1.5">{isDutch ? 'Verdeling' : 'Distribution'}</p>
+                  <p className="text-sm mb-1.5">{isDutch ? 'Verdeling' : 'Distribution'}</p>
                   <div className="space-y-0.5">
                     {Array.from({ length: 10 }, (_, i) => 10 - i).map(grade => {
                       const count = stats.distribution[grade] || 0;

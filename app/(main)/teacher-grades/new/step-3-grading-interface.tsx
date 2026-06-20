@@ -188,7 +188,7 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
     <div className="space-y-4">
       {/* Header */}
       <div className="p-3 bg-muted rounded-lg space-y-1 text-sm">
-        <p className="font-semibold">{data.title}</p>
+        <p className="text-base">{data.title}</p>
         <p className="text-xs text-muted-foreground">
           {isDutch ? 'Klas' : 'Class'}: {data.className}
         </p>
@@ -244,7 +244,7 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
       <div className="border border-border rounded-lg overflow-hidden">
         {/* Table header */}
         <div className="bg-muted border-b border-border">
-          <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 text-xs text-muted-foreground">
             <div>{isDutch ? 'Student' : 'Student'}</div>
             <div>{isDutch ? 'Vorige Cijfers' : 'Previous Grades'}</div>
             <div className="text-center">{isDutch ? 'Cijfer' : 'Grade'}</div>
@@ -367,7 +367,7 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
       <div className="grid grid-cols-3 gap-3 p-3 bg-muted rounded-lg">
         <div>
           <p className="text-xs text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
-          <p className="text-lg font-semibold">
+          <p className="text-lg">
             {gradedCount} / {students.length}
           </p>
         </div>
@@ -380,12 +380,12 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
                 style={{ width: `${progressPct}%` }}
               />
             </div>
-            <span className="text-sm font-semibold">{progressPct}%</span>
+            <span className="text-sm">{progressPct}%</span>
           </div>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">{isDutch ? 'Gemiddelde Klas' : 'Class Avg'}</p>
-          <p className="text-lg font-semibold">
+          <p className="text-lg">
             {classAverage ? classAverage.toFixed(1) : '—'}
           </p>
         </div>

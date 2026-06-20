@@ -301,7 +301,7 @@ export function NotificationPopover({ className }: NotificationPopoverProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[10px] font-semibold text-white"
+              className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] text-white"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </motion.span>
@@ -323,7 +323,7 @@ export function NotificationPopover({ className }: NotificationPopoverProps) {
             <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <Bell className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[13px] font-semibold text-foreground">Notifications</span>
+                <span className="text-[14px] text-foreground">Notifications</span>
                 {unreadCount > 0 && (
                   <span className="rounded-full bg-[var(--accent-brand)]/15 px-1.5 py-0.5 text-[11px] font-medium text-[var(--accent-brand)]">
                     {unreadCount} new

@@ -252,7 +252,7 @@ export function ClassSettingsRedesigned({
       {/* Content Area */}
       <div className="rounded-lg border border-border bg-background">
         <div className="border-b border-border px-6 py-4">
-          <h2 className="text-[16px] font-semibold text-foreground">
+          <h2 className="text-[18px] text-foreground">
             {activeSection === 'classinfo' && (isDutch ? 'Klasinformatie' : 'Class Information')}
             {activeSection === 'access' && (isDutch ? 'Toegang & Leden' : 'Access & Members')}
             {activeSection === 'features' && (isDutch ? 'Functies' : 'Features')}

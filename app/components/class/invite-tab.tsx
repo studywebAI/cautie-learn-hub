@@ -107,7 +107,7 @@ export function InviteTab({
                 <Input
                   value={activeCode}
                   readOnly
-                  className="font-mono text-xl tracking-widest font-bold h-12 text-center"
+                  className="font-mono text-xl tracking-widest h-12 text-center"
                 />
                 <Button
                   variant="outline"

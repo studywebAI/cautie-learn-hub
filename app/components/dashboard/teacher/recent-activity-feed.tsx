@@ -80,7 +80,7 @@ export function RecentActivityFeed() {
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-muted-foreground">Recent activity</span>
+          <span className="text-sm text-muted-foreground">Recent activity</span>
           <span className="flex items-center gap-1">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
             <span className="text-[10px] text-muted-foreground">Live</span>

@@ -182,7 +182,7 @@ export function Gradebook({ classId }: GradebookProps) {
                       </TableCell>
                     )
                   })}
-                  <TableCell className="text-center font-bold">
+                  <TableCell className="text-center text-base">
                     {calculateOverallGrade(student.id)?.toFixed(1)}%
                   </TableCell>
                 </TableRow>

@@ -144,7 +144,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
     return (
       <div className="rounded-xl surface-panel border border-border p-4">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-muted-foreground">Today&apos;s plan</p>
+          <p className="text-xs text-muted-foreground">Today&apos;s plan</p>
           <Link href="/agenda" className="text-xs text-[var(--accent-brand)] hover:opacity-80 flex items-center gap-1">
             Open agenda <ChevronRight className="h-3 w-3" />
           </Link>
@@ -159,9 +159,9 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <p className="text-xs font-semibold text-muted-foreground">Today&apos;s plan</p>
+          <p className="text-xs text-muted-foreground">Today&apos;s plan</p>
           {todayCount > 0 && (
-            <span className="text-[10px] font-semibold bg-[var(--accent-brand)] text-white rounded-full px-2 py-0.5">
+            <span className="text-[10px] bg-[var(--accent-brand)] text-white rounded-full px-2 py-0.5">
               {todayCount}
             </span>
           )}
@@ -174,7 +174,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
       {/* Today's schedule strip */}
       {todaySlots.length > 0 && (
         <div className="rounded-lg bg-[#f4f5f0] border border-[#dde0d0] p-3 space-y-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[#7f8962]">Today&apos;s schedule</p>
+          <p className="text-[10px] text-[#7f8962]">Today&apos;s schedule</p>
           <div className="space-y-1">
             {todaySlots.slice(0, 4).map(slot => (
               <div key={slot.id} className="flex items-center gap-2 text-sm">
@@ -224,9 +224,9 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
               : <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
 
             const dueLabel = item.isOverdue
-              ? <span className="text-[10px] font-semibold text-destructive bg-destructive/10 rounded px-1.5 py-0.5">Overdue</span>
+              ? <span className="text-[10px] text-destructive bg-destructive/10 rounded px-1.5 py-0.5">Overdue</span>
               : item.isToday
-              ? <span className="text-[10px] font-semibold text-[#7f8962] bg-[#f4f5f0] rounded px-1.5 py-0.5">Today</span>
+              ? <span className="text-[10px] text-[#7f8962] bg-[#f4f5f0] rounded px-1.5 py-0.5">Today</span>
               : <span className="text-[10px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">Tomorrow</span>;
 
             return (

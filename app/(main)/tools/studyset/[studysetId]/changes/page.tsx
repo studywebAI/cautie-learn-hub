@@ -26,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PageSection } from '@/components/layout/page-section';
 
 const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
-const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
+const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 
 type ManualEntry = {
   id: string;
@@ -227,7 +227,7 @@ export default function StudysetChangesPage() {
       </div>
 
       <div className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
+        <h1 className="flex items-center gap-2 text-2xl text-foreground">
           <History className="h-5 w-5 text-muted-foreground" />
           {studysetName ? `${studysetName} — Changes` : 'Changes'}
         </h1>

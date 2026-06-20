@@ -14,9 +14,9 @@ export const StudentTextBlock: React.FC<StudentTextBlockProps> = ({
   const getStyleClasses = (style: string) => {
     switch (style) {
       case 'heading':
-        return 'text-2xl font-bold mb-4';
+        return 'text-2xl mb-4';
       case 'subheading':
-        return 'text-xl font-semibold mb-3';
+        return 'text-xl mb-3';
       case 'quote':
         return 'border-l-4 border-primary pl-4 italic text-muted-foreground';
       case 'note':

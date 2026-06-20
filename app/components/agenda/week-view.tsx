@@ -134,7 +134,7 @@ export function WeekView({ events, selectedDay, onDaySelect, onEventMove, onEven
               key={`label-${format(day, 'yyyy-MM-dd')}`}
               className={`rounded-xl px-2 py-2 text-center ${todayDay ? 'bg-[var(--accent-brand)] text-white' : 'surface-panel'}`}
             >
-              <p className={`text-sm ${todayDay ? 'text-white font-semibold' : 'text-foreground/90'}`}>{format(day, 'EEEE')}</p>
+              <p className={`text-sm ${todayDay ? 'text-white' : 'text-foreground/90'}`}>{format(day, 'EEEE')}</p>
               <p className={`text-[11px] ${todayDay ? 'text-white/80' : 'text-muted-foreground'}`}>{format(day, 'MMM d')}</p>
             </div>
           );

@@ -161,7 +161,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
     <div className="overflow-hidden rounded-[10px] border border-border bg-background">
       {/* Topbar */}
       <div className="flex items-center gap-1.5 border-b border-border bg-muted/50 px-4 py-2.5 text-[12px] text-muted-foreground">
-        <span className="font-semibold text-foreground">
+        <span className="text-foreground">
           {isDutch ? 'Berichten' : 'Messenger'}
         </span>
       </div>
@@ -171,7 +171,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
 
         {/* ── Channel sidebar ── */}
         <div className="flex flex-col gap-0.5 overflow-y-auto border-r border-border p-3">
-          <div className="px-2 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[.5px] text-muted-foreground/60">
+          <div className="px-2 pb-1 pt-2 text-[10px] text-muted-foreground/60">
             {isDutch ? 'Kanalen' : 'Channels'}
           </div>
 
@@ -182,11 +182,11 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
             className={cn(
               'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
               channel === 'all'
-                ? 'bg-[var(--accent-brand)]/10 font-semibold text-[var(--accent-brand)]'
+                ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
                 : 'hover:bg-muted/60'
             )}
           >
-            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-blue-100 text-[12px] font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-blue-100 text-[12px] text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
               A
             </span>
             {isDutch ? 'Iedereen' : 'All'}
@@ -203,11 +203,11 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               className={cn(
                 'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
                 channel === 'teachers'
-                  ? 'bg-[var(--accent-brand)]/10 font-semibold text-[var(--accent-brand)]'
+                  ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
                   : 'hover:bg-muted/60'
               )}
             >
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-[var(--accent-brand)]/10 text-[12px] font-bold text-[var(--accent-brand)]">
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-[var(--accent-brand)]/10 text-[12px] text-[var(--accent-brand)]">
                 T
               </span>
               {isDutch ? 'Docenten' : 'Teachers'}
@@ -219,7 +219,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
         <div className="flex min-w-0 flex-col">
           {/* Thread header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <p className="text-[13px] font-semibold text-foreground">
+            <p className="text-[13px] text-foreground">
               {channelLabel}
             </p>
             <button
@@ -257,7 +257,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                     )}>
                       {/* Meta line */}
                       <div className="mb-[3px] text-[11px] text-muted-foreground">
-                        <strong className="font-semibold text-foreground/70">
+                        <strong className="text-foreground/70">
                           {isOwn ? (isDutch ? 'Jij' : 'You') : msg.authorName}
                         </strong>
                         {'  '}
@@ -398,7 +398,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                   type="button"
                   disabled={!canSend}
                   onClick={() => void sendMessage()}
-                  className="rounded-[6px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] px-3 py-1.5 text-[12px] font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-[6px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] px-3 py-1.5 text-[12px] text-background transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {sending ? '…' : (isDutch ? 'Stuur' : 'Send')}
                 </button>

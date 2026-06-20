@@ -560,7 +560,7 @@ export default function ParagraphDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1 rounded-md border border-border p-1 md:flex">
-            <span className="px-1 text-[10px] uppercase tracking-wide text-muted-foreground">{t.filterByType}</span>
+            <span className="px-1 text-[10px] text-muted-foreground">{t.filterByType}</span>
             <Button type="button" size="sm" variant={assignmentTypeFilter === 'all' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('all')}>
               {t.allAssignments}
             </Button>
@@ -806,7 +806,7 @@ export default function ParagraphDetailPage() {
                         <span className="rounded-full surface-interactive px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
                       </div>
                       <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground">
                           {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
                         </p>
                         <div className="mt-2 space-y-2">

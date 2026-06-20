@@ -63,7 +63,7 @@ export const SimpleMultipleChoiceBlock: React.FC<SimpleMultipleChoiceBlockProps>
 
   return (
     <div className="w-full p-4 border rounded-lg bg-white">
-      <h3 className="text-lg font-semibold mb-4">
+      <h3 className="text-lg mb-4">
         {block.data.question || 'Multiple Choice Question'}
       </h3>
 

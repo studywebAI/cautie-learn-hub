@@ -103,7 +103,7 @@ export default function MetricsPage() {
 
       {/* Class selection */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold">
+        <label className="text-sm">
           {isDutch ? 'Selecteer Klas' : 'Select Class'}
         </label>
         <Select value={selectedClassId} onValueChange={setSelectedClassId}>
@@ -124,7 +124,7 @@ export default function MetricsPage() {
       {selectedClassId && (
         <div className="space-y-3">
           <div>
-            <p className="text-sm font-semibold mb-2">
+            <p className="text-sm mb-2">
               {isDutch ? 'Selecteer Cijferlijsten' : 'Select Grade Sets'} ({selectedGradeSetIds.length})
             </p>
             <p className="text-xs text-muted-foreground">
@@ -188,7 +188,7 @@ export default function MetricsPage() {
       {selectedClassId && selectedGradeSetIds.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2 pt-4 border-t border-border">
-            <h2 className="font-semibold text-base">
+            <h2 className="text-base">
               {isDutch ? 'Analyse' : 'Analysis'} ({selectedGradeSetIds.length} {isDutch ? 'sets' : 'sets'})
             </h2>
             <Button variant="outline" size="sm">

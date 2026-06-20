@@ -71,11 +71,11 @@ export function GradesMiniCard() {
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <p className="text-xs font-semibold text-muted-foreground">My grades</p>
+          <p className="text-sm text-muted-foreground">My grades</p>
           {avg !== null && (
             <div className="flex items-center gap-1">
               <TrendIcon grades={grades} />
-              <span className={`text-[11px] font-semibold ${gradeColor(avg)}`}>
+              <span className={`text-[11px] ${gradeColor(avg)}`}>
                 avg {avg.toFixed(1)}
               </span>
             </div>
@@ -96,7 +96,7 @@ export function GradesMiniCard() {
               <p className="text-[12px] font-medium truncate">{g.grade_set_title}</p>
               <p className="text-[10px] text-muted-foreground truncate">{g.class_name}</p>
             </div>
-            <span className={`text-[14px] font-bold tabular-nums shrink-0 ${gradeColor(g.grade_numeric)}`}>
+            <span className={`text-[14px] tabular-nums shrink-0 ${gradeColor(g.grade_numeric)}`}>
               {g.grade_numeric !== null ? g.grade_numeric.toFixed(1) : (g.grade_value ?? '—')}
             </span>
           </div>

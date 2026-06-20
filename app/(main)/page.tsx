@@ -253,21 +253,21 @@ function TeacherSummaryDashboard() {
                   <span className="text-xs text-muted-foreground">Classes</span>
                   <School className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
-                <div className="text-2xl font-semibold">{teacherClasses.length}</div>
+                <div className="text-2xl">{teacherClasses.length}</div>
               </div>
               <div className="rounded-xl surface-panel border border-border p-3.5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-muted-foreground">Students</span>
                   <Users className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
-                <div className="text-2xl font-semibold">{totalStudents}</div>
+                <div className="text-2xl">{totalStudents}</div>
               </div>
               <div className="rounded-xl surface-panel border border-border p-3.5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-muted-foreground">Assignments</span>
                   <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
-                <div className="text-2xl font-semibold">{activeAssignments}</div>
+                <div className="text-2xl">{activeAssignments}</div>
               </div>
               {/* Messages card */}
               {resolvedClassId ? (
@@ -277,8 +277,8 @@ function TeacherSummaryDashboard() {
                     <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="text-2xl font-semibold">{unreadMessages}</div>
-                    {unreadMessages > 0 && <span className="text-[10px] font-semibold text-[var(--accent-brand)]">unread</span>}
+                    <div className="text-2xl">{unreadMessages}</div>
+                    {unreadMessages > 0 && <span className="text-[10px] text-[var(--accent-brand)]">unread</span>}
                   </div>
                 </Link>
               ) : (
@@ -287,7 +287,7 @@ function TeacherSummaryDashboard() {
                     <span className="text-xs text-muted-foreground">Messages</span>
                     <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                  <div className="text-2xl font-semibold">{unreadMessages}</div>
+                  <div className="text-2xl">{unreadMessages}</div>
                 </div>
               )}
             </div>

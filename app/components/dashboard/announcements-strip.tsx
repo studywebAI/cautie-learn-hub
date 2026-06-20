@@ -81,7 +81,7 @@ export function AnnouncementsStrip() {
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
         <Bell className="h-4 w-4 text-[var(--accent-brand)]" />
-        <p className="text-sm font-semibold">Announcements</p>
+        <p className="text-sm">Announcements</p>
       </div>
 
       <div className="space-y-2 max-h-[280px] overflow-y-auto">

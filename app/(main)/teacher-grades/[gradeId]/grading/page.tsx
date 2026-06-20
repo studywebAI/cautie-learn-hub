@@ -410,7 +410,7 @@ export default function GradingInterfacePage() {
       <div className="border border-border rounded-lg overflow-hidden">
         {/* Table header */}
         <div className="bg-muted border-b border-border">
-          <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground">
+          <div className="grid grid-cols-[2fr_2fr_1fr_1fr] gap-4 px-4 py-3 text-xs text-muted-foreground">
             <div>{isDutch ? 'Student' : 'Student'}</div>
             <div>{isDutch ? 'Vorige Cijfers' : 'Previous Grades'}</div>
             <div className="text-center">{isDutch ? 'Cijfer' : 'Grade'}</div>
@@ -538,7 +538,7 @@ export default function GradingInterfacePage() {
         <div className="grid grid-cols-5 gap-3 p-3 bg-muted rounded-lg text-xs">
           <div>
             <p className="text-muted-foreground">{isDutch ? 'Beoordeeld' : 'Graded'}</p>
-            <p className="text-lg font-semibold">{gradedCount} / {students.length}</p>
+            <p className="text-lg">{gradedCount} / {students.length}</p>
           </div>
           <div>
             <p className="text-muted-foreground">{isDutch ? 'Voortgang' : 'Progress'}</p>
@@ -549,20 +549,20 @@ export default function GradingInterfacePage() {
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
-              <span className="font-semibold">{progressPct}%</span>
+              <span>{progressPct}%</span>
             </div>
           </div>
           <div>
             <p className="text-muted-foreground">{isDutch ? 'Gemiddelde' : 'Average'}</p>
-            <p className="text-lg font-semibold">{stats.average.toFixed(1)}</p>
+            <p className="text-lg">{stats.average.toFixed(1)}</p>
           </div>
           <div>
             <p className="text-muted-foreground">{isDutch ? 'Mediaan' : 'Median'}</p>
-            <p className="text-lg font-semibold">{stats.median.toFixed(1)}</p>
+            <p className="text-lg">{stats.median.toFixed(1)}</p>
           </div>
           <div>
             <p className="text-muted-foreground">{isDutch ? 'Std Dev' : 'Std Dev'}</p>
-            <p className="text-lg font-semibold">{stats.stdDev.toFixed(2)}</p>
+            <p className="text-lg">{stats.stdDev.toFixed(2)}</p>
           </div>
         </div>
       )}

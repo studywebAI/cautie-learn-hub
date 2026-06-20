@@ -110,7 +110,7 @@ export function MaterialsPanel({ studysetId, editable = true, onMaterialAdded }:
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Materials</h3>
+        <h3 className="text-base text-foreground">Materials</h3>
         {editable && (
           <Button
             variant="outline"

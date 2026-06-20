@@ -65,8 +65,8 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
       <div className="w-full p-4 border rounded-lg surface-chip">
         <div
           className={`prose prose-sm max-w-none ${
-            block.data.style === 'heading' ? 'text-xl font-bold' :
-            block.data.style === 'subheading' ? 'text-lg font-semibold' :
+            block.data.style === 'heading' ? 'text-xl' :
+            block.data.style === 'subheading' ? 'text-lg' :
             block.data.style === 'quote' ? 'border-l-4 border-primary pl-4 italic' :
             block.data.style === 'note' ? 'bg-yellow-50 p-3 rounded border-l-4 border-yellow-400' :
             block.data.style === 'warning' ? 'bg-red-50 p-3 rounded border-l-4 border-red-400' :
@@ -116,8 +116,8 @@ export const SimpleTextBlock: React.FC<SimpleTextBlockProps> = ({
       ) : (
         <div
           className={`prose prose-sm max-w-none ${
-            style === 'heading' ? 'text-xl font-bold' :
-            style === 'subheading' ? 'text-lg font-semibold' :
+            style === 'heading' ? 'text-xl' :
+            style === 'subheading' ? 'text-lg' :
             style === 'quote' ? 'border-l-4 border-primary pl-4 italic' :
             style === 'note' ? 'bg-yellow-50 p-3 rounded border-l-4 border-yellow-400' :
             style === 'warning' ? 'bg-red-50 p-3 rounded border-l-4 border-red-400' :

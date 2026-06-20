@@ -53,7 +53,7 @@ export function TodaysAgenda({ assignments, personalTasks, classes }: TodaysAgen
              style={{ borderColor: `hsl(var(--${event.type === 'assignment' ? 'destructive' : 'primary'}))` }}>
           <div className='flex justify-between items-start'>
             <div>
-              <p className="font-semibold">{event.title}</p>
+              <p>{event.title}</p>
               <p className="text-sm text-muted-foreground">{event.subject}</p>
             </div>
             {event.type === 'assignment'

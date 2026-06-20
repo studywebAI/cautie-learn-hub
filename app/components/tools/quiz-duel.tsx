@@ -22,7 +22,7 @@ function LoadingDuel() {
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm p-8">
             <div className="flex flex-col items-center gap-2 text-center">
                 <Spinner size={48} />
-                <h3 className="text-2xl font-bold tracking-tight mt-4">
+                <h3 className="text-2xl tracking-tight mt-4">
                     Preparing Your Duel
                 </h3>
                 <p className="text-sm text-muted-foreground">
@@ -113,15 +113,15 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
                             <AvatarFallback><User /></AvatarFallback>
                         </Avatar>
                         <div>
-                            <p className="font-bold text-lg">{player1.name}</p>
-                            <p className="text-2xl font-bold font-headline text-primary">{player1.score}</p>
+                            <p className="text-lg">{player1.name}</p>
+                            <p className="text-2xl font-headline text-primary">{player1.score}</p>
                         </div>
                     </div>
                      <Swords className="h-10 w-10 text-muted-foreground" />
                      <div className="flex items-center gap-4 text-right">
                          <div>
-                            <p className="font-bold text-lg">{player2.name}</p>
-                            <p className="text-2xl font-bold font-headline text-primary">{player2.score}</p>
+                            <p className="text-lg">{player2.name}</p>
+                            <p className="text-2xl font-headline text-primary">{player2.score}</p>
                         </div>
                         <Avatar className="h-16 w-16 border-2">
                             <AvatarImage src={player2.avatarUrl} alt={player2.name} />
@@ -133,7 +133,7 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
             <CardContent className="space-y-6">
                 <div className="text-center space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Round {currentRoundIndex + 1} of {rounds.length}</p>
-                     <p className="font-semibold text-xl">{question.question}</p>
+                     <p className="text-xl">{question.question}</p>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
@@ -154,7 +154,7 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
                                 onClick={() => handleSelectAnswer(opt.id)}
                                 disabled={isAnswered}
                             >
-                                <span className="font-bold mr-3">{opt.id.toUpperCase()}.</span>
+                                <span className="text-base mr-3">{opt.id.toUpperCase()}.</span>
                                 <span>{opt.text}</span>
                                 {isAnswered && isTheCorrectAnswer && <Check className="ml-auto h-5 w-5 text-green-600" />}
                                 {isAnswered && isSelected && !isTheCorrectAnswer && <X className="ml-auto h-5 w-5 text-red-600" />}
@@ -171,9 +171,9 @@ export function QuizDuel({ sourceText, onRestart }: QuizDuelProps) {
                         className="text-center pt-4"
                      >
                         {currentRound.winnerId ? (
-                             <p className="font-semibold">{currentRound.winnerId === player1.id ? player1.name : player2.name} answered first and wins the round!</p>
+                             <p className="text-base">{currentRound.winnerId === player1.id ? player1.name : player2.name} answered first and wins the round!</p>
                         ) : (
-                             <p className="font-semibold">It's a draw for this round!</p>
+                             <p className="text-base">It's a draw for this round!</p>
                         )}
                         
                         {isFinished ? (

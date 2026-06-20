@@ -307,7 +307,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold font-headline">Analytics</h2>
+          <h2 className="text-3xl font-headline">Analytics</h2>
           <p className="text-sm text-muted-foreground">
             Student-level and class-level signals, including speed and paste warnings.
           </p>
@@ -324,7 +324,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Students</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{classOverview.totalStudents}</div>
+            <div className="text-2xl">{classOverview.totalStudents}</div>
             <p className="text-xs text-muted-foreground">{engagementMetrics.activeStudentsCount} active this week</p>
           </CardContent>
         </Card>
@@ -333,7 +333,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Average Study Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(engagementMetrics.averageStudyTime)}m</div>
+            <div className="text-2xl">{Math.round(engagementMetrics.averageStudyTime)}m</div>
             <p className="text-xs text-muted-foreground">Per student / week</p>
           </CardContent>
         </Card>
@@ -342,7 +342,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Completion</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(classOverview.overallCompletionRate)}%</div>
+            <div className="text-2xl">{Math.round(classOverview.overallCompletionRate)}%</div>
             <Progress value={classOverview.overallCompletionRate} className="mt-2" />
           </CardContent>
         </Card>
@@ -351,7 +351,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Warnings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.warnings.length}</div>
+            <div className="text-2xl">{analytics.warnings.length}</div>
             <p className="text-xs text-muted-foreground">Suspicious speed/paste/AI signals</p>
           </CardContent>
         </Card>
@@ -360,7 +360,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Attendance Risk</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(analytics.attendanceSignals?.absentRate || 0)}%</div>
+            <div className="text-2xl">{Math.round(analytics.attendanceSignals?.absentRate || 0)}%</div>
             <p className="text-xs text-muted-foreground">
               Absent rate (14d) Â· Late {Math.round(analytics.attendanceSignals?.lateRate || 0)}%
             </p>
@@ -371,7 +371,7 @@ export function ClassAnalyticsDashboard({ classId }: ClassAnalyticsDashboardProp
             <CardTitle className="text-sm font-medium">Schedule Health</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{analytics.scheduleSignals?.slotsCount || 0}</div>
+            <div className="text-2xl">{analytics.scheduleSignals?.slotsCount || 0}</div>
             <p className="text-xs text-muted-foreground">
               Today {analytics.scheduleSignals?.todaySlotsCount || 0} Â· {analytics.scheduleSignals?.hasLiveClassNow ? "Live now" : "No live class"}
             </p>

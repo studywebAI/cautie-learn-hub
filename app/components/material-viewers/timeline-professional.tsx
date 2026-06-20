@@ -112,7 +112,7 @@ export function ProfessionalTimelineRenderer({ data }: ProfessionalTimelineRende
               <Card className="hover:shadow-lg transition-shadow cursor-pointer w-full" onClick={() => setSelectedEvent(event)}>
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                    <h3 className="text-lg text-gray-900 mb-2 line-clamp-2">
                       {event.title.length > 50 ? event.title.substring(0, 50) + '...' : event.title}
                     </h3>
                     <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
@@ -135,7 +135,7 @@ export function ProfessionalTimelineRenderer({ data }: ProfessionalTimelineRende
         {events.length === 0 && !isLoadingWikipedia && (
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">📅</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No Timeline Events</h3>
+            <h3 className="text-xl text-gray-900 mb-2">No Timeline Events</h3>
             <p className="text-gray-600">Add events to create a visual timeline of important dates and milestones.</p>
           </div>
         )}
@@ -160,14 +160,14 @@ export function ProfessionalTimelineRenderer({ data }: ProfessionalTimelineRende
                 </a>
               )}
             </div>
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl">
               {selectedEvent?.title}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <h4 className="font-semibold text-gray-900 mb-2">Summary</h4>
+              <h4 className="text-[15px] text-gray-900 mb-2">Summary</h4>
               <p className="text-gray-700 leading-relaxed">
                 {selectedEvent?.description}
               </p>
@@ -175,7 +175,7 @@ export function ProfessionalTimelineRenderer({ data }: ProfessionalTimelineRende
 
             {selectedEvent?.fullDescription && (
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Detailed Information</h4>
+                <h4 className="text-[15px] text-gray-900 mb-2">Detailed Information</h4>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-gray-700 leading-relaxed">
                     {selectedEvent.fullDescription}

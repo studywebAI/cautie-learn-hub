@@ -106,7 +106,7 @@ export function ClassCard({
         <div>
           <div className="flex justify-between items-center mb-1">
             <span className="text-sm font-medium text-muted-foreground">Average Progress</span>
-            <span className="text-sm font-bold text-primary">{averageProgress}%</span>
+            <span className="text-base text-primary">{averageProgress}%</span>
           </div>
           <Progress value={averageProgress} className="h-2" />
         </div>

@@ -163,14 +163,14 @@ function FillBlankView({
             className="absolute flex h-full w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 surface-panel px-12 py-10 text-center shadow-sm [backface-visibility:hidden]"
             onClick={() => { if (!isFlipped) setIsFlipped(true); }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">You see this side</span>
+            <span className="text-[10px] text-muted-foreground">You see this side</span>
             <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
             {!isFlipped && (
               <span className="text-xs text-muted-foreground">Flip the card, then write down the matching answer yourself</span>
             )}
           </div>
           <div className="absolute flex h-full w-full flex-col items-center justify-center gap-3 rounded-2xl border border-border/80 surface-panel px-10 py-8 text-center shadow-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Now write down the matching answer</span>
+            <span className="text-[10px] text-muted-foreground">Now write down the matching answer</span>
             {!revealed ? (
               <div className="flex w-full max-w-md flex-col items-center gap-3" onClick={(e) => e.stopPropagation()}>
                 <Textarea
@@ -188,11 +188,11 @@ function FillBlankView({
             ) : (
               <div className="flex w-full max-w-md flex-col items-center gap-4" onClick={(e) => e.stopPropagation()}>
                 <div className="w-full rounded-xl surface-chip p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">What you wrote</p>
+                  <p className="text-[10px] text-muted-foreground">What you wrote</p>
                   <p className="mt-1 text-sm leading-relaxed">{typedAnswer.trim() || '(left empty)'}</p>
                 </div>
                 <div className="w-full rounded-xl border border-border/80 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Correct answer</p>
+                  <p className="text-[10px] text-muted-foreground">Correct answer</p>
                   <p className="mt-1 text-base font-medium leading-relaxed">{card.back}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">Compare the two, then mark yourself below.</p>
@@ -928,7 +928,7 @@ export function FlashcardViewer({
           <div className="flex w-full max-w-5xl flex-col items-center gap-1.5">
             {card.frontAlternatives && card.frontAlternatives.length > 0 ? (
               <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground/70">Front:</span>
+                <span className="text-[10px] text-muted-foreground/70">Front:</span>
                 {[{ label: 'Original', idx: undefined as number | undefined }, ...card.frontAlternatives.map((alt, idx) => ({ label: alt, idx }))].map((opt) => {
                   const isActive = altSelection[card.id]?.front === opt.idx;
                   return (
@@ -947,7 +947,7 @@ export function FlashcardViewer({
             ) : null}
             {card.backAlternatives && card.backAlternatives.length > 0 ? (
               <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <span className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground/70">Back:</span>
+                <span className="text-[10px] text-muted-foreground/70">Back:</span>
                 {[{ label: 'Original', idx: undefined as number | undefined }, ...card.backAlternatives.map((alt, idx) => ({ label: alt, idx }))].map((opt) => {
                   const isActive = altSelection[card.id]?.back === opt.idx;
                   return (
@@ -982,11 +982,11 @@ export function FlashcardViewer({
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 text-sm" align="center">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Where this came from</p>
+                  <p className="text-[10px] text-muted-foreground">Where this came from</p>
                   <p className="mt-1 leading-relaxed">{card.citation}</p>
                   {settings?.explanationMode === 'research' && card.groundingNote ? (
                     <>
-                      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Why / how it relates</p>
+                      <p className="mt-3 text-[10px] text-muted-foreground">Why / how it relates</p>
                       <p className="mt-1 leading-relaxed text-muted-foreground">{card.groundingNote}</p>
                     </>
                   ) : null}
@@ -1054,19 +1054,19 @@ export function FlashcardViewer({
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Accuracy</p>
-                <p className="text-xl font-semibold">{sessionAnalytics.accuracy}%</p>
+                <p className="text-xl">{sessionAnalytics.accuracy}%</p>
               </div>
               <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Reviewed</p>
-                <p className="text-xl font-semibold">{sessionAnalytics.reviewedCount}</p>
+                <p className="text-xl">{sessionAnalytics.reviewedCount}</p>
               </div>
               <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Incorrect</p>
-                <p className="text-xl font-semibold">{sessionAnalytics.incorrectCount}</p>
+                <p className="text-xl">{sessionAnalytics.incorrectCount}</p>
               </div>
               <div className="rounded-xl surface-panel p-3">
                 <p className="text-xs text-muted-foreground">Avg response</p>
-                <p className="text-xl font-semibold">{Math.max(1, Math.round(sessionAnalytics.avgResponseMs / 1000))}s</p>
+                <p className="text-xl">{Math.max(1, Math.round(sessionAnalytics.avgResponseMs / 1000))}s</p>
               </div>
             </div>
 
@@ -1076,15 +1076,15 @@ export function FlashcardViewer({
                 <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
                   <div className="rounded-md bg-background p-2">
                     <p className="text-muted-foreground">Quick</p>
-                    <p className="text-base font-semibold">{sessionAnalytics.quickCount}</p>
+                    <p className="text-base">{sessionAnalytics.quickCount}</p>
                   </div>
                   <div className="rounded-md bg-background p-2">
                     <p className="text-muted-foreground">Medium</p>
-                    <p className="text-base font-semibold">{sessionAnalytics.mediumCount}</p>
+                    <p className="text-base">{sessionAnalytics.mediumCount}</p>
                   </div>
                   <div className="rounded-md bg-background p-2">
                     <p className="text-muted-foreground">Slow</p>
-                    <p className="text-base font-semibold">{sessionAnalytics.slowCount}</p>
+                    <p className="text-base">{sessionAnalytics.slowCount}</p>
                   </div>
                 </div>
               </div>

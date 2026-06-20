@@ -374,7 +374,7 @@ export function FirstTimeSetupGate() {
         <aside className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] p-5 lg:border-b-0 lg:border-r lg:p-10">
           <div className="mx-auto flex h-full w-full max-w-xl flex-col justify-between gap-8">
             <div className="space-y-3">
-              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">{stepPrompt}</h2>
+              <h2 className="text-3xl tracking-tight md:text-4xl">{stepPrompt}</h2>
               <p className="text-sm text-muted-foreground">{uiText.step} {currentStepIndex + 1} {uiText.of} {totalSteps}</p>
               <div className="flex flex-wrap gap-2">
                 {flowSteps.map((stepKey, index) => (

@@ -77,7 +77,7 @@ export function AuthForm({
       <div className="mx-auto grid min-h-[calc(100vh-2rem)] w-full max-w-6xl grid-cols-1 overflow-hidden rounded-3xl border border-border/80 surface-panel md:grid-cols-[1.1fr_1fr] md:min-h-[calc(100vh-4rem)]">
         <div className="hidden border-r border-border/80 surface-interactive p-8 md:flex md:flex-col md:justify-between lg:p-10">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">cautie</p>
+            <p className="text-xs text-muted-foreground">cautie</p>
             <h1 className="mt-4 text-3xl leading-tight lg:text-4xl">Learn faster with clean workflows.</h1>
             <p className="mt-3 max-w-md text-sm text-muted-foreground">
               One account for your classes, tools, agenda, and personalized setup.

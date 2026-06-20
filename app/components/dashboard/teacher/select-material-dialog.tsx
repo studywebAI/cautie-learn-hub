@@ -81,7 +81,7 @@ export function SelectMaterialDialog({ isOpen, setIsOpen, classId, onMaterialSel
                     >
                         <Icon className="h-6 w-6 text-primary flex-shrink-0" />
                         <div className="flex-1">
-                        <p className="font-semibold">{material.title}</p>
+                        <p className="text-lg">{material.title}</p>
                         <p className="text-xs text-muted-foreground">{material.type}</p>
                         </div>
                         {isSelected && <Check className="h-5 w-5 text-primary" />}

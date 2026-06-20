@@ -72,13 +72,13 @@ export const TextBlock: React.FC<TextBlockProps> = ({
     switch (style) {
       case 'heading':
         return (
-          <h1 className="text-3xl font-bold mb-4 text-foreground">
+          <h1 className="text-3xl mb-4 text-foreground">
             {displayContent || 'Heading'}
           </h1>
         );
       case 'subheading':
         return (
-          <h2 className="text-2xl font-semibold mb-3 text-foreground">
+          <h2 className="text-2xl mb-3 text-foreground">
             {displayContent || 'Subheading'}
           </h2>
         );
@@ -120,8 +120,8 @@ export const TextBlock: React.FC<TextBlockProps> = ({
         placeholder="Enter text..."
         className={cn(
           'min-h-[60px] resize-none border-none shadow-none focus-visible:ring-0 p-0',
-          style === 'heading' && 'text-3xl font-bold',
-          style === 'subheading' && 'text-2xl font-semibold',
+          style === 'heading' && 'text-3xl',
+          style === 'subheading' && 'text-2xl',
           style === 'quote' && 'text-lg italic',
           style === 'note' && 'text-base',
           style === 'warning' && 'text-base',

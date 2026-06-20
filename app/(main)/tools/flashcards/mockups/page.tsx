@@ -80,13 +80,13 @@ function StandardStackedReveal() {
   return (
     <div className="w-full space-y-3">
       <div className="rounded-xl border border-border/70 surface-panel px-5 py-4">
-        <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground mb-1">Term</p>
+        <p className="text-[10px] text-muted-foreground mb-1">Term</p>
         <p className="text-base font-medium text-foreground">{SAMPLE.term}</p>
       </div>
       <div className="border-t border-dashed border-border/60" />
       {revealed ? (
         <div className="rounded-xl surface-chip px-5 py-4">
-          <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground mb-1">Explanation</p>
+          <p className="text-[10px] text-muted-foreground mb-1">Explanation</p>
           <p className="text-sm text-foreground">{SAMPLE.explanation}</p>
         </div>
       ) : (
@@ -339,7 +339,7 @@ function ContextSideBySide() {
         <p className="text-[11px] text-muted-foreground italic leading-relaxed">{SAMPLE.source}</p>
       </div>
       <div className="rounded-xl border border-border/70 surface-panel px-4 py-3 flex flex-col justify-center">
-        <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground mb-1">Focus term</p>
+        <p className="text-[10px] text-muted-foreground mb-1">Focus term</p>
         <p className="text-base font-medium text-foreground">{SAMPLE.term}</p>
         <p className="text-xs text-muted-foreground mt-1.5">{SAMPLE.explanation}</p>
       </div>
@@ -394,7 +394,7 @@ function MnemonicCompanionChip() {
       </div>
       <div className="sm:w-[150px] rounded-xl surface-chip px-3 py-3 flex flex-col items-center justify-center text-center gap-1">
         <Lightbulb className="h-3.5 w-3.5 text-muted-foreground" />
-        <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">Memory trick</p>
+        <p className="text-[10px] text-muted-foreground">Memory trick</p>
         <p className="text-[11px] text-foreground leading-snug">{SAMPLE.mnemonic}</p>
       </div>
     </div>
@@ -500,11 +500,11 @@ function TypeTwoFieldPair() {
       <p className="text-[10px] px-2.5 py-1 rounded-full surface-chip text-muted-foreground inline-block">{SAMPLE.pair.kind} pair — both fields graded together</p>
       <div className="grid grid-cols-2 gap-2.5">
         <div className="space-y-1 text-left">
-          <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">When?</p>
+          <p className="text-[10px] text-muted-foreground">When?</p>
           <Input value={a} onChange={(e) => { setA(e.target.value); setChecked(false); }} placeholder="Year…" className="h-9 text-sm" />
         </div>
         <div className="space-y-1 text-left">
-          <p className="text-[10px] uppercase tracking-[0.5px] text-muted-foreground">What happened?</p>
+          <p className="text-[10px] text-muted-foreground">What happened?</p>
           <Input value={b} onChange={(e) => { setB(e.target.value); setChecked(false); }} placeholder="Event…" className="h-9 text-sm" />
         </div>
       </div>

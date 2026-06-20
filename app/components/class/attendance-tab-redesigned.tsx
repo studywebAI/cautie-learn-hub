@@ -58,7 +58,7 @@ const EVENT_LABELS: Record<EventType, { en: string; nl: string; color: string }>
 function EventBadge({ type, lang }: { type: EventType; lang: string }) {
   const def = EVENT_LABELS[type];
   return (
-    <span className={cn('inline-flex rounded px-2 py-0.5 text-[11px] font-semibold', def.color)}>
+    <span className={cn('inline-flex rounded px-2 py-0.5 text-[11px]', def.color)}>
       {lang === 'nl' ? def.nl : def.en}
     </span>
   );
@@ -235,7 +235,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
           { val: data.stats.attendanceRate + '%', lbl: isDutch ? 'Aanwezigheid' : 'Attendance rate', color: 'text-foreground' },
         ].map(({ val, lbl, color }) => (
           <div key={lbl} className="class-panel text-center">
-            <p className={cn('text-xl font-bold', color)}>{val}</p>
+            <p className={cn('text-xl', color)}>{val}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">{lbl}</p>
           </div>
         ))}
@@ -326,7 +326,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
                     {formatEventTime(event.createdAt, dateLocale)}
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold">{event.studentName}</p>
+                    <p className="text-[13px]">{event.studentName}</p>
                     {event.note && <p className="mt-0.5 text-[12px] text-muted-foreground">{event.note}</p>}
                   </div>
                   <EventBadge type={event.type} lang={language} />
@@ -352,7 +352,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
           <div className="class-panel">
             <div className="mb-3 flex items-start justify-between">
               <div>
-                <p className="text-[15px] font-semibold">{studentToShow.name}</p>
+                <p className="text-[15px]">{studentToShow.name}</p>
                 <div className="mt-1 flex flex-wrap gap-2 text-[12px] text-muted-foreground">
                   <span>{isDutch ? 'Afwezig:' : 'Absent:'} <strong className="text-destructive">{studentToShow.totalAbsent}</strong></span>
                   <span>{isDutch ? 'Te laat:' : 'Late:'} <strong className="text-amber-600">{studentToShow.totalLate}</strong></span>
@@ -395,7 +395,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
 
           {/* Student timeline */}
           <div className="class-panel p-0">
-            <div className="border-b border-border px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="border-b border-border px-4 py-2.5 text-[11px] text-muted-foreground">
               {isDutch ? 'Aanwezigheidshistorie' : 'Attendance history'}
             </div>
             {studentToShow.recentActivity.length === 0 ? (
@@ -456,7 +456,7 @@ export function AttendanceTabRedesigned({ classId }: { classId: string }) {
                     type="button"
                     onClick={() => setRecordType(t)}
                     className={cn(
-                      'rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors',
+                      'rounded-full border px-2.5 py-1 text-[11px] transition-colors',
                       recordType === t
                         ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)] text-background'
                         : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]'

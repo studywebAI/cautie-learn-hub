@@ -124,7 +124,7 @@ export function CautieWordmark({
       <span
         className={cn(
           'relative inline-block lowercase tracking-tight overflow-visible',
-          compact ? 'text-2xl font-semibold' : 'text-7xl font-bold',
+          compact ? 'text-2xl' : 'text-7xl',
           textClassName
         )}
         style={{ fontFamily: '"Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif' }}

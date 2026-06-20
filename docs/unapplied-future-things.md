@@ -1,6 +1,6 @@
 # Unapplied Future Things
 
-Last updated: 2026-04-29
+Last updated: 2026-06-20
 
 This file tracks features that are in codebase planning/partial state but are not fully shipped in UX yet.
 
@@ -268,3 +268,111 @@ This file tracks features that are in codebase planning/partial state but are no
 - `Safety.setting_conflict_detector`: warn on conflicting/invalid setting combos.
 - `Safety.performance_budget`: disable heavy features on low-end devices.
 - `Safety.offline_mode`: support cached offline study path.
+
+## 7) Deferred quiz grading + source-citation architecture (PROPOSED — NOT implemented, needs decision)
+
+Requested 2026-06-20. User considers this very important: "if the answers/questions
+aren't good, the quiz is completely pointless." Do NOT implement until the user
+explicitly picks an approach below — they asked for alternatives before building.
+
+### Problem with current behavior
+Quiz generation grades/produces answers eagerly at the same time questions are
+generated. User wants this deferred to end-of-run grading for 3 reasons:
+1. No security risk from exposing grading info early (less surface for leaking
+   correct answers to the client before the run is over).
+2. Open/short-answer questions can be graded by AI at the end just as well.
+3. Sending plain input text is far cheaper than doing a full grading round-trip
+   per question at generation time.
+
+### Exception: immediate-feedback mode
+The existing `answerFeedback` setting (`'end' | 'immediate'`, quiz/page.tsx) already
+controls this. If `answerFeedback === 'immediate'`, grade that one question
+right away (per-question), not batched. If `'end'`, batch all grading to the
+final results screen.
+
+### Core flow (as proposed by user)
+- At generation time, every question carries one of two things depending on quiz mode:
+  - **Literal mode** (questions must literally come from the source): the AI
+    does NOT write an answer. Instead, the source text is pre-split into numbered
+    chunks before generation (see chunking scheme below), and the AI returns which
+    chunk number(s) are relevant to the answer, e.g. `relevant: [1, 2]`. At grading
+    time, the system looks up the literal text of those chunks and sends
+    `question + cited chunk text + student's answer` to a grading LLM call.
+  - **Research mode** (answer may go beyond the literal source): chunk citation
+    isn't enough since the answer isn't confined to one passage. The AI instead
+    writes a `suggested_answer` at generation time — as short as possible while
+    still being a complete, understandable reference — carried alongside the
+    question to the deferred grading step. Purpose: stop the grading AI from
+    hallucinating what's correct.
+  - User is NOT fully sold on `suggested_answer` as the right shape for this and
+    explicitly asked for alternatives before building (see "Alternatives" below).
+
+### Chunking scheme (literal mode source numbering)
+Example given by user: split input into numbered parts, e.g. every ~2 sentences,
+one photo, or one uploaded file = one chunk:
+```
+1(Netherlands is a beautiful country. Netherlands loves football)2(John loves pizza. Lisa loves fries)
+```
+`1` = everything between its parens, `2` = everything between its parens, etc.
+User flagged that "every 2 sentences" is an arbitrary guess and asked to find a
+better chunking heuristic — recommendation: chunk by semantic/paragraph boundary
+up to a token budget (e.g. ~40-60 tokens per chunk) instead of a fixed sentence
+count, so chunks are neither too granular (excess citation overhead) nor too
+coarse (citing irrelevant surrounding text). Non-text sources (1 photo, 1 file)
+each get their own chunk number regardless of size.
+
+### Grading must resist manipulation, but allow legitimate leniency
+- The grading prompt must be hardened so it can NEVER be swayed by surface-level
+  appeals in the student's answer text (e.g. "I learned this so just mark it
+  right"). This must be explicit and emphatic in the system prompt.
+- Minor non-substantive mistakes (e.g. spelling) CAN be forgiven — grading should
+  be semantic/subjective, not exact-string-match, governed by a careful rubric
+  prompt.
+- Language-mismatch leniency: if a student answers in a different language than
+  expected and the quiz subject is NOT about that language itself (e.g. a quiz
+  about Dutch geography), that's acceptable, and the app should surface the
+  existing "switch app language to X?" notification (already built — just needs
+  to deep-link into Settings → Language). If the quiz IS about a language (e.g.
+  a German-vocabulary quiz) answering in French must NOT be auto-accepted, since
+  the language itself is the thing being tested. Implementation idea: a short,
+  explicit rule appended to the grading prompt when the quiz topic is
+  language-itself, e.g. "this test is about a language — do not grade answers
+  written in a different language as correct." Not foolproof, but better than
+  nothing.
+
+### Alternatives to `suggested_answer` (user asked for these before deciding)
+- **(A) User's original proposal** — research mode: free-text `suggested_answer`
+  string carried to grading. Literal mode: chunk-citation indices only.
+  Risk: a single canonical phrasing can bias the grader against a correct
+  answer phrased differently, and if the generation-time AI got the
+  `suggested_answer` itself subtly wrong, that error propagates uncorrected
+  into every grading call for that question.
+- **(B) Always cite + short "reasoning notes"** — use chunk citations in both
+  modes (research mode chunks may just be empty/sparse since the answer extends
+  beyond source), and replace `suggested_answer` with a short, internal-only
+  `reasoning_notes` field that explains why a fact is true rather than asserting
+  one canonical phrasing. The grading LLM uses cited source text + reasoning
+  notes + rubric, never a single fixed "the answer is X" string.
+- **(C, recommended) Acceptance-criteria list instead of one suggested answer** —
+  at generation time, instead of one `suggested_answer` string, produce a short
+  list of 1-3 required facts/keywords the answer must contain (e.g.
+  `criteria: ["mentions 1842", "mentions the Treaty of ..."]`). Grading checks each
+  criterion against the student's answer rather than fuzzy-matching one
+  reference phrasing. More robust for open/short-answer grading, more resistant
+  to "trust me" social engineering (correctness is criteria-based, not
+  plausibility-based), and combines cleanly with literal-mode chunk citations for
+  full traceability (teacher review / audit later).
+- Decision needed from user: pick (A), (B), (C), or a hybrid before this gets
+  built. Until then, current (eager, non-deferred) grading behavior stays as-is.
+
+## 8) Analytics for students AND teachers (reminder — not specced yet)
+
+Requested 2026-06-20, to revisit once the end-of-quiz results/analytics layout
+pass is done. User wants:
+- Students to be able to revisit their own past results for a quiz/flashcards
+  run later (re-see the end screen), not just immediately after finishing.
+- Some way to act on that historical result afterward — user's words: "build
+  new tools about that to finish it 100%" — vague/aspirational, not yet
+  specced. Needs a follow-up conversation before scoping.
+- Applies to both the student-facing and teacher-facing analytics views.
+

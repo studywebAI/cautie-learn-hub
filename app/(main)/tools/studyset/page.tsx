@@ -144,7 +144,7 @@ const LANGUAGE_OPTIONS = [
 type UrlSource = { id: string; url: string; label: string };
 
 const SOFT_SURFACE = 'border border-border/60 bg-surface-1/50';
-const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
+const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 const CALENDAR_CLASSES = {
   day_selected:
     'bg-surface-chip text-foreground hover:bg-surface-chip hover:text-foreground focus:bg-surface-chip focus:text-foreground',
@@ -775,7 +775,7 @@ export default function StudysetPage() {
       {/* Tool header strip */}
       <div className="flex items-center justify-between pb-2">
         <div>
-          <h1 className="text-lg font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="text-lg tracking-tight flex items-center gap-2">
             <Route className="h-4 w-4 text-muted-foreground" />
             Studyset
           </h1>
@@ -942,7 +942,7 @@ export default function StudysetPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
-                              <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${sm.className}`}>
+                              <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] ${sm.className}`}>
                                 {sm.label}
                               </span>
                             </div>
@@ -1027,13 +1027,13 @@ export default function StudysetPage() {
             <div className="px-8 pt-8 pb-6 border-b border-border/60">
               <div className="flex items-start gap-4">
                 <div
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white text-sm font-bold"
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white text-sm"
                   style={{ backgroundColor: '#6b7c4e' }}
                 >
                   {step + 1}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground leading-tight">{STEP_TITLES[step]}</h2>
+                  <h2 className="text-xl text-foreground leading-tight">{STEP_TITLES[step]}</h2>
                   <p className="text-sm text-muted-foreground mt-1">{STEP_SUBTITLES[step]}</p>
                 </div>
               </div>
@@ -1218,7 +1218,7 @@ export default function StudysetPage() {
                     ) : (
                       <>
                         <span
-                          className="flex h-6 w-6 items-center justify-center rounded-full text-white text-xs font-bold"
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-white text-xs"
                           style={{ backgroundColor: '#6b7c4e' }}
                         >
                           {selectedDateStrings.length}
@@ -1375,7 +1375,7 @@ export default function StudysetPage() {
                     {microsoftConnected && (
                       <div className="mt-3">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Selected files</p>
+                          <p className="text-xs font-medium text-muted-foreground">Selected files</p>
                           <button
                             type="button"
                             onClick={() => void loadMicrosoftSelectedFiles()}
@@ -1502,7 +1502,7 @@ export default function StudysetPage() {
                             onClick={() => setDifficulty(opt.value)}
                             className={`rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${
                               difficulty === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
                                 : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
                             }`}
                           >
@@ -1524,7 +1524,7 @@ export default function StudysetPage() {
                             onClick={() => setDepth(opt.value)}
                             className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
                               depth === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
                                 : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
                             }`}
                           >
@@ -1546,7 +1546,7 @@ export default function StudysetPage() {
                             onClick={() => setTone(opt.value)}
                             className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
                               tone === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735] font-semibold'
+                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
                                 : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
                             }`}
                           >
@@ -1650,7 +1650,7 @@ export default function StudysetPage() {
                   type="button"
                   onClick={goNext}
                   disabled={!canNext || creating}
-                  className="ml-auto flex items-center gap-1.5 rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  className="ml-auto flex items-center gap-1.5 rounded-lg px-6 py-2.5 text-sm text-white transition-colors disabled:opacity-50"
                   style={{ backgroundColor: canNext ? '#6b7c4e' : undefined }}
                 >
                   Next
@@ -1661,7 +1661,7 @@ export default function StudysetPage() {
                   type="button"
                   onClick={() => void createStudyset()}
                   disabled={!isStepFourReady || creating}
-                  className="ml-auto rounded-lg px-6 py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
+                  className="ml-auto rounded-lg px-6 py-2.5 text-sm text-white transition-colors disabled:opacity-50"
                   style={{ backgroundColor: isStepFourReady ? '#6b7c4e' : undefined }}
                 >
                   {creating ? 'Creating studyset…' : 'Create studyset'}

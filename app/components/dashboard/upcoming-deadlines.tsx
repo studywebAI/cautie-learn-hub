@@ -81,7 +81,7 @@ export function UpcomingDeadlines() {
               <Link prefetch={false} key={deadline.id} href={href} className="block group">
                 <div className="flex items-center justify-between p-3 surface-interactive rounded-lg group-hover:surface-interactive transition-colors">
                   <div className="flex flex-col gap-0.5">
-                      <p className="font-semibold">{deadline.title}</p>
+                      <p>{deadline.title}</p>
                       <p className="text-sm text-muted-foreground">{deadline.subject} - {dictionary.dashboard.upcomingDeadlines.due} {deadline.date}</p>
                       <p className="text-xs text-muted-foreground">{deadline.workload}</p>
                   </div>

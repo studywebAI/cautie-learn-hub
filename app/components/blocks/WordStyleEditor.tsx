@@ -316,7 +316,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
       {isTeacher && (
         <div className="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">Assignment Editor</h2>
+            <h2 className="text-xl">Assignment Editor</h2>
             <Badge variant="outline" className="flex items-center gap-1">
               <EyeOff className="h-3 w-3" />
               Teacher View
@@ -330,7 +330,7 @@ export const WordStyleEditor: React.FC<WordStyleEditorProps> = ({
             <Card className="border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Choose a template to insert:</h3>
+                  <h3 className="text-base">Choose a template to insert:</h3>
                   <Button
                     variant="ghost"
                     size="sm"

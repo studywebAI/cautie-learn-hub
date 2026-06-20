@@ -167,7 +167,7 @@ export function ChapterContentViewer({
     <div className={className}>
       {chapter && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold font-headline">{chapter.title}</h2>
+          <h2 className="text-2xl font-headline">{chapter.title}</h2>
           {chapter.description && (
             <p className="text-muted-foreground mt-2">{chapter.description}</p>
           )}

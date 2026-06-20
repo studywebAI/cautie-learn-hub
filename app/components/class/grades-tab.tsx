@@ -1138,10 +1138,10 @@ function GradeDistributionChart({ students }: { students: Array<{ grade_numeric?
   return (
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-muted-foreground">Grade distribution</p>
+        <p className="text-sm text-muted-foreground">Grade distribution</p>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">{nums.length} graded</span>
-          <span className="text-xs font-semibold text-[var(--accent-brand)]">avg {avg.toFixed(1)}</span>
+          <span className="text-sm text-[var(--accent-brand)]">avg {avg.toFixed(1)}</span>
         </div>
       </div>
       <div className="flex items-end gap-3" style={{ height: '72px' }}>
@@ -1151,7 +1151,7 @@ function GradeDistributionChart({ students }: { students: Array<{ grade_numeric?
           return (
             <div key={b.key} className="flex-1 flex flex-col items-center justify-end gap-1" style={{ height: '72px' }}>
               {b.count > 0 && (
-                <span className="text-[10px] font-semibold text-muted-foreground">{b.count}</span>
+                <span className="text-[11px] text-muted-foreground">{b.count}</span>
               )}
               <div
                 className="w-full rounded-t-[3px]"
@@ -1456,7 +1456,7 @@ function EditGradesDetail({
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">{gradeSet.title}</h1>
+            <h1 className="text-2xl">{gradeSet.title}</h1>
             <Badge variant={gradeSet.status === 'published' ? 'default' : 'secondary'}>
               {gradeSet.status}
             </Badge>
@@ -1521,7 +1521,7 @@ function EditGradesDetail({
       <div className="class-panel-lg space-y-4">
         <h2 className="text-base">Student Grades</h2>
           <div className="space-y-2">
-            <Label className="font-semibold">Grading Preset</Label>
+            <Label className="text-base">Grading Preset</Label>
             <select
               value={selectedPresetId}
               onChange={(e) => setSelectedPresetId(e.target.value)}
@@ -1537,7 +1537,7 @@ function EditGradesDetail({
           </div>
         {validationError && <p className="text-sm text-foreground/80">{validationError}</p>}
           <div className="class-panel space-y-2">
-            <Label className="font-semibold">Bulk for Selected</Label>
+            <Label className="text-base">Bulk for Selected</Label>
             {suggestedBulkValue ? (
               <button
                 type="button"

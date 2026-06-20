@@ -134,7 +134,7 @@ export function ClassCalendarEvents({ classId, className }: Props) {
       <div className="rounded-xl border border-border bg-muted/30 p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h4 className="text-sm font-semibold flex items-center gap-2">
+            <h4 className="text-sm flex items-center gap-2">
               <Calendar className="h-4 w-4 text-[#6b7c4e]" />
               Calendar subscription link
             </h4>
@@ -160,7 +160,7 @@ export function ClassCalendarEvents({ classId, className }: Props) {
       {/* Events list */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-foreground">
+          <h4 className="text-sm text-foreground">
             Upcoming events ({events.filter(e => new Date(e.starts_at) >= new Date()).length})
           </h4>
           <Button type="button" size="sm" onClick={() => setShowForm((v) => !v)} style={{ backgroundColor: '#6b7c4e' }}>

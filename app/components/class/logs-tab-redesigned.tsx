@@ -194,16 +194,16 @@ export function LogsTabRedesigned({
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                <th className="px-4 py-3 text-left text-[11px] text-muted-foreground/60">
                   {isDutch ? 'Actie' : 'Action'}
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden sm:table-cell">
+                <th className="px-4 py-3 text-left text-[11px] text-muted-foreground/60 hidden sm:table-cell">
                   {isDutch ? 'Door' : 'By'}
                 </th>
-                <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 hidden md:table-cell">
+                <th className="px-4 py-3 text-left text-[11px] text-muted-foreground/60 hidden md:table-cell">
                   {isDutch ? 'Samenvatting' : 'Summary'}
                 </th>
-                <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                <th className="px-4 py-3 text-right text-[11px] text-muted-foreground/60">
                   {isDutch ? 'Tijd' : 'Time'}
                 </th>
               </tr>
@@ -234,7 +234,7 @@ export function LogsTabRedesigned({
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className={cn('inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold', categoryBadge(log.log_category))}>
+                          <span className={cn('inline-block rounded px-1.5 py-0.5 text-[11px]', categoryBadge(log.log_category))}>
                             {log.log_code}
                           </span>
                           <span className={cn('text-[12px] font-600', categoryColor(log.log_category))}>
@@ -270,7 +270,7 @@ export function LogsTabRedesigned({
       {selectedLog && (
         <div className="w-80 shrink-0 rounded-lg border border-border bg-white dark:bg-[hsl(var(--surface-1))] self-start sticky top-4">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h3 className="text-[13px] font-semibold text-foreground">
+            <h3 className="text-[14px] text-foreground">
               {isDutch ? 'Details' : 'Details'}
             </h3>
             <button
@@ -285,14 +285,14 @@ export function LogsTabRedesigned({
           <div className="p-4 space-y-3 text-[12px]">
             {/* Action */}
             <DetailRow label={isDutch ? 'Actie' : 'Action'}>
-              <span className={cn('font-semibold', categoryColor(selectedLog.log_category))}>
+              <span className={cn('text-[13px]', categoryColor(selectedLog.log_category))}>
                 {humanizeAction(selectedLog.action)}
               </span>
             </DetailRow>
 
             {/* Code */}
             <DetailRow label={isDutch ? 'Code' : 'Code'}>
-              <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold', categoryBadge(selectedLog.log_category))}>
+              <span className={cn('rounded px-1.5 py-0.5 text-[11px]', categoryBadge(selectedLog.log_category))}>
                 {selectedLog.log_code}
               </span>
             </DetailRow>
@@ -328,7 +328,7 @@ export function LogsTabRedesigned({
             {/* Metadata key-value pairs */}
             {Object.keys(selectedLog.metadata || {}).length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mb-2">
+                <p className="text-[11px] text-muted-foreground/60 mb-2">
                   {isDutch ? 'Context' : 'Context'}
                 </p>
                 <div className="space-y-1.5 rounded-md bg-muted/40 p-3">

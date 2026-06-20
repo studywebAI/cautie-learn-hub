@@ -128,7 +128,7 @@ function MaterialPageContent() {
                <label htmlFor="file-upload" className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer surface-interactive hover:surface-interactive">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                  <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">{materialDict.clickToUpload}</span> {materialDict.dragAndDrop}</p>
+                  <p className="mb-2 text-sm text-muted-foreground"><span>{materialDict.clickToUpload}</span> {materialDict.dragAndDrop}</p>
                   <p className="text-xs text-muted-foreground">PDF, DOCX, TXT, PNG, JPG</p>
                 </div>
                 <Input id="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" />

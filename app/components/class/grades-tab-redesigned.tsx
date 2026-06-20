@@ -65,7 +65,7 @@ function GradeDistChart({ grades, isDutch }: { grades: StudentGrade[]; isDutch: 
 
   return (
     <div className="mt-3 rounded-md border border-border bg-white p-3 dark:bg-[hsl(var(--surface-1))]">
-      <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground/60">
+      <p className="mb-2 text-[12px] text-muted-foreground/60">
         {isDutch ? 'Verdeling' : 'Distribution'}
       </p>
       <div className="h-[80px]">
@@ -237,7 +237,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
         <button
           type="button"
           onClick={() => setShowCreate(true)}
-          className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent-brand)] px-3 text-[12px] font-semibold text-background hover:opacity-90"
+          className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--accent-brand)] px-3 text-[13px] text-background hover:opacity-90"
         >
           <Plus className="h-3.5 w-3.5" />
           {isDutch ? 'Nieuwe cijferlijst' : 'New grade set'}
@@ -254,7 +254,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
           {(['all', 'published', 'draft'] as const).map((f, i) => (
             <button key={f} type="button" onClick={() => setFilterStatus(f)}
               className={cn('px-2.5 py-1.5 text-[11px] transition-colors', i > 0 && 'border-l border-border',
-                filterStatus === f ? 'bg-[hsl(var(--surface-2))] font-semibold text-foreground' : 'text-muted-foreground hover:text-foreground'
+                filterStatus === f ? 'bg-[hsl(var(--surface-2))] text-foreground' : 'text-muted-foreground hover:text-foreground'
               )}>
               {f === 'all' ? (isDutch ? 'Alles' : 'All') : f === 'published' ? (isDutch ? 'Gepubliceerd' : 'Published') : (isDutch ? 'Concept' : 'Draft')}
             </button>
@@ -303,10 +303,10 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                   style={{ gridTemplateColumns: '1fr 100px 90px 70px 24px' }}
                 >
                   <div>
-                    <p className="text-[13px] font-semibold leading-snug">{gs.name}</p>
+                    <p className="text-[14px] leading-snug">{gs.name}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                       {gs.subject && <>{gs.subject} · </>}
-                      <span className={cn('font-semibold',
+                      <span className={cn(
                         gs.status === 'published' ? 'text-[var(--accent-brand)]' : 'text-amber-600'
                       )}>
                         {gs.status === 'published' ? (isDutch ? 'Gepubliceerd' : 'Published') : (isDutch ? 'Concept' : 'Draft')}
@@ -317,7 +317,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                   <p className="text-right text-[12px] text-muted-foreground">
                     {gs.gradedCount}/{gs.studentCount}
                   </p>
-                  <p className={cn('text-right text-[14px] font-bold', gradeColor(gs.average))}>
+                  <p className={cn('text-right text-[15px]', gradeColor(gs.average))}>
                     {gs.average !== null ? gs.average : '—'}
                   </p>
                   {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -344,7 +344,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                       {isEditing && (
                         <>
                           <button type="button" onClick={() => void saveGrades(gs.id)}
-                            className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[11px] font-semibold text-background hover:opacity-90">
+                            className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[12px] text-background hover:opacity-90">
                             {isDutch ? 'Opslaan' : 'Save'}
                           </button>
                           <button type="button" onClick={() => setEditingSet(null)}
@@ -356,7 +356,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                       {gs.status === 'draft' && !isEditing && (
                         <button type="button" disabled={publishing === gs.id}
                           onClick={() => void publishSet(gs.id)}
-                          className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[11px] font-semibold text-background hover:opacity-90 disabled:opacity-50">
+                          className="h-7 rounded-md bg-[var(--accent-brand)] px-2.5 text-[12px] text-background hover:opacity-90 disabled:opacity-50">
                           {publishing === gs.id ? '…' : (isDutch ? 'Publiceren' : 'Publish')}
                         </button>
                       )}
@@ -386,7 +386,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                       return (
                         <div className="overflow-hidden rounded-md border border-border bg-white dark:bg-[hsl(var(--surface-1))]">
                           {/* Col header */}
-                          <div className="grid gap-2 border-b border-border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60"
+                          <div className="grid gap-2 border-b border-border px-3 py-1.5 text-[11px] text-muted-foreground/60"
                             style={{ gridTemplateColumns: '1fr 60px 80px' }}>
                             <span>{isDutch ? 'Leerling' : 'Student'}</span>
                             <span className="text-right">{isDutch ? 'Beoord.' : 'Label'}</span>
@@ -406,7 +406,7 @@ function TeacherGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                                     onChange={e => setGradeInputs(prev => ({ ...prev, [sg.studentId]: e.target.value }))}
                                     className="h-7 text-right text-[12px]" />
                                 ) : (
-                                  <span className={cn('text-right text-[14px] font-bold', gradeColor(sg.grade))}>
+                                  <span className={cn('text-right text-[15px]', gradeColor(sg.grade))}>
                                     {sg.grade !== null ? sg.grade : '—'}
                                   </span>
                                 )}
@@ -526,7 +526,7 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
       {/* Grade calculator */}
       {showCalc && (
         <div className="rounded-lg border border-border bg-[hsl(var(--surface-2))] p-3.5">
-          <p className="mb-2.5 text-[13px] font-semibold">{isDutch ? 'Welk cijfer heb ik nodig?' : 'What grade do I need?'}</p>
+          <p className="mb-2.5 text-[14px]">{isDutch ? 'Welk cijfer heb ik nodig?' : 'What grade do I need?'}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="mb-1 block text-[11px] text-muted-foreground">{isDutch ? 'Huidig gemiddelde' : 'Current average'}</label>
@@ -538,7 +538,7 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
             </div>
           </div>
           {calcResult !== null && (
-            <div className={cn('mt-3 rounded-md px-3 py-2 text-[13px] font-semibold',
+            <div className={cn('mt-3 rounded-md px-3 py-2 text-[14px]',
               calcResult <= 10 ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]' : 'bg-red-600/10 text-red-600'
             )}>
               {calcResult <= 10
@@ -560,7 +560,7 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
             </p>
           ) : (
             <>
-              <div className="grid gap-3 border-b border-border px-3.5 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground/60"
+              <div className="grid gap-3 border-b border-border px-3.5 py-2 text-[11px] text-muted-foreground/60"
                 style={{ gridTemplateColumns: '60px 1fr 50px' }}>
                 <span>{isDutch ? 'Datum' : 'Date'}</span>
                 <span>{isDutch ? 'Opdracht' : 'Assignment'}</span>
@@ -572,10 +572,10 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                   style={{ gridTemplateColumns: '60px 1fr 50px' }}>
                   <span className="text-[11px] text-muted-foreground">{fmtDate(g.publishedAt, loc)}</span>
                   <div>
-                    <p className="text-[13px] font-semibold leading-snug">{g.gradeSetName}</p>
+                    <p className="text-[14px] leading-snug">{g.gradeSetName}</p>
                     {g.subject && <p className="text-[11px] text-muted-foreground leading-snug">{g.subject}</p>}
                   </div>
-                  <span className={cn('text-right text-[16px] font-bold', gradeColor(g.grade))}>
+                  <span className={cn('text-right text-[17px]', gradeColor(g.grade))}>
                     {g.grade !== null ? g.grade : '—'}
                   </span>
                 </div>
@@ -603,11 +603,11 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                 <button type="button"
                   onClick={() => setExpandedSubject(isOpen ? null : subject)}
                   className={cn('flex w-full items-center gap-3 px-3.5 py-[11px] text-left transition-colors hover:bg-[hsl(var(--interactive-hover))]', i > 0 && 'border-t border-border/40')}>
-                  <span className="flex-1 text-[13px] font-semibold">{subject}</span>
+                  <span className="flex-1 text-[14px]">{subject}</span>
                   <div className="h-[5px] w-24 overflow-hidden rounded-full bg-muted">
                     <div className="h-full rounded-full bg-[var(--accent-brand)]" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className={cn('w-10 text-right text-[16px] font-bold', gradeColor(avg))}>
+                  <span className={cn('w-10 text-right text-[17px]', gradeColor(avg))}>
                     {avg !== null ? avg : '—'}
                   </span>
                 </button>
@@ -618,7 +618,7 @@ function StudentGradesView({ classId, isDutch, loc }: { classId: string; isDutch
                         className={cn('flex items-center justify-between px-3.5 py-2 text-[12px]', j > 0 && 'border-t border-border/40')}>
                         <span className="text-muted-foreground">{g.gradeSetName}</span>
                         <span className="text-muted-foreground">{fmtDate(g.publishedAt, loc)}</span>
-                        <span className={cn('font-bold', gradeColor(g.grade))}>{g.grade !== null ? g.grade : '—'}</span>
+                        <span className={cn('text-[13px]', gradeColor(g.grade))}>{g.grade !== null ? g.grade : '—'}</span>
                       </div>
                     ))}
                   </div>

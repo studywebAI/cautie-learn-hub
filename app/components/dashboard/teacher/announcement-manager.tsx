@@ -171,7 +171,7 @@ export function AnnouncementManager({ classId, isTeacher }: AnnouncementManagerP
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Class Announcements</h2>
+          <h2 className="text-3xl">Class Announcements</h2>
           <p className="text-muted-foreground">Create and manage announcements for your class.</p>
         </div>
         {isTeacher && (

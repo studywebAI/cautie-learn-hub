@@ -99,7 +99,7 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       onClick={handleClick}
     >
       <div className={`min-w-0 flex-1 ${compact ? 'hidden xl:block' : ''}`}>
-        <p className="truncate text-[10px] uppercase tracking-[0.03em] text-muted-foreground">
+        <p className="truncate text-[10px] text-muted-foreground">
           {event.subject}{event.class_name ? ` | ${event.class_name}` : ''}
         </p>
         <p className="truncate text-[13px] text-foreground">{event.title}</p>

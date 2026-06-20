@@ -1329,7 +1329,7 @@ function PresentationPageContent() {
           <div className="flex min-h-[65vh] flex-col items-center justify-center px-4 py-8">
             <div className="w-full max-w-2xl space-y-6">
               <div className="text-center">
-                <h1 className="text-3xl font-semibold leading-tight">Create Presentation</h1>
+                <h1 className="text-3xl leading-tight">Create Presentation</h1>
                 <p className="mt-2 text-base text-muted-foreground">Add material or describe what your presentation should cover</p>
               </div>
 

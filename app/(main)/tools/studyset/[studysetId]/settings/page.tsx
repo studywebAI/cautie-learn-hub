@@ -42,7 +42,7 @@ import { ICON_OPTIONS, COLOR_OPTIONS, colorHex, statusMeta } from '@/components/
 
 const BRAND = '#6b7c4e';
 const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
-const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
+const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 const CALENDAR_CLASSES = {
   day_selected:
     'bg-surface-chip text-foreground hover:bg-surface-chip hover:text-foreground focus:bg-surface-chip focus:text-foreground',
@@ -324,7 +324,7 @@ export default function StudysetSettingsPage() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold text-foreground">
+          <h1 className="flex items-center gap-2 text-2xl text-foreground">
             <SlidersHorizontal className="h-5 w-5 text-muted-foreground" />
             {data.name} — Settings
           </h1>
@@ -332,7 +332,7 @@ export default function StudysetSettingsPage() {
             Edit how this studyset looks, schedules and studies for you.
           </p>
         </div>
-        <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide ${sm.className}`}>
+        <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] ${sm.className}`}>
           {sm.label}
         </span>
       </div>

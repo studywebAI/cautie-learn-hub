@@ -1189,11 +1189,11 @@ export function AssignmentEditor({
           {expandedAnswersBlockId === block.id && (
             <div className="mt-2 space-y-2 rounded-lg border border-border/70 surface-panel p-2 text-xs">
               <div className="rounded-md border border-border/50 bg-background p-2 text-foreground/80">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Question</p>
+                <p className="text-[11px] text-foreground/65">Question</p>
                 <p className="mt-1">{String(block.data.question || block.data.prompt || block.data.header || 'Untitled block')}</p>
                 {referenceAnswer ? (
                   <>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Reference Answer</p>
+                    <p className="mt-2 text-[11px] text-foreground/65">Reference Answer</p>
                     <p className="mt-1">{referenceAnswer}</p>
                   </>
                 ) : null}
@@ -1210,7 +1210,7 @@ export function AssignmentEditor({
                       <span>{row.student_name || 'Student'}</span>
                       <span className={verdictClass}>{verdict}</span>
                     </div>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Student Answer</p>
+                    <p className="mt-1 text-[11px] text-foreground/65">Student Answer</p>
                     <p className="mt-1 line-clamp-2 text-foreground/80">{String(row.answer_data?.text || row.answer_data?.answer || '')}</p>
                   </div>
                 );
@@ -1230,12 +1230,12 @@ export function AssignmentEditor({
                 return (
                   <div className="space-y-2">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">My Submitted Answer</p>
+                      <p className="text-[11px] text-foreground/65">My Submitted Answer</p>
                       <p className="mt-1 text-foreground/85">{answerText}</p>
                     </div>
                     {referenceAnswer ? (
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/65">Reference Answer</p>
+                        <p className="text-[11px] text-foreground/65">Reference Answer</p>
                         <p className="mt-1 text-foreground/85">{referenceAnswer}</p>
                       </div>
                     ) : null}
@@ -1279,7 +1279,7 @@ export function AssignmentEditor({
       case 'multiple_choice':
         return (
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Question</Label>
+            <Label className="text-[11px] text-muted-foreground">Question</Label>
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
@@ -1340,7 +1340,7 @@ export function AssignmentEditor({
               </Button>
             </div>
             <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Answer</p>
+              <p className="text-[11px] text-muted-foreground">Expected Answer</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {Array.isArray(block.data.options)
                   ? block.data.options.filter((option: any) => option?.correct).map((option: any) => option?.text || '...').join(', ') || 'No correct option set.'
@@ -1354,7 +1354,7 @@ export function AssignmentEditor({
       case 'open_question':
         return (
           <div className="space-y-2">
-            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Question</Label>
+            <Label className="text-[11px] text-muted-foreground">Question</Label>
             <Input
               value={block.data.question}
               onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
@@ -1365,7 +1365,7 @@ export function AssignmentEditor({
               disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
-            <Label className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Correct / Model Answer</Label>
+            <Label className="text-[11px] text-muted-foreground">Correct / Model Answer</Label>
             <Textarea
               value={block.data.correct_answer || ''}
               onChange={(e) => updateBlock(block.id, { ...block.data, correct_answer: e.target.value })}
@@ -1466,7 +1466,7 @@ export function AssignmentEditor({
               ))}
             </div>
             <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Matches</p>
+              <p className="text-[11px] text-muted-foreground">Expected Matches</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {(block.data.pairs || [])
                   .slice(0, 3)
@@ -1542,7 +1542,7 @@ export function AssignmentEditor({
               </Button>
             </div>
             <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
-              <p className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Expected Order</p>
+              <p className="text-[11px] text-muted-foreground">Expected Order</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {(block.data.items || []).map((item: string, idx: number) => `${idx + 1}. ${item || '...'}`).join(' | ') || 'No items yet.'}
               </p>
@@ -1900,7 +1900,7 @@ export function AssignmentEditor({
           <aside className="w-[320px] border-l border-border bg-background p-3 overflow-y-auto">
             <div className="space-y-3">
               <div className="rounded-xl border border-border surface-panel p-3">
-                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em] mb-2">Blocks</div>
+                <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
                 <div className="space-y-1.5">
                   {BLOCK_TEMPLATES.map((template) => (
                     <div
@@ -1928,7 +1928,7 @@ export function AssignmentEditor({
                 const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
                 return (
                   <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-[0.08em]">Question Settings</div>
+                    <div className="text-[11px] font-medium text-muted-foreground">Question Settings</div>
                     {isQuestionBlock && localAnswersEnabled && (
                       <div className="flex items-center justify-between">
                         <Label className="text-xs">Show feedback</Label>

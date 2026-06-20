@@ -230,11 +230,11 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
                 <div className="flex justify-between items-start">
                   <div className="grid grid-cols-2 gap-4 flex-1">
                     <div>
-                        <p className="text-xs font-semibold text-muted-foreground">FRONT</p>
+                        <p className="text-sm text-muted-foreground">FRONT</p>
                         <p className="font-medium">{card.front}</p>
                     </div>
                      <div>
-                        <p className="text-xs font-semibold text-muted-foreground">BACK</p>
+                        <p className="text-sm text-muted-foreground">BACK</p>
                         <p className="">{card.back}</p>
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export function FlashcardEditor({ cards, sourceText, onStartStudy, onBack, isAss
         <div className="p-6 pt-2">
             <Separator className="my-4" />
             <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Add New Card</h3>
+                <h3 className="text-lg">Add New Card</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="manual-front">Front</Label>

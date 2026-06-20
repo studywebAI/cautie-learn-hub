@@ -99,7 +99,7 @@ function StatBox({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-semibold leading-none text-foreground">{value}</p>
+          <p className="text-2xl leading-none text-foreground">{value}</p>
           <p className="mt-1 truncate text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
@@ -340,7 +340,7 @@ export default function StudysetAnalyticsPage() {
       </div>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">
+        <h1 className="text-2xl text-foreground">
           {data.studyset.name} — Analytics
         </h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -446,7 +446,7 @@ export default function StudysetAnalyticsPage() {
                         </td>
                         <td className="py-3">
                           <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClasses(
+                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs ${statusBadgeClasses(
                               status
                             )}`}
                           >

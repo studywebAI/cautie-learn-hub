@@ -149,7 +149,7 @@ const TOOL_TYPES: Record<string, string> = {
   wordweb: 'wordweb',
 };
 
-const SECTION_HEADING = 'text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground mb-3';
+const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
 
 function toolMeta(taskType: string) {
@@ -548,7 +548,7 @@ export default function StudysetDetailPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
+          <h1 className="text-2xl leading-tight tracking-tight text-foreground">
             {studyset?.name || 'Studyset'}
           </h1>
         </div>
@@ -602,7 +602,7 @@ export default function StudysetDetailPage() {
             <PopoverContent className="w-80" align="end">
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-sm mb-1">Share this studyset</h4>
+                  <h4 className="text-base mb-1">Share this studyset</h4>
                   <p className="text-xs text-muted-foreground">
                     Anyone with this link can view and copy this studyset.
                   </p>
@@ -669,12 +669,12 @@ export default function StudysetDetailPage() {
               strokeDashoffset={ringOffset}
               transform="rotate(-90 36 36)"
             />
-            <text x="36" y="41" textAnchor="middle" className="fill-foreground text-[15px] font-semibold">
+            <text x="36" y="41" textAnchor="middle" className="fill-foreground text-[15px]">
               {progress.percent}%
             </text>
           </svg>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <p className="text-[11px] text-muted-foreground">
               Readiness
             </p>
             <p className="text-sm text-muted-foreground">
@@ -684,10 +684,10 @@ export default function StudysetDetailPage() {
         </div>
 
         <div className={`${CARD} flex flex-col justify-center`}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Sessions done
           </p>
-          <p className="mt-1 text-3xl font-semibold text-foreground">
+          <p className="mt-1 text-3xl text-foreground">
             {completedDays}
             <span className="text-base font-normal text-muted-foreground">/{days.length}</span>
           </p>
@@ -695,10 +695,10 @@ export default function StudysetDetailPage() {
         </div>
 
         <div className={`${CARD} flex flex-col justify-center`}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Weak topics
           </p>
-          <p className="mt-1 text-3xl font-semibold text-foreground">{weakTopicCount}</p>
+          <p className="mt-1 text-3xl text-foreground">{weakTopicCount}</p>
           <p className="text-sm text-muted-foreground">need attention</p>
         </div>
       </div>
@@ -715,7 +715,7 @@ export default function StudysetDetailPage() {
           }}
         >
           <p
-            className="text-2xl font-semibold"
+            className="text-2xl"
             style={{
               color:
                 examCountdown.days <= 7 ? '#9b3a32' : examCountdown.days <= 14 ? '#8a6a13' : '#4a5735',
@@ -741,7 +741,7 @@ export default function StudysetDetailPage() {
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">{aiBrief.title}</p>
+                <p className="text-base text-foreground">{aiBrief.title}</p>
                 <p className="mt-1 text-sm text-muted-foreground">{aiBrief.summary}</p>
                 {dailyPulse?.focus_topics && dailyPulse.focus_topics.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
@@ -793,7 +793,7 @@ export default function StudysetDetailPage() {
       {recommendations.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            <h2 className="text-[11px] text-muted-foreground">
               ai recommendations
             </h2>
             {performanceSummary?.momentum && (
@@ -898,7 +898,7 @@ export default function StudysetDetailPage() {
       {/* Study Plan roadmap */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+          <h2 className="text-[11px] text-muted-foreground">
             study plan
           </h2>
           <div className="flex items-center gap-1 rounded-full border border-border bg-white p-1">
@@ -976,7 +976,7 @@ export default function StudysetDetailPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-foreground">Day {day.day_number}</span>
+                      <span className="text-xs text-foreground">Day {day.day_number}</span>
                       {day.completed ? (
                         <CheckCircle2 className="h-4 w-4 text-[var(--accent-brand)]" />
                       ) : (

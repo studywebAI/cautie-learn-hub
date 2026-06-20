@@ -57,7 +57,7 @@ function MCQCardGrid({ question, answer, disabled, onChange, reveal, correctOpti
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-medium ${cls}`}
+            className={`flex min-h-[92px] items-center justify-center rounded-xl px-5 py-5 text-center text-[14px] ${cls}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -88,12 +88,12 @@ function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOpt
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-3.5 text-left ${cls}`}
+            className={`flex w-full items-center gap-3 rounded-lg px-5 py-4 text-left ${cls}`}
           >
             <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${selected ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]' : 'border-muted-foreground/40'}`}>
               {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
-            <span className="text-[13px] text-foreground">{cleanOptionText(option.text)}</span>
+            <span className="text-[14px] text-foreground">{cleanOptionText(option.text)}</span>
           </button>
         );
       })}
@@ -129,7 +129,7 @@ function MCQColorBlocks({ question, answer, disabled, onChange, reveal, correctO
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[80px] items-center justify-center rounded-xl px-4 py-4 text-center text-[13px] font-semibold ${cls} ${disabled && !selected ? 'opacity-70' : 'opacity-100'}`}
+            className={`flex min-h-[92px] items-center justify-center rounded-xl px-5 py-5 text-center text-[14px] ${cls} ${disabled && !selected ? 'opacity-70' : 'opacity-100'}`}
           >
             {cleanOptionText(option.text)}
           </button>
@@ -164,7 +164,7 @@ function TFBigButtons({ answer, disabled, onChange, reveal, correctOptionId, opt
             type="button"
             disabled={disabled}
             onClick={() => onChange({ kind: 'option', value: option.id })}
-            className={`flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl text-[22px] font-bold ${cls}`}
+            className={`flex min-h-[100px] flex-col items-center justify-center gap-2 rounded-xl text-[23px] ${cls}`}
           >
             <span className="text-3xl">{isTrue ? '○' : '✕'}</span>
             <span className="text-[15px]">{cleanOptionText(option.text)}</span>
@@ -186,54 +186,74 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
     ? answer.value
     : [...items].sort(() => 0);
 
-  const dragIdx = useRef<number | null>(null);
-  const [touchDragIdx, setTouchDragIdx] = useState<number | null>(null);
+  const [draggingItem, setDraggingItem] = useState<string | null>(null);
+  const [overItem, setOverItem] = useState<string | null>(null);
+  const [touchDragItem, setTouchDragItem] = useState<string | null>(null);
 
-  const handleDrop = (dropIdx: number, fromIdx: number | null) => {
-    if (fromIdx === null || fromIdx === dropIdx) return;
-    const next = [...current];
-    const [moved] = next.splice(fromIdx, 1);
-    next.splice(dropIdx, 0, moved);
-    onChange({ kind: 'ordering', value: next });
+  // Live preview: reflects the in-progress drag before it's dropped, so siblings
+  // visibly reflow while dragging instead of only updating on release.
+  const reorder = (from: string, to: string) => {
+    const next = current.filter((i) => i !== from);
+    const pos = next.indexOf(to);
+    next.splice(pos, 0, from);
+    return next;
+  };
+
+  const displayItems = draggingItem && overItem && draggingItem !== overItem
+    ? reorder(draggingItem, overItem)
+    : current;
+
+  const commitDrop = (target: string | null, from: string | null) => {
+    if (from && target && from !== target) {
+      onChange({ kind: 'ordering', value: reorder(from, target) });
+    }
+    setDraggingItem(null);
+    setOverItem(null);
   };
 
   return (
     <div className="space-y-2">
-      {current.map((item, idx) => (
+      {displayItems.map((item, idx) => (
         <div
           key={item}
-          data-order-idx={idx}
+          data-order-item={item}
           draggable={!disabled}
-          onDragStart={() => { dragIdx.current = idx; }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={() => { handleDrop(idx, dragIdx.current); dragIdx.current = null; }}
+          onDragStart={() => { setDraggingItem(item); setOverItem(item); }}
+          onDragOver={(e) => { e.preventDefault(); if (draggingItem) setOverItem(item); }}
+          onDrop={() => commitDrop(overItem ?? item, draggingItem)}
+          onDragEnd={() => { setDraggingItem(null); setOverItem(null); }}
           onTouchStart={(e) => {
             if (disabled) return;
             e.stopPropagation();
-            setTouchDragIdx(idx);
+            setTouchDragItem(item);
+            setDraggingItem(item);
+            setOverItem(item);
           }}
-          onTouchEnd={(e) => {
-            if (touchDragIdx === null) return;
-            const touch = e.changedTouches[0];
+          onTouchMove={(e) => {
+            if (touchDragItem === null) return;
+            const touch = e.touches[0];
             const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            const target = el?.closest('[data-order-idx]');
-            const dropIdx = target ? Number(target.getAttribute('data-order-idx')) : null;
-            if (dropIdx !== null && !Number.isNaN(dropIdx)) handleDrop(dropIdx, touchDragIdx);
-            setTouchDragIdx(null);
+            const target = el?.closest('[data-order-item]');
+            const overTouchItem = target?.getAttribute('data-order-item') || null;
+            if (overTouchItem) setOverItem(overTouchItem);
+          }}
+          onTouchEnd={() => {
+            commitDrop(overItem ?? touchDragItem, touchDragItem);
+            setTouchDragItem(null);
           }}
           className={[
-            'flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 select-none transition-opacity',
+            'flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3.5 select-none transition-all',
             disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
-            touchDragIdx === idx ? 'opacity-40' : '',
+            draggingItem === item ? 'opacity-50 scale-[0.98]' : '',
           ].join(' ')}
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] font-semibold text-[var(--accent-brand)]">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
             {idx + 1}
           </span>
           <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
             <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
           </svg>
-          <span className="text-[13px] text-foreground">{item}</span>
+          <span className="text-[14px] text-foreground">{item}</span>
         </div>
       ))}
     </div>
@@ -286,16 +306,16 @@ function OrderingClickNumber({ question, answer, disabled, onChange }: {
             type="button"
             disabled={disabled}
             onClick={() => pos ? undefined : assign(item)}
-            className={`flex w-full items-center gap-3 rounded-lg border px-3 py-3 text-left transition-all ${
+            className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3.5 text-left transition-all ${
               pos ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/8' : 'border-border bg-background hover:border-[var(--accent-brand)]/30'
             }`}
           >
-            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-all ${
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[12px] leading-none transition-all ${
               pos ? 'bg-[var(--accent-brand)] text-white' : 'border-2 border-dashed border-muted-foreground/30 text-muted-foreground'
             }`}>
               {pos || '?'}
             </span>
-            <span className="text-[13px] text-foreground">{item}</span>
+            <span className="text-[14px] text-foreground">{item}</span>
           </button>
         );
       })}
@@ -361,7 +381,7 @@ function MatchingClickPairs({ question, answer, disabled, onChange }: {
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="space-y-2">
-        <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Match from</p>
+        <p className="mb-1 text-[11px] font-medium text-muted-foreground">Match from</p>
         {leftOrder.map((left) => {
           const isMatched = !!mapping[left];
           const isSelected = selectedLeft === left;
@@ -371,7 +391,7 @@ function MatchingClickPairs({ question, answer, disabled, onChange }: {
               key={left}
               type="button"
               onClick={() => handleLeftClick(left)}
-              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-[13px] transition-all ${
+              className={`flex w-full items-center gap-2 rounded-lg border px-4 py-3 text-left text-[14px] transition-all ${
                 isSelected
                   ? 'border-[var(--accent-brand)] ring-2 ring-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
                   : isMatched
@@ -385,7 +405,7 @@ function MatchingClickPairs({ question, answer, disabled, onChange }: {
         })}
       </div>
       <div className="space-y-2">
-        <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Match to</p>
+        <p className="mb-1 text-[11px] font-medium text-muted-foreground">Match to</p>
         {rightValues.map((right) => {
           const isMatched = !!getColorForRight(right);
           const colorCls = getColorForRight(right);
@@ -394,7 +414,7 @@ function MatchingClickPairs({ question, answer, disabled, onChange }: {
               key={right}
               type="button"
               onClick={() => handleRightClick(right)}
-              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 text-left text-[13px] transition-all ${
+              className={`flex w-full items-center gap-2 rounded-lg border px-4 py-3 text-left text-[14px] transition-all ${
                 selectedLeft
                   ? 'border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/10 cursor-pointer'
                   : isMatched
@@ -757,13 +777,13 @@ function MatchingBoard({ question, answer, disabled, onChange }: { question: Qui
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {pairs.map((pair) => (
-          <div key={pair.left} className="rounded-lg border border-border bg-background p-2.5">
-            <p className="mb-2 text-sm font-medium">{pair.left}</p>
+          <div key={pair.left} className="rounded-lg border border-border bg-background p-3.5">
+            <p className="mb-2 text-[14px]">{pair.left}</p>
             <div
               className={[
-                'min-h-10 rounded-md border border-dashed px-2 py-2 text-sm transition-colors',
+                'min-h-11 rounded-md border border-dashed px-3 py-2.5 text-[14px] transition-colors',
                 selectedOption ? 'border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/5 cursor-pointer' : 'border-border',
               ].join(' ')}
               onDragOver={(e) => e.preventDefault()}
@@ -1092,7 +1112,7 @@ function HotspotQuestion({ question, answer, disabled, onChange }: {
               top: `${correctZone.y}%`,
               transform: 'translateX(-50%) translateY(-110%)',
             }}
-            className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow"
+            className="rounded-full bg-emerald-500 px-2 py-0.5 text-[11px] text-white shadow"
           >
             {correctZone.label}
           </div>
@@ -1145,7 +1165,7 @@ function ComparisonMatrix({ question, answer, disabled, onChange }: {
             <tr className="border-b border-border bg-muted/40">
               <th className="px-3 py-2.5 text-left font-medium text-muted-foreground" />
               {cols.map((col) => (
-                <th key={col} className="px-3 py-2.5 text-center text-[12px] font-semibold text-foreground">
+                <th key={col} className="px-3 py-2.5 text-center text-[12px] text-foreground">
                   {col}
                 </th>
               ))}
@@ -1281,7 +1301,7 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
     <div className="space-y-3">
       {criteria ? (
         <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px] text-muted-foreground">
-          <span className="font-semibold text-foreground">Rank by: </span>{criteria}
+          <span className="font-medium text-foreground">Rank by: </span>{criteria}
         </div>
       ) : null}
       <p className="text-[11px] text-muted-foreground">Drag to reorder from #1 (top) to last (bottom).</p>
@@ -1295,7 +1315,7 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
             onDrop={() => handleDrop(idx)}
             className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-3 cursor-grab active:cursor-grabbing select-none"
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] font-bold text-[var(--accent-brand)]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[11px] leading-none text-[var(--accent-brand)]">
               #{idx + 1}
             </span>
             <svg className="h-4 w-4 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
@@ -1459,7 +1479,7 @@ function VennQuestion({ question, answer, disabled, onChange }: {
               i > 0 ? '-ml-5' : ''
             } ${circleStyle[i % circleStyle.length]}`}
           >
-            <span className="px-1 text-[10px] font-semibold leading-tight">
+            <span className="px-1 text-[11px] leading-tight">
               {circle.label.length > 8 ? circle.label.slice(0, 7) + '…' : circle.label}
             </span>
           </div>
@@ -1570,7 +1590,7 @@ function ScenarioQuestion({ question, answer, disabled, onChange, reveal, correc
       {/* Scenario context */}
       {context ? (
         <div className="rounded-xl border border-black/[0.08] bg-white px-4 py-3.5 space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scenario</p>
+          <p className="text-[11px] text-muted-foreground">Scenario</p>
           <p className="text-[13px] leading-relaxed text-foreground">
             {truncated ? `${context.slice(0, 320)}…` : context}
           </p>
@@ -1825,7 +1845,7 @@ function QuestionView({
           onChange={(e) => onChange({ kind: 'text', value: e.target.value })}
           disabled={disabled}
           rows={3}
-          className="w-full rounded-lg border border-black/[0.08] bg-white px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
+          className="w-full rounded-lg border border-black/[0.08] bg-white px-4 py-3 text-[13px] text-foreground placeholder:text-muted-foreground placeholder:transition-opacity [&:focus::placeholder]:opacity-0 resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]/40"
           placeholder="Type your answer..."
         />
       </div>
@@ -2150,8 +2170,8 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
               ].join(' ')}>
                 {modalRow.correct ? <IconCheck size={9} strokeWidth={2} /> : <IconX size={9} strokeWidth={2} />}
               </span>
-              <span className="text-[12px] font-semibold text-muted-foreground">Q{modalRow.idx + 1}</span>
-              <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+              <span className="text-[12px] text-muted-foreground">Q{modalRow.idx + 1}</span>
+              <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] text-[var(--accent-brand)]">
                 {getTypeLabel(modalRow.type)}
               </span>
               {modalRow.responseMs > 0 && (
@@ -2169,31 +2189,31 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
 
           {/* Modal body */}
           <div className="flex-1 overflow-auto px-6 py-5 space-y-4">
-            <p className="text-[16px] font-semibold leading-[1.65] text-foreground">
+            <p className="text-[17px] leading-[1.65] text-foreground">
               {modalRow.question.question.replace(/_{3,}/g, '____')}
             </p>
 
             <div className="grid grid-cols-2 gap-3">
               <div className={`rounded-xl border px-4 py-3 ${modalRow.correct ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10' : 'border-red-200 dark:border-red-800 bg-red-50/40 dark:bg-red-900/10'}`}>
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Your answer</p>
+                <p className="mb-1.5 text-[11px] text-muted-foreground">Your answer</p>
                 <p className={`text-[14px] font-medium ${modalRow.correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>{modalRow.given || '—'}</p>
               </div>
               <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 px-4 py-3">
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Correct answer</p>
+                <p className="mb-1.5 text-[11px] text-muted-foreground">Correct answer</p>
                 <p className="text-[14px] font-medium text-emerald-700 dark:text-emerald-400">{modalRow.correctValue || '—'}</p>
               </div>
             </div>
 
             {modalRow.question.type === 'matching' && (
               <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Matching breakdown</p>
+                <p className="mb-2 text-[11px] text-muted-foreground">Matching breakdown</p>
                 <MatchingComparison question={modalRow.question} answer={modalRow.answer} />
               </div>
             )}
 
             {modalRow.question.explanation && (
               <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
-                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Explanation</p>
+                <p className="mb-1.5 text-[11px] text-muted-foreground">Explanation</p>
                 <p className="text-[13.5px] leading-relaxed text-foreground/80">{modalRow.question.explanation}</p>
               </div>
             )}
@@ -2269,16 +2289,16 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
           <div className="flex overflow-hidden rounded-2xl border border-border bg-white dark:bg-card shadow-sm">
             {/* Accuracy */}
             <div className={`flex-1 border-r border-border px-5 py-4 ${accentBg(accuracyPct)}`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Accuracy</p>
-              <p className={`mt-1 text-[26px] font-bold tabular-nums leading-none ${scoreColor}`}>{accuracyPct}%</p>
+              <p className="text-[11px] text-muted-foreground">Accuracy</p>
+              <p className={`mt-1 text-[26px] tabular-nums leading-none ${scoreColor}`}>{accuracyPct}%</p>
               <p className="mt-1 text-[10px] text-muted-foreground">{scoredRows.filter((r) => r.correct).length} / {scoredRows.length} correct</p>
             </div>
             {/* Speed */}
             <div className="flex-1 border-r border-border px-5 py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Speed</p>
+              <p className="text-[11px] text-muted-foreground">Speed</p>
               <button
                 type="button"
-                className="mt-1 text-[26px] font-bold tabular-nums leading-none text-foreground hover:text-[var(--accent-brand)] transition-colors"
+                className="mt-1 text-[26px] tabular-nums leading-none text-foreground hover:text-[var(--accent-brand)] transition-colors"
                 onClick={() => setShowTotalTime((v) => !v)}
               >
                 {showTotalTime ? (totalMs > 0 ? `${Math.round(totalMs / 1000)}s` : '—') : (avgMs > 0 ? `${(avgMs / 1000).toFixed(1)}s` : '—')}
@@ -2287,8 +2307,8 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
             </div>
             {/* Completed */}
             <div className="flex-1 px-5 py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Completed</p>
-              <p className="mt-1 text-[26px] font-bold tabular-nums leading-none text-foreground">{completedPct}%</p>
+              <p className="text-[11px] text-muted-foreground">Completed</p>
+              <p className="mt-1 text-[26px] tabular-nums leading-none text-foreground">{completedPct}%</p>
               <p className="mt-1 text-[10px] text-muted-foreground">{scoredRows.length} questions answered</p>
             </div>
           </div>
@@ -2299,12 +2319,12 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
             {/* LEFT: full question list */}
             <div className="rounded-2xl border border-border bg-white dark:bg-card overflow-hidden shadow-sm">
               <div className="border-b border-border/60 bg-muted/20 px-5 py-3 flex items-center justify-between">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">All questions</p>
+                <p className="text-[12px] text-muted-foreground">All questions</p>
                 <span className="text-[10px] text-muted-foreground">click to expand</span>
               </div>
               <div className="divide-y divide-border/50">
-                {rows.map((row) => {
-                  const unanswered = row.answer === undefined && !row.isNotRelevant;
+                {rows.filter((row) => !row.isNotRelevant).map((row) => {
+                  const unanswered = row.answer === undefined;
                   return (
                     <button
                       key={row.id}
@@ -2316,13 +2336,12 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                         {/* Status icon */}
                         <span className={[
                           'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
-                          row.isNotRelevant ? 'bg-muted text-muted-foreground' :
                           unanswered ? 'bg-muted text-muted-foreground' :
                           row.correct ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
                           'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400',
                         ].join(' ')}>
-                          {row.isNotRelevant || unanswered
-                            ? <span className="text-[9px] font-bold">—</span>
+                          {unanswered
+                            ? <span className="text-[9px]">—</span>
                             : row.correct
                               ? <IconCheck size={8} strokeWidth={2} />
                               : <IconX size={8} strokeWidth={2} />}
@@ -2330,22 +2349,22 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[10px] font-semibold text-muted-foreground">Q{row.idx + 1}</span>
-                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-1.5 py-0.5 text-[9px] font-semibold text-[var(--accent-brand)]">{getTypeLabel(row.type)}</span>
+                            <span className="text-[10px] text-muted-foreground">Q{row.idx + 1}</span>
+                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-1.5 py-0.5 text-[9px] text-[var(--accent-brand)]">{getTypeLabel(row.type)}</span>
                           </div>
-                          <p className="text-[12.5px] font-medium text-foreground line-clamp-1">
+                          <p className="text-[12.5px] text-foreground line-clamp-1">
                             {row.question.question.replace(/_{3,}/g, '____')}
                           </p>
                         </div>
 
                         {/* Answer pills */}
-                        {!row.isNotRelevant && !unanswered && (
+                        {!unanswered && (
                           <div className="shrink-0 flex flex-col items-end gap-1">
-                            <span className={`rounded-md px-2 py-0.5 text-[10px] font-medium border max-w-[140px] truncate ${row.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
+                            <span className={`rounded-md px-2 py-0.5 text-[10px] border max-w-[140px] truncate ${row.correct ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' : 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'}`}>
                               {row.given.length > 22 ? row.given.slice(0, 20) + '…' : row.given}
                             </span>
                             {!row.correct && (
-                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300 max-w-[140px] truncate">
+                              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300 max-w-[140px] truncate">
                                 {row.correctValue.length > 22 ? row.correctValue.slice(0, 20) + '…' : row.correctValue}
                               </span>
                             )}
@@ -2368,7 +2387,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
               {/* Topics overview */}
               <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
                 <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Topics</p>
+                  <p className="text-[12px] text-muted-foreground">Topics</p>
                 </div>
                 {categoryScores.length === 0 ? (
                   <p className="px-4 py-3 text-[11px] text-muted-foreground">No data.</p>
@@ -2378,7 +2397,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                       <div key={entry.cat} className="flex items-center justify-between px-4 py-2">
                         <span className="text-[12px] text-foreground capitalize truncate flex-1 mr-2">{entry.cat}</span>
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] border ${
                             entry.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
                             entry.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
                             'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
@@ -2394,11 +2413,11 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
               {/* Keep training — ALL wrong combined */}
               <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
                 <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Keep training</p>
+                  <p className="text-[12px] text-muted-foreground">Keep training</p>
                 </div>
                 {wrongRows.length === 0 ? (
                   <div className="px-4 py-4 text-center">
-                    <p className="text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">Perfect score!</p>
+                    <p className="text-[13px] text-emerald-600 dark:text-emerald-400">Perfect score!</p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground">Nothing to retrain.</p>
                   </div>
                 ) : (
@@ -2412,7 +2431,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                           key={tool}
                           type="button"
                           onClick={() => openTrainTool(tool)}
-                          className="rounded-lg border border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/[0.07] px-3 py-2 text-[12px] font-semibold text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.13] capitalize transition-colors"
+                          className="rounded-lg border border-[var(--accent-brand)]/40 bg-[var(--accent-brand)]/[0.07] px-3 py-2 text-[12px] text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/[0.13] capitalize transition-colors"
                         >
                           {tool === 'quiz' ? 'New quiz' : tool === 'flashcards' ? 'Flashcards' : 'Notes'}
                         </button>
@@ -2426,13 +2445,13 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
               {typeScores.length > 1 && (
                 <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-sm overflow-hidden">
                   <div className="border-b border-border/60 bg-muted/20 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">By type</p>
+                    <p className="text-[12px] text-muted-foreground">By type</p>
                   </div>
                   <div className="px-4 py-2 space-y-1.5">
                     {typeScores.map((t) => (
                       <div key={t.type} className="flex items-center justify-between gap-2">
                         <span className="text-[11px] text-foreground truncate">{getTypeLabel(t.type)}</span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] border ${
                           t.score >= 80 ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-300' :
                           t.score >= 50 ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-300' :
                           'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
@@ -2510,6 +2529,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [hintText, setHintText] = useState('');
   const [hintLoading, setHintLoading] = useState(false);
   const pendingAdvance = useRef(false);
+  const circleRowRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveMode: 'classic' | 'assisted' | 'adaptive' = mode === 'practice' ? 'classic' : mode;
   const adaptiveCap = Math.max(1, Math.min(50, Number(runtimeSettings?.adaptiveCap || 50)));
@@ -2632,6 +2652,13 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   }, [adaptiveBuffer, adaptiveCap, adaptiveSignals, effectiveMode, isAdaptiveLoading, questions, runtimeSettings?.answerFeedback, runtimeSettings?.gradingModes, runtimeSettings?.knowledgeScore, selectedTypes, sourceText, toast]);
 
   useEffect(() => { if (effectiveMode === 'adaptive') void ensureAdaptiveBuffer(); }, [effectiveMode, ensureAdaptiveBuffer]);
+
+  useEffect(() => {
+    const row = circleRowRef.current;
+    if (!row) return;
+    const active = row.querySelector<HTMLElement>(`[data-circle-idx="${currentIndex}"]`);
+    active?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [currentIndex]);
 
   const handleSetAnswer = (next: AnswerValue) => {
     if (!currentQuestion) return;
@@ -2814,23 +2841,28 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
         {/* Right: circles or progress bar + toggle */}
         <div className="flex items-center gap-2 sm:gap-3 ml-2">
           {navMode === 'circles' ? (
-            <div className="flex items-center gap-0.5 flex-wrap justify-end max-w-[180px] sm:max-w-[280px] md:max-w-[360px] lg:max-w-[480px]">
-              {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions).map((_, idx) => {
+            <div
+              ref={circleRowRef}
+              className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[200px] sm:max-w-[300px] md:max-w-[380px] lg:max-w-[480px]"
+            >
+              {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions)
+                .map((q, idx) => ({ q, idx }))
+                .filter(({ q }) => !notRelevantIds.has(q.id))
+                .map(({ idx }) => {
                 const state = getCircleState(idx);
                 return (
                   <button
                     key={idx}
                     type="button"
+                    data-circle-idx={idx}
                     onClick={() => handleJumpTo(idx)}
                     title={`Question ${idx + 1}`}
                     className={[
-                      'flex h-6 w-6 sm:h-6 sm:w-6 lg:h-7 lg:w-7 shrink-0 items-center justify-center rounded-full text-[10px] sm:text-[10px] lg:text-[11px] font-medium transition-all',
+                      'flex h-7 w-7 sm:h-7 sm:w-7 lg:h-8 lg:w-8 shrink-0 items-center justify-center rounded-full text-[11px] sm:text-[11px] lg:text-[12px] transition-all',
                       state === 'current'
                         ? 'bg-[var(--accent-brand)] text-white ring-2 ring-[var(--accent-brand)] ring-offset-1 ring-offset-background'
                         : state === 'answered'
                         ? 'bg-[var(--accent-brand)]/20 text-[var(--accent-brand)] border border-[var(--accent-brand)]/40'
-                        : state === 'not-relevant'
-                        ? 'border border-border bg-muted text-muted-foreground/30 line-through'
                         : 'border border-border bg-muted text-muted-foreground hover:border-[var(--accent-brand)]/50',
                     ].join(' ')}
                   >
@@ -2841,7 +2873,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               {effectiveMode === 'adaptive' && (
                 <span
                   title="More questions to come"
-                  className="flex h-6 w-6 sm:h-6 sm:w-6 lg:h-7 lg:w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[10px] sm:text-[10px] lg:text-[13px] text-[var(--accent-brand)]/70"
+                  className="flex h-7 w-7 sm:h-7 sm:w-7 lg:h-8 lg:w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[11px] sm:text-[11px] lg:text-[13px] text-[var(--accent-brand)]/70"
                 >
                   ∞
                 </span>
@@ -2849,7 +2881,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             </div>
           ) : (
             <span className="text-[13px] text-muted-foreground">
-              Question <span className="font-semibold text-foreground">{currentIndex + 1}</span> of {effectiveMode === 'adaptive' ? '∞' : questions.length}
+              Question <span className="text-foreground">{currentIndex + 1}</span> of {effectiveMode === 'adaptive' ? '∞' : questions.length}
             </span>
           )}
 
@@ -2894,21 +2926,21 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
 
             {/* Card header: number badge + type badge */}
             <div className="flex items-center gap-2 border-b border-border/60 bg-muted/20 px-6 sm:px-8 py-3.5">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] font-bold text-white">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] leading-none text-white">
                 {currentIndex + 1}
               </span>
-              <span className="rounded-full bg-[var(--accent-brand)]/12 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+              <span className="flex items-center rounded-full bg-[var(--accent-brand)]/12 px-2 py-1 text-[10px] leading-none text-[var(--accent-brand)]">
                 {getTypeLabel(currentQuestion.type ?? 'multiple-choice')}
               </span>
             </div>
 
-            <div className="px-6 sm:px-8 pt-7 pb-7">
+            <div className="px-7 sm:px-9 pt-8 pb-8">
               {/* Question text — skip for fill-blank/cloze with blanks to avoid duplicate */}
               {!(
                 (currentQuestion.type === 'fill-blank' || currentQuestion.type === 'cloze') &&
                 /_{3,}/.test(currentQuestion.question)
               ) && (
-                <p className="mb-4 text-[18px] sm:text-[20px] font-semibold leading-[1.6] text-foreground">
+                <p className="mb-4 text-[19px] sm:text-[21px] leading-[1.6] text-foreground">
                   {currentQuestion.question.replace(/_{3,}/g, '____')}
                 </p>
               )}
@@ -2971,7 +3003,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${isCurrentCorrect ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
                   {isCurrentCorrect ? <IconCheck size={9} strokeWidth={2.2} /> : <IconX size={9} strokeWidth={2.2} />}
                 </span>
-                <span className={`text-[13px] font-semibold ${isCurrentCorrect ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-700 dark:text-red-400'}`}>
+                <span className={`text-[14px] ${isCurrentCorrect ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-700 dark:text-red-400'}`}>
                   {isCurrentCorrect ? 'Correct' : 'Incorrect'}
                 </span>
               </div>
@@ -2981,11 +3013,11 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 {!isCurrentCorrect && (
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div className="rounded-xl border border-red-100 dark:border-red-900/40 bg-red-50/30 dark:bg-red-900/10 px-4 py-3">
-                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Your answer</p>
+                      <p className="mb-1 text-[10px] text-muted-foreground">Your answer</p>
                       <p className="text-[13px] font-medium text-red-600 dark:text-red-400">{formatAnswer(currentQuestion, currentAnswer)}</p>
                     </div>
                     <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-900/10 px-4 py-3">
-                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.09em] text-muted-foreground">Correct answer</p>
+                      <p className="mb-1 text-[10px] text-muted-foreground">Correct answer</p>
                       <p className="text-[13px] font-medium text-emerald-700 dark:text-emerald-400">{getCorrectAnswerText(currentQuestion)}</p>
                     </div>
                   </div>
@@ -3061,7 +3093,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <Button
                 type="button"
                 variant="ghost"
-                className="h-9 px-3 text-[12px] text-muted-foreground hover:text-foreground"
+                className="h-9 px-3 text-[12px] text-[var(--accent-brand)] hover:bg-[var(--accent-brand)]/10 hover:text-[var(--accent-brand)]"
                 onClick={handleNotRelevant}
                 title="Mark as not relevant to your research"
               >

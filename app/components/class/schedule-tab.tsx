@@ -387,7 +387,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
       <div className="overflow-hidden rounded-[10px] border border-[#e4e4e4] bg-white dark:border-border dark:bg-[hsl(var(--surface-1))]">
         {/* Topbar */}
         <div className="flex items-center gap-1.5 border-b border-[#e4e4e4] bg-[#f7f7f7] px-4 py-2.5 text-[12px] text-[#888] dark:border-border dark:bg-[hsl(var(--surface-2))]">
-          <span className="font-semibold text-[#1a1a1a] dark:text-foreground">
+          <span className="text-[#1a1a1a] dark:text-foreground">
             {isDutch ? 'Rooster' : 'Schedule'}
           </span>
           <span>·</span>
@@ -448,7 +448,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                 <button
                   type="button"
                   onClick={() => setShowAddForm(!showAddForm)}
-                  className="flex items-center gap-1.5 rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-[5px] text-[12px] font-semibold text-white"
+                  className="flex items-center gap-1.5 rounded-[6px] border border-[#7f8962] bg-[#7f8962] px-3 py-[5px] text-[12px] text-white"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {isDutch ? 'Toevoegen' : 'Add slot'}
@@ -469,7 +469,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           {/* ── Add slot form ── */}
           {showAddForm && isTeacher && (
             <div className="mb-4 rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-4 dark:border-border dark:bg-[hsl(var(--surface-2))]">
-              <p className="mb-3 text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+              <p className="mb-3 text-[13px] text-[#1a1a1a] dark:text-foreground">
                 {isDutch ? 'Nieuw roosterblok' : 'New schedule slot'}
               </p>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
@@ -538,7 +538,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                   type="button"
                   onClick={() => void createSlot()}
                   disabled={saving}
-                  className="rounded-[6px] bg-[#7f8962] px-4 py-1.5 text-[12px] font-semibold text-white disabled:opacity-50"
+                  className="rounded-[6px] bg-[#7f8962] px-4 py-1.5 text-[12px] text-white disabled:opacity-50"
                 >
                   {saving ? '…' : (isDutch ? 'Opslaan' : 'Save')}
                 </button>
@@ -564,7 +564,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                     <div
                       key={day.value}
                       className={cn(
-                        'p-1 text-center text-[11px] font-bold uppercase tracking-[.4px]',
+                        'p-1 text-center text-[11px]',
                         day.value === todayDayIndex ? 'text-[#7f8962]' : 'text-[#aaa]'
                       )}
                     >
@@ -610,10 +610,10 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                                 onDragEnd={() => setDragSlotId(null)}
                                 className="flex h-full flex-col p-[5px_6px]"
                               >
-                                <div className="text-[10px] font-semibold text-[#7f8962]">
+                                <div className="text-[10px] text-[#7f8962]">
                                   {fmt24(slot.start_time)}–{fmt24(slot.end_time)}
                                 </div>
-                                <div className="mt-0.5 text-[11px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                                <div className="mt-0.5 text-[11px] text-[#1a1a1a] dark:text-foreground">
                                   {slot.title}
                                 </div>
                                 {slot.notes && (
@@ -672,7 +672,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
           {/* ── DAY VIEW ── */}
           {viewMode === 'day' && (
             <div>
-              <p className="mb-2.5 text-[12px] font-semibold text-[#7f8962]">{todayLabel}</p>
+              <p className="mb-2.5 text-[12px] text-[#7f8962]">{todayLabel}</p>
 
               {todaySlots.length === 0 ? (
                 <div className="rounded-[8px] border border-[#e4e4e4] bg-[#fafafa] p-6 text-center text-[13px] text-[#aaa] dark:border-border dark:bg-[hsl(var(--surface-2))]">
@@ -691,11 +691,11 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                         )}
                         style={{ gridTemplateColumns: '60px 1fr 60px' }}
                       >
-                        <div className="text-[12px] font-semibold text-[#7f8962]">
+                        <div className="text-[12px] text-[#7f8962]">
                           {fmt24(slot.start_time)}
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-[#1a1a1a] dark:text-foreground">
+                          <div className="text-[13px] text-[#1a1a1a] dark:text-foreground">
                             {slot.title}
                           </div>
                           {slot.notes && (
@@ -707,7 +707,7 @@ export function ScheduleTab({ classId, cachedData = null, parentLoading = false 
                         </div>
                         <div className="text-right">
                           {isCurrent && (
-                            <span className="rounded-full bg-[#edf1e5] px-2 py-0.5 text-[10px] font-semibold text-[#7f8962]">
+                            <span className="rounded-full bg-[#edf1e5] px-2 py-0.5 text-[10px] text-[#7f8962]">
                               {isDutch ? 'Nu' : 'Now'}
                             </span>
                           )}

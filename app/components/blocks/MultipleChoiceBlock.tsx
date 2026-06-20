@@ -78,7 +78,7 @@ export const MultipleChoiceBlock: React.FC<MultipleChoiceBlockProps> = ({
 
     return (
       <div className={cn('w-full p-4 border rounded-lg', className)}>
-        <h3 className="text-lg font-semibold mb-4">{question || 'Multiple Choice Question'}</h3>
+        <h3 className="text-lg mb-4">{question || 'Multiple Choice Question'}</h3>
 
         <div className="space-y-2">
           {displayOptions.map((option) => (

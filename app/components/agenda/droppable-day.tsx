@@ -29,7 +29,7 @@ export function DroppableDay({ id, date, events, onClick, onEventClick, compact 
       className={`relative min-h-[360px] rounded-xl p-2 md:min-h-[520px] md:p-2.5 cursor-pointer transition-colors surface-panel ${todayDay ? 'ring-1 ring-[var(--accent-brand)]/30' : ''}`}
     >
       <div className="mb-2 flex items-center justify-end">
-        <span className={`text-[11px] ${todayDay ? 'font-semibold text-[var(--accent-brand)]' : 'text-muted-foreground'}`}>{format(date, 'd')}</span>
+        <span className={`text-[11px] ${todayDay ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'}`}>{format(date, 'd')}</span>
       </div>
 
       <SortableContext items={events.map(e => e.id)} strategy={verticalListSortingStrategy}>

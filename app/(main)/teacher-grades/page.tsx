@@ -179,7 +179,7 @@ export default function TeacherGradesLanding() {
       {/* Recent grades */}
       {recentGrades.length > 0 && (
         <div className="class-panel-lg space-y-3">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {isDutch ? 'Recente cijfers' : 'Recent grades'} ({allGrades.length})
           </p>
           <div className="space-y-2">

@@ -343,7 +343,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <p className="font-semibold">{index + 1}. {q.question}</p>
+                    <p className="text-[15px]">{index + 1}. {q.question}</p>
                     <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc pl-5">
                       {q.options.map(opt => (
                         <li key={opt.id} className={opt.isCorrect && showAnswers ? 'font-medium text-primary' : ''}>
@@ -369,7 +369,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
         <Separator className="my-4" />
         <Accordion type="single" collapsible>
           <AccordionItem value="add-question">
-            <AccordionTrigger className="text-lg font-semibold">Add New Question</AccordionTrigger>
+            <AccordionTrigger className="text-lg">Add New Question</AccordionTrigger>
             <AccordionContent className="pt-4">
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleAddManualQuestion)} className="space-y-6">
@@ -420,7 +420,7 @@ export function QuizEditor({ quiz, sourceText, onStartQuiz, onBack, isAssignment
                     
                     {aiSuggestedOptions && aiSuggestedOptions.length > 0 && (
                       <div className="space-y-4 rounded-md border p-4 bg-blue-50/50 dark:bg-blue-950/20">
-                        <h4 className="font-semibold text-blue-700 dark:text-blue-300">AI Suggested Options:</h4>
+                        <h4 className="text-[15px] text-blue-700 dark:text-blue-300">AI Suggested Options:</h4>
                         <ul className="space-y-2">
                           {aiSuggestedOptions.map((opt, index) => (
                             <li key={opt.id} className="flex items-center justify-between p-2 rounded-md bg-white dark:bg-gray-800 shadow-sm">

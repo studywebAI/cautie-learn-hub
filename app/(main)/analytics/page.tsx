@@ -55,7 +55,7 @@ function StatBox({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-semibold leading-none text-foreground">{value}</p>
+          <p className="text-2xl leading-none text-foreground">{value}</p>
           <p className="mt-1 truncate text-xs text-muted-foreground">{label}</p>
         </div>
       </CardContent>
@@ -119,7 +119,7 @@ function TeacherAnalytics() {
   return (
     <PageSection className="[--accent-brand:#6b7c4e]">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Analytics</h1>
+        <h1 className="text-2xl text-foreground">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">Class performance overview.</p>
       </div>
       <Card>
@@ -145,7 +145,7 @@ function TeacherAnalytics() {
                       <p className="text-xs text-muted-foreground">{row.memberCount} members</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-semibold text-foreground">{row.avgScore > 0 ? `${row.avgScore}%` : '—'}</p>
+                      <p className="text-lg text-foreground">{row.avgScore > 0 ? `${row.avgScore}%` : '—'}</p>
                       <p className="text-xs text-muted-foreground">avg score</p>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -267,7 +267,7 @@ function StudentAnalytics() {
   return (
     <PageSection className="[--accent-brand:#6b7c4e]">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Analytics</h1>
+        <h1 className="text-2xl text-foreground">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track progress and performance across all your studysets.
         </p>
@@ -342,7 +342,7 @@ function StudentAnalytics() {
                       </div>
                     </div>
                     <div className="w-20 shrink-0 text-right">
-                      <p className="text-lg font-semibold text-foreground">{row.avgScore}%</p>
+                      <p className="text-lg text-foreground">{row.avgScore}%</p>
                       <p className="text-xs text-muted-foreground">avg score</p>
                     </div>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />

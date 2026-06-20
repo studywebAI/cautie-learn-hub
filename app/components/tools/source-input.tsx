@@ -1748,7 +1748,7 @@ export function SourceInput({
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] font-semibold text-white hover:opacity-90"
+              className="h-11 w-full rounded-md border-none bg-[var(--accent-brand)] text-[13px] text-white hover:opacity-90"
               onClick={() => void submitAndSave()}
               disabled={disabled || isProcessing || !canGenerate}
             >

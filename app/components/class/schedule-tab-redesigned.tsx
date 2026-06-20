@@ -385,7 +385,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
       <div className="overflow-hidden rounded-[10px] border border-border bg-background">
         {/* Topbar */}
         <div className="flex items-center gap-1.5 border-b border-border bg-muted/50 px-4 py-2.5 text-[12px] text-muted-foreground">
-          <span className="font-semibold text-foreground">
+          <span className="text-foreground">
             {isDutch ? 'Rooster' : 'Schedule'}
           </span>
           <span>·</span>
@@ -449,7 +449,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                   type="button"
                   onClick={() => setShowAddForm(!showAddForm)}
                   style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
-                  className="flex items-center gap-1.5 rounded-[6px] border border-[var(--accent-brand)] px-3 py-[5px] text-[12px] font-semibold"
+                  className="flex items-center gap-1.5 rounded-[6px] border border-[var(--accent-brand)] px-3 py-[5px] text-[12px]"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {isDutch ? 'Toevoegen' : 'Add slot'}
@@ -470,7 +470,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
           {/* ── Add slot form ── */}
           {showAddForm && isTeacher && (
             <div className="mb-4 rounded-[8px] border border-border bg-muted/30 p-4">
-              <p className="mb-3 text-[13px] font-semibold text-foreground">
+              <p className="mb-3 text-[13px] text-foreground">
                 {isDutch ? 'Nieuw roosterblok' : 'New schedule slot'}
               </p>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -531,7 +531,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                   onClick={() => void createSlot()}
                   disabled={saving}
                   style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
-                  className="rounded-[6px] px-4 py-1.5 text-[12px] font-semibold disabled:opacity-50"
+                  className="rounded-[6px] px-4 py-1.5 text-[12px] disabled:opacity-50"
                 >
                   {saving ? '…' : (isDutch ? 'Opslaan' : 'Save')}
                 </button>
@@ -557,7 +557,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                     <div
                       key={day.value}
                       className={cn(
-                        'p-1 text-center text-[11px] font-bold uppercase tracking-[.4px]',
+                        'p-1 text-center text-[11px]',
                         day.value === todayDayIndex ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'
                       )}
                     >
@@ -603,10 +603,10 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                                 onDragEnd={() => setDragSlotId(null)}
                                 className="flex h-full flex-col p-[5px_6px]"
                               >
-                                <div className="text-[10px] font-semibold text-[var(--accent-brand)]">
+                                <div className="text-[10px] text-[var(--accent-brand)]">
                                   {fmt24(slot.start_time)}–{fmt24(slot.end_time)}
                                 </div>
-                                <div className="mt-0.5 text-[11px] font-semibold text-foreground">
+                                <div className="mt-0.5 text-[11px] text-foreground">
                                   {slot.title}
                                 </div>
                                 {slot.notes && (
@@ -662,7 +662,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
           {/* ── DAY VIEW ── */}
           {viewMode === 'day' && (
             <div>
-              <p className="mb-2.5 text-[12px] font-semibold text-[var(--accent-brand)]">{todayLabel}</p>
+              <p className="mb-2.5 text-[12px] text-[var(--accent-brand)]">{todayLabel}</p>
 
               {todaySlots.length === 0 ? (
                 <div className="rounded-[8px] border border-border bg-muted/30 p-6 text-center text-[13px] text-muted-foreground">
@@ -681,11 +681,11 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                         )}
                         style={{ gridTemplateColumns: '60px 1fr 60px' }}
                       >
-                        <div className="text-[12px] font-semibold text-[var(--accent-brand)]">
+                        <div className="text-[12px] text-[var(--accent-brand)]">
                           {fmt24(slot.start_time)}
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-foreground">
+                          <div className="text-[13px] text-foreground">
                             {slot.title}
                           </div>
                           {slot.notes && (
@@ -694,7 +694,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                         </div>
                         <div className="text-right">
                           {isCurrent && (
-                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--accent-brand)]">
+                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] text-[var(--accent-brand)]">
                               {isDutch ? 'Nu' : 'Now'}
                             </span>
                           )}

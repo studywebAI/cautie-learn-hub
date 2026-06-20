@@ -303,7 +303,7 @@ export function ChapterEditor({
                 <Input
                   value={chapter.title}
                   onChange={(e) => setChapter({ ...chapter, title: e.target.value })}
-                  className="text-xl font-bold"
+                  className="text-xl"
                 />
                 <Textarea
                   value={chapter.description || ''}

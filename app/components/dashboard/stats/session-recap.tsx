@@ -30,7 +30,7 @@ export function SessionRecap({ sessionRecap }: SessionRecapProps) {
     return (
         <div className="flex flex-col items-center justify-center text-center h-full surface-interactive p-6 rounded-lg">
             <FileQuestion className="h-10 w-10 text-muted-foreground mb-4" />
-            <h3 className="font-semibold text-lg">No Session Data</h3>
+            <h3 className="text-xl">No Session Data</h3>
             <p className="text-sm text-muted-foreground">Complete a quiz to see your results here.</p>
         </div>
     );
@@ -78,17 +78,17 @@ export function SessionRecap({ sessionRecap }: SessionRecapProps) {
             <div className="grid grid-cols-2 gap-2 text-center">
                 <div className="p-2 bg-background rounded-lg">
                     <Target className="h-5 w-5 text-primary mx-auto mb-1" />
-                    <p className="text-xl font-bold">{score}%</p>
+                    <p className="text-2xl">{score}%</p>
                     <p className="text-xs text-muted-foreground">Score</p>
                 </div>
                  <div className="p-2 bg-background rounded-lg">
                     <Clock className="h-5 w-5 text-primary mx-auto mb-1" />
-                    <p className="text-xl font-bold">{formatTime(timeTaken)}</p>
+                    <p className="text-2xl">{formatTime(timeTaken)}</p>
                     <p className="text-xs text-muted-foreground">Time</p>
                 </div>
                  <div className="p-2 bg-background rounded-lg">
                     <CheckCircle className="h-5 w-5 text-green-600 mx-auto mb-1" />
-                    <p className="text-xl font-bold">{correctAnswers}/{totalQuestions}</p>
+                    <p className="text-2xl">{correctAnswers}/{totalQuestions}</p>
                     <p className="text-xs text-muted-foreground">Correct</p>
                 </div>
                  <div className="p-2 bg-background rounded-lg">

@@ -702,7 +702,7 @@ export default function SettingsPage() {
                       },
                     ] as Array<{ section: string; items: Array<{ q: string; a: string }> }>).map(({ section, items }) => (
                       <div key={section} className="space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{section}</p>
+                        <p className="text-sm text-muted-foreground">{section}</p>
                         <div className="space-y-2">
                           {items.map(({ q, a }) => (
                             <div key={q} className="rounded-xl surface-interactive p-4">

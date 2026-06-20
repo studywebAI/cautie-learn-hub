@@ -133,7 +133,7 @@ export function FunLoader({ tool, scenario }: FunLoaderProps) {
         <div className="space-y-1.5">
           <p
             key={animKey}
-            className="text-[22px] font-bold tracking-tight text-foreground fun-loader-fade-up"
+            className="text-[22px] tracking-tight text-foreground fun-loader-fade-up"
           >
             {steps[currentStep]}
           </p>

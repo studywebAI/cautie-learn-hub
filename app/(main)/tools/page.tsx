@@ -98,7 +98,7 @@ export default function ToolsPage() {
       {phase === 'input' && (
         <div className="w-full max-w-2xl space-y-6">
           <div className="space-y-1.5 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">What are you studying?</h1>
+            <h1 className="text-2xl tracking-tight">What are you studying?</h1>
             <p className="text-sm text-muted-foreground">
               Paste your notes, upload a file, or drop a link — AI picks the best tools for your content.
             </p>
@@ -147,7 +147,7 @@ export default function ToolsPage() {
           {/* Recommended */}
           {recommended.length > 0 && (
             <section className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="text-[12px] text-muted-foreground">
                 Recommended for your content
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -161,7 +161,7 @@ export default function ToolsPage() {
                       <tool.icon className="h-5 w-5 text-[var(--accent-brand)]" strokeWidth={1.6} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold leading-snug">{tool.label}</p>
+                      <p className="leading-snug">{tool.label}</p>
                       {tool.context && (
                         <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-2">
                           {tool.context}
@@ -177,7 +177,7 @@ export default function ToolsPage() {
           {/* Not recommended — smaller, still accessible */}
           {notRecommended.length > 0 && (
             <section className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              <p className="text-[12px] text-muted-foreground/50">
                 Other tools
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

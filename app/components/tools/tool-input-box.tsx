@@ -797,7 +797,7 @@ export function ToolInputBox({
                   <button
                     key={tool.id}
                     type="button"
-                    className={`w-full flex items-center justify-between px-3 py-2 hover:bg-accent/10 transition-colors ${tool.id === toolId ? 'text-[var(--accent-brand)] font-semibold' : 'text-foreground'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2 hover:bg-accent/10 transition-colors ${tool.id === toolId ? 'text-[var(--accent-brand)]' : 'text-foreground'}`}
                     onClick={() => handleToolSwitch(tool)}
                   >
                     {tool.label}

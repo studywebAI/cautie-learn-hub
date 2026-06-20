@@ -121,7 +121,7 @@ function MindmapPageContent() {
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl font-semibold tracking-tight">Create a Mindmap</h1>
+              <h1 className="text-2xl tracking-tight">Create a Mindmap</h1>
               <p className="text-sm text-muted-foreground">
                 Paste your notes, upload a file, or drop a link
               </p>
@@ -164,7 +164,7 @@ function MindmapPageContent() {
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             {/* Title section */}
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Title</p>
+              <p className="text-[10px] text-muted-foreground">Title</p>
               <Input
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
@@ -194,7 +194,7 @@ function MindmapPageContent() {
 
             {/* Save to recents */}
             <div className="border-t border-border pt-4 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted-foreground">Save to Recents</p>
+              <p className="text-[10px] text-muted-foreground">Save to Recents</p>
               <Switch
                 checked={saveToRecents}
                 onCheckedChange={setSaveToRecents}
@@ -282,7 +282,7 @@ function MindmapPageContent() {
   return (
     <div className="h-full flex items-center justify-center">
       <div className="text-center space-y-2">
-        <h2 className="text-lg font-semibold">Mindmap</h2>
+        <h2 className="text-lg">Mindmap</h2>
         <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </div>

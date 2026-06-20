@@ -259,7 +259,7 @@ export function Mindmap({ title = 'Mindmap', initialData, onSave }: MindmapProps
     <div className="flex flex-col gap-4 h-full">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-3 bg-background rounded-lg border border-border">
-        <h2 className="text-sm font-semibold flex-1">{title}</h2>
+        <h2 className="text-sm flex-1">{title}</h2>
         <div className="flex items-center gap-2">
           {selectedId && selectedId !== data.id && (
             <>

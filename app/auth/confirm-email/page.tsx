@@ -45,7 +45,7 @@ function ConfirmEmailForm() {
   return (
     <div className="mx-auto max-w-md w-full space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Check your email</h1>
+        <h1 className="text-2xl">Check your email</h1>
         <p className="text-muted-foreground mt-2">
           We've sent an 8-digit verification code to <strong>{email}</strong>. Please enter it below to confirm your email address.
         </p>
