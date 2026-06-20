@@ -1052,7 +1052,7 @@ export function AppSidebar() {
             {visibleMainItems.map((item) => (
               <div key={item.href} className="relative">
                 {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                     <button
                       type="button"
                       data-nav-dropdown-trigger="true"
@@ -1071,7 +1071,7 @@ export function AppSidebar() {
                     </button>
                   </AnimateIcon>
                 ) : (
-                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                     <Link
                       href={item.href}
                       className={cn(
@@ -1090,7 +1090,7 @@ export function AppSidebar() {
             ))}
             {showSectionHeaders && visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
             {visibleToolsItems.map((item) => (
-              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} asChild>
+              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} completeOnStop asChild>
                 <Link
                   href={item.href}
                   className={cn(
@@ -1107,7 +1107,7 @@ export function AppSidebar() {
             ))}
             {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
             {visibleOtherItems.map((item) => (
-              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} asChild>
+              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} completeOnStop asChild>
                 <Link
                   href={item.href}
                   className={cn(
@@ -1147,7 +1147,7 @@ export function AppSidebar() {
                   {visibleMainItems.map((item) => (
                     <SidebarMenuItem key={item.label} className="relative">
                       {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                        <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                        <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                           <SidebarMenuButton
                             data-nav-dropdown-trigger="true"
                             onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
@@ -1161,7 +1161,7 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </AnimateIcon>
                       ) : (
-                        <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                        <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                           <SidebarMenuButton
                             asChild
                             isActive={isMenuItemActive(item.href)}
@@ -1188,7 +1188,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                      <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                         <SidebarMenuButton
                           asChild
                           isActive={isMenuItemActive(item.href)}
@@ -1213,7 +1213,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                      <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                         <SidebarMenuButton
                           asChild
                           isActive={isMenuItemActive(item.href)}
@@ -1256,7 +1256,7 @@ export function AppSidebar() {
               {visibleMainItems.map((item) => (
                 <SidebarMenuItem key={item.label} className="relative">
                   {isDropdownTrigger(item.href) && canUseDropdownFor(item.href) ? (
-                    <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                    <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                       <SidebarMenuButton
                         data-nav-dropdown-trigger="true"
                         onMouseEnter={(e) => openDropdownFor(getDropdownKind(item.href), e.currentTarget)}
@@ -1271,7 +1271,7 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </AnimateIcon>
                   ) : (
-                    <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                    <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                       <SidebarMenuButton
                         asChild
                         isActive={isMenuItemActive(item.href)}
@@ -1298,7 +1298,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                     <SidebarMenuButton
                       asChild
                       isActive={isMenuItemActive(item.href)}
@@ -1323,7 +1323,7 @@ export function AppSidebar() {
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <AnimateIcon animateOnHover={item.animated !== false} asChild>
+                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
                     <SidebarMenuButton
                       asChild
                       isActive={isMenuItemActive(item.href)}

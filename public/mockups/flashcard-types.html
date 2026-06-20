@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cautie — Flashcard Type Mockups</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#e5e5e5;min-height:100vh}
+.layout{display:flex;gap:0;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:#111;border-right:1px solid #1c1c1c;padding:24px 16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h1{font-size:15px;font-weight:700;margin-bottom:4px;color:#e5e5e5}
+.sidebar p{font-size:11px;color:#555;margin-bottom:24px}
+.nav-section{font-size:10px;font-weight:600;color:#444;letter-spacing:.1em;text-transform:uppercase;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:#666;transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:#1a1a1a;color:#ccc}
+.nav-item.active{background:rgba(127,137,98,.15);color:#7f8962}
+.nav-num{font-size:10px;color:#444;min-width:18px}
+.main{flex:1;padding:40px 48px;max-width:1100px}
+.page-header{margin-bottom:56px}
+.page-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.page-header p{font-size:14px;color:#666;max-width:640px;line-height:1.6}
+.section{margin-bottom:80px;scroll-margin-top:40px}
+.section-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.section-badge{display:inline-block;font-size:11px;font-weight:600;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 10px;border-radius:4px;margin-bottom:10px}
+.section-desc{font-size:13px;color:#555;margin-bottom:28px;line-height:1.6}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.variant{background:#141414;border:1px solid #1c1c1c;border-radius:14px;overflow:hidden}
+.vhead{padding:14px 18px 12px;border-bottom:1px solid #191919;display:flex;align-items:center;justify-content:space-between}
+.vname{font-size:12px;font-weight:600;color:#888}
+.vtag{font-size:10px;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px}
+.vbody{padding:22px 18px}
+.qlabel{font-size:10px;font-weight:600;color:#444;letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px}
+
+/* ─── CARD FACE ─── */
+.card-face{border:1px solid #1e1e1e;border-radius:14px;background:#161616;padding:34px 28px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:170px;text-align:center}
+.cf-img{width:100%;max-height:120px;border-radius:10px;background:#1c1c1c;display:flex;align-items:center;justify-content:center;color:#3a3a3a;font-size:11px;overflow:hidden}
+.cf-side-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#3e3e3e}
+.cf-front{font-size:18px;font-weight:500;color:#e5e5e5;line-height:1.35}
+.cf-back{font-size:15px;color:#bbb;line-height:1.4}
+.cf-flip-hint{font-size:10px;color:#3e3e3e;margin-top:2px}
+
+/* Bad example styling */
+.bad{position:relative}
+.bad::after{content:"✗ Not allowed";position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#f87171;background:rgba(248,113,113,.1);padding:2px 8px;border-radius:5px}
+.bad .card-face{border-color:rgba(248,113,113,.3)}
+.good::before{content:"✓ Correct";position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;color:#4ade80;background:rgba(74,222,128,.1);padding:2px 8px;border-radius:5px}
+.good{position:relative}
+
+/* ─── ALT CHIPS ─── */
+.alt-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin-top:14px}
+.alt-tag{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#444}
+.alt-chip{padding:4px 11px;border-radius:20px;font-size:11px;border:1px solid #262626;color:#777;cursor:pointer;transition:all .15s;max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alt-chip:hover{border-color:#3a3a3a;color:#aaa}
+.alt-chip.sel{background:#7f8962;border-color:#7f8962;color:#fff}
+
+/* ─── MCQ ─── */
+.mcq-grid{display:grid;grid-template-columns:1fr;gap:8px;width:100%;margin-top:6px}
+.mc-opt{padding:11px 14px;background:#1a1a1a;border:1.5px solid #222;border-radius:9px;font-size:12px;color:#bbb;display:flex;align-items:center;gap:9px;transition:all .15s}
+.mc-opt:hover{border-color:#7f8962}
+.mc-opt.cor{border-color:#4ade80;background:rgba(74,222,128,.07);color:#cdebcd}
+.mc-letter{width:22px;height:22px;background:#252525;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#555;flex-shrink:0}
+.mc-opt.cor .mc-letter{background:#4ade80;color:#0d0d0d}
+
+/* ─── TYPE PICKER (mirrors quiz picker) ─── */
+.tpicker{border-radius:8px;border:1px solid rgba(255,255,255,.09);background:#141414;overflow:hidden}
+.tp-row{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);transition:background .15s}
+.tp-row:last-child{border-bottom:none}
+.tp-row.sel{background:rgba(127,137,98,.1)}
+.tp-row:hover:not(.sel){background:rgba(255,255,255,.03)}
+.tp-circle{width:18px;height:18px;border-radius:50%;border:2px solid #333;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.tp-row.sel .tp-circle{border-color:#7f8962;background:#7f8962}
+.tp-circle-dot{width:7px;height:7px;border-radius:50%;background:#fff;opacity:0}
+.tp-row.sel .tp-circle-dot{opacity:1}
+.tp-label{font-size:13px;color:#ddd;flex:1}
+.tp-info{width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.2);font-size:10px;font-weight:700;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tp-locked{opacity:.4}
+.tp-locked .tp-label{color:#777}
+.tp-tag{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 7px;border-radius:4px;flex-shrink:0}
+.tp-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#555;margin-bottom:8px}
+.tp-helper{font-size:11px;color:#4a4a4a;margin-top:10px;line-height:1.6}
+
+/* Divider */
+.divider{border:none;border-top:1px solid #1a1a1a;margin:56px 0}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <h1>Cautie</h1>
+  <p>Flashcard Type Mockups</p>
+  <div class="nav-section">Card Types</div>
+  <a class="nav-item active" href="#termdef"><span class="nav-num">01</span> Term &amp; Definition</a>
+  <a class="nav-item" href="#mcq"><span class="nav-num">02</span> Multiple Choice</a>
+  <a class="nav-item" href="#image"><span class="nav-num">03</span> Image Card</a>
+  <div class="nav-section">Phrasing Rule</div>
+  <a class="nav-item" href="#rule"><span class="nav-num">↗</span> Fragment vs Question</a>
+  <div class="nav-section">Alternates</div>
+  <a class="nav-item" href="#alts"><span class="nav-num">↗</span> Suggested Phrasings</a>
+  <div class="nav-section">Setup UI</div>
+  <a class="nav-item" href="#picker"><span class="nav-num">↗</span> Card Type Picker</a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<div class="page-header">
+  <h2>Flashcard Type Mockups</h2>
+  <p>Card "types" pick the best-fitting format per card during generation. Front/back always read as short fragments — never as a quiz question — so flashcards stay distinct from the Quiz tool.</p>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- RULE -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="rule">
+  <div class="section-badge">Rule</div>
+  <div class="section-title">Fragment vs Question</div>
+  <div class="section-desc">Flashcard sides are never phrased as a question + answer pair — that would just be a quiz. Both sides read as matching fragments: a term/cue on one side, a description/fact on the other.</div>
+  <div class="variants">
+    <div class="variant bad">
+      <div class="vhead"><span class="vname">Wrong — Question Phrasing</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Front</div>
+          <div class="cf-front">What organ pumps blood?</div>
+        </div>
+      </div>
+    </div>
+    <div class="variant good">
+      <div class="vhead"><span class="vname">Correct — Fragment Phrasing</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Front</div>
+          <div class="cf-front">the organ that pumps blood</div>
+          <div class="cf-flip-hint">↻ tap to flip</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 01. TERM & DEFINITION -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="termdef">
+  <div class="section-badge">01</div>
+  <div class="section-title">Term &amp; Definition</div>
+  <div class="section-desc">The default card type. Front is a short cue/term fragment, back is the matching description fragment — no question marks, no "What/Which/Who" starters on either side.</div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Front</span><span class="vtag">term-definition</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Front</div>
+          <div class="cf-front">the organ that pumps blood</div>
+          <div class="cf-flip-hint">↻ tap to flip</div>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Back</span><span class="vtag">term-definition</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Back</div>
+          <div class="cf-back">the heart</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 02. MULTIPLE CHOICE -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="mcq">
+  <div class="section-badge">02</div>
+  <div class="section-title">Multiple Choice</div>
+  <div class="section-desc">Same fragment style as Term &amp; Definition, but the back is also expressed as 3 answer choices in <code>mcqOptions</code> — one matching "back" exactly, two same-domain distractors written by the AI specifically for this card (instead of generic siblings pulled from other cards in the deck).</div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Flipped — Choices Revealed</span><span class="vtag">multiple-choice</span></div>
+      <div class="vbody">
+        <div class="card-face" style="padding:24px 24px">
+          <div class="cf-side-label">Front</div>
+          <div class="cf-front" style="font-size:15px">the organ that pumps blood</div>
+        </div>
+        <div class="mcq-grid">
+          <div class="mc-opt cor"><span class="mc-letter">✓</span>the heart</div>
+          <div class="mc-opt"><span class="mc-letter">·</span>the liver</div>
+          <div class="mc-opt"><span class="mc-letter">·</span>the kidneys</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- 03. IMAGE CARD -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="image">
+  <div class="section-badge">03</div>
+  <div class="section-title">Image Card</div>
+  <div class="section-desc">Only available in <strong style="color:#7f8962">Research mode</strong>. Front names a concrete, photographable subject; the AI looks up a real photo of it (no invented images) and shows it above the term. Back stays a short description fragment, same as Term &amp; Definition.</div>
+  <div class="cat-note" style="margin-bottom:14px"><span class="tp-tag">Research mode only</span></div>
+  <div class="variants">
+    <div class="variant">
+      <div class="vhead"><span class="vname">Front — Photo + Term</span><span class="vtag">image-card</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-img">[ photo from image search ]</div>
+          <div class="cf-front" style="font-size:16px">mitochondria</div>
+          <div class="cf-flip-hint">↻ tap to flip</div>
+        </div>
+      </div>
+    </div>
+    <div class="variant">
+      <div class="vhead"><span class="vname">Back — Description Fragment</span><span class="vtag">image-card</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Back</div>
+          <div class="cf-back">the powerhouse of the cell, makes ATP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- ALTERNATES -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="alts">
+  <div class="section-badge">Alternates</div>
+  <div class="section-title">Suggested Phrasings</div>
+  <div class="section-desc">The AI auto-fills the best-fitting phrasing per side, but also suggests up to 2 alternative phrasings (same fragment style). Chips under each side let the learner swap to an alternate, or go back to the original — applies to any card type.</div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1">
+      <div class="vhead"><span class="vname">Front + Back with Swap Chips</span><span class="vtag">term-definition</span></div>
+      <div class="vbody">
+        <div class="card-face">
+          <div class="cf-side-label">Front</div>
+          <div class="cf-front">the organ that pumps blood</div>
+        </div>
+        <div class="alt-row">
+          <span class="alt-tag">Front:</span>
+          <span class="alt-chip sel">Original</span>
+          <span class="alt-chip">muscular organ circulating blood</span>
+          <span class="alt-chip">four-chambered pump in the chest</span>
+        </div>
+        <div class="card-face" style="margin-top:16px">
+          <div class="cf-side-label">Back</div>
+          <div class="cf-back">the heart</div>
+        </div>
+        <div class="alt-row">
+          <span class="alt-tag">Back:</span>
+          <span class="alt-chip">Original</span>
+          <span class="alt-chip sel">cardiac muscle organ</span>
+          <span class="alt-chip">the human heart</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- ════════════════════════════════════════ -->
+<!-- TYPE PICKER -->
+<!-- ════════════════════════════════════════ -->
+<section class="section" id="picker">
+  <div class="section-badge">Setup UI</div>
+  <div class="section-title">Card Type Picker</div>
+  <div class="section-desc">Lives in the flashcard Options step, styled identically to the Quiz question-type picker (same row layout, circle indicator, info tooltip, text size, casing). "Image Card" is hidden entirely — not grayed out — unless Explanation Mode is set to Research.</div>
+  <div class="variants">
+    <div class="variant" style="grid-column:1/-1;max-width:420px">
+      <div class="vhead"><span class="vname">Card Types</span><span class="vtag">Literal mode active</span></div>
+      <div class="vbody">
+        <div class="tpicker">
+          <div class="tp-row sel">
+            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
+            <span class="tp-label">Term &amp; Definition</span>
+            <div class="tp-info">i</div>
+          </div>
+          <div class="tp-row sel">
+            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
+            <span class="tp-label">Multiple Choice</span>
+            <div class="tp-info">i</div>
+          </div>
+        </div>
+        <div class="tp-helper">The AI picks the best-fitting type per card from your selection — cards stay as term/cue fragments, never phrased as quiz questions.</div>
+      </div>
+    </div>
+    <div class="variant" style="grid-column:1/-1;max-width:420px">
+      <div class="vhead"><span class="vname">Card Types</span><span class="vtag">Research mode active</span></div>
+      <div class="vbody">
+        <div class="tpicker">
+          <div class="tp-row sel">
+            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
+            <span class="tp-label">Term &amp; Definition</span>
+            <div class="tp-info">i</div>
+          </div>
+          <div class="tp-row">
+            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
+            <span class="tp-label">Multiple Choice</span>
+            <div class="tp-info">i</div>
+          </div>
+          <div class="tp-row sel">
+            <div class="tp-circle"><div class="tp-circle-dot"></div></div>
+            <span class="tp-label">Image Card</span>
+            <span class="tp-tag">Research</span>
+            <div class="tp-info">i</div>
+          </div>
+        </div>
+        <div class="tp-helper">"Image Card" only appears here when Explanation Mode is Research — it's removed from the list otherwise, not just disabled.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

@@ -12,7 +12,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { Cast } from '@/components/animate-ui/icons/cast';
 import { Clapperboard } from '@/components/animate-ui/icons/clapperboard';
 import { Link } from '@/components/animate-ui/icons/link';
-import { Unplug } from '@/components/animate-ui/icons/unplug';
 import { Clock8 } from '@/components/animate-ui/icons/clock-8';
 import { CloudUpload } from '@/components/animate-ui/icons/cloud-upload';
 import { AnimateIcon } from '@/components/animate-ui/icons/icon-base';
@@ -232,7 +231,6 @@ export function ToolInputBox({
 
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
-  const [showImportSubmenu, setShowImportSubmenu] = useState(false);
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -464,7 +462,6 @@ export function ToolInputBox({
     if (!files.length) return;
 
     // Close menus after file is selected
-    setShowPhotosSubmenu(false);
     setShowPlusMenu(false);
 
     for (const file of files) {
@@ -679,7 +676,7 @@ export function ToolInputBox({
 
           {showPlusMenu && (
             <div
-              className="fixed z-[999] w-56 rounded-2xl border border-border/50 bg-card/95 backdrop-blur-xl shadow-2xl shadow-black/10 overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-150"
+              className="fixed z-[999] w-56 rounded-xl border border-border bg-popover shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-150"
               style={{ top: `${plusMenuPosition.top}px`, left: `${plusMenuPosition.left}px` }}
             >
               {/* Hidden file inputs */}
@@ -701,94 +698,72 @@ export function ToolInputBox({
                 className="hidden"
               />
 
-              <div className="p-1.5 space-y-0.5">
+              <div className="p-1">
                 {/* Share a page → screenshot */}
-                <AnimateIcon animateOnHover asChild>
+                <AnimateIcon animateOnHover completeOnStop asChild>
                   <button
                     type="button"
                     onClick={() => { void handleScreenshot(); }}
                     disabled={capturing}
-                    className="group w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 text-left"
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
                   >
-                    <div className="h-8 w-8 rounded-xl bg-violet-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                      {capturing
-                        ? <Spinner size={16} color="#8b5cf6" />
-                        : <Cast className="h-4 w-4 text-violet-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
-                      }
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Share a page</span>
+                    {capturing
+                      ? <Spinner size={16} className="flex-shrink-0" />
+                      : <Cast className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                    }
+                    <span className="text-sm text-foreground">Share a page</span>
                   </button>
                 </AnimateIcon>
 
                 {/* Photos */}
-                <AnimateIcon animateOnHover asChild>
+                <AnimateIcon animateOnHover completeOnStop asChild>
                   <label
                     htmlFor="tool-input-image"
-                    className="group flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 cursor-pointer"
+                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
                     onClick={() => setShowPlusMenu(false)}
                   >
-                    <div className="h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                      <Clapperboard className="h-4 w-4 text-blue-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Photos</span>
+                    <Clapperboard className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                    <span className="text-sm text-foreground">Photos</span>
                   </label>
                 </AnimateIcon>
 
                 {/* Files */}
-                <AnimateIcon animateOnHover asChild>
+                <AnimateIcon animateOnHover completeOnStop asChild>
                   <label
                     htmlFor="tool-input-file"
-                    className="group flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 cursor-pointer"
+                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
                     onClick={() => setShowPlusMenu(false)}
                   >
-                    <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                      <Link className="h-4 w-4 text-amber-500 transition-transform duration-150 group-hover:-translate-y-0.5" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">Files</span>
+                    <Link className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                    <span className="text-sm text-foreground">Files</span>
                   </label>
                 </AnimateIcon>
 
-                <div className="my-1 h-px bg-border/50 mx-1" />
+                <div className="my-1 h-px bg-border mx-1" />
 
-                {/* Import from */}
-                <AnimateIcon animateOnHover asChild>
+                {/* Recents */}
+                <AnimateIcon animateOnHover completeOnStop asChild>
                   <button
                     type="button"
-                    className="group w-full flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-muted/70 transition-all duration-100 text-left"
-                    onClick={() => setShowImportSubmenu(!showImportSubmenu)}
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                    onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
                   >
-                    <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center flex-shrink-0 transition-transform duration-150 group-hover:scale-110">
-                      <Unplug className="h-4 w-4 text-emerald-500 transition-transform duration-150 group-hover:rotate-6" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground flex-1">Import from</span>
-                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${showImportSubmenu ? 'rotate-180' : ''}`} />
+                    <Clock8 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                    <span className="text-sm text-foreground">Recents</span>
                   </button>
                 </AnimateIcon>
 
-                {showImportSubmenu && (
-                  <div className="ml-3 pl-3 border-l border-border/40 space-y-0.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
-                    <AnimateIcon animateOnHover asChild>
-                      <button
-                        type="button"
-                        className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
-                        onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
-                      >
-                        <Clock8 className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
-                        <span>Recents</span>
-                      </button>
-                    </AnimateIcon>
-                    <AnimateIcon animateOnHover asChild>
-                      <button
-                        type="button"
-                        className="group w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-muted/60 transition-all duration-100 text-sm text-left"
-                        onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
-                      >
-                        <CloudUpload className="h-3.5 w-3.5 text-muted-foreground transition-colors duration-100 group-hover:text-foreground" />
-                        <span>Microsoft 365</span>
-                      </button>
-                    </AnimateIcon>
-                  </div>
-                )}
+                {/* Microsoft 365 */}
+                <AnimateIcon animateOnHover completeOnStop asChild>
+                  <button
+                    type="button"
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                    onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+                  >
+                    <CloudUpload className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                    <span className="text-sm text-foreground">Microsoft 365</span>
+                  </button>
+                </AnimateIcon>
               </div>
             </div>
           )}
