@@ -343,6 +343,227 @@ function ClozeView({
   );
 }
 
+function FormulaView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <span className="text-sm text-muted-foreground">Formula</span>
+          <p className="max-w-[92%] text-2xl leading-[1.35] font-mono text-foreground md:text-4xl">{card.front}</p>
+          {!revealed ? (
+            <Button onClick={handleReveal} className="rounded-full px-6">
+              <Eye className="mr-2 h-4 w-4" />
+              Reveal formula
+            </Button>
+          ) : (
+            <div className="rounded-xl surface-chip p-6 max-w-md">
+              <p className="text-[10px] text-muted-foreground mb-2">Formula expression</p>
+              <p className="text-lg font-mono leading-relaxed">{card.back}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ComparePairView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <span className="text-sm text-muted-foreground">Compare & Contrast</span>
+          <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+          {!revealed ? (
+            <Button onClick={handleReveal} className="rounded-full px-6">
+              <Eye className="mr-2 h-4 w-4" />
+              Reveal difference
+            </Button>
+          ) : (
+            <div className="rounded-xl surface-chip p-6 max-w-md">
+              <p className="text-[10px] text-muted-foreground mb-2">Key difference</p>
+              <p className="text-base leading-relaxed">{card.back}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProcessStepView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <span className="text-sm text-muted-foreground">Process Step</span>
+          <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+          {!revealed ? (
+            <Button onClick={handleReveal} className="rounded-full px-6">
+              <Eye className="mr-2 h-4 w-4" />
+              What happens
+            </Button>
+          ) : (
+            <div className="rounded-xl surface-chip p-6 max-w-md">
+              <p className="text-[10px] text-muted-foreground mb-2">What occurs in this step</p>
+              <p className="text-base leading-relaxed">{card.back}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MnemonicView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [hintRevealed, setHintRevealed] = useState(false);
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <span className="text-sm text-muted-foreground">Mnemonic</span>
+          <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+          <div className="flex flex-col gap-4 w-full max-w-md">
+            {!hintRevealed && card.hint && (
+              <Button onClick={() => setHintRevealed(true)} variant="outline" className="rounded-full px-6">
+                <Lightbulb className="mr-2 h-4 w-4" />
+                Memory aid
+              </Button>
+            )}
+            {hintRevealed && card.hint && (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+                <p className="text-[10px] text-amber-700 mb-2">Memory trick</p>
+                <p className="text-base text-amber-900 leading-relaxed">{card.hint}</p>
+              </div>
+            )}
+            <div className="rounded-xl surface-chip p-4">
+              <p className="text-[10px] text-muted-foreground mb-2">The fact to remember</p>
+              <p className="text-base font-medium leading-relaxed">{card.back}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DateEventView({
+  card,
+  isFlipped,
+  setIsFlipped,
+  height,
+  onRevealed,
+}: {
+  card: Flashcard;
+  isFlipped: boolean;
+  setIsFlipped: (f: boolean) => void;
+  height: number;
+  onRevealed: () => void;
+}) {
+  const [revealed, setRevealed] = useState(false);
+
+  const handleReveal = () => {
+    if (revealed) return;
+    setRevealed(true);
+    onRevealed();
+  };
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-4'>
+      <div className="w-full max-w-5xl rounded-2xl border border-border/80 surface-panel px-12 py-10 shadow-sm" style={{ minHeight: `${height}px` }}>
+        <div className="flex h-full flex-col items-center justify-center gap-6 text-center">
+          <span className="text-sm text-muted-foreground">Date & Event</span>
+          <p className="max-w-[92%] text-2xl leading-[1.35] text-foreground md:text-4xl">{card.front}</p>
+          {!revealed ? (
+            <Button onClick={handleReveal} className="rounded-full px-6">
+              <Eye className="mr-2 h-4 w-4" />
+              Reveal event
+            </Button>
+          ) : (
+            <div className="rounded-xl surface-chip p-6 max-w-md">
+              <p className="text-[10px] text-muted-foreground mb-2">Event or date</p>
+              <p className="text-base leading-relaxed">{card.back}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FlashcardViewer({
   cards,
   mode,
@@ -999,6 +1220,76 @@ export function FlashcardViewer({
           onRevealed={handleFillBlankRevealed}
         />
       );
+    }
+
+    if (card.type === 'formula') {
+      return (
+        <FormulaView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    if (card.type === 'compare-pair') {
+      return (
+        <ComparePairView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    if (card.type === 'process-step') {
+      return (
+        <ProcessStepView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    if (card.type === 'mnemonic') {
+      return (
+        <MnemonicView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    if (card.type === 'date-event') {
+      return (
+        <DateEventView
+          key={card.id}
+          card={card}
+          isFlipped={isAnswered}
+          setIsFlipped={setIsAnswered}
+          height={currentFlipHeight}
+          onRevealed={handleFillBlankRevealed}
+        />
+      );
+    }
+
+    // For reversed-direction type, use FlipView (it's the same as term-definition but marked for bidirectional study)
+    if (card.type === 'reversed-direction' && displayCard) {
+      return <FlipView card={displayCard} isFlipped={isFlipped} setIsFlipped={setIsFlipped} height={currentFlipHeight} />;
     }
 
     // Mode-based rendering (for term-definition, multiple-choice card types)
