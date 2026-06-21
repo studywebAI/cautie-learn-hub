@@ -266,6 +266,8 @@ export function AuthForm({
                         setIsSignUp(!isSignUp)
                         setError(null)
                         setCode('')
+                        setName('')
+                        setPassword('')
                       }}
                       disabled={isLoading}
                       className="h-8 px-1"
