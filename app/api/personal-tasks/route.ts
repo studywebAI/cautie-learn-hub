@@ -14,8 +14,7 @@ export async function GET(request: Request) {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    // For guests, return an empty array. The client will use local storage.
-    return NextResponse.json([]);
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { data, error } = await supabase

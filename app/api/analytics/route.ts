@@ -15,24 +15,18 @@ export async function GET(request: Request) {
     const supabase = await createClient(cookieStore)
 
     const { data: { user } } = await supabase.auth.getUser();
-    const { searchParams } = new URL(request.url);
-    const guestId = searchParams.get('guestId');
 
-    if (!user && !guestId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = user?.id || guestId;
+    const userId = user.id;
     const cacheKey = `analytics-${userId}`;
 
     // Check cache first
     const cached = cache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
       return NextResponse.json(cached.data);
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
     }
 
     // Get study time data for the last 7 days

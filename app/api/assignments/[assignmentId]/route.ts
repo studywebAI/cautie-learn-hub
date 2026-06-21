@@ -15,14 +15,12 @@ export async function DELETE(
 ) {
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
-  const { searchParams } = new URL(request.url);
-  const guestId = searchParams.get('guestId');
 
   const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user && !guestId) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -40,22 +38,9 @@ export async function DELETE(
 
   const classId = (assignment as any).class_id;
 
-  if (user) {
-    const perm = await getClassPermission(supabase as any, classId, user.id);
-    if (!perm.isMember || !perm.isTeacher) {
-      return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
-    }
-  } else if (guestId) {
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('guest_id')
-      .eq('id', classId)
-      .eq('owner_type', 'guest')
-      .single();
-
-    if (classError || !classData || classData.guest_id !== guestId) {
-      return NextResponse.json({ error: 'Forbidden. You are not the owner of this class.' }, { status: 403 });
-    }
+  const perm = await getClassPermission(supabase as any, classId, user.id);
+  if (!perm.isMember || !perm.isTeacher) {
+    return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
   }
 
   // Delete the assignment
@@ -202,13 +187,13 @@ export async function PUT(
 ) {
   const resolvedParams = await params;
   const { assignmentId } = resolvedParams;
-  const { title, due_date, chapter_id, block_id, guestId, type, content, files, is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = await request.json();
+  const { title, due_date, chapter_id, block_id, type, content, files, is_visible, answers_enabled, is_locked, answer_mode, ai_grading_enabled } = await request.json();
   const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && !guestId) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -226,22 +211,9 @@ export async function PUT(
 
   const classId = (assignment as any).class_id;
 
-  if (user) {
-    const perm = await getClassPermission(supabase as any, classId, user.id);
-    if (!perm.isMember || !perm.isTeacher) {
-      return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
-    }
-  } else if (guestId) {
-    const { data: classData, error: classError } = await supabase
-      .from('classes')
-      .select('guest_id')
-      .eq('id', classId)
-      .eq('owner_type', 'guest')
-      .single();
-
-    if (classError || !classData || classData.guest_id !== guestId) {
-      return NextResponse.json({ error: 'Forbidden. You are not the owner of this class.' }, { status: 403 });
-    }
+  const perm = await getClassPermission(supabase as any, classId, user.id);
+  if (!perm.isMember || !perm.isTeacher) {
+    return NextResponse.json({ error: 'Forbidden. You are not authorized to manage this assignment.' }, { status: 403 });
   }
 
   // Validate chapter_id if provided

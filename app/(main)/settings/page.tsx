@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Eye, EyeOff, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OPENROUTER_LOCKED_MODEL } from '@/lib/ai/openrouter-policy';
 
@@ -42,6 +42,13 @@ export default function SettingsPage() {
   const [subscriptionType, setSubscriptionType] = useState<string>(role === 'teacher' ? 'teacher' : 'student');
   const [displayName, setDisplayName] = useState('');
   const [displayNameSaving, setDisplayNameSaving] = useState(false);
+  const [nameLockedByTeacher, setNameLockedByTeacher] = useState(false);
+  const [supportCode, setSupportCode] = useState('');
+  const [supportCodeVisible, setSupportCodeVisible] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [aiProvider, setAiProvider] = useState<'openai'>('openai');
   const [openaiApiKeyDraft, setOpenaiApiKeyDraft] = useState('');
   const [openaiModel, setOpenaiModel] = useState<string>(OPENROUTER_LOCKED_MODEL);
@@ -82,8 +89,48 @@ export default function SettingsPage() {
   }, [session?.user?.email]);
 
   useEffect(() => {
+    if (!session?.user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('display_name, name_locked_by_teacher, support_code')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if (data?.name_locked_by_teacher) {
+        setNameLockedByTeacher(true);
+        if (data.display_name) setDisplayName(data.display_name);
+      }
+      if (data?.support_code) setSupportCode(data.support_code);
+    })();
+  }, [session?.user?.id]);
+
+  const savePassword = async () => {
+    setPasswordStatus(null);
+    if (newPassword.length < 8) {
+      setPasswordStatus({ type: 'error', message: tr({ en: 'Password must be at least 8 characters.', nl: 'Wachtwoord moet minstens 8 tekens zijn.' }) });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordStatus({ type: 'error', message: tr({ en: 'Passwords do not match.', nl: 'Wachtwoorden komen niet overeen.' }) });
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordStatus({ type: 'success', message: tr({ en: 'Password updated.', nl: 'Wachtwoord bijgewerkt.' }) });
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordStatus({ type: 'error', message: err instanceof Error ? err.message : tr({ en: 'Could not update password.', nl: 'Kon wachtwoord niet bijwerken.' }) });
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  useEffect(() => {
     const tabParam = (searchParams?.get('tab') || '').toLowerCase();
-    const validTabs = new Set(['personalization', 'general', 'studysets', 'subscription', 'help', 'log-codes']);
+    const validTabs = new Set(['personalization', 'account', 'general', 'studysets', 'subscription', 'help', 'log-codes']);
     if (validTabs.has(tabParam)) {
       setActiveTab(tabParam);
       return;
@@ -220,6 +267,7 @@ export default function SettingsPage() {
   const tr = (values: Partial<Record<string, string>>) => values[locale] || values.en || '';
   const tabItems = [
     { id: 'personalization', label: tr({ en: 'Personalization', nl: 'Personalisatie' }) },
+    { id: 'account', label: tr({ en: 'Account', nl: 'Account' }) },
     { id: 'general', label: tr({ en: 'General', nl: 'Algemeen' }) },
     { id: 'studysets', label: tr({ en: 'Studysets', nl: 'Studiesets' }) },
     { id: 'subscription', label: tr({ en: 'Subscription', nl: 'Abonnement' }) },
@@ -380,14 +428,112 @@ export default function SettingsPage() {
                         value={displayName}
                         onChange={(event) => setDisplayName(event.target.value)}
                         placeholder={ui.displayNamePlaceholder}
+                        disabled={nameLockedByTeacher}
                       />
-                      <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving}>
+                      <Button onClick={() => void saveDisplayName()} disabled={displayNameSaving || nameLockedByTeacher}>
                         {displayNameSaving ? ui.saving : ui.save}
                       </Button>
                     </div>
+                    {nameLockedByTeacher && (
+                      <p className="text-xs text-muted-foreground">
+                        {tr({
+                          en: 'A teacher set your name. You can no longer change it yourself.',
+                          nl: 'Een docent heeft je naam ingesteld. Je kunt deze zelf niet meer wijzigen.',
+                        })}
+                      </p>
+                    )}
                   </div>
 
                   <ThemePicker theme={theme} setTheme={setTheme} />
+                </CardContent>
+              </Card>
+              )}
+
+              {activeTab === 'account' && (
+              <Card className="border-0 surface-panel shadow-none">
+                <CardHeader>
+                  <CardTitle>{tr({ en: 'Account', nl: 'Account' })}</CardTitle>
+                  <CardDescription>
+                    {tr({ en: 'Your name, email, password, and support code.', nl: 'Je naam, e-mail, wachtwoord en supportcode.' })}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid gap-2 max-w-md">
+                    <Label>{ui.displayName}</Label>
+                    <Input value={displayName} disabled />
+                    {nameLockedByTeacher ? (
+                      <p className="text-xs text-muted-foreground">
+                        {tr({
+                          en: 'A teacher set your name. You can no longer change it yourself.',
+                          nl: 'Een docent heeft je naam ingesteld. Je kunt deze zelf niet meer wijzigen.',
+                        })}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {tr({ en: 'Edit this under the Personalization tab.', nl: 'Wijzig dit onder het tabblad Personalisatie.' })}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label>{tr({ en: 'Email', nl: 'E-mail' })}</Label>
+                    <Input value={session?.user?.email || ''} disabled />
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="support-code">{tr({ en: 'Student/teacher code', nl: 'Leerling-/docentcode' })}</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="support-code"
+                        value={supportCodeVisible ? supportCode : '••••••'}
+                        readOnly
+                        className="font-mono tracking-widest"
+                      />
+                      <Button type="button" variant="outline" size="icon" onClick={() => setSupportCodeVisible((v) => !v)}>
+                        {supportCodeVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => { if (supportCode) void navigator.clipboard.writeText(supportCode); }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {tr({
+                        en: 'Give this code to support so they can identify your account.',
+                        nl: 'Geef deze code aan support zodat ze je account kunnen identificeren.',
+                      })}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label htmlFor="new-password">{tr({ en: 'New password', nl: 'Nieuw wachtwoord' })}</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      placeholder={tr({ en: 'At least 8 characters', nl: 'Minstens 8 tekens' })}
+                    />
+                    <Label htmlFor="confirm-password">{tr({ en: 'Confirm new password', nl: 'Bevestig nieuw wachtwoord' })}</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(event) => setConfirmPassword(event.target.value)}
+                    />
+                    <Button onClick={() => void savePassword()} disabled={passwordSaving || !newPassword || !confirmPassword} className="w-fit">
+                      {passwordSaving ? ui.saving : tr({ en: 'Update password', nl: 'Wachtwoord bijwerken' })}
+                    </Button>
+                    {passwordStatus && (
+                      <p className={cn('text-xs', passwordStatus.type === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
+                        {passwordStatus.message}
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
               )}

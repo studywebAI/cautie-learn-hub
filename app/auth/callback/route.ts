@@ -58,7 +58,18 @@ export async function GET(request: NextRequest) {
       path: '/',
     })
 
-    // Always redirect to dashboard after successful login
+    // First-time Google sign-in: no name on file yet, ask for one before
+    // landing on the dashboard.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name')
+      .eq('id', session.user.id)
+      .maybeSingle()
+
+    if (!profile?.display_name) {
+      return NextResponse.redirect(new URL('/auth/complete-profile', request.url))
+    }
+
     return NextResponse.redirect(new URL('/', request.url))
   } catch (err) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent((err as Error).message)}`, request.url))

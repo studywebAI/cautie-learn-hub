@@ -18,6 +18,7 @@ export function AuthForm({
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
+  const [name, setName] = useState('')
   const [email, setEmail] = useState(searchParams?.email || '')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
@@ -49,6 +50,7 @@ export function AuthForm({
       const formData = new FormData()
       formData.append('email', email)
       formData.append('password', password)
+      if (isSignUp) formData.append('name', name)
       await (isSignUp ? signUp : signIn)(formData)
       // If 2FA is required, the server will redirect with appropriate message
     } catch (error) {
@@ -100,6 +102,21 @@ export function AuthForm({
             <div className="space-y-4 border-t border-border/70 pt-4">
               {step === 'credentials' ? (
                 <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+                  {isSignUp && (
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -125,7 +142,7 @@ export function AuthForm({
                       className="h-10"
                     />
                   </div>
-                  <Button type="submit" disabled={isLoading || !email.trim() || !password.trim()} className="h-10 w-full">
+                  <Button type="submit" disabled={isLoading || !email.trim() || !password.trim() || (isSignUp && !name.trim())} className="h-10 w-full">
                     {isLoading ? (
                       <>
                         <Spinner size={16} color="white" className="mr-2" />

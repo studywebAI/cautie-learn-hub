@@ -47,10 +47,7 @@ export const AnalyticsDashboard = React.memo(function AnalyticsDashboard() {
       if (!userId) return;
 
       try {
-        const params = new URLSearchParams();
-        params.set('guestId', ''); // Empty for logged-in users
-
-        const response = await fetch(`/api/analytics?${params}`);
+        const response = await fetch('/api/analytics');
         if (response.ok) {
           const data = await response.json();
           setAnalytics(data);

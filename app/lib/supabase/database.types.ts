@@ -18,6 +18,7 @@ export type Database = {
           id: string
           updated_at: string | null
           full_name: string | null
+          display_name: string | null
           avatar_url: string | null
           role: string | null
           email: string | null
@@ -26,11 +27,14 @@ export type Database = {
           high_contrast: boolean | null
           dyslexia_font: boolean | null
           reduced_motion: boolean | null
+          support_code: string | null
+          name_locked_by_teacher: boolean | null
         }
         Insert: {
           id: string
           updated_at?: string | null
           full_name?: string | null
+          display_name?: string | null
           avatar_url?: string | null
           role?: string | null
           email?: string | null
@@ -39,11 +43,14 @@ export type Database = {
           high_contrast?: boolean | null
           dyslexia_font?: boolean | null
           reduced_motion?: boolean | null
+          support_code?: string | null
+          name_locked_by_teacher?: boolean | null
         }
         Update: {
           id?: string
           updated_at?: string | null
           full_name?: string | null
+          display_name?: string | null
           avatar_url?: string | null
           role?: string | null
           email?: string | null
@@ -52,6 +59,8 @@ export type Database = {
           high_contrast?: boolean | null
           dyslexia_font?: boolean | null
           reduced_motion?: boolean | null
+          support_code?: string | null
+          name_locked_by_teacher?: boolean | null
         }
       }
       classes: {

@@ -145,6 +145,22 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
 
+    // A teacher rename is global: it overrides the student's own profile
+    // name everywhere (not just this class) and the student can no longer
+    // change it back themselves. Uses the admin client so the update is not
+    // subject to the self-service display_name lock trigger.
+    if (displayName) {
+      try {
+        const adminClient = createAdminClient()
+        await adminClient
+          .from('profiles')
+          .update({ display_name: displayName, name_locked_by_teacher: true })
+          .eq('id', targetUserId)
+      } catch {
+        // Admin client unavailable - the class-scoped alias above still applies.
+      }
+    }
+
     await logAuditEntry(supabase, {
       userId: user.id,
       classId,

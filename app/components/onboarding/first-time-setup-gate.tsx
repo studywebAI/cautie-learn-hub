@@ -93,7 +93,16 @@ function resolveBrowserLanguage(): LanguageOption {
   return 'en';
 }
 
+// Disabled in favor of collecting name/preferences directly in the signup flow.
+// Flip back to true to re-enable the multi-step onboarding wizard.
+const SETUP_WIZARD_ENABLED = false;
+
 export function FirstTimeSetupGate() {
+  if (!SETUP_WIZARD_ENABLED) return null;
+  return <FirstTimeSetupGateImpl />;
+}
+
+function FirstTimeSetupGateImpl() {
   const { session, isLoading, setLanguage, setTheme, theme: currentTheme } = useContext(AppContext) as AppContextType;
   const supabase = useMemo(() => createClient(), []);
 
