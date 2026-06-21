@@ -241,8 +241,8 @@ export function ToolInputBox({
   const toolMenuRef = useRef<HTMLDivElement>(null);
   const toolButtonRef = useRef<HTMLButtonElement>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
-  const [plusMenuPosition, setPlusMenuPosition] = useState({ top: 0, left: 0 });
-  const [toolMenuPosition, setToolMenuPosition] = useState({ top: 0, right: 0 });
+  const [plusMenuPosition, setPlusMenuPosition] = useState<{ top: number; left: number } | null>(null);
+  const [toolMenuPosition, setToolMenuPosition] = useState<{ top: number; right: number } | null>(null);
 
   // Ocean animal placeholder texts
   const oceanPlaceholders = [
@@ -398,9 +398,11 @@ export function ToolInputBox({
     const handler = (e: MouseEvent) => {
       if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
         setShowPlusMenu(false);
+        setPlusMenuPosition(null);
       }
       if (toolMenuRef.current && !toolMenuRef.current.contains(e.target as Node)) {
         setShowToolMenu(false);
+        setToolMenuPosition(null);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -462,6 +464,7 @@ export function ToolInputBox({
 
     // Close menus after file is selected
     setShowPlusMenu(false);
+    setPlusMenuPosition(null);
 
     for (const file of files) {
       const isImage = file.type.startsWith('image/');
@@ -521,6 +524,7 @@ export function ToolInputBox({
   // ---------------------------------------------------------------------------
   const handleScreenshot = useCallback(async () => {
     setShowPlusMenu(false);
+    setPlusMenuPosition(null);
     const dataUri = await capture();
     if (!dataUri) return;
     setAttachments((prev) => [
@@ -605,6 +609,7 @@ export function ToolInputBox({
   // ---------------------------------------------------------------------------
   const handleToolSwitch = useCallback((tool: typeof TOOLS[number]) => {
     setShowToolMenu(false);
+    setToolMenuPosition(null);
     if (tool.id === toolId) return;
     // State is already persisted via useEffect → just navigate
     router.push(tool.href);
@@ -667,13 +672,20 @@ export function ToolInputBox({
           <button
             ref={plusButtonRef}
             type="button"
-            onClick={() => { setShowPlusMenu((v) => !v); setShowToolMenu(false); }}
+            onClick={() => {
+              if (!showPlusMenu && plusButtonRef.current) {
+                const rect = plusButtonRef.current.getBoundingClientRect();
+                setPlusMenuPosition({ top: rect.bottom + 8, left: rect.left });
+              }
+              setShowPlusMenu((v) => !v);
+              setShowToolMenu(false);
+            }}
             className="h-8 w-8 flex items-center justify-center rounded-full border border-border text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors"
           >
             <Plus className="h-4 w-4" />
           </button>
 
-          {showPlusMenu && (
+          {showPlusMenu && plusMenuPosition && (
             <div
               className="fixed z-[999] w-56 rounded-xl border border-border bg-popover shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
               style={{ top: `${plusMenuPosition.top}px`, left: `${plusMenuPosition.left}px` }}
@@ -716,7 +728,7 @@ export function ToolInputBox({
                 <label
                   htmlFor="tool-input-image"
                   className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                  onClick={() => setShowPlusMenu(false)}
+                  onClick={() => { setShowPlusMenu(false); setPlusMenuPosition(null); }}
                 >
                   <Clapperboard className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                   <span className="text-sm text-foreground">Photos</span>
@@ -726,7 +738,7 @@ export function ToolInputBox({
                 <label
                   htmlFor="tool-input-file"
                   className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                  onClick={() => setShowPlusMenu(false)}
+                  onClick={() => { setShowPlusMenu(false); setPlusMenuPosition(null); }}
                 >
                   <Link className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                   <span className="text-sm text-foreground">Files</span>
@@ -738,7 +750,7 @@ export function ToolInputBox({
                 <button
                   type="button"
                   className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
-                  onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
+                  onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); setPlusMenuPosition(null); }}
                 >
                   <Clock8 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                   <span className="text-sm text-foreground">Recents</span>
@@ -748,7 +760,7 @@ export function ToolInputBox({
                 <button
                   type="button"
                   className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
-                  onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+                  onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); setPlusMenuPosition(null); }}
                 >
                   <CloudUpload className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                   <span className="text-sm text-foreground">Microsoft 365</span>
@@ -770,14 +782,22 @@ export function ToolInputBox({
             <button
               ref={toolButtonRef}
               type="button"
-              onClick={() => { setShowToolMenu((v) => !v); setShowPlusMenu(false); }}
+              onClick={() => {
+                if (!showToolMenu && toolButtonRef.current) {
+                  const rect = toolButtonRef.current.getBoundingClientRect();
+                  const viewportWidth = window.innerWidth;
+                  setToolMenuPosition({ top: rect.bottom + 8, right: viewportWidth - rect.right });
+                }
+                setShowToolMenu((v) => !v);
+                setShowPlusMenu(false);
+              }}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors border border-transparent hover:border-border"
             >
               {currentTool.label}
               <ChevronDown className="h-3 w-3" />
             </button>
 
-            {showToolMenu && (
+            {showToolMenu && toolMenuPosition && (
               <div className="fixed z-[999] w-40 rounded-lg border border-border bg-card shadow-lg py-1 text-sm" style={{
                 top: `${toolMenuPosition.top}px`,
                 right: `${toolMenuPosition.right}px`,
