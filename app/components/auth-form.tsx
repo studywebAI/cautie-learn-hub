@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,14 +9,11 @@ import { createClient } from '@/lib/supabase/client'
 import { Spinner } from '@/components/ui/spinner'
 
 export function AuthForm({
-  signIn,
-  signUp,
   searchParams,
 }: {
-  signIn: (formData: FormData) => void
-  signUp: (formData: FormData) => void
   searchParams: { message: string; type: string; email: string }
 }) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [name, setName] = useState('')
@@ -23,6 +21,7 @@ export function AuthForm({
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials')
+  const [error, setError] = useState<string | null>(null)
 
   const handleGoogleSignIn = async () => {
     try {
@@ -37,7 +36,7 @@ export function AuthForm({
       if (error) throw error
     } catch (error: any) {
       console.error('Google sign-in error:', error)
-      alert(error?.message || 'Failed to sign in with Google')
+      setError(error?.message || 'Failed to sign in with Google')
     } finally {
       setIsLoading(false)
     }
@@ -45,15 +44,34 @@ export function AuthForm({
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
+
     try {
-      const formData = new FormData()
-      formData.append('email', email)
-      formData.append('password', password)
-      if (isSignUp) formData.append('name', name)
-      await (isSignUp ? signUp : signIn)(formData)
-      // If 2FA is required, the server will redirect with appropriate message
-    } catch (error) {
+      const response = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          isSignUp,
+          ...(isSignUp && { name }),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send verification code')
+        setIsLoading(false)
+        return
+      }
+
+      // Move to code verification step
+      setStep('2fa')
+      setCode('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error')
     } finally {
       setIsLoading(false)
     }
@@ -61,14 +79,57 @@ export function AuthForm({
 
   const handle2FASubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
+
     try {
-      const formData = new FormData()
-      formData.append('email', email)
-      formData.append('password', password)
-      formData.append('code', code)
-      await signIn(formData)
-    } catch (error) {
+      const supabase = createClient()
+
+      if (isSignUp) {
+        // For signup: verify OTP to confirm email
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: 'email',
+        })
+
+        if (verifyError) {
+          let errorMessage = 'Invalid verification code'
+          if (verifyError.message.includes('Token has expired')) {
+            errorMessage = 'The verification code has expired. Please request a new one.'
+          } else if (verifyError.message.includes('Token has been used')) {
+            errorMessage = 'This verification code has already been used. Please request a new one.'
+          }
+          setError(errorMessage)
+          setIsLoading(false)
+          return
+        }
+
+        // Account created successfully, user already provided name during signup
+        router.push('/')
+      } else {
+        // For login: verify OTP to create session
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: 'email',
+        })
+
+        if (verifyError) {
+          let errorMessage = 'Invalid verification code'
+          if (verifyError.message.includes('Token has expired')) {
+            errorMessage = 'The verification code has expired. Please request a new one.'
+          }
+          setError(errorMessage)
+          setIsLoading(false)
+          return
+        }
+
+        // Session created successfully
+        router.push('/')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed')
     } finally {
       setIsLoading(false)
     }
@@ -98,6 +159,12 @@ export function AuthForm({
                   : 'Enter the verification code sent to your email'}
               </p>
             </div>
+
+            {(searchParams?.message || error) && (
+              <div className={`rounded-lg p-3 text-sm ${searchParams?.type === 'error' || error ? 'bg-destructive/10 text-destructive' : 'bg-blue-500/10 text-blue-600'}`}>
+                {error || searchParams?.message}
+              </div>
+            )}
 
             <div className="space-y-4 border-t border-border/70 pt-4">
               {step === 'credentials' ? (
@@ -195,7 +262,11 @@ export function AuthForm({
                     <Button
                       type="button"
                       variant="link"
-                      onClick={() => setIsSignUp(!isSignUp)}
+                      onClick={() => {
+                        setIsSignUp(!isSignUp)
+                        setError(null)
+                        setCode('')
+                      }}
                       disabled={isLoading}
                       className="h-8 px-1"
                     >
@@ -235,7 +306,11 @@ export function AuthForm({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setStep('credentials')}
+                      onClick={() => {
+                        setStep('credentials')
+                        setError(null)
+                        setCode('')
+                      }}
                       disabled={isLoading}
                       className="h-10 w-full"
                     >

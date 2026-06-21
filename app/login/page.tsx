@@ -1,13 +1,12 @@
 'use client';
 
-import { Suspense, useState, useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { AuthForm } from '@/components/auth-form';
 import { useToast } from '@/hooks/use-toast';
 
 function LoginContent() {
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
@@ -31,7 +30,6 @@ function LoginContent() {
     router.replace('/login');
   }, [router, searchParams, toast]);
 
-  // Redirect if already logged in...........................................................................
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -42,133 +40,7 @@ function LoginContent() {
     checkSession();
   }, [router, supabase]);
 
-  const signIn = async (formData: FormData) => {
-    setIsLoading(true);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const code = formData.get('code') as string;
-
-    if (code) {
-      // Verify OTP code for email confirmation
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: code,
-        type: 'email',
-      });
-
-      if (error) {
-        let errorMessage = 'Invalid verification code';
-        let errorType = 'error';
-
-        if (error.message.includes('Token has expired')) {
-          errorMessage = 'The verification code has expired. Please request a new one.';
-          errorType = 'warning';
-        } else if (error.message.includes('Token has been used')) {
-          errorMessage = 'This verification code has already been used. Please request a new one.';
-          errorType = 'warning';
-        } else if (error.message.includes('Invalid token')) {
-          errorMessage = 'Invalid verification code. Please check and try again.';
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = 'Too many verification attempts. Please wait a few minutes before trying again.';
-        } else if (error.message) {
-          errorMessage = `Verification error: ${error.message}`;
-        }
-
-        router.push(`/login?message=${encodeURIComponent(errorMessage)}&type=${errorType}&email=${encodeURIComponent(email)}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // Success - redirect to dashboard
-      router.push('/');
-      setIsLoading(false);
-    } else {
-      // Sign in with password
-      try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          let errorMessage = 'Sign in failed';
-          let errorType = 'error';
-
-          if (error.message.includes('Invalid login credentials')) {
-            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-          } else if (error.message.includes('Email not confirmed')) {
-            errorMessage = 'Please check your email and click the confirmation link before signing in.';
-            errorType = 'warning';
-          } else if (error.message.includes('Too many requests')) {
-            errorMessage = 'Too many sign-in attempts. Please wait a few minutes before trying again.';
-          } else if (error.message) {
-            errorMessage = `Authentication error: ${error.message}`;
-          }
-
-          router.push(`/login?message=${encodeURIComponent(errorMessage)}&type=${errorType}&email=${encodeURIComponent(email)}`);
-          setIsLoading(false);
-          return;
-        }
-      } catch (err) {
-        router.push(`/login?message=${encodeURIComponent('Network error during sign in. Please try again.')}&email=${encodeURIComponent(email)}`);
-        setIsLoading(false);
-        return;
-      }
-
-      router.push('/');
-      setIsLoading(false);
-    }
-  };
-
-  const signUp = async (formData: FormData) => {
-    setIsLoading(true);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const name = (formData.get('name') as string) || '';
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name.trim() },
-          emailRedirectTo: `${window.location.origin}/auth/confirm-email`,
-        },
-      });
-
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          router.push('/login?message=Account already exists. Please sign in instead.&type=info');
-          setIsLoading(false);
-          return;
-        }
-        router.push(`/login?message=${encodeURIComponent(error.message)}&type=error&email=${encodeURIComponent(email)}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // User created, email confirmation required
-      if (data.user) {
-        router.push(`/auth/confirm-email?email=${encodeURIComponent(email)}&message=Please check your email for the 8-digit verification code.`);
-        setIsLoading(false);
-        return;
-      }
-
-      router.push('/login?message=An unexpected error occurred. Please try again.&type=error');
-      setIsLoading(false);
-    } catch (err) {
-      router.push(`/login?message=${encodeURIComponent('Network error during signup. Please try again.')}&type=error&email=${encodeURIComponent(email)}`);
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AuthForm
-      signIn={signIn}
-      signUp={signUp}
-      searchParams={authSearchParams}
-    />
-  );
+  return <AuthForm searchParams={authSearchParams} />;
 }
 
 export default function Login() {
