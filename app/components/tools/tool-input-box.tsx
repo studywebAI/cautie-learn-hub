@@ -14,7 +14,6 @@ import { Clapperboard } from '@/components/animate-ui/icons/clapperboard';
 import { Link } from '@/components/animate-ui/icons/link';
 import { Clock8 } from '@/components/animate-ui/icons/clock-8';
 import { CloudUpload } from '@/components/animate-ui/icons/cloud-upload';
-import { AnimateIcon } from '@/components/animate-ui/icons/icon-base';
 import { useScreenshotCapture } from '@/hooks/use-screenshot-capture';
 import { useSpeechToText } from '@/hooks/use-speech-to-text';
 import { useToast } from '@/hooks/use-toast';
@@ -676,7 +675,7 @@ export function ToolInputBox({
 
           {showPlusMenu && (
             <div
-              className="fixed z-[999] w-56 rounded-xl border border-border bg-popover shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 duration-150"
+              className="fixed z-[999] w-56 rounded-xl border border-border bg-popover shadow-lg overflow-hidden animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-150"
               style={{ top: `${plusMenuPosition.top}px`, left: `${plusMenuPosition.left}px` }}
             >
               {/* Hidden file inputs */}
@@ -700,70 +699,60 @@ export function ToolInputBox({
 
               <div className="p-1">
                 {/* Share a page → screenshot */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <button
-                    type="button"
-                    onClick={() => { void handleScreenshot(); }}
-                    disabled={capturing}
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
-                  >
-                    {capturing
-                      ? <Spinner size={16} className="flex-shrink-0" />
-                      : <Cast className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
-                    }
-                    <span className="text-sm text-foreground">Share a page</span>
-                  </button>
-                </AnimateIcon>
+                <button
+                  type="button"
+                  onClick={() => { void handleScreenshot(); }}
+                  disabled={capturing}
+                  className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                >
+                  {capturing
+                    ? <Spinner size={16} className="flex-shrink-0" />
+                    : <Cast className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                  }
+                  <span className="text-sm text-foreground">Share a page</span>
+                </button>
 
                 {/* Photos */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <label
-                    htmlFor="tool-input-image"
-                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                    onClick={() => setShowPlusMenu(false)}
-                  >
-                    <Clapperboard className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
-                    <span className="text-sm text-foreground">Photos</span>
-                  </label>
-                </AnimateIcon>
+                <label
+                  htmlFor="tool-input-image"
+                  className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
+                  onClick={() => setShowPlusMenu(false)}
+                >
+                  <Clapperboard className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                  <span className="text-sm text-foreground">Photos</span>
+                </label>
 
                 {/* Files */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <label
-                    htmlFor="tool-input-file"
-                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                    onClick={() => setShowPlusMenu(false)}
-                  >
-                    <Link className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
-                    <span className="text-sm text-foreground">Files</span>
-                  </label>
-                </AnimateIcon>
+                <label
+                  htmlFor="tool-input-file"
+                  className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
+                  onClick={() => setShowPlusMenu(false)}
+                >
+                  <Link className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                  <span className="text-sm text-foreground">Files</span>
+                </label>
 
                 <div className="my-1 h-px bg-border mx-1" />
 
                 {/* Recents */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <button
-                    type="button"
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
-                    onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
-                  >
-                    <Clock8 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
-                    <span className="text-sm text-foreground">Recents</span>
-                  </button>
-                </AnimateIcon>
+                <button
+                  type="button"
+                  className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                  onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
+                >
+                  <Clock8 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                  <span className="text-sm text-foreground">Recents</span>
+                </button>
 
                 {/* Microsoft 365 */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <button
-                    type="button"
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
-                    onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
-                  >
-                    <CloudUpload className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
-                    <span className="text-sm text-foreground">Microsoft 365</span>
-                  </button>
-                </AnimateIcon>
+                <button
+                  type="button"
+                  className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                  onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
+                >
+                  <CloudUpload className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
+                  <span className="text-sm text-foreground">Microsoft 365</span>
+                </button>
               </div>
             </div>
           )}
