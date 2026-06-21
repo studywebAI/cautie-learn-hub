@@ -50,6 +50,13 @@ const explainAnswerFlow = ai.defineFlow(
 
 Question: "{{{question}}}"
 
+{{#if sourceText}}Source text:
+"""
+{{{sourceText}}}
+"""
+
+If the source text contains something directly useful for hinting at the answer, base your hint on it. If the source text is missing, irrelevant, or unhelpful for this question, ignore it and write the hint yourself from general knowledge instead.{{else}}No source text was provided, so write the hint yourself from general knowledge.{{/if}}
+
 Give one concise, helpful hint (1-2 sentences).{{/if}}{{#if followUpQuestion}}The user has asked a follow-up question: "{{{followUpQuestion}}}". First, check if this question is related to the subject matter from the source text. If it is not related to schoolwork or the topic, politely refuse to answer and explain that you can only answer questions related to the subject. If it is related, answer it helpfully based on the source text and question context.{{/if}}{{#unless isHint}}{{#unless followUpQuestion}}{{#if isFlashcard}}You are explaining a flashcard to help the student understand the concept. Do NOT refer to "answers", "correct/incorrect", or quiz terminology. Simply explain the concept on this flashcard clearly and concisely.
 
 Term: "{{{question}}}"
