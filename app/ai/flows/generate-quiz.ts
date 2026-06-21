@@ -159,12 +159,25 @@ function normalizeQuestionShape(
   }
 
   if (type === 'argument-analysis') {
-    normalized.argumentStatements = Array.isArray(question?.argumentStatements)
+    const statements = Array.isArray(question?.argumentStatements)
       ? question.argumentStatements.map((s: any, i: number) => ({
           id: String(s?.id || `stmt-${i}`),
           text: String(s?.text || '').trim(),
         })).filter((s: any) => s.text)
       : [];
+    if (!statements.length) {
+      // The model picked argument-analysis for a question that has no
+      // statements to tag (e.g. a plain factual question) — ship it as a
+      // short-answer question instead of an unanswerable empty card.
+      normalized.type = 'short-answer';
+      const acceptableAnswers = Array.isArray(question?.acceptableAnswers)
+        ? question.acceptableAnswers.map((entry: any) => String(entry || '').trim()).filter(Boolean)
+        : [];
+      normalized.acceptableAnswers = acceptableAnswers.length ? acceptableAnswers : ['Not available from source'];
+      normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
+      return normalized;
+    }
+    normalized.argumentStatements = statements;
     normalized.argumentTags = Array.isArray(question?.argumentTags)
       ? question.argumentTags.map((t: any) => String(t || '').trim()).filter(Boolean)
       : ['Claim', 'Evidence', 'Counterargument', 'Conclusion'];

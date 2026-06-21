@@ -1298,40 +1298,46 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
 }) {
   const items = question.orderingItems || [];
   const criteria = (question as any).rankingCriteria as string | undefined;
-  const current: string[] = answer?.kind === 'ordering' && answer.value.length === items.length
-    ? answer.value
-    : [...items];
+  // Keyed by stable origin index, and hover-target read directly from the id
+  // captured per rendered row, rather than re-deriving an index from item text
+  // on every drag event — recomputing by text caused a feedback loop where the
+  // live-reordered DOM moved a different item under the cursor mid-drag,
+  // making the two rows flicker back and forth.
+  const itemsWithId = useMemo(() => items.map((text, id) => ({ id, text })), [items]);
 
-  const dragIdx = useRef<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const idsFromTexts = (texts: string[]) => {
+    const pool = itemsWithId.map((it) => it.id);
+    return texts.map((text) => {
+      const idx = pool.findIndex((id) => itemsWithId[id].text === text);
+      if (idx === -1) return pool[0];
+      return pool.splice(idx, 1)[0];
+    });
+  };
 
-  const displayList = dragIdx.current !== null && dragOverIdx !== null && dragIdx.current !== dragOverIdx
-    ? (() => {
-        const temp = [...current];
-        const [moved] = temp.splice(dragIdx.current!, 1);
-        temp.splice(dragOverIdx, 0, moved);
-        return temp;
-      })()
+  const current: number[] = answer?.kind === 'ordering' && answer.value.length === itemsWithId.length
+    ? idsFromTexts(answer.value)
+    : itemsWithId.map((it) => it.id);
+
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [overId, setOverId] = useState<number | null>(null);
+
+  const reorder = (from: number, to: number) => {
+    const next = current.filter((i) => i !== from);
+    const pos = next.indexOf(to);
+    next.splice(pos, 0, from);
+    return next;
+  };
+
+  const displayIds = draggingId !== null && overId !== null && draggingId !== overId
+    ? reorder(draggingId, overId)
     : current;
 
-  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
-  const handleDragOver = (idx: number, e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOverIdx(idx);
-  };
-  const handleDragLeave = () => { setDragOverIdx(null); };
-  const handleDrop = (dropIdx: number) => {
-    if (dragIdx.current === null || dragIdx.current === dropIdx) {
-      dragIdx.current = null;
-      setDragOverIdx(null);
-      return;
+  const handleDrop = (target: number) => {
+    if (draggingId !== null && draggingId !== target) {
+      onChange({ kind: 'ordering', value: reorder(draggingId, target).map((id) => itemsWithId[id].text) });
     }
-    const next = [...current];
-    const [moved] = next.splice(dragIdx.current, 1);
-    next.splice(dropIdx, 0, moved);
-    onChange({ kind: 'ordering', value: next });
-    dragIdx.current = null;
-    setDragOverIdx(null);
+    setDraggingId(null);
+    setOverId(null);
   };
 
   return (
@@ -1343,29 +1349,33 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
       ) : null}
       <p className="text-[11px] text-muted-foreground">Drag to reorder from #1 (top) to last (bottom).</p>
       <div className="space-y-3">
-        {displayList.map((item, idx) => (
-          <div
-            key={item}
-            draggable={!disabled}
-            onDragStart={() => handleDragStart(displayList.indexOf(item))}
-            onDragOver={(e) => handleDragOver(displayList.indexOf(item), e)}
-            onDragLeave={handleDragLeave}
-            onDrop={() => handleDrop(displayList.indexOf(item))}
-            className={`flex items-center gap-4 rounded-lg border px-4 py-4 cursor-grab active:cursor-grabbing select-none transition-all ${
-              dragOverIdx === displayList.indexOf(item)
-                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/20'
-                : 'border-border bg-background'
-            }`}
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
-              #{idx + 1}
-            </span>
-            <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-            </svg>
-            <span className="text-[15px] text-foreground">{item}</span>
-          </div>
-        ))}
+        {displayIds.map((id, idx) => {
+          const item = itemsWithId[id].text;
+          return (
+            <div
+              key={id}
+              draggable={!disabled}
+              onDragStart={() => setDraggingId(id)}
+              onDragOver={(e) => { e.preventDefault(); if (draggingId !== null) setOverId(id); }}
+              onDragLeave={() => setOverId((prev) => (prev === id ? null : prev))}
+              onDrop={() => handleDrop(id)}
+              onDragEnd={() => { setDraggingId(null); setOverId(null); }}
+              className={`flex items-center gap-4 rounded-lg border px-4 py-4 cursor-grab active:cursor-grabbing select-none transition-all ${
+                overId === id && draggingId !== null
+                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/20'
+                  : 'border-border bg-background'
+              }`}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
+                #{idx + 1}
+              </span>
+              <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+              </svg>
+              <span className="text-[15px] text-foreground">{item}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
