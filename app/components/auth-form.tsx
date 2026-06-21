@@ -292,7 +292,7 @@ export function AuthForm({
                     Sign in with Google
                   </Button>
 
-                  <div className="text-center">
+                  <div className="flex justify-between items-center gap-2">
                     <Button
                       type="button"
                       variant="link"
@@ -308,6 +308,14 @@ export function AuthForm({
                     >
                       {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                     </Button>
+                    {!isSignUp && (
+                      <a
+                        href="/auth/forgot-password"
+                        className="text-sm underline hover:no-underline text-muted-foreground h-8 flex items-center"
+                      >
+                        Forgot password?
+                      </a>
+                    )}
                   </div>
                 </form>
               ) : (
