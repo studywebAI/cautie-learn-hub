@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {step === 'email'
-              ? 'Enter your email and we'll send you a verification code'
+              ? "Enter your email and we'll send you a verification code"
               : step === 'code'
                 ? 'Enter the verification code sent to your email'
                 : 'Enter your new password below'}
