@@ -285,7 +285,7 @@ export function AuthForm({
                       type="text"
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Enter 8-digit code"
+                      placeholder="Enter 6-digit code"
                       required
                       disabled={isLoading}
                       className="h-12 text-center text-2xl tracking-widest"
@@ -295,7 +295,7 @@ export function AuthForm({
                     </p>
                   </div>
                   <div className="space-y-2">
-                    <Button type="submit" disabled={isLoading || code.length !== 8} className="h-10 w-full">
+                    <Button type="submit" disabled={isLoading || code.length !== 6} className="h-10 w-full">
                       {isLoading ? (
                         <>
                           <Spinner size={16} color="white" className="mr-2" />
