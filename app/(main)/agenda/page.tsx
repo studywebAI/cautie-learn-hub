@@ -35,6 +35,22 @@ type ScheduleSlot = {
   notes?: string | null;
 };
 
+type ScheduledStudyItem = {
+  id: string;
+  tool: 'quiz' | 'flashcards' | 'notes' | 'wordweb';
+  title: string;
+  source_text: string | null;
+  scheduled_for: string;
+  status: 'pending' | 'notified' | 'completed' | 'dismissed';
+};
+
+const SCHEDULED_TOOL_HREFS: Record<ScheduledStudyItem['tool'], string> = {
+  notes: '/tools/notes',
+  flashcards: '/tools/flashcards',
+  quiz: '/tools/quiz',
+  wordweb: '/tools/notes',
+};
+
 type StudysetAgendaItem = {
   id: string;
   studyset_id: string;
@@ -177,6 +193,7 @@ function AgendaPageContent() {
   const [overlayClassIds, setOverlayClassIds] = useState<string[]>([]);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
   const [studysetAgendaItems, setStudysetAgendaItems] = useState<StudysetAgendaItem[]>([]);
+  const [scheduledStudyItems, setScheduledStudyItems] = useState<ScheduledStudyItem[]>([]);
   const [teacherAgendaItems, setTeacherAgendaItems] = useState<AgendaApiItem[]>([]);
   const [studentAgendaItems, setStudentAgendaItems] = useState<AgendaApiItem[]>([]);
   const [agendaReloadKey, setAgendaReloadKey] = useState(0);
@@ -320,6 +337,38 @@ function AgendaPageContent() {
     void loadStudysetAgenda();
     return () => controller.abort();
   }, [agendaDebugId, isLoading]);
+
+  useEffect(() => {
+    if (isLoading || !isStudent) {
+      setScheduledStudyItems([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const from = new Date().toISOString();
+    const to = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString();
+
+    const loadScheduledItems = async () => {
+      try {
+        const response = await fetch(
+          `/api/scheduled-items?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&status=pending,notified`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) {
+          setScheduledStudyItems([]);
+          return;
+        }
+        const data = await response.json();
+        setScheduledStudyItems(Array.isArray(data?.items) ? data.items : []);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+        setScheduledStudyItems([]);
+      }
+    };
+
+    void loadScheduledItems();
+    return () => controller.abort();
+  }, [agendaDebugId, isLoading, isStudent]);
 
   useEffect(() => {
     if (!isTeacher || isLoading || overlayClassIds.length === 0) {
@@ -489,7 +538,23 @@ function AgendaPageContent() {
     }));
 
     const feedEvents = studentAgendaItems.map(agendaApiItemToEvent);
-    const merged = [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents];
+
+    const scheduledEvents: CalendarEvent[] = scheduledStudyItems.map((item) => {
+      const href = item.source_text?.trim()
+        ? `${SCHEDULED_TOOL_HREFS[item.tool]}?sourceText=${encodeURIComponent(item.source_text)}&autostart=1`
+        : SCHEDULED_TOOL_HREFS[item.tool];
+      return {
+        id: `scheduled-${item.id}`,
+        title: item.title,
+        subject: 'Scheduled study',
+        date: parseISO(item.scheduled_for),
+        type: 'study_plan' as const,
+        href,
+        description: `Scheduled ${item.tool} session`,
+      };
+    });
+
+    const merged = [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents, ...scheduledEvents];
     console.info('[AGENDA] events computed', {
       agendaDebugId,
       role: 'student-or-other',
@@ -497,10 +562,11 @@ function AgendaPageContent() {
       personalEvents: personalEvents.length,
       scheduleEvents: scheduleEvents.length,
       studysetEvents: studysetEvents.length,
+      scheduledEvents: scheduledEvents.length,
       merged: merged.length,
     });
     return merged;
-  }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems]);
+  }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems, scheduledStudyItems]);
 
   const handleTaskCreated = async (newTask: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
     await createPersonalTask(newTask);

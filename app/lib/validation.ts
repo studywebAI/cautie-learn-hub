@@ -13,6 +13,8 @@ export {
   notificationPreferencesSchema,
   markNotificationReadSchema,
   createPersonalTaskSchema,
+  createScheduledStudyItemSchema,
+  updateScheduledStudyItemSchema,
 } from './validation/schemas';
 export { validateBody } from './validation/validate';
 

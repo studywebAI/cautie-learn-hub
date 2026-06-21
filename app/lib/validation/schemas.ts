@@ -286,6 +286,22 @@ export const updatePersonalTaskSchema = z.object({
   completed: z.boolean().optional()
 });
 
+// ============================================
+// SCHEDULED STUDY ITEMS
+// ============================================
+
+export const createScheduledStudyItemSchema = z.object({
+  tool: z.enum(['quiz', 'flashcards', 'notes', 'wordweb']),
+  title: titleSchema,
+  source_text: z.string().max(200000).optional().nullable(),
+  scheduled_for: z.string().datetime()
+});
+
+export const updateScheduledStudyItemSchema = z.object({
+  scheduled_for: z.string().datetime().optional(),
+  status: z.enum(['pending', 'notified', 'completed', 'dismissed']).optional()
+});
+
 export const bulkClassesSchema = z.object({
   action: z.enum([
     'archive',

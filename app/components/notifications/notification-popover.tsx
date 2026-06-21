@@ -45,6 +45,8 @@ function getTypeConfig(type: string): { icon: React.ReactNode; accent: string; l
     case 'assignment_due':
     case 'deadline_reminder':
       return { icon: <Clock className={cls} />, accent: 'text-red-600 bg-red-500/10', label: 'Deadline' };
+    case 'scheduled_study_item_due':
+      return { icon: <Clock className={cls} />, accent: 'text-[var(--accent-brand)] bg-[var(--accent-brand)]/10', label: 'Scheduled' };
     case 'submission_graded':
     case 'ai_grading_completed':
       return { icon: <Star className={cls} />, accent: 'text-emerald-600 bg-emerald-500/10', label: 'Grade' };
@@ -137,6 +139,19 @@ function NotificationItem({
                 disabled={processingId === notification?.data?.request_id}
               >
                 Reject
+              </Button>
+            </div>
+          )}
+
+          {notification.type === 'scheduled_study_item_due' && (
+            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2.5 text-[11px]"
+                onClick={() => { window.location.href = '/agenda'; }}
+              >
+                Open agenda
               </Button>
             </div>
           )}

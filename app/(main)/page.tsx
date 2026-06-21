@@ -12,6 +12,7 @@ import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Alert, Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
+import { ScheduledStudyItems } from "@/components/dashboard/scheduled-study-items";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
 import { UpcomingExamsStudysets } from "@/components/dashboard/upcoming-exams-studysets";
 import { WeakSpotsPanel } from "@/components/dashboard/weak-spots-panel";
@@ -159,6 +160,7 @@ function StudentDashboard() {
               schoolSlots={schoolSlots}
             />
             <TodaysStudysetTasks />
+            <ScheduledStudyItems />
             <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
               <AnalyticsDashboard />
             </Suspense>

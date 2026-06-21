@@ -7,6 +7,7 @@ import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
 import { FirstTimeSetupGate } from "@/components/onboarding/first-time-setup-gate";
 import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
+import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled-reminder-checker";
 
 const AppSidebar = dynamic(
     () => import("@/components/sidebar").then((m) => m.AppSidebar),
@@ -48,6 +49,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         >
             <FirstTimeSetupGate />
             <GlobalCommandPalette />
+            <ScheduledReminderChecker />
             {routePulseVisible && (
                 <div className="pointer-events-none fixed inset-x-0 top-0 z-[210] h-[2px] bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
             )}
