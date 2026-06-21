@@ -137,7 +137,7 @@ export function AuthForm({
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4 bg-background">
-      <div className="w-full max-w-md space-y-5 rounded-2xl border border-border/70 surface-panel p-4 md:p-5">
+      <div className="w-full max-w-md space-y-5 rounded-lg border border-border surface-interactive p-6">
         <div className="text-center">
           <h2 className="text-2xl md:text-3xl">{step === 'credentials' ? (isSignUp ? 'Create an account' : 'Welcome back') : 'Check your email'}</h2>
           <p className="mt-2 text-sm text-muted-foreground md:text-base">
