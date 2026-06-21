@@ -18,7 +18,6 @@ import {
   Sparkles,
   FileText,
   ListChecks,
-  Info,
   Eye,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -26,7 +25,7 @@ import { MultipleChoiceView } from './multiple-choice-view';
 import { normalizeForCompare } from '@/lib/study-grading';
 import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { SourcesPill, SourcesSidebar } from '@/components/tools/sources-panel';
 import {
   Dialog,
   DialogContent,
@@ -599,6 +598,7 @@ export function FlashcardViewer({
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showSources, setShowSources] = useState(false);
   const [isAnswered, setIsAnswered] = useState(false);
   const [answerCorrectness, setAnswerCorrectness] = useState<boolean | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
@@ -1371,28 +1371,14 @@ export function FlashcardViewer({
         {card && cardMeta ? (
           <div className="flex w-full max-w-5xl flex-wrap items-center justify-center gap-2">
             {settings?.showCitations && card.citation ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Show source citation"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border/80 surface-chip px-3 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <Info className="h-3.5 w-3.5" />
-                    Source
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 text-sm" align="center">
-                  <p className="text-[10px] text-muted-foreground">Where this came from</p>
-                  <p className="mt-1 leading-relaxed">{card.citation}</p>
-                  {settings?.explanationMode === 'research' && card.groundingNote ? (
-                    <>
-                      <p className="mt-3 text-[10px] text-muted-foreground">Why / how it relates</p>
-                      <p className="mt-1 leading-relaxed text-muted-foreground">{card.groundingNote}</p>
-                    </>
-                  ) : null}
-                </PopoverContent>
-              </Popover>
+              <SourcesPill
+                data={{
+                  citation: card.citation,
+                  imageUrl: card.imageUrl,
+                  groundingNote: settings?.explanationMode === 'research' ? card.groundingNote : undefined,
+                }}
+                onOpen={() => setShowSources(true)}
+              />
             ) : null}
             {settings?.mnemonicHints && (effectiveMode === 'assisted' ? card.assistedHint : card.hint) ? (
               <Button
@@ -1660,6 +1646,16 @@ export function FlashcardViewer({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SourcesSidebar
+        open={showSources}
+        onOpenChange={setShowSources}
+        data={{
+          citation: card?.citation,
+          imageUrl: card?.imageUrl,
+          groundingNote: settings?.explanationMode === 'research' ? card?.groundingNote : undefined,
+        }}
+      />
     </Card>
   );
 }

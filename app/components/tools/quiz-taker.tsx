@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import type { Quiz, QuizQuestion } from '@/lib/types';
 import { AppContext } from '@/contexts/app-context';
+import { SourcesPill, SourcesSidebar } from '@/components/tools/sources-panel';
 
 // ─── Variant selection ────────────────────────────────────────────────────────
 // Deterministic: same question always gets same variant (seeded from question ID).
@@ -2731,6 +2732,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
   const [showWhy, setShowWhy] = useState(false);
   const [whyIncorrect, setWhyIncorrect] = useState('');
   const [whyIncorrectLoading, setWhyIncorrectLoading] = useState(false);
+  const [showSources, setShowSources] = useState(false);
   const [finalizedMap, setFinalizedMap] = useState<Record<string, boolean>>({});
   const [lastAnsweredQuestionId, setLastAnsweredQuestionId] = useState<string | null>(null);
   const [navMode, setNavMode] = useState<'circles' | 'progress'>('circles');
@@ -3248,24 +3250,36 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  className="text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2"
-                  onClick={() => {
-                    const next = !showWhy;
-                    setShowWhy(next);
-                    if (next && !currentQuestion.explanation?.trim() && !whyIncorrect && !whyIncorrectLoading) {
-                      void loadWhyIncorrect();
-                    }
-                  }}
-                >
-                  {showWhy ? 'Hide explanation' : 'Show explanation'}
-                </button>
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    className="text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2"
+                    onClick={() => {
+                      const next = !showWhy;
+                      setShowWhy(next);
+                      if (next && !currentQuestion.explanation?.trim() && !whyIncorrect && !whyIncorrectLoading) {
+                        void loadWhyIncorrect();
+                      }
+                    }}
+                  >
+                    {showWhy ? 'Hide explanation' : 'Show explanation'}
+                  </button>
+                  <SourcesPill
+                    data={{ citation: currentQuestion.citation, media: currentQuestion.media }}
+                    onOpen={() => setShowSources(true)}
+                  />
+                </div>
               </div>
             </div>
           ) : null}
         </div>
       </div>
+
+      <SourcesSidebar
+        open={showSources}
+        onOpenChange={setShowSources}
+        data={{ citation: currentQuestion?.citation, media: currentQuestion?.media }}
+      />
 
       {/* ── Bottom nav ── full width, buttons at edges */}
       <div className="shrink-0 border-t border-border bg-white dark:bg-card px-3 sm:px-5 py-3 sm:py-3.5">
