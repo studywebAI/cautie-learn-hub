@@ -182,81 +182,97 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
   question: QuizQuestion; answer?: AnswerValue; disabled: boolean; onChange: (v: AnswerValue) => void;
 }) {
   const items = question.orderingItems || [];
-  const current: string[] = answer?.kind === 'ordering' && answer.value.length === items.length
-    ? answer.value
-    : [...items].sort(() => 0);
+  // Keyed by stable origin index rather than item text, so duplicate-text
+  // items don't collide as React keys and cause rendering glitches.
+  const itemsWithId = useMemo(() => items.map((text, id) => ({ id, text })), [items]);
 
-  const [draggingItem, setDraggingItem] = useState<string | null>(null);
-  const [overItem, setOverItem] = useState<string | null>(null);
-  const [touchDragItem, setTouchDragItem] = useState<string | null>(null);
+  const idsFromTexts = (texts: string[]) => {
+    const pool = itemsWithId.map((it) => it.id);
+    return texts.map((text) => {
+      const idx = pool.findIndex((id) => itemsWithId[id].text === text);
+      if (idx === -1) return pool[0];
+      return pool.splice(idx, 1)[0];
+    });
+  };
+
+  const current: number[] = answer?.kind === 'ordering' && answer.value.length === itemsWithId.length
+    ? idsFromTexts(answer.value)
+    : itemsWithId.map((it) => it.id);
+
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [overId, setOverId] = useState<number | null>(null);
+  const [touchDragId, setTouchDragId] = useState<number | null>(null);
 
   // Live preview: reflects the in-progress drag before it's dropped, so siblings
   // visibly reflow while dragging instead of only updating on release.
-  const reorder = (from: string, to: string) => {
+  const reorder = (from: number, to: number) => {
     const next = current.filter((i) => i !== from);
     const pos = next.indexOf(to);
     next.splice(pos, 0, from);
     return next;
   };
 
-  const displayItems = draggingItem && overItem && draggingItem !== overItem
-    ? reorder(draggingItem, overItem)
+  const displayIds = draggingId !== null && overId !== null && draggingId !== overId
+    ? reorder(draggingId, overId)
     : current;
 
-  const commitDrop = (target: string | null, from: string | null) => {
-    if (from && target && from !== target) {
-      onChange({ kind: 'ordering', value: reorder(from, target) });
+  const commitDrop = (target: number | null, from: number | null) => {
+    if (from !== null && target !== null && from !== target) {
+      onChange({ kind: 'ordering', value: reorder(from, target).map((id) => itemsWithId[id].text) });
     }
-    setDraggingItem(null);
-    setOverItem(null);
+    setDraggingId(null);
+    setOverId(null);
   };
 
   return (
     <div className="space-y-3">
-      {displayItems.map((item, idx) => (
-        <div
-          key={item}
-          data-order-item={item}
-          draggable={!disabled}
-          onDragStart={() => { setDraggingItem(item); setOverItem(item); }}
-          onDragOver={(e) => { e.preventDefault(); if (draggingItem) setOverItem(item); }}
-          onDrop={() => commitDrop(overItem ?? item, draggingItem)}
-          onDragEnd={() => { setDraggingItem(null); setOverItem(null); }}
-          onTouchStart={(e) => {
-            if (disabled) return;
-            e.stopPropagation();
-            setTouchDragItem(item);
-            setDraggingItem(item);
-            setOverItem(item);
-          }}
-          onTouchMove={(e) => {
-            if (touchDragItem === null) return;
-            const touch = e.touches[0];
-            const el = document.elementFromPoint(touch.clientX, touch.clientY);
-            const target = el?.closest('[data-order-item]');
-            const overTouchItem = target?.getAttribute('data-order-item') || null;
-            if (overTouchItem) setOverItem(overTouchItem);
-          }}
-          onTouchEnd={() => {
-            commitDrop(overItem ?? touchDragItem, touchDragItem);
-            setTouchDragItem(null);
-          }}
-          className={[
-            'flex items-center gap-4 rounded-lg border border-border bg-background px-4 py-4 select-none transition-all',
-            disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
-            draggingItem === item ? 'opacity-50 scale-[0.98]' : '',
-            overItem === item && draggingItem ? 'bg-[var(--accent-brand)]/5 border-[var(--accent-brand)]/30' : '',
-          ].join(' ')}
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[13px] leading-none text-[var(--accent-brand)]">
-            {idx + 1}
-          </span>
-          <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-          </svg>
-          <span className="text-[15px] text-foreground">{item}</span>
-        </div>
-      ))}
+      {displayIds.map((id, idx) => {
+        const item = itemsWithId[id].text;
+        return (
+          <div
+            key={id}
+            data-order-item={id}
+            draggable={!disabled}
+            onDragStart={() => { setDraggingId(id); setOverId(id); }}
+            onDragOver={(e) => { e.preventDefault(); if (draggingId !== null) setOverId(id); }}
+            onDrop={() => commitDrop(overId ?? id, draggingId)}
+            onDragEnd={() => { setDraggingId(null); setOverId(null); }}
+            onTouchStart={(e) => {
+              if (disabled) return;
+              e.stopPropagation();
+              setTouchDragId(id);
+              setDraggingId(id);
+              setOverId(id);
+            }}
+            onTouchMove={(e) => {
+              if (touchDragId === null) return;
+              const touch = e.touches[0];
+              const el = document.elementFromPoint(touch.clientX, touch.clientY);
+              const target = el?.closest('[data-order-item]');
+              const overTouchId = target ? Number(target.getAttribute('data-order-item')) : null;
+              if (overTouchId !== null && !Number.isNaN(overTouchId)) setOverId(overTouchId);
+            }}
+            onTouchEnd={() => {
+              commitDrop(overId ?? touchDragId, touchDragId);
+              setTouchDragId(null);
+            }}
+            className={[
+              'flex items-center gap-4 rounded-lg border border-border bg-background px-4 py-4 select-none transition-all',
+              disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+              draggingId === id ? 'opacity-50 scale-[0.98]' : '',
+              overId === id && draggingId !== null ? 'bg-[var(--accent-brand)]/5 border-[var(--accent-brand)]/30' : '',
+            ].join(' ')}
+          >
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[13px] leading-none text-[var(--accent-brand)]">
+              {idx + 1}
+            </span>
+            <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 16a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm6 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+            </svg>
+            <span className="text-[15px] text-foreground">{item}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -3026,7 +3042,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
           {navMode === 'circles' ? (
             <div
               ref={circleRowRef}
-              className="flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[320px] sm:max-w-[400px] md:max-w-[550px] lg:max-w-[700px]"
+              className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-[420px]"
             >
               {(effectiveMode === 'adaptive' ? questions.slice(0, currentIndex + 1) : questions)
                 .map((q, idx) => ({ q, idx }))
@@ -3041,7 +3057,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                     onClick={() => handleJumpTo(idx)}
                     title={`Question ${idx + 1}`}
                     className={[
-                      'flex h-7 w-7 sm:h-7 sm:w-7 lg:h-8 lg:w-8 shrink-0 items-center justify-center rounded-full text-[11px] sm:text-[11px] lg:text-[12px] transition-all',
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] transition-all',
                       state === 'current'
                         ? 'bg-[var(--accent-brand)] text-white ring-2 ring-[var(--accent-brand)] ring-offset-1 ring-offset-background'
                         : state === 'answered'
@@ -3056,7 +3072,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               {effectiveMode === 'adaptive' && (
                 <span
                   title="More questions to come"
-                  className="flex h-7 w-7 sm:h-7 sm:w-7 lg:h-8 lg:w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[11px] sm:text-[11px] lg:text-[13px] text-[var(--accent-brand)]/70"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-[var(--accent-brand)]/50 text-[14px] text-[var(--accent-brand)]/70"
                 >
                   ∞
                 </span>
