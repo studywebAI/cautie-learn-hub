@@ -1,9 +1,8 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
@@ -14,14 +13,12 @@ export function AuthForm({
 }: {
   searchParams: { message: string; type: string; email: string }
 }) {
-  const id = useId()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState(searchParams?.email || '')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials')
   const [error, setError] = useState<string | null>(null)
@@ -199,20 +196,6 @@ export function AuthForm({
                   className="h-10"
                 />
               </div>
-              {!isSignUp && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id={`${id}-remember`}
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    disabled={isLoading}
-                  />
-                  <Label htmlFor={`${id}-remember`} className="font-normal text-muted-foreground">
-                    Remember me
-                  </Label>
-                </div>
-              )}
-
               <Button type="submit" disabled={isLoading || !email.trim() || !password.trim() || (isSignUp && !name.trim())} className="h-10 w-full">
                 {isLoading ? (
                   <>
