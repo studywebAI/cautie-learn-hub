@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
@@ -13,12 +14,14 @@ export function AuthForm({
 }: {
   searchParams: { message: string; type: string; email: string }
 }) {
+  const id = useId()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState(searchParams?.email || '')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [code, setCode] = useState('')
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials')
   const [error, setError] = useState<string | null>(null)
@@ -151,13 +154,30 @@ export function AuthForm({
 
         <div className="flex items-center justify-center p-4 md:p-8 lg:p-10">
           <div className="w-full max-w-md space-y-5 rounded-2xl border border-border/70 surface-panel p-4 md:p-5">
-            <div className="text-center md:text-left">
-              <h2 className="text-2xl md:text-3xl">Welcome to cautie</h2>
-              <p className="mt-2 text-sm text-muted-foreground md:text-base">
-                {step === 'credentials'
-                  ? `Enter your email and password to ${isSignUp ? 'create an account' : 'sign in'}`
-                  : 'Enter the verification code sent to your email'}
-              </p>
+            <div className="flex flex-col items-center gap-2">
+              <div
+                className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border"
+                aria-hidden="true"
+              >
+                <svg
+                  className="stroke-zinc-800 dark:stroke-zinc-100"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 32 32"
+                  aria-hidden="true"
+                >
+                  <circle cx="16" cy="16" r="12" fill="none" strokeWidth="8" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <h2 className="text-2xl">{step === 'credentials' ? (isSignUp ? 'Create an account' : 'Welcome back') : 'Check your email'}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {step === 'credentials'
+                    ? `Enter your email and password to ${isSignUp ? 'create an account' : 'sign in'}`
+                    : 'Enter the verification code sent to your email'}
+                </p>
+              </div>
             </div>
 
             {(searchParams?.message || error) && (
@@ -209,6 +229,20 @@ export function AuthForm({
                       className="h-10"
                     />
                   </div>
+                  {!isSignUp && (
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`${id}-remember`}
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                        disabled={isLoading}
+                      />
+                      <Label htmlFor={`${id}-remember`} className="font-normal text-muted-foreground">
+                        Remember me
+                      </Label>
+                    </div>
+                  )}
+
                   <Button type="submit" disabled={isLoading || !email.trim() || !password.trim() || (isSignUp && !name.trim())} className="h-10 w-full">
                     {isLoading ? (
                       <>
