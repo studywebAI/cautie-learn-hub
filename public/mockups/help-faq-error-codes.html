@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Help & FAQ + Error Codes — Layout Mockups</title>
+<style>
+:root {
+  --accent: #7f8962;
+  --accent-10: rgba(127,137,98,.10);
+  --accent-18: rgba(127,137,98,.18);
+  --accent-30: rgba(127,137,98,.30);
+  --bg: #ebebea;
+  --sidebar: #f2f2f0;
+  --surface: #ffffff;
+  --surface2: #f7f7f5;
+  --border: rgba(0,0,0,.08);
+  --border2: rgba(0,0,0,.13);
+  --text: #1c1c1a;
+  --sub: #6b6b68;
+  --muted: #9e9e99;
+  --r: 13px;
+  --r-sm: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#dddcda;color:var(--text);font-size:13px;line-height:1.45}
+
+/* ── Tab bar ── */
+.tabs{position:fixed;top:0;left:0;right:0;z-index:200;height:44px;background:#fff;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:4px;padding:0 16px}
+.tabs strong{font-size:11px;font-weight:700;color:var(--muted);margin-right:6px;text-transform:uppercase;letter-spacing:.05em}
+.tab{padding:5px 14px;border-radius:20px;border:1px solid var(--border2);background:transparent;font-size:12px;font-weight:500;cursor:pointer;color:var(--sub);transition:all .15s;font-family:inherit}
+.tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab:hover:not(.on){background:var(--surface2)}
+
+/* ── Chrome shell ── */
+.shell{display:none;padding-top:44px;height:100vh}
+.shell.on{display:flex;flex-direction:column;height:100vh}
+.chrome{display:flex;flex:1;overflow:hidden;background:var(--bg)}
+
+/* sidebar (right-aligned) */
+.sb{width:190px;flex-shrink:0;background:var(--sidebar);border-radius:18px 0 0 18px;display:flex;flex-direction:column;overflow:hidden;order:2}
+.sb-body{flex:1;padding:8px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;font-size:13px;font-weight:500;color:var(--sub);cursor:pointer;transition:background .12s}
+.sb-item:hover{background:rgba(0,0,0,.04)}
+.sb-item.on{background:rgba(0,0,0,.07);color:var(--text);font-weight:600}
+.sb-foot{padding:10px 8px;display:flex;flex-direction:column;gap:6px;margin-top:auto}
+
+/* breadcrumb */
+.bc{height:36px;background:var(--sidebar);border-radius:16px 16px 0 0;flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:5px;font-size:13px;font-weight:500}
+.bc-u{color:rgba(50,50,45,.5)}
+.bc-s{color:rgba(50,50,45,.2)}
+
+/* main area */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;order:1}
+.page{flex:1;overflow-y:auto;padding:20px 22px}
+.foot{flex-shrink:0;border-top:1px solid var(--border);background:var(--surface);padding:12px 22px;display:flex;justify-content:space-between;align-items:center}
+.btn-back{border:1px solid var(--border2);background:transparent;border-radius:9px;padding:8px 16px;font-size:13px;cursor:pointer;color:var(--sub);font-family:inherit}
+
+/* atoms */
+.label{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;border:1px solid var(--accent-30);background:var(--accent-10);color:var(--accent);font-size:11px;font-weight:600}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px}
+
+/* input */
+.inp{width:100%;padding:8px 11px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface2);font-size:13px;color:var(--text);outline:none;font-family:inherit}
+.inp:focus{border-color:var(--accent);background:#fff}
+
+/* card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.card-head{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+
+/* ─── HELPERS ─── */
+.gap4{height:4px} .gap8{height:8px} .gap10{height:10px} .gap14{height:14px} .gap18{height:18px}
+.row{display:flex;align-items:center;gap:8px}
+.row.jb{justify-content:space-between}
+.col{display:flex;flex-direction:column;gap:6px}
+.accent-num{font-size:15px;font-weight:700;color:var(--accent)}
+
+/* ═════════════════════ HELP & FAQ ═════════════════════ */
+.faq-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.faq-category{margin-bottom:8px}
+.faq-category-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 6px 0;margin-bottom:6px;border-bottom:1px solid var(--border)}
+.faq-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .12s}
+.faq-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.faq-card.open{border-color:var(--accent-30)}
+.faq-card-header{padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.faq-card-q{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.faq-card-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;transition:transform .2s}
+.faq-card.open .faq-card-icon{transform:rotate(180deg)}
+.faq-card-body{display:none;padding:0 14px 12px 14px;border-top:1px solid var(--border);color:var(--sub);font-size:12.5px;line-height:1.55}
+.faq-card.open .faq-card-body{display:block}
+.faq-card-a{display:block;margin-bottom:8px}
+.faq-card-a:last-child{margin-bottom:0}
+.faq-lang{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.faq-lang:first-child{margin-top:0;padding-top:0;border-top:none}
+
+/* ═════════════════════ ERROR CODES ═════════════════════ */
+.ec-search{margin-bottom:14px}
+.ec-list{display:grid;grid-template-columns:1fr;gap:10px}
+.ec-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .12s}
+.ec-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.ec-card.open{border-color:var(--accent-30)}
+.ec-card-header{padding:12px 14px;display:flex;align-items:start;gap:12px}
+.ec-badge{display:inline-flex;align-items:center;justify-content:center;min-width:56px;height:32px;background:var(--accent-10);border:1px solid var(--accent-30);border-radius:8px;font-size:11px;font-weight:700;color:var(--accent);flex-shrink:0;text-align:center;line-height:1.1}
+.ec-content{flex:1;display:flex;flex-direction:column;gap:3px}
+.ec-title{font-size:13px;font-weight:600;color:var(--text)}
+.ec-desc{font-size:11.5px;color:var(--sub);line-height:1.4}
+.ec-expand{width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;transition:transform .2s;margin-top:2px}
+.ec-card.open .ec-expand{transform:rotate(180deg)}
+.ec-card-body{display:none;padding:0 14px 12px 14px;padding-left:82px;border-top:1px solid var(--border);color:var(--sub);font-size:12px}
+.ec-card.open .ec-card-body{display:block}
+.ec-lang-group{margin-bottom:10px}
+.ec-lang-group:last-child{margin-bottom:0}
+.ec-lang-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;display:block}
+.ec-lang-text{font-size:11.5px;line-height:1.5;color:var(--text)}
+
+/* category colors */
+.ec-badge.evt{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.30);color:#4f46e5}
+.ec-badge.ros{background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.30);color:#22c55e}
+.ec-badge.acd{background:rgba(168,85,247,.10);border-color:rgba(168,85,247,.30);color:#a855f7}
+.ec-badge.oth{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.30);color:#3b82f6}
+
+/* ─── TAB SWITCHING ─── */
+.tab-content{display:none}
+.tab-content.on{display:block}
+
+/* responsive: stacks sidebar below main on mobile */
+@media (max-width:768px) {
+  .chrome{flex-direction:column}
+  .sb{width:100%;border-radius:0;height:auto;flex-shrink:0}
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <strong>Help & FAQ + Error Codes</strong>
+  <button class="tab on" onclick="switchTab('faq')">Help & FAQ</button>
+  <button class="tab" onclick="switchTab('errors')">Error Codes</button>
+</div>
+
+<!-- main layout: main content + right sidebar -->
+<div class="shell on">
+  <div class="chrome">
+
+    <!-- main content area -->
+    <div class="main">
+      <div class="bc"><span class="bc-u">loper</span><span class="bc-s">/</span>Help Center</div>
+      <div class="page">
+
+        <!-- ═ FAQ TAB ═ -->
+        <div id="faq" class="tab-content on">
+          <div class="faq-grid" id="faq-content"></div>
+        </div>
+
+        <!-- ═ ERROR CODES TAB ═ -->
+        <div id="errors" class="tab-content">
+          <div class="ec-search">
+            <input class="inp" id="ec-search" placeholder="Search error codes... (e.g., EVT-ATT, ROS-MEM)" onkeyup="filterErrorCodes()" />
+          </div>
+          <div class="ec-list" id="ec-content"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- right sidebar with tabs -->
+    <div class="sb">
+      <div class="sb-body">
+        <div class="sb-item on" onclick="switchTab('faq')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0">
+            <path d="M2 3h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/>
+            <path d="M2 5.5h12M5 8l2 2 4-3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Help & FAQ
+        </div>
+        <div class="sb-item" onclick="switchTab('errors')">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0">
+            <circle cx="8" cy="8" r="6.5"/>
+            <path d="M8 5v4M8 12v.5" stroke-linecap="round"/>
+          </svg>
+          Error Codes
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ────────────────────── FAQ DATA ──────────────────────
+const faqData = [
+  {
+    category: 'Getting Started',
+    items: [
+      {
+        q: 'What is loper?',
+        a: 'loper is an intelligent learning platform that helps students study more effectively through adaptive quizzes, flashcards, and personalized study tools.'
+      },
+      {
+        q: 'How do I create my first quiz?',
+        a: 'Navigate to the Quiz section, select your study material, and click "Generate Quiz". The AI will automatically detect key concepts and create questions tailored to your knowledge level.'
+      },
+      {
+        q: 'Can I import my own questions?',
+        a: 'Yes! You can upload questions from CSV, PDF, or manually add them one by one. We support all common question types including multiple choice, true/false, and short answer.'
+      }
+    ]
+  },
+  {
+    category: 'Classes & Subjects',
+    items: [
+      {
+        q: 'How do I organize my classes?',
+        a: 'Use the Subjects section to create class folders. Within each subject, you can create study sets, assign them to specific topics, and manage multiple quiz variations.'
+      },
+      {
+        q: 'Can I share classes with students?',
+        a: 'Yes! Each study set has a sharing option. You can generate a unique link to share with students or colleagues. You can also manage permissions per person.'
+      },
+      {
+        q: 'What if I need to update a quiz after sharing it?',
+        a: 'You can edit quizzes anytime. Changes will apply to new attempts, while historical results remain unchanged. Students will see an update notification.'
+      }
+    ]
+  },
+  {
+    category: 'Tools & Studying',
+    items: [
+      {
+        q: 'How does the adaptive mode work?',
+        a: 'Adaptive mode adjusts question difficulty in real-time based on your answers. As you answer correctly, questions become harder. Incorrect answers result in slightly easier questions to reinforce concepts.'
+      },
+      {
+        q: 'What are flashcards useful for?',
+        a: 'Flashcards are perfect for memorization and quick review. They use spaced repetition to show you cards at optimal intervals, maximizing long-term retention.'
+      },
+      {
+        q: 'How can I track my progress?',
+        a: 'The Analytics dashboard shows your performance over time, including accuracy rates, time spent, common weak areas, and improvement trends across all your study sets.'
+      }
+    ]
+  },
+  {
+    category: 'Account & Settings',
+    items: [
+      {
+        q: 'How do I change my password?',
+        a: 'Go to Settings > Account Security, click "Change Password", and follow the verification steps. You'll be logged out for security and need to log in again.'
+      },
+      {
+        q: 'Can I download my study history?',
+        a: 'Yes! Visit Settings > Data Export to download your quiz results, flashcard progress, and study statistics in CSV or PDF format.'
+      },
+      {
+        q: 'Is my data secure and private?',
+        a: 'All data is encrypted in transit and at rest. We never share your study data with third parties. See our Privacy Policy for complete details.'
+      }
+    ]
+  }
+];
+
+// ────────────────────── ERROR CODES DATA ──────────────────────
+const errorCodesData = [
+  {
+    code: 'EVT-ATT-001',
+    title: 'Attendance state changed',
+    category: 'evt',
+    en: 'Attendance check/X was changed for a student. This typically happens when a teacher corrects an attendance record or a system update is applied.',
+    nl: 'Aanwezigheid check/X is aangepast voor een leerling. Dit gebeurt meestal wanneer een leraar een aanwezigheidsregistratie corrigeert of een systeemupdate wordt toegepast.'
+  },
+  {
+    code: 'EVT-ATT-002',
+    title: 'Attendance verification failed',
+    category: 'evt',
+    en: 'The system could not verify attendance due to network issues or invalid session data. Please refresh and try again.',
+    nl: 'Het systeem kon de aanwezigheid niet verifiëren vanwege netwerkproblemen of ongeldige sessiegegevens. Vernieuw de pagina en probeer opnieuw.'
+  },
+  {
+    code: 'EVT-GRD-001',
+    title: 'Grade synchronization error',
+    category: 'evt',
+    en: 'Grades failed to sync with the grade management system. This is usually temporary and resolves within a few minutes.',
+    nl: 'Grades zijn niet gesynchroniseerd met het beoordelingssysteem. Dit is meestal tijdelijk en wordt opgelost binnen enkele minuten.'
+  },
+  {
+    code: 'EVT-GRD-002',
+    title: 'Invalid grade value',
+    category: 'evt',
+    en: 'The entered grade value exceeds the maximum allowed for this assignment or assessment. Check your grade scale settings.',
+    nl: 'De ingevoerde waarde overschrijdt het maximale toegestane bedrag voor deze opdracht of beoordeling. Controleer uw graadschaalsinstellingen.'
+  },
+  {
+    code: 'ROS-MEM-001',
+    title: 'Memory allocation exceeded',
+    category: 'ros',
+    en: 'The system ran out of available memory while processing your request. This typically happens with very large datasets. Try again later or contact support.',
+    nl: 'Het systeem had onvoldoende geheugen beschikbaar bij het verwerken van uw verzoek. Dit gebeurt meestal met zeer grote datasets. Probeer later opnieuw of neem contact op met ondersteuning.'
+  },
+  {
+    code: 'ROS-MEM-002',
+    title: 'Cache overflow',
+    category: 'ros',
+    en: 'The cache system exceeded its size limit. This is an internal system issue that typically resolves after a restart.',
+    nl: 'Het cachesysteem heeft zijn groottenlimiet overschreden. Dit is een intern systeemprobleem dat doorgaans na een herstart wordt opgelost.'
+  },
+  {
+    code: 'ROS-NET-001',
+    title: 'Network timeout',
+    category: 'ros',
+    en: 'The connection to the server timed out. Check your internet connection and try again. If the problem persists, the server may be temporarily unavailable.',
+    nl: 'De verbinding met de server is verbroken. Controleer uw internetverbinding en probeer opnieuw. Als het probleem aanhoudt, is de server mogelijk tijdelijk niet beschikbaar.'
+  },
+  {
+    code: 'ACD-EDT-001',
+    title: 'Document edit conflict',
+    category: 'acd',
+    en: 'Another user is currently editing this document. Your changes cannot be saved until they finish. Wait a moment and try again.',
+    nl: 'Een ander gebruiker bewerkt dit document momenteel. Uw wijzigingen kunnen pas worden opgeslagen wanneer deze klaar zijn. Wacht even en probeer opnieuw.'
+  },
+  {
+    code: 'ACD-EDT-002',
+    title: 'Unsaved changes lost',
+    category: 'acd',
+    en: 'Your unsaved changes were lost due to a connection error. Please check if your work was auto-saved in the revision history.',
+    nl: 'Uw niet-opgeslagen wijzigingen gingen verloren door een verbindingsfout. Controleer of uw werk is opgeslagen in de revisiegeschiedenis.'
+  },
+  {
+    code: 'ACD-PRM-001',
+    title: 'Insufficient permissions',
+    category: 'acd',
+    en: 'You do not have permission to perform this action. Contact your administrator or the document owner to request access.',
+    nl: 'U hebt geen toestemming om deze actie uit te voeren. Neem contact op met uw beheerder of de documenteigenaar om toegang aan te vragen.'
+  },
+  {
+    code: 'ACD-PRM-002',
+    title: 'Permission revoked',
+    category: 'acd',
+    en: 'Your access to this resource has been revoked. If you believe this is a mistake, contact your administrator.',
+    nl: 'Uw toegang tot deze bron is ingetrokken. Als u denkt dat dit een fout is, neem dan contact op met uw beheerder.'
+  },
+  {
+    code: 'ACD-QZ-001',
+    title: 'Quiz generation failed',
+    category: 'acd',
+    en: 'The quiz could not be generated due to insufficient content or invalid input. Ensure your study material contains enough material for the requested number of questions.',
+    nl: 'De quiz kon niet worden gegenereerd vanwege onvoldoende inhoud of ongeldige invoer. Zorg ervoor dat uw studiemateriaal genoeg materiaal bevat voor het aangevraagde aantal vragen.'
+  }
+];
+
+// ────────────────────── RENDERING ──────────────────────
+function renderFAQ() {
+  const container = document.getElementById('faq-content');
+  container.innerHTML = '';
+
+  faqData.forEach(cat => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'faq-category';
+
+    const catTitle = document.createElement('div');
+    catTitle.className = 'faq-category-title';
+    catTitle.textContent = cat.category;
+    catDiv.appendChild(catTitle);
+
+    cat.items.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'faq-card';
+      card.onclick = () => toggleFAQ(card);
+
+      const header = document.createElement('div');
+      header.className = 'faq-card-header';
+      header.innerHTML = `
+        <div class="faq-card-q">${item.q}</div>
+        <div class="faq-card-icon"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4l4 4 4-4"/></svg></div>
+      `;
+      card.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'faq-card-body';
+      body.innerHTML = `
+        <div class="faq-card-a">${item.a}</div>
+      `;
+      card.appendChild(body);
+
+      catDiv.appendChild(card);
+    });
+
+    container.appendChild(catDiv);
+  });
+}
+
+function toggleFAQ(el) {
+  el.classList.toggle('open');
+}
+
+function renderErrorCodes() {
+  const container = document.getElementById('ec-content');
+  container.innerHTML = '';
+
+  errorCodesData.forEach(ec => {
+    const card = document.createElement('div');
+    card.className = 'ec-card';
+    card.dataset.code = ec.code;
+    card.onclick = () => toggleEC(card);
+
+    const header = document.createElement('div');
+    header.className = 'ec-card-header';
+
+    const badge = document.createElement('div');
+    badge.className = `ec-badge ${ec.category}`;
+    badge.textContent = ec.code;
+    header.appendChild(badge);
+
+    const content = document.createElement('div');
+    content.className = 'ec-content';
+    content.innerHTML = `
+      <div class="ec-title">${ec.title}</div>
+      <div class="ec-desc">${ec.en}</div>
+    `;
+    header.appendChild(content);
+
+    const expand = document.createElement('div');
+    expand.className = 'ec-expand';
+    expand.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4l4 4 4-4"/></svg>';
+    header.appendChild(expand);
+
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'ec-card-body';
+    body.innerHTML = `
+      <div class="ec-lang-group">
+        <span class="ec-lang-label">English</span>
+        <div class="ec-lang-text">${ec.en}</div>
+      </div>
+      <div class="ec-lang-group">
+        <span class="ec-lang-label">Nederlands</span>
+        <div class="ec-lang-text">${ec.nl}</div>
+      </div>
+    `;
+    card.appendChild(body);
+
+    container.appendChild(card);
+  });
+}
+
+function toggleEC(el) {
+  el.classList.toggle('open');
+}
+
+function filterErrorCodes() {
+  const query = document.getElementById('ec-search').value.toUpperCase();
+  document.querySelectorAll('.ec-card').forEach(card => {
+    const code = card.dataset.code;
+    const shouldShow = code.includes(query) || query === '';
+    card.style.display = shouldShow ? 'block' : 'none';
+  });
+}
+
+function switchTab(tab) {
+  // update tab buttons
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('on'));
+
+  const tabButtons = document.querySelectorAll('.tabs .tab');
+  const sidebarItems = document.querySelectorAll('.sb-item');
+
+  if (tab === 'faq') {
+    tabButtons[0].classList.add('on');
+    sidebarItems[0].classList.add('on');
+  } else {
+    tabButtons[1].classList.add('on');
+    sidebarItems[1].classList.add('on');
+  }
+
+  // update content visibility
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('on'));
+  document.getElementById(tab).classList.add('on');
+}
+
+// Initial render
+renderFAQ();
+renderErrorCodes();
+</script>
+</body>
+</html>
