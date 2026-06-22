@@ -1675,23 +1675,23 @@ export function SourceInput({
 
         <div className="w-full max-w-[760px]">
           <div className="relative z-10 flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md px-[14px] text-xs hover:border-[var(--accent-brand)]" onClick={() => fileInputRef.current?.click()} disabled={disabled || isProcessing}>
               <UploadCloud className="mr-1.5 h-3.5 w-3.5" />
               Upload
             </Button>
-            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
+            <Button type="button" variant="outline" size="sm" className="h-10 rounded-md px-[14px] text-xs hover:border-[var(--accent-brand)]" onClick={() => imageInputRef.current?.click()} disabled={disabled || isProcessing}>
               <Image className="mr-1.5 h-3.5 w-3.5" />
               Photo
             </Button>
             {enableMic && (
-              <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
+              <Button type="button" variant="outline" size="sm" className="h-10 rounded-md px-[14px] text-xs hover:border-[var(--accent-brand)]" onClick={() => (isFallbackRecording ? stopListening() : startListening())} disabled={disabled || isProcessing || !enableMic}>
                 {isFallbackRecording ? <StopCircle className="mr-1.5 h-3.5 w-3.5" /> : <Mic className="mr-1.5 h-3.5 w-3.5" />}
                 Mic
               </Button>
             )}
             <DropdownMenu open={importMenuOpen} onOpenChange={setImportMenuOpen}>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]" disabled={disabled || isProcessing}>
+                <Button type="button" variant="outline" size="sm" className="h-10 rounded-md px-[14px] text-xs hover:border-[var(--accent-brand)]" disabled={disabled || isProcessing}>
                   <FileIcon className="mr-1.5 h-3.5 w-3.5" />
                   Import from...
                 </Button>
@@ -1712,7 +1712,7 @@ export function SourceInput({
               type="button"
               variant="outline"
               size="sm"
-              className="h-10 rounded-md border border-[#d0d0d0] bg-[#f8f8f8] px-[14px] text-xs text-[#333] hover:border-[var(--accent-brand)] hover:bg-[#fafafa]"
+              className="h-10 rounded-md px-[14px] text-xs hover:border-[var(--accent-brand)]"
               onClick={() => setLinkInputOpen((prev) => !prev)}
               disabled={disabled || isProcessing}
             >
@@ -1720,7 +1720,7 @@ export function SourceInput({
               Link
             </Button>
             {enableCaptions && (
-              <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg border-sidebar-border bg-white px-3 text-xs hover:surface-panel" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
+              <Button type="button" variant="outline" size="sm" className="h-9 rounded-lg px-3 text-xs" onClick={() => setCaptionsOpen((prev) => !prev)} disabled={disabled || !enableCaptions}>
                 <Captions className="mr-1.5 h-3.5 w-3.5" />
                 Captions
               </Button>
@@ -1740,7 +1740,7 @@ export function SourceInput({
                 }
               }}
               placeholder="Paste your notes, article, textbook, or any study material..."
-              className="min-h-[140px] w-full resize-y rounded-md border border-[#d0d0d0] bg-white p-[14px] text-[13px] font-normal text-[#333]"
+              className="min-h-[140px] w-full resize-y rounded-md p-[14px] text-[13px] font-normal"
               disabled={disabled || isProcessing}
             />
           </div>
@@ -1812,7 +1812,7 @@ export function SourceInput({
           </div>
         )}
 
-        <span className="w-full max-w-[760px] text-[10px] text-[#999]">PDF, DOCX, images, YouTube links, or paste text</span>
+        <span className="w-full max-w-[760px] text-[10px] text-muted-foreground">PDF, DOCX, images, YouTube links, or paste text</span>
         {isFallbackRecording && (
           <span className="w-full max-w-[760px] text-[11px] text-muted-foreground">
             Recording... click Mic again to stop.
