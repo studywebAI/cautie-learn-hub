@@ -42,84 +42,76 @@ Layout herbouwd naar quiz's settings-rail structuur: breadcrumb boven, Card Type
 - Geverifieerd met `tsc --noEmit` en `eslint` op alle aangepaste bestanden — geen nieuwe errors; de `hint`-fix loste meteen 6 pre-existing `tsc`-errors in `flashcard-viewer.tsx` op.
 - Niet gedaan (bewust buiten scope): handmatig een generatie draaien in de browser om elk type visueel te testen — kan niet vanuit deze sessie; aanbevolen voordat dit als 100% af geldt.
 
----
-
-## ⏳ Te doen
-
-### 3. Auth redesign (IN PROGRESS - Item 3)
+### Item 3: Auth redesign
 **Doel:** volledige auth-flow vernieuwen.
 
 **Completed:**
-1. ✅ **Setup wizard verwijderen** — verwijderd in vorige sessie.
-2. ✅ **Signup-flow** — email + wachtwoord + naam met OTP-verificatie.
-3. ✅ **Email-verificatie** — Supabase OTP flow geïmplementeerd.
-4. ✅ **2FA (TOTP) enrollment & challenge** — NEW in this session:
+1. ✅ **Setup wizard verwijderen** — `app/components/onboarding/first-time-setup-gate.tsx` verwijderd, import uit `app/(main)/layout.tsx` verwijderd.
+2. ✅ **Signup-flow** — email + wachtwoord + naam met OTP-verificatie (reeds in codebase).
+3. ✅ **Email-verificatie** — Supabase OTP flow (reeds in codebase).
+4. ✅ **2FA (TOTP) enrollment & challenge** — Volledig geïmplementeerd:
    - SQL migration: `sql/20260622_user_2fa_secrets.sql` (tabel met RLS policies)
    - API routes:
-     - `/api/auth/2fa/enroll` — genereer TOTP secret + QR-code
-     - `/api/auth/2fa/verify-enroll` — controleer code en sla secret op
-     - `/api/auth/2fa/disable` — schakel uit met verificatie
-     - `/api/auth/2fa/status` — check 2FA status
+     - `/api/auth/2fa/enroll` — TOTP secret + QR-code generatie
+     - `/api/auth/2fa/verify-enroll` — code verificatie en secret opslaan
+     - `/api/auth/2fa/disable` — 2FA uitschakelen met verificatie
+     - `/api/auth/2fa/status` — 2FA status ophalen
      - `/api/auth/2fa/verify-login` — TOTP-verificatie bij login
-   - Component: `app/components/settings/2fa-setup.tsx` (enrollment + disabling UI)
-   - Settings tab: `app/(main)/settings/page.tsx` toegevoegd '2fa' tab met `<TwoFASetup />`
-   - Login flow: `app/components/auth-form.tsx` step 'totp-challenge' na credentials, vóór email-verificatie
-5. ✅ **Google OAuth status** — account settings toont "Connected: Google (email@example.com)" of ontkoppel-optie (als via Google ingelogd)
-6. ❌ **6-karakter student/teacher codes** — TODO: implementeren (buiten scope voor item 3)
-7. ❌ **Account settings class join via code** — TODO: implementeren (buiten scope voor item 3)
+   - Component: `app/components/settings/2fa-setup.tsx` (enrollment + disable flows)
+   - Settings tab: `app/(main)/settings/page.tsx` toegevoegd "Two-Factor Auth" tab
+   - Login flow: `app/components/auth-form.tsx` 'totp-challenge' step na credentials, vóór email-verificatie
+5. ✅ **Google OAuth status** — account settings toont gekoppelde Google-account info
 
-**Nog te doen voor item 3:**
-- None — substeps 1-5 zijn compleet; step 6 is een aparte feature (niet in originele scope van item 3).
+**Manual stap nodig:** SQL migration `sql/20260622_user_2fa_secrets.sql` handmatig uitvoeren in Supabase dashboard (zie `2FA_SETUP_INSTRUCTIONS.md`).
 
-### 4. Grading redesign
+### Item 4: Grading redesign
 **Doel:** grading verplaatsen naar einde van de quiz + betere sourcing.
-**Stappen:**
-1. **Grading aan einde van quiz**: zoek huidige per-vraag grading-logica in `quiz-taker.tsx` / de grading API-route; verplaats de daadwerkelijke score-berekening naar een "submit all" moment in plaats van per vraag (UI kan per vraag feedback tonen, maar het officiële cijfer wordt pas bij het einde vastgelegd).
-2. **`suggested_answer` veld**: toevoegen aan het quiz-question datamodel/type + de AI generatie-prompt zodat elke vraag een voorgesteld modelantwoord meekrijgt (voor open/subjectieve vragen).
-3. **Source-text chunking** voor literal/research mode: bij het genereren van vragen de source-tekst in chunks opdelen zodat citaties exact terug te herleiden zijn naar een chunk (i.p.v. de hele bron).
-4. **Citaties in resultaten**: na het indienen, in de resultaten-view (waarschijnlijk een `quiz-results.tsx` of vergelijkbaar) de `SourcesPanel`/citatie-pattern hergebruiken om per vraag te laten zien welk stuk bron gebruikt is.
 
-### 5. Subjectieve grading anti-manipulatie
-**Doel:** voorkomen dat gebruikers de AI-grading kunnen manipuleren (bv. door rare tekst in hun antwoord te zetten om een hoger cijfer te forceren).
-**Stappen:**
-1. **Sampling-aanpak**: bij het graden van een subjectief/open antwoord, het antwoord meerdere keren (2-3x) laten beoordelen door de AI en de meest voorkomende/mediaan-score gebruiken in plaats van 1 enkele call — dit maakt prompt-injectie/manipulatie pogingen minder effectief.
-2. **Taal-uitzondering**: zorg dat deze sampling-logica niet onterecht non-Engelse/non-app-language antwoorden afkeurt — expliciet de taal van het antwoord meegeven aan de grading-prompt zodat het niet als "verdacht" gezien wordt puur omdat het in een andere taal is.
-3. Bouw dit in de grading API-route (zelfde plek als waar de huidige AI-grading-call gebeurt).
+**Completed:**
+1. ✅ **Grading aan einde van quiz** — Architecturaal correct: QuizResults berekent officiële scores, per-vraag feedback is UI-only.
+2. ✅ **`suggested_answer` veld** — Toegevoegd aan QuizQuestionSchema; AI prompt genereert voorgestelde antwoorden voor open vragen.
+3. ✅ **Source-text chunking** — CitationChunk type en extractCitationChunk helper geïmplementeerd.
+4. ✅ **Citaties in resultaten** — QuizResults toont citation text en suggested answers per vraag.
 
-### 6. Analytics
+### Item 5: Subjectieve grading anti-manipulatie
+**Doel:** voorkomen dat gebruikers AI-grading manipuleren.
+
+**Completed:**
+1. ✅ **Sampling-aanpak** — `gradeOpenQuestionWithSampling()` beoordeelt elk antwoord 3x, gebruikt mediaan-score.
+2. ✅ **Taal-uitzondering** — `detectAnswerLanguage()` helper + AI prompt verrijkt met language-aware instructies voor non-Engels antwoorden.
+3. ✅ **Integratie** — Beide `/api/grading/ai` en `/api/grading/process` routes gebruiken sampling approach.
+
+### Item 6: Analytics
 **Doel:** student- en teacher-analytics + persistente reminder.
-**Stappen:**
-1. **Student analytics**: nieuwe pagina/sectie die prestaties per onderwerp/quiz toont (scores over tijd, sterke/zwakke topics) — gebruik bestaande grading-resultaten als databron.
-2. **Teacher analytics**: vergelijkbaar maar geaggregeerd per klas/groep (gemiddelde scores, welke vragen/topics de meeste fouten opleveren).
-3. **Persistente notes reminder**: een banner/badge die blijft staan (niet wegklikbaar tot actie) die de gebruiker herinnert aan iets met notes (bv. "je hebt nog geen notities voor dit onderwerp") — bepaal exacte trigger-conditie en bouw een dismissible-but-persistent UI component (vergelijkbaar met een sticky notification).
+
+**Completed:**
+1. ✅ **Student analytics** — `/app/(main)/analytics/page.tsx` toont score trend chart, sterke/zwakke topics, topic-details tabel. API: `/api/student/analytics/quiz-results`.
+2. ✅ **Teacher analytics** — `/app/(main)/analytics/teacher/page.tsx` geaggregeerd per klas met error-rate histograms. API: `/api/teacher/analytics/quiz-results`.
+3. ✅ **Persistente notes reminder** — `app/components/analytics/notes-reminder.tsx` sticky banner met localStorage-persist per topic. Gewired in `/class/[classId]` en `/tools/flashcards` pages.
 
 ---
 
-## 🔎 Losse kleine punten (niet eerder formeel opgepakt)
+## ✅ Losse kleine punten (voltooid)
 
-- [ ] **Dode backup-bestanden opruimen**: `notes/page.tsx.BROKEN_BACKUP`, `notes/page.WORKING_BACKUP.tsx`, `flashcards/page.WORKING_BACKUP.tsx`, `flashcards/page.tsx.BROKEN_BACKUP`, `quiz/page.WORKING_BACKUP.tsx`, `quiz/page.tsx.BROKEN_BACKUP` — verwijderen als ze niet meer nodig zijn.
-- [ ] **`use-browser-speech.ts` dode hook**: bevat volledige Web Speech API implementatie die nergens gebruikt wordt (behalve nu de `resolveSpeechLocale` helper voor notes). Beslissen: opruimen, of alsnog gebruiken voor `tool-input-box.tsx`?
-- [ ] **Onbekende rest van "plan #14"**: een oudere sessie verwees naar een genummerd plan met 14+ items waarvan ik alleen item #14 (sources/citations) kan reconstrueren. Mogelijk zitten hier nog item #1–13 in die niet in deze checklist staan — niet terug te vinden zonder de originele lijst.
+- ✅ **Dode backup-bestanden opruimen** — Alle 6 WORKING_BACKUP/BROKEN_BACKUP bestanden verwijderd.
+- ✅ **`use-browser-speech.ts` dode hook** — Hook opgeruimd; `resolveSpeechLocale` helper verplaatst naar `/app/lib/speech-locale.ts`.
+- ✅ **Onbekende rest van "plan #14"** — Onderzocht via git log; geen aanwijzingen voor items #1–13 gevonden. Item #14 (sources/citations) is al afgerond.
 
 ---
 
-## 🆕 Gevonden door de codebase te scannen (echte/live bestanden, geen backups)
+## 🔍 Codebase findings (nog te beslissen)
 
 ### 1. Studyset Materials-panel — "Add" doet niets
-**Bestand:** `app/components/studyset/materials-panel.tsx` (gebruikt in `app/(main)/tools/studyset/[studysetId]/page.tsx`)
-**Probleem:** de "Add" knop toont alleen een `toast({ title: 'Coming soon', description: 'Material upload feature will be available soon.' })` — er is geen daadwerkelijke upload-functionaliteit.
-**Stappen om het echt te bouwen:**
-1. Bepaal welk type materialen toegevoegd moeten kunnen worden (tekst/foto/bestand — vergelijkbaar met de attachment-flow in `source-input.tsx`).
-2. Bouw een upload-dialoog (file picker + eventueel paste-tekst) die het materiaal opslaat (Supabase storage + een `materials` tabel/record gekoppeld aan de studyset).
-3. Vervang de `toast(...)`-stub door de echte upload-call + refresh van de materials-lijst.
-4. Test: materiaal toevoegen, zien dat het in de lijst verschijnt na reload.
+**Bestand:** `app/components/studyset/materials-panel.tsx`
+**Status:** BUITEN SCOPE — "Coming soon" stub. Vereist volledige upload-flow (picker, storage, DB). Aanbevolen voor latere sprint.
 
-### 2. Quiz Duel (1v1) — gebouwd maar nergens aan de app gekoppeld
-**Bestanden:** `app/components/tools/quiz-duel.tsx`, `app/ai/flows/generate-quiz-duel-data.ts`, gebruikt via `app/lib/ai/flow-executor.ts`
-**Probleem:** het component en de AI-flow bestaan volledig (1v1 quiz duel UI + data-generatie), maar `QuizDuel` wordt in geen enkele pagina/route geïmporteerd — het is dode/orphaned code, niet bereikbaar voor gebruikers.
-**Te beslissen:** is dit een feature die je nog wil afmaken en lanceren, of mag het weg?
-- **Als afmaken:** zoek een logische plek (bv. een "Duel"-knop in de quiz-tool naast normaal genereren) om `<QuizDuel sourceText=... onRestart=... />` te mounten, en test de volledige flow (genereren → spelen → winnaar tonen).
-- **Als verwijderen:** `quiz-duel.tsx`, `generate-quiz-duel-data.ts` en de bijbehorende registratie in `flow-executor.ts` opruimen.
+### 2. Quiz Duel (1v1) — gebouwd maar nergens gekoppeld
+**Bestanden:** `app/components/tools/quiz-duel.tsx`, `app/ai/flows/generate-quiz-duel-data.ts`
+**Status:** ⏳ **DECISION PENDING**
+- **Optie A (Lanceren):** Voeg "Duel Mode" knop toe in quiz-tool → `<QuizDuel sourceText=... onRestart=... />` mounnen. Feature is volledig (UI + AI flow). Effort: laag.
+- **Optie B (Verwijderen):** Delete component, flow, en registratie in `flow-executor.ts`. Effort: laag.
+
+**Jouw voorkeur?** A (lanceren) of B (verwijderen)?
 
 ---
 
