@@ -36,8 +36,8 @@ function normalizeDisplayName(value: unknown): string {
 export function SidebarProfile() {
   const { session } = useContext(AppContext) as AppContextType;
   const userId = session?.user?.id ?? null;
-  const { state } = useSidebar();
-  const isCollapsed = state === 'collapsed';
+  const { state, isMobile } = useSidebar();
+  const isCollapsed = !isMobile && state === 'collapsed';
   const router = useRouter();
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [resolvedDisplayName, setResolvedDisplayName] = useState<string>('');

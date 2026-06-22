@@ -41,6 +41,7 @@ import {
 } from '@/lib/tools/notes-canonical-adapter';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { sanitizeEditorHtml as importedSanitizeEditorHtml } from '@/lib/sanitize';
+import { resolveSpeechLocale } from '@/hooks/use-browser-speech';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -948,7 +949,7 @@ function NotesPageContent() {
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-    recognition.lang = language === 'nl' ? 'nl-NL' : 'en-US';
+    recognition.lang = resolveSpeechLocale(language);
 
     keepListeningRef.current = true;
     setListenError(null);
