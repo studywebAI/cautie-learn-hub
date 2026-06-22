@@ -347,13 +347,15 @@ export function ToolInputBox({
   useEffect(() => {
     if (!showPlusMenu || !plusButtonRef.current) return;
 
+    const MENU_WIDTH = 224;
     const updatePosition = () => {
       if (!plusButtonRef.current) return;
       const rect = plusButtonRef.current.getBoundingClientRect();
-      setPlusMenuPosition({
-        top: rect.bottom + 8,
-        left: rect.left,
-      });
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const left = Math.min(rect.left, Math.max(8, viewportWidth - MENU_WIDTH - 8));
+      const top = Math.min(rect.bottom + 8, viewportHeight - 8);
+      setPlusMenuPosition({ top, left });
     };
 
     updatePosition();
@@ -396,7 +398,7 @@ export function ToolInputBox({
   // Close dropdowns on outside click
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (plusMenuRef.current && !plusMenuRef.current.contains(e.target as Node)) {
         setShowPlusMenu(false);
       }
@@ -405,7 +407,11 @@ export function ToolInputBox({
       }
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -671,7 +677,9 @@ export function ToolInputBox({
             onClick={() => {
               if (!showPlusMenu && plusButtonRef.current) {
                 const rect = plusButtonRef.current.getBoundingClientRect();
-                setPlusMenuPosition({ top: rect.bottom + 8, left: rect.left });
+                const left = Math.min(rect.left, Math.max(8, window.innerWidth - 224 - 8));
+                const top = Math.min(rect.bottom + 8, window.innerHeight - 8);
+                setPlusMenuPosition({ top, left });
               }
               setShowPlusMenu((v) => !v);
               setShowToolMenu(false);
@@ -707,12 +715,12 @@ export function ToolInputBox({
 
               <div className="p-1">
                 {/* Share a page → screenshot */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
+                <AnimateIcon animateOnHover animateOnTap completeOnStop asChild>
                   <button
                     type="button"
-                    onClick={() => { void handleScreenshot(); }}
+                    onClick={() => { void handleScreenshot(); setShowPlusMenu(false); }}
                     disabled={capturing}
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 active:bg-muted/60 transition-colors duration-100 text-left"
                   >
                     {capturing
                       ? <Spinner size={16} className="flex-shrink-0" />
@@ -723,36 +731,42 @@ export function ToolInputBox({
                 </AnimateIcon>
 
                 {/* Photos */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <label
-                    htmlFor="tool-input-image"
-                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                    onClick={() => setShowPlusMenu(false)}
+                <AnimateIcon animateOnHover animateOnTap completeOnStop asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPlusMenu(false);
+                      imageInputRef.current?.click();
+                    }}
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 active:bg-muted/60 transition-colors duration-100 text-left"
                   >
                     <Clapperboard className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                     <span className="text-sm text-foreground">Photos</span>
-                  </label>
+                  </button>
                 </AnimateIcon>
 
                 {/* Files */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
-                  <label
-                    htmlFor="tool-input-file"
-                    className="group flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 cursor-pointer"
-                    onClick={() => setShowPlusMenu(false)}
+                <AnimateIcon animateOnHover animateOnTap completeOnStop asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPlusMenu(false);
+                      fileInputRef.current?.click();
+                    }}
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 active:bg-muted/60 transition-colors duration-100 text-left"
                   >
                     <Link className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
                     <span className="text-sm text-foreground">Files</span>
-                  </label>
+                  </button>
                 </AnimateIcon>
 
                 <div className="my-1 h-px bg-border mx-1" />
 
                 {/* Recents */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
+                <AnimateIcon animateOnHover animateOnTap completeOnStop asChild>
                   <button
                     type="button"
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 active:bg-muted/60 transition-colors duration-100 text-left"
                     onClick={() => { router.push(`${currentTool.href}?open=recents`); setShowPlusMenu(false); }}
                   >
                     <Clock8 className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
@@ -761,10 +775,10 @@ export function ToolInputBox({
                 </AnimateIcon>
 
                 {/* Microsoft 365 */}
-                <AnimateIcon animateOnHover completeOnStop asChild>
+                <AnimateIcon animateOnHover animateOnTap completeOnStop asChild>
                   <button
                     type="button"
-                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 transition-colors duration-100 text-left"
+                    className="group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-muted/60 active:bg-muted/60 transition-colors duration-100 text-left"
                     onClick={() => { router.push(`${currentTool.href}?open=microsoft`); setShowPlusMenu(false); }}
                   >
                     <CloudUpload className="h-4 w-4 text-muted-foreground flex-shrink-0 transition-colors duration-100 group-hover:text-foreground" />
