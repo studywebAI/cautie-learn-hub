@@ -898,11 +898,11 @@ function FlashcardsPageContent() {
               {/* Practice Mode — mirrors quiz's classic/assisted/adaptive triad */}
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
-                  <p className={S}>What mode do you want?</p>
+                  <p className={S}>Welke modus wil je?</p>
                   <InfoTooltip contentClassName="max-w-[200px]">
-                    <p><span className="text-foreground">Classic</span> — study the set once, no extra help.</p>
-                    <p><span className="text-foreground">Assisted</span> — hints and mnemonics shown along the way.</p>
-                    <p><span className="text-foreground">Adaptive</span> — AI mixes question types, unlimited cards.</p>
+                    <p><span className="text-foreground">Classic</span> — studeer de set eenmaal, geen extra hulp.</p>
+                    <p><span className="text-foreground">Assisted</span> — hints en ezelsbruggetjes onderweg.</p>
+                    <p><span className="text-foreground">Adaptive</span> — AI mengt vraagtypen, onbeperkt.</p>
                   </InfoTooltip>
                 </div>
                 <div className="space-y-1">
@@ -932,7 +932,7 @@ function FlashcardsPageContent() {
               {/* Question Type — Quizlet-native interaction formats */}
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
-                  <p className={S}>What question type do you want?</p>
+                  <p className={S}>Welk vraagtype wil je?</p>
                   <InfoTooltip contentClassName="max-w-[200px]">
                     {modeOptions.map((option) => (
                       <p key={option.value}><span className="text-foreground">{option.label}</span> — {option.description}</p>
