@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
-import { FirstTimeSetupGate } from "@/components/onboarding/first-time-setup-gate";
 import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
 import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled-reminder-checker";
 
@@ -47,7 +46,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             defaultOpen={isPhone ? false : sidebarDefaultOpen}
             style={{ "--sidebar-width": isTablet ? "15rem" : "16.5rem" } as React.CSSProperties}
         >
-            <FirstTimeSetupGate />
             <GlobalCommandPalette />
             <ScheduledReminderChecker />
             {routePulseVisible && (

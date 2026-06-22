@@ -24,27 +24,27 @@ Layout herbouwd naar quiz's settings-rail structuur: breadcrumb boven, Card Type
 - `app/components/tools/quiz-taker.tsx` — pill gewired naast "Show explanation".
 - `app/components/tools/flashcard-viewer.tsx` — oude citation-only Popover vervangen door dezelfde pill+sidebar (incl. citation, source image, research-mode grounding note).
 
+### Notes — sources/citaties integratie
+**Aanpak:** notes worden gerenderd als platte HTML (`dangerouslySetInnerHTML`), niet als losse React-componenten per sectie zoals quiz/flashcards — dus geen per-sectie pill, maar één document-niveau Sources-pill/sidebar met alle secties die een citation hebben.
+- `app/lib/tools/canonical-model.ts` — `note?: string | null` toegevoegd aan `CanonicalSourceRef`.
+- `app/lib/tools/notes-canonical-adapter.ts` — `NoteSection` uitgebreid met `citation?`/`groundingNote?`; `notesSectionsToCanonical`/`canonicalToNotesSections` zetten dit nu door via `sourceRefs`.
+- `app/ai/flows/generate-notes.ts` — `NoteSchema` heeft nu optionele `citation`/`groundingNote`; prompt geeft instructies om deze te vullen voor de tekst-stijlen (`structured`, `bullet-points`, `standard`), niet voor de JSON/visuele stijlen.
+- `app/components/tools/sources-panel.tsx` — `SourcesPanelData` uitgebreid met optionele `items[]` (multi-entry, document-niveau) naast het bestaande single-entry gebruik in quiz/flashcards; `hasSources`/`SourcesPill`/`SourcesSidebar` renderen nu beide vormen.
+- `app/lib/import-parsers.ts` / `app/lib/export-formatters.ts` — lokale `NoteSection`-types ook uitgebreid met `citation?`/`groundingNote?` zodat het veld overal door de editor-roundtrip (`editableSections`) heen blijft bestaan.
+- `app/(main)/tools/notes/page.tsx` — `SourcesPill` + `SourcesSidebar` gewired naast `ExportToolbar`/`SendToClassButton`; `notesSourcesData` (memoized) verzamelt alle secties met een citation.
+- Geverifieerd met `tsc --noEmit` en `eslint` op alle aangepaste bestanden — geen nieuwe errors (2 pre-existing, ongerelateerde flashcard-type errors in `import-parsers.ts` bevestigd via `git stash` als al aanwezig vóór deze wijziging).
+
+### Flashcard modes/types parity
+**Bevinding:** de AI-flow (`generate-flashcards.ts`) en de viewer (`flashcard-viewer.tsx`) ondersteunden al 12 kaarttypes (incl. `cloze`, `example-sentence`, `true-false`, `compare-pair`, `mnemonic`, `formula`, `process-step`, `date-event`, `reversed-direction`) — alleen de settings-UI exposeerde er maar 3 (`term-definition`, `multiple-choice`, `image-card`). Geen nieuwe generatie-/viewer-logica nodig, alleen de UI-laag + gating + één losse schema-bug.
+- `app/(main)/tools/flashcards/page.tsx` — `FLASHCARD_TYPE_DEFINITIONS` uitgebreid met de overige 9 types (label + description); `visibleCardTypes` filtert nu ook op `isFlashcardTypeAvailable(...)`.
+- `app/lib/tools/content-classifier.ts` — nieuwe `isFlashcardTypeAvailable()` (analoog aan `isQuizTypeAvailable`): gate `cloze`/`example-sentence`/`compare-pair`/`process-step`/`date-event` op relevante content-signalen, rest altijd beschikbaar.
+- **Bug gevonden en gefixt** — `app/lib/types.ts`: `FlashcardSchema` miste het `hint`-veld, terwijl de AI-prompt het al genereerde (`mnemonic`-type) en `flashcard-viewer.tsx` het op 6 plekken las (`card.hint`) — Zod strippte het stilletjes uit elke AI-response. Toegevoegd: `hint: z.string().optional()`.
+- Geverifieerd met `tsc --noEmit` en `eslint` op alle aangepaste bestanden — geen nieuwe errors; de `hint`-fix loste meteen 6 pre-existing `tsc`-errors in `flashcard-viewer.tsx` op.
+- Niet gedaan (bewust buiten scope): handmatig een generatie draaien in de browser om elk type visueel te testen — kan niet vanuit deze sessie; aanbevolen voordat dit als 100% af geldt.
+
 ---
 
 ## ⏳ Te doen
-
-### 1. Notes — sources/citaties integratie
-**Doel:** dezelfde pill+sidebar pattern als quiz/flashcards, nu in de notes-tool.
-**Stappen:**
-1. Open `app/(main)/tools/notes/page.tsx` en zoek waar de notes-content gerenderd wordt (sectie-niveau, niet top-level).
-2. Importeer `SourcesPanel` uit `app/components/tools/sources-panel.tsx` (zelfde import als in `quiz-taker.tsx` / `flashcard-viewer.tsx`).
-3. Render de pill op een logische plek per sectie/notitie-blok (vergelijkbaar met "naast Show explanation" in quiz).
-4. Zorg dat de data die `SourcesPanel` nodig heeft (citation, source image, grounding note) al aanwezig is in het notes data-model — check `lib/tools/notes-canonical-adapter.ts` of dat veld al bestaat; zo niet, toevoegen.
-5. Verifieer met `npx tsc --noEmit -p tsconfig.json | grep notes/page.tsx` (moet leeg zijn).
-
-### 2. Flashcard modes/types parity
-**Doel:** flashcard kaarttypes/modes gelijktrekken met wat quiz al heeft (parity, niet zomaar kopiëren — alleen wat logisch is voor flashcards).
-**Stappen:**
-1. Vergelijk `QUIZ_TYPE_DEFINITIONS` in `app/(main)/tools/quiz/page.tsx` met de huidige flashcard card-types in `app/(main)/tools/flashcards/page.tsx`.
-2. Lijst de quiz-types die geen flashcard-equivalent hebben (en omgekeerd).
-3. Beslis per ontbrekend type of het zinvol is voor flashcards (niet alles 1-op-1 overnemen — flashcards ≠ quiz).
-4. Implementeer ontbrekende types in de flashcard generatie-flow + viewer (`flashcard-viewer.tsx`) + AI-flow/prompt die de kaarten genereert.
-5. Test elk nieuw type minstens 1x door een generatie te draaien.
 
 ### 3. Auth redesign
 **Doel:** volledige auth-flow vernieuwen.

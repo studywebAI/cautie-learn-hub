@@ -127,6 +127,7 @@ export const QuizQuestionSchema = z.object({
   options: z.array(QuizOptionSchema).optional().default([]).describe('An array of possible answer options.'),
   correctOptionId: z.string().optional(),
   acceptableAnswers: z.array(z.string()).optional(),
+  suggestedAnswer: z.string().optional().describe('For open/subjective questions: a model answer or suggested response. For multiple-choice/true-false: leave empty.'),
   media: QuizQuestionMediaSchema.optional(),
   matchingPairs: z.array(z.object({
     left: z.string(),
@@ -237,6 +238,7 @@ export const FlashcardSchema = z.object({
   correctAnswer: z.boolean().optional().describe('For true-false type: whether the statement on front is correct (true) or incorrect (false).'),
   imageUrl: z.string().optional().describe('URL of a representative photo for "front". Only relevant when "type" is "image-card" — leave empty when generating, it is filled in automatically afterward from a real image search. Never invent a URL.'),
   citation: z.string().optional().describe('A short, literal reference to where in the Source Text this card\'s information came from (e.g. a quoted fragment or a short section description). Omit this field entirely if no specific passage can be pointed to.'),
+  hint: z.string().optional().describe('A short memory aid or mnemonic (a brief association, image cue, rhyme, or "ezelsbruggetje") that helps recall the back of the card. Only generated when "includeHints" is enabled.'),
   assistedHint: z.string().optional().describe('A short, logical memory aid for assisted mode only — a brief association, pattern, or contextual connection that helps recall the back without revealing it. Keep it to a few words. Only generated and shown when learner selects "assisted" mode. Must be simple and help thinking, not a riddle.'),
   groundingNote: z.string().optional().describe('A brief (1-2 sentence) note explaining why this card was written this way and how its content relates to or derives from the Source Text. This is shown to the learner in "Research" mode to make the AI\'s reasoning transparent.'),
 });

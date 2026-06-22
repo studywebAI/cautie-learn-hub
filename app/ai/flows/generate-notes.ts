@@ -11,6 +11,8 @@ import { z } from 'genkit';
 const NoteSchema = z.object({
   title: z.string().describe('The title of the note section.'),
   content: z.string().or(z.array(z.string())).describe('The detailed content. For visual styles, use structured JSON format. For text styles, use markdown format. No ASCII art or HTML unless specified.'),
+  citation: z.string().optional().describe('For text-based styles only: a short, exact quote or close paraphrase from the Source Text that this section is grounded in.'),
+  groundingNote: z.string().optional().describe('For text-based styles only: a brief note on how the citation supports this section.'),
 });
 
 const GenerateNotesInputSchema = z.object({
@@ -110,6 +112,11 @@ For "standard" style:
 - Include summaries and key takeaways
 - Academic tone with clear explanations
 
+For "structured", "bullet-points", and "standard" styles only, also include grounding for each section:
+- "citation": a short, exact quote or close paraphrase (max ~2 sentences) from the Source Text that the section's content is based on
+- "groundingNote": a one-sentence note explaining how that citation supports the section
+- Omit both fields if no specific part of the Source Text directly grounds the section
+
 === VISUAL STYLES (JSON OUTPUT) ===
 
 For "mindmap" style:
@@ -185,7 +192,7 @@ Localization profile:
 Use HTML <span style="background-color: lightblue;">text</span> for highlighting.
 {{/if}}
 
-Output as JSON: { "notes": [ { "title": "Section Title", "content": "Content here" } ] }
+Output as JSON: { "notes": [ { "title": "Section Title", "content": "Content here", "citation": "Optional grounding quote (text styles only)", "groundingNote": "Optional grounding explanation (text styles only)" } ] }
 
 FINAL INSTRUCTIONS:
 - Create notes that are pedagogically sound and educationally valuable

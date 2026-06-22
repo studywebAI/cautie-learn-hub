@@ -29,7 +29,7 @@ import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-s
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
 import { extractShareableClasses } from '@/lib/classes/shareable-classes';
 import { postClassShareItem } from '@/lib/class-share/client';
-import { classifyContent } from '@/lib/tools/content-classifier';
+import { classifyContent, isFlashcardTypeAvailable } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
 import { PageHeader } from '@/components/ui/page-header';
 import { SkeletonGroup, SkeletonCard } from '@/components/ui/skeleton';
@@ -37,10 +37,23 @@ import { SkeletonGroup, SkeletonCard } from '@/components/ui/skeleton';
 type Phase = 'input' | 'options' | 'study';
 
 type FlashcardTypeDefinition = {
-  value: 'term-definition' | 'multiple-choice' | 'image-card';
+  value:
+    | 'term-definition'
+    | 'multiple-choice'
+    | 'image-card'
+    | 'cloze'
+    | 'example-sentence'
+    | 'true-false'
+    | 'compare-pair'
+    | 'mnemonic'
+    | 'formula'
+    | 'process-step'
+    | 'date-event'
+    | 'reversed-direction';
   label: string;
   description: string;
   requiresResearchMode?: boolean;
+  requiresFlag?: string; // content classifier flag that must be 'y'
 };
 
 const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
@@ -53,6 +66,51 @@ const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
     value: 'multiple-choice',
     label: 'Multiple Choice',
     description: 'Same term/cue fragment, but the back is also offered as answer choices to pick from',
+  },
+  {
+    value: 'true-false',
+    label: 'True / False',
+    description: 'A short statement on the front, whether it is true or false on the back',
+  },
+  {
+    value: 'cloze',
+    label: 'Cloze (Fill in the Blank)',
+    description: 'A sentence with the key term replaced by a blank — fill in the missing word',
+  },
+  {
+    value: 'example-sentence',
+    label: 'Example Sentence',
+    description: 'A sentence using the term in context with the term blanked out',
+  },
+  {
+    value: 'compare-pair',
+    label: 'Compare Pair',
+    description: 'Names two related items, the key distinguishing fact between them on the back',
+  },
+  {
+    value: 'mnemonic',
+    label: 'Mnemonic',
+    description: 'Same term/definition fragment, plus a memory aid (association, rhyme, image cue)',
+  },
+  {
+    value: 'formula',
+    label: 'Formula',
+    description: 'Front names a formula/law/equation, back is the expression itself',
+  },
+  {
+    value: 'process-step',
+    label: 'Process Step',
+    description: 'Front names a step in a sequence, back is what happens during that step',
+  },
+  {
+    value: 'date-event',
+    label: 'Date & Event',
+    description: 'A date or period on one side, the matching event on the other',
+  },
+  {
+    value: 'reversed-direction',
+    label: 'Reversed Direction',
+    description: 'Same term/definition fragment, flagged to also be studied back-to-front',
   },
   {
     value: 'image-card',
@@ -183,8 +241,12 @@ function FlashcardsPageContent() {
   );
 
   const visibleCardTypes = React.useMemo(
-    () => FLASHCARD_TYPE_DEFINITIONS.filter((t) => !t.requiresResearchMode || explanationMode === 'research'),
-    [explanationMode]
+    () => FLASHCARD_TYPE_DEFINITIONS.filter(
+      (def) =>
+        (!def.requiresResearchMode || explanationMode === 'research') &&
+        isFlashcardTypeAvailable(def.value, contentClass)
+    ),
+    [contentClass, explanationMode]
   );
 
   useEffect(() => {

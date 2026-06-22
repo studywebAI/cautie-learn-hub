@@ -2073,6 +2073,25 @@ function IconX({ size = 10, strokeWidth = 1.8 }: { size?: number; strokeWidth?: 
 }
 
 type SourceHighlightSpan = { start: number; end: number; correct: boolean };
+type CitationChunk = { text: string; startIdx: number; endIdx: number; chunkId: string };
+
+// Finds the citation in the source text and returns the full chunk context
+function extractCitationChunk(sourceText: string, citation: string | undefined): CitationChunk | null {
+  if (!citation || citation.length < 5) return null;
+  const haystack = sourceText.toLowerCase();
+  const needle = citation.toLowerCase();
+  const startIdx = haystack.indexOf(needle);
+  if (startIdx === -1) return null;
+
+  // Return the exact citation match as a chunk
+  const endIdx = startIdx + citation.length;
+  return {
+    text: sourceText.slice(startIdx, endIdx),
+    startIdx,
+    endIdx,
+    chunkId: `chunk-${Math.abs(startIdx).toString(36)}-${Math.abs(endIdx).toString(36)}`,
+  };
+}
 
 // Locates each scored question's citation inside the raw source text and groups
 // matches into merged, non-overlapping spans so the passage can be painted by outcome.
@@ -2343,6 +2362,20 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
               <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
                 <p className="mb-1.5 text-[11px] text-muted-foreground">Explanation</p>
                 <p className="text-[13.5px] leading-relaxed text-foreground/80">{modalRow.question.explanation}</p>
+              </div>
+            )}
+
+            {modalRow.question.citation && (
+              <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
+                <p className="mb-1.5 text-[11px] text-muted-foreground">Source Citation</p>
+                <p className="text-[13.5px] leading-relaxed text-foreground/80 italic">"{modalRow.question.citation}"</p>
+              </div>
+            )}
+
+            {modalRow.question.suggestedAnswer && (
+              <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
+                <p className="mb-1.5 text-[11px] text-muted-foreground">Suggested Answer</p>
+                <p className="text-[13.5px] leading-relaxed text-foreground/80">{modalRow.question.suggestedAnswer}</p>
               </div>
             )}
 

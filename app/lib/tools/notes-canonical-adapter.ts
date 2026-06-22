@@ -1,6 +1,11 @@
 import type { CanonicalDocument, CanonicalEdge, CanonicalNode } from '@/lib/tools/canonical-model';
 
-export type NoteSection = { title: string; content: string | string[] };
+export type NoteSection = {
+  title: string;
+  content: string | string[];
+  citation?: string;
+  groundingNote?: string;
+};
 
 function slugify(input: string) {
   return String(input || '')
@@ -35,6 +40,16 @@ export function notesSectionsToCanonical(
       type: 'section',
       title: String(section.title || `Section ${index + 1}`),
       body,
+      sourceRefs: section.citation
+        ? [
+            {
+              id: `source-${id}`,
+              kind: 'text',
+              label: section.citation,
+              note: section.groundingNote || null,
+            },
+          ]
+        : undefined,
     });
     const dateMatch = `${section.title}\n${body}`.match(/\b(19|20)\d{2}\b/);
     if (dateMatch) {
@@ -111,8 +126,13 @@ export function canonicalToNotesSections(document: CanonicalDocument): NoteSecti
   return orderedIds
     .map((id) => nodeMap.get(id))
     .filter((node): node is CanonicalNode => Boolean(node))
-    .map((node) => ({
-      title: node.title || 'Section',
-      content: node.body || '',
-    }));
+    .map((node) => {
+      const ref = node.sourceRefs?.[0];
+      return {
+        title: node.title || 'Section',
+        content: node.body || '',
+        citation: ref?.label || undefined,
+        groundingNote: ref?.note || undefined,
+      };
+    });
 }

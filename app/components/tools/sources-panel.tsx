@@ -16,15 +16,28 @@ export type SourceMedia = {
   source?: string;
 };
 
+export type SourcesPanelItem = {
+  title: string;
+  citation?: string;
+  groundingNote?: string;
+  imageUrl?: string;
+};
+
 export type SourcesPanelData = {
   citation?: string;
   media?: SourceMedia;
   imageUrl?: string;
   groundingNote?: string;
+  items?: SourcesPanelItem[];
 };
 
 function hasSources(data: SourcesPanelData): boolean {
-  return Boolean(data.citation?.trim()) || Boolean(data.media?.url) || Boolean(data.imageUrl?.trim());
+  return (
+    Boolean(data.citation?.trim()) ||
+    Boolean(data.media?.url) ||
+    Boolean(data.imageUrl?.trim()) ||
+    Boolean(data.items?.some((item) => item.citation?.trim() || item.imageUrl?.trim()))
+  );
 }
 
 const ICON_BY_KIND: Record<'text' | 'image' | 'video', typeof FileText> = {
@@ -45,8 +58,8 @@ function SourceIcon({ kind }: { kind: 'text' | 'image' | 'video' }) {
 export function SourcesPill({ data, onOpen }: { data: SourcesPanelData; onOpen: () => void }) {
   if (!hasSources(data)) return null;
   const kinds: Array<'text' | 'image' | 'video'> = [];
-  if (data.citation?.trim()) kinds.push('text');
-  if (data.media?.kind === 'image' || data.imageUrl?.trim()) kinds.push('image');
+  if (data.citation?.trim() || data.items?.some((item) => item.citation?.trim())) kinds.push('text');
+  if (data.media?.kind === 'image' || data.imageUrl?.trim() || data.items?.some((item) => item.imageUrl?.trim())) kinds.push('image');
   if (data.media?.kind === 'video') kinds.push('video');
 
   return (
@@ -81,6 +94,37 @@ export function SourcesSidebar({
         </SheetHeader>
 
         <div className="flex flex-col gap-3 overflow-y-auto">
+          {data.items?.length ? (
+            data.items
+              .filter((item) => item.citation?.trim() || item.imageUrl?.trim())
+              .map((item, index) => (
+                <div key={`${item.title}-${index}`} className="rounded-xl border border-border bg-muted/30 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-foreground">
+                    <SourceIcon kind="text" />
+                    {item.title}
+                  </div>
+                  {item.citation?.trim() ? (
+                    <p className="text-[13px] leading-relaxed text-foreground/80">
+                      "{item.citation.trim()}"
+                    </p>
+                  ) : null}
+                  {item.groundingNote?.trim() ? (
+                    <>
+                      <p className="mt-3 text-[11px] text-muted-foreground">Why / how it relates</p>
+                      <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{item.groundingNote.trim()}</p>
+                    </>
+                  ) : null}
+                  {item.imageUrl?.trim() ? (
+                    <img
+                      src={item.imageUrl.trim()}
+                      alt={`${item.title} source`}
+                      className="mt-3 max-h-48 w-full rounded-lg object-cover"
+                    />
+                  ) : null}
+                </div>
+              ))
+          ) : null}
+
           {data.citation?.trim() ? (
             <div className="rounded-xl border border-border bg-muted/30 p-3">
               <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-foreground">

@@ -16,6 +16,7 @@ export type CanonicalSourceRef = {
   kind: 'text' | 'url' | 'file' | 'image';
   label?: string | null;
   uri?: string | null;
+  note?: string | null;
 };
 
 export type CanonicalTemporal = {

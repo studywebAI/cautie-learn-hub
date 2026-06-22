@@ -42,6 +42,7 @@ import {
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { sanitizeEditorHtml as importedSanitizeEditorHtml } from '@/lib/sanitize';
 import { resolveSpeechLocale } from '@/hooks/use-browser-speech';
+import { SourcesPill, SourcesSidebar, type SourcesPanelData } from '@/components/tools/sources-panel';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -239,6 +240,7 @@ function NotesPageContent() {
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
+  const [showNotesSources, setShowNotesSources] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -1147,6 +1149,16 @@ function NotesPageContent() {
     return generatedNotes || [];
   }, [canonicalDoc, generatedNotes, noteHtml]);
 
+  const notesSourcesData = useMemo<SourcesPanelData>(() => ({
+    items: editableSections
+      .filter((section) => section.citation?.trim())
+      .map((section) => ({
+        title: section.title || 'Section',
+        citation: section.citation,
+        groundingNote: section.groundingNote,
+      })),
+  }), [editableSections]);
+
   const applyInlineFormat = useCallback((command: 'bold' | 'italic' | 'underline') => {
     if (typeof document === 'undefined') return;
     if (!editMode) setEditMode(true);
@@ -1262,6 +1274,7 @@ function NotesPageContent() {
                 getHtml={() => noteHtml || notesToHtml(generatedNotes)}
                 getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
+              <SourcesPill data={notesSourcesData} onOpen={() => setShowNotesSources(true)} />
               <SendToClassButton
                 classes={shareableClasses}
                 classIdFromRoute={classId}
@@ -1271,6 +1284,12 @@ function NotesPageContent() {
               />
             </div>
           </div>
+
+          <SourcesSidebar
+            open={showNotesSources}
+            onOpenChange={setShowNotesSources}
+            data={notesSourcesData}
+          />
 
           <div className={cn('grid gap-4', !isVisualMode && showNotesPanel ? 'grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]' : 'grid-cols-1')}>
             {mode === 'wordweb' && canonicalDoc ? (

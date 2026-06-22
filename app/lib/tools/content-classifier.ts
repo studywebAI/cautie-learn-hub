@@ -170,3 +170,37 @@ export function isQuizTypeAvailable(
   // multiple-choice, true-false, fill-blank, short-answer — always available
   return true;
 }
+
+/**
+ * Returns true when a given flashcard type is available for the provided classification.
+ * Pass null to show all types (before content is classified).
+ *
+ * Always-show (work for any academic text):
+ *   term-definition, multiple-choice, true-false, mnemonic, formula, reversed-direction
+ *
+ * Everything else requires at least one relevant content signal.
+ */
+export function isFlashcardTypeAvailable(
+  typeValue: string,
+  cls: ContentClassification | null
+): boolean {
+  if (!cls) return true;
+
+  if (typeValue === 'cloze')
+    return cls.vocabulary === 'y' || cls.dates === 'y' || cls.people === 'y' || cls.processes === 'y';
+
+  if (typeValue === 'example-sentence')
+    return cls.vocabulary === 'y';
+
+  if (typeValue === 'compare-pair')
+    return cls.comparisons === 'y';
+
+  if (typeValue === 'process-step')
+    return cls.processes === 'y';
+
+  if (typeValue === 'date-event')
+    return cls.dates === 'y' || cls.timeline === 'y';
+
+  // term-definition, multiple-choice, image-card, true-false, mnemonic, formula, reversed-direction — always available
+  return true;
+}

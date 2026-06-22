@@ -1,6 +1,6 @@
 import type { Quiz, QuizQuestion, QuizOption, Flashcard } from '@/lib/types';
 
-type NoteSection = { title: string; content: string | string[] };
+type NoteSection = { title: string; content: string | string[]; citation?: string; groundingNote?: string };
 
 /**
  * Parse markdown (from our export format) back into interactive tool data.

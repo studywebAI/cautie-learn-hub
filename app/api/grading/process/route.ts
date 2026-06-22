@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { updateProgressSnapshot } from '@/lib/progress'
+import { gradeOpenQuestionWithSampling } from '@/ai/flows/grade-open-question'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,40 +71,35 @@ export async function POST() {
       return NextResponse.json({ error: 'Not an open question' }, { status: 400 })
     }
 
-    // Call AI grading using the handle endpoint
+    // Grade using sampling approach for anti-manipulation protection
     const answerData = studentAnswer.answer_data as any
     const blockConfig = blockData.data as any
 
-    const aiResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/ai/handle`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        flowName: 'gradeOpenQuestion',
-        input: {
-          question: blockConfig.question,
-          criteria: blockConfig.grading_criteria,
-          maxScore: blockConfig.max_score,
-          language: 'en',
-          studentAnswer: answerData.text
-        }
-      })
-    });
+    const gradingResult = await gradeOpenQuestionWithSampling({
+      question: blockConfig.question || '',
+      criteria: blockConfig.grading_criteria || '',
+      maxScore: blockConfig.max_score || 5,
+      language: 'en',
+      studentAnswer: answerData?.text || answerData?.toString() || ''
+    }, 3); // Use 3 sampling evaluations
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      throw new Error('AI grading failed');
-    }
+    // Use the median score from sampling
+    const finalScore = gradingResult.medianScore;
+    const finalFeedback = gradingResult.finalFeedback;
 
-    const gradingResult = await aiResponse.json();
-
-    // Update student answer
+    // Update student answer with median score and sampling metadata
     await supabase
       .from('student_answers')
       .update({
-        score: gradingResult.score,
-        feedback: gradingResult.feedback,
+        score: finalScore,
+        feedback: finalFeedback,
         graded_by_ai: true,
-        graded_at: new Date().toISOString()
+        graded_at: new Date().toISOString(),
+        ai_grading_samples: {
+          scores: gradingResult.scores,
+          feedbacks: gradingResult.feedbacks,
+          samplingCount: gradingResult.scores.length,
+        }
       })
       .eq('id', studentAnswer.id)
 
@@ -123,10 +119,15 @@ export async function POST() {
       .eq('id', job.id)
 
     return NextResponse.json({
-      message: 'Grading completed',
+      message: 'Grading completed with sampling-based approach',
       jobId: job.id,
-      score: gradingResult.score,
-      feedback: gradingResult.feedback
+      score: finalScore,
+      feedback: finalFeedback,
+      samplingDetails: {
+        allScores: gradingResult.scores,
+        medianScore: gradingResult.medianScore,
+        samplingCount: gradingResult.scores.length
+      }
     })
 
   } catch (error) {

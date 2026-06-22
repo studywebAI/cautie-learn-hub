@@ -141,6 +141,7 @@ function normalizeQuestionShape(
       ? question.acceptableAnswers.map((entry: any) => String(entry || '').trim()).filter(Boolean)
       : [];
     normalized.acceptableAnswers = acceptableAnswers.length ? acceptableAnswers : ['Not available from source'];
+    normalized.suggestedAnswer = typeof question?.suggestedAnswer === 'string' ? question.suggestedAnswer.trim() : undefined;
     normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
     return normalized;
   }
@@ -154,6 +155,7 @@ function normalizeQuestionShape(
       ? question.clozeWordBank.map((w: any) => String(w || '').trim()).filter(Boolean)
       : [];
     normalized.clozeWordBank = wordBank;
+    normalized.suggestedAnswer = typeof question?.suggestedAnswer === 'string' ? question.suggestedAnswer.trim() : undefined;
     normalized.hint = typeof question?.hint === 'string' ? question.hint : undefined;
     return normalized;
   }
@@ -597,7 +599,7 @@ Each question must include:
 - citation: a short literal fragment (5-20 words) quoted directly from the Source Text that this question is grounded in. Must be an exact substring of the Source Text so it can be located later. Omit this field only if the question genuinely cannot be tied to one specific passage (e.g. it synthesizes the whole text).
 If type is multiple-choice/true-false/scenario/image-analysis/video-analysis/drawing-analysis, include 3-4 options and exactly one correct answer.
 If type is scenario, also include scenarioContext (1-3 sentence case/scenario text that sets up the question).
-If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers.
+If type is fill-blank/short-answer, include acceptableAnswers as an array of valid answers, and optionally include suggestedAnswer (a model answer or suggested response that a student could give).
 If type is matching, include matchingPairs as array of {left,right} (4-6 pairs).
 If type is ordering, include orderingItems as array of strings in correct order.
 If type is timeline, include timelineStart, timelineEnd, and timelineEvents (array of {id, label, position 1-100}) — NOT orderingItems.

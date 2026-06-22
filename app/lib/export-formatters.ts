@@ -95,7 +95,7 @@ export function flashcardsToHtml(cards: Flashcard[]): string {
 
 // ── Notes ──
 
-type NoteSection = { title: string; content: string | string[] };
+type NoteSection = { title: string; content: string | string[]; citation?: string; groundingNote?: string };
 
 function escapeHtml(value: string) {
   return value

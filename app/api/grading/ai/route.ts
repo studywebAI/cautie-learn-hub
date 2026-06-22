@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
-import { gradeOpenQuestion } from '@/ai/flows/grade-open-question';
+import { gradeOpenQuestion, gradeOpenQuestionWithSampling } from '@/ai/flows/grade-open-question';
 
 export async function POST(request: Request) {
   try {
@@ -81,8 +81,8 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Grade the open question
-      const gradingResult = await gradeOpenQuestion({
+      // Grade the open question using sampling approach for anti-manipulation
+      const sampledGradingResult = await gradeOpenQuestionWithSampling({
         question: block.data?.question || '',
         criteria: block.data?.grading_criteria || '',
         maxScore: block.data?.max_score || 5,
@@ -92,29 +92,40 @@ export async function POST(request: Request) {
         checkSpelling: submission.assignments.ai_grading_check_spelling || true,
         checkGrammar: submission.assignments.ai_grading_check_grammar || true,
         keywords: submission.assignments.ai_grading_keywords || '',
-      });
+      }, 3); // Use 3 sampling evaluations
 
-      // Update student answer with grading result
+      // Update student answer with grading result (using median score)
       const { error: updateError } = await supabase
         .from('student_answers')
         .update({
-          score: gradingResult.score,
-          feedback: gradingResult.feedback,
+          score: sampledGradingResult.medianScore,
+          feedback: sampledGradingResult.finalFeedback,
           graded_at: new Date().toISOString(),
           graded_by_ai: true,
-          is_correct: gradingResult.score >= (block.data?.max_score || 5) * 0.8,
+          is_correct: sampledGradingResult.medianScore >= (block.data?.max_score || 5) * 0.8,
+          ai_grading_samples: {
+            scores: sampledGradingResult.scores,
+            feedbacks: sampledGradingResult.feedbacks,
+            samplingCount: sampledGradingResult.scores.length,
+          },
         })
         .eq('id', studentAnswer.id);
 
       if (updateError) {
+        console.error('Error updating student answer:', updateError);
       }
 
       gradingResults.push({
         blockId: block.id,
         question: block.data?.question,
         studentAnswer: studentAnswer.answer_data,
-        score: gradingResult.score,
-        feedback: gradingResult.feedback,
+        score: sampledGradingResult.medianScore,
+        feedback: sampledGradingResult.finalFeedback,
+        samplingDetails: {
+          samples: sampledGradingResult.scores.length,
+          allScores: sampledGradingResult.scores,
+          medianScore: sampledGradingResult.medianScore,
+        },
       });
     }
 
