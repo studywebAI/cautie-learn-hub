@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -72,7 +73,6 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
       return
     }
 
-    setEnrollmentStep('verifying')
     try {
       const response = await fetch('/api/auth/2fa/verify-enroll', {
         method: 'POST',
@@ -88,7 +88,6 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
       setQrCode('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed')
-      setEnrollmentStep('showing-qr')
     }
   }
 
@@ -201,7 +200,13 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
                     </p>
                     {qrCode && (
                       <div className="flex justify-center bg-white p-4 rounded-lg">
-                        <img src={qrCode} alt="2FA QR Code" className="h-48 w-48" />
+                        <Image
+                          src={qrCode}
+                          alt="2FA QR Code"
+                          width={192}
+                          height={192}
+                          className="h-48 w-48"
+                        />
                       </div>
                     )}
                   </div>
@@ -244,17 +249,17 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
                       onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
                       className="h-12 text-center text-2xl tracking-widest"
-                      disabled={enrollmentStep === 'verifying'}
+                      disabled={isEnrolling}
                     />
                   </div>
 
                   <div className="flex gap-2">
                     <Button
                       onClick={handleVerifyEnrollment}
-                      disabled={verificationCode.length !== 6 || enrollmentStep === 'verifying'}
+                      disabled={verificationCode.length !== 6 || isEnrolling}
                       className="flex-1"
                     >
-                      {enrollmentStep === 'verifying' ? (
+                      {isEnrolling ? (
                         <>
                           <Spinner size={16} className="mr-2" />
                           {tr({ en: 'Verifying...', nl: 'Verifiëren...' })}
@@ -272,7 +277,7 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
                         setQrCode('')
                         setError('')
                       }}
-                      disabled={enrollmentStep === 'verifying'}
+                      disabled={isEnrolling}
                     >
                       {tr({ en: 'Cancel', nl: 'Annuleren' })}
                     </Button>

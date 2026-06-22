@@ -1,0 +1,292 @@
+================================================================================
+ANALYTICS & NOTES REMINDER IMPLEMENTATION PLAN - EXECUTIVE SUMMARY
+================================================================================
+
+Three comprehensive documents have been generated to guide your implementation:
+
+1. IMPLEMENTATION_PLAN_ANALYTICS.md (Main Plan)
+   - Complete system architecture
+   - Data flow diagrams (text-based)
+   - 3 phases with full specifications
+   - API endpoint designs with response structures
+   - Component specifications with prop types
+   - Database query patterns
+   - Pitfalls and mitigations
+   - Timeline estimates (14 hours total)
+
+2. ANALYTICS_IMPLEMENTATION_DETAILS.md (Code Reference)
+   - 6 complete database query examples with comments
+   - 3 full API route implementations (ready to copy)
+   - 2 full component implementations (StudentAnalyticsCharts, NotesReminder)
+   - Error handling patterns
+   - Testing utilities and mock data generators
+   - Performance optimization checklist
+
+3. ANALYTICS_QUICK_REFERENCE.md (Checklist)
+   - Phase-by-phase task checklist
+   - File creation summary (13 new files total)
+   - Implementation order (recommended sequence)
+   - Common pitfalls with preventative measures
+   - Testing checklist per phase
+   - Future enhancements (post-MVP)
+
+================================================================================
+AT A GLANCE
+================================================================================
+
+SCOPE:
+- Student Analytics: Topic-wise scores, 30-day trend charts, strong/weak topics
+- Teacher Analytics: Per-quiz metrics by class, error-rate histograms, question analysis
+- Notes Reminder: Sticky banner after quiz completion, dismissible, 30-day TTL
+
+NEW API ENDPOINTS (3):
+✓ GET /api/student/analytics/detailed
+✓ GET /api/student/notes/check
+✓ GET /api/classes/[classId]/analytics/detailed
+
+NEW COMPONENTS (9):
+✓ StudentAnalyticsCharts (recharts LineChart + BarChart)
+✓ TopicScoreCard (individual topic performance)
+✓ PerformanceSummary (aggregate stats)
+✓ TeacherAnalyticsFilters (class/topic/date selector)
+✓ QuizPerformanceTable (class quizzes with expandable detail)
+✓ ErrorRateChart (topic error rates histogram)
+✓ QuestionAnalysisDetail (per-question metrics)
+✓ ClassMetaMetricsCard (class-level summary)
+✓ NotesReminder (sticky banner with dismissal)
+
+NEW PAGES (1):
+✓ /app/(main)/analytics/teacher/page.tsx
+
+MODIFIED FILES (2):
+✓ /app/(main)/analytics/page.tsx (add tabs, new components)
+✓ /app/lib/types.ts (add 8 new type definitions)
+
+================================================================================
+IMPLEMENTATION ORDER (7 STEPS - 14 HOURS TOTAL)
+================================================================================
+
+1. Phase 3.2: /api/student/notes/check                          [30 min]
+   - Simplest endpoint, enables early API testing
+
+2. Phase 3.1: NotesReminder component                           [1.5 hrs]
+   - Depends on #1
+   - Self-contained, easy to test
+
+3. Phase 1.1: /api/student/analytics/detailed                  [2 hrs]
+   - Complex aggregation logic
+   - Implement helper functions step-by-step
+
+4. Phase 1.2: Student analytics page + charts                  [2.5 hrs]
+   - Depends on #3
+   - Build components bottom-up
+
+5. Phase 2.1: /api/classes/[classId]/analytics/detailed        [2.5 hrs]
+   - Similar pattern to #3
+   - Reuse aggregation helpers
+
+6. Phase 2.2: Teacher analytics page + components              [3 hrs]
+   - Depends on #5
+   - Most complex UI
+
+7. Phase 3 Integration: Add NotesReminder to pages             [1 hr]
+   - Depends on #2
+   - Straightforward prop passing
+
+================================================================================
+KEY IMPLEMENTATION NOTES
+================================================================================
+
+DATA MODEL:
+- Core FK chain: student_answers → blocks → assignments → paragraphs →
+  chapters → subjects
+- Handles mixed scoring: explicit score field OR is_correct boolean
+- LEFT JOINs to handle incomplete hierarchies
+
+QUERY PATTERNS:
+- Use WITH (CTE) for complex aggregations (readability)
+- Filter student_answers to last 90 days (performance)
+- Add indexes on (student_id, submitted_at) if table is large
+- Cache API responses for 1 hour (in-memory Map)
+
+COMPONENT PATTERNS:
+- All components are 'use client' (React client components)
+- Use recharts for charts (already installed)
+- Cards from UI library (@/components/ui/card)
+- Icons from lucide-react (already installed)
+- Responsive design with Tailwind classes
+
+NOTES REMINDER LOGIC:
+- localStorage key: `cautie:notes-reminder:dismissed:${topicId}`
+- Value: timestamp (number), TTL: 30 days
+- Shown only if: student has activity (quiz) but no notes on topic
+- Dismissal can be cleared after 30 days to re-show reminder
+
+ERROR HANDLING:
+- Gracefully fallback if student_notes table doesn't exist
+- Use safe navigation pattern: `.?.[0]?.property` for nested relations
+- Implement try-catch in all endpoints
+- Return empty structures on error (not 500)
+
+PERFORMANCE:
+- Implement caching at API level (1-hour TTL)
+- Database indexes on foreign key columns
+- Limit results to 90-day window
+- Paginate teacher analytics (10 items at a time)
+
+================================================================================
+POTENTIAL PITFALLS & MITIGATIONS
+================================================================================
+
+1. Complex nested relations
+   → Use safe navigation: const topic = answer.blocks?.[0]?.assignments...
+   → Document the pattern clearly
+
+2. N+1 queries
+   → Use Supabase select() with all joins in one query
+   → Test with explain/analyze if slow
+
+3. Common mistakes extraction (open questions)
+   → Only for block_type = 'open_question'
+   → Aggregate by JSON value, truncate to top 3
+   → Add error logging for debugging
+
+4. localStorage key collisions
+   → Use namespace: cautie:notes-reminder:dismissed:${topicId}
+   → Document format clearly
+
+5. Teacher access to other classes
+   → Always filter by class_members.user_id = current_user
+   → Verify in every teacher API endpoint
+
+6. Dismissal flag not expiring
+   → Check (Date.now() - storedTimestamp) < 30*24*60*60*1000
+   → Clear if expired, show reminder again
+
+7. Performance with large class
+   → Limit teacher analytics to max 5 classes, 10 topics
+   → Show warning if selection too broad
+
+8. Student_notes table doesn't exist
+   → Gracefully return hasNotes=false
+   → Plan migration when ready
+   → Don't block MVP on this
+
+================================================================================
+TESTING STRATEGY
+================================================================================
+
+UNIT TESTS:
+- Aggregate functions with mock data (5+ scenarios each)
+- localStorage TTL logic (set/get/expire)
+- Type safety (TypeScript compilation)
+
+INTEGRATION TESTS:
+- API endpoints with Supabase mocks
+- Verify response structures match types
+- Test filtering and sorting
+
+MANUAL TESTS (REQUIRED):
+- Student with 0 quizzes → empty analytics
+- Student with 20+ quizzes → correct aggregates
+- Create quiz, see reminder → dismiss → localStorage set
+- Refresh → reminder hidden
+- Simulate 31 days → reminder reappears
+- Expand teacher quiz row → question detail appears
+- Filter by topic → metrics update
+
+================================================================================
+SUCCESS CRITERIA
+================================================================================
+
+✓ Student sees quiz scores by topic (>80% accuracy)
+✓ Student sees 30-day performance trend (LineChart rendering)
+✓ Student identifies 3+ strong/weak topics with explanation
+✓ Teacher filters analytics by class and sees per-quiz metrics
+✓ Teacher views per-question error rates and common mistakes
+✓ Teacher histogram shows topic error rates (sorted)
+✓ Notes reminder appears after quiz (not dismissed)
+✓ Notes reminder persists dismissal for 30 days
+✓ All APIs respond in <500ms
+✓ No N+1 queries in implementations
+
+================================================================================
+DATABASE ASSUMPTIONS
+================================================================================
+
+MUST EXIST:
+- student_answers (id, student_id, block_id, score, is_correct, submitted_at)
+- blocks (id, assignment_id, type)
+- assignments (id, class_id, paragraph_id, title)
+- paragraphs (id, chapter_id, title)
+- chapters (id, subject_id, title)
+- subjects (id, title)
+- class_members (class_id, user_id)
+- profiles (id, full_name)
+
+OPTIONAL (RECOMMENDED):
+- student_notes (id, student_id, topic_id, content, created_at)
+  * If missing, notes check endpoint assumes hasNotes=false
+  * Can be added in future migration
+
+RECOMMENDED INDEXES:
+- student_answers(student_id, submitted_at)
+- student_answers(block_id)
+
+================================================================================
+FILES TO REVIEW/MODIFY
+================================================================================
+
+Existing files mentioned in implementation:
+- /app/(main)/analytics/page.tsx (StudentAnalytics component)
+- /app/api/analytics/route.ts (existing student analytics)
+- /app/api/classes/[classId]/analytics/route.ts (existing class analytics)
+- /app/components/dashboard/teacher/class-analytics-dashboard.tsx
+- /app/lib/types.ts (existing type definitions)
+
+These show the existing patterns and will help inform implementation.
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. READ: IMPLEMENTATION_PLAN_ANALYTICS.md (full architecture)
+2. REVIEW: ANALYTICS_IMPLEMENTATION_DETAILS.md (code examples)
+3. PRINT: ANALYTICS_QUICK_REFERENCE.md (keep handy while coding)
+4. START: Phase 3.2 (simplest endpoint first)
+5. TEST: Each phase before moving to next
+6. COMMIT: In logical chunks (one phase per commit)
+
+================================================================================
+QUESTIONS?
+================================================================================
+
+Refer to section in IMPLEMENTATION_PLAN_ANALYTICS.md:
+- "Questions for Clarification" (at end) for design decisions
+- "Pitfalls & Mitigations" for common issues
+- "Implementation Sequence & Order" for dependencies
+- "Success Criteria" for acceptance tests
+
+All code examples are in ANALYTICS_IMPLEMENTATION_DETAILS.md with comments.
+
+================================================================================
+FINAL NOTES
+================================================================================
+
+✓ Plan assumes recharts already installed (verified in package.json)
+✓ Plan assumes Supabase client already configured
+✓ Plan uses existing UI components from project
+✓ Plan follows existing code patterns from analytics endpoints
+✓ Plan includes error handling from day 1
+✓ Plan documents pitfalls learned from similar projects
+✓ No breaking changes to existing code
+✓ MVP scope is clear and achievable in 14 hours
+✓ Future enhancements are documented (post-MVP)
+
+Ready to implement!
+
+================================================================================
+Generated: June 22, 2026
+Prepared by: Claude Code
+Status: Ready for implementation
+================================================================================

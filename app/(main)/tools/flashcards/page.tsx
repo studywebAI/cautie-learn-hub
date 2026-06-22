@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
+import { NotesReminder } from '@/components/analytics/notes-reminder';
 import type { Flashcard } from '@/lib/types';
 import { runToolFlowV2 } from '@/lib/toolbox/client';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
@@ -632,6 +633,7 @@ function FlashcardsPageContent() {
     return (
       <div className="h-full flex flex-col">
         <PageHeader title="Study Flashcards" hideBreadcrumb />
+        <NotesReminder topicId="flashcard-study" topicName="Flashcard topic" />
         <div className="flex-1 min-h-0 overflow-auto flex flex-col">
           <div className="p-3 md:p-4 flex items-center justify-between border-b border-border/20">
             <Button variant="ghost" onClick={() => { handleRestart(); setPhase('options'); }} className="rounded-full text-xs">{t.back}</Button>

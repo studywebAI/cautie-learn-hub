@@ -7,6 +7,7 @@ import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { STUDENT_CLASS_TAB_IDS, TEACHER_CLASS_TAB_IDS } from '@/lib/class-tabs';
+import { NotesReminder } from '@/components/analytics/notes-reminder';
 
 const QuickGrader = dynamic(
   () => import('@/components/dashboard/teacher/quick-grader').then((m) => m.QuickGrader),
@@ -341,6 +342,10 @@ export default function ClassDetailsPage() {
       {isTeacher && (
         <QuickGrader classId={classId} isOpen={isQuickGraderOpen} onClose={() => setIsQuickGraderOpen(false)} />
       )}
+      <NotesReminder
+        topicId={`class-${classId}`}
+        topicName={classInfo?.name || 'Class'}
+      />
       <div key={`class-${classId}-tab-${tab}`}>{renderContent()}</div>
     </>
   );
