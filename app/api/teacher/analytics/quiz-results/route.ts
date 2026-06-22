@@ -58,7 +58,7 @@ export async function GET(request: Request) {
     const results: ClassQuizAnalytics[] = []
 
     for (const classId of classesToAnalyze) {
-      const classInfo = teacherClasses.find(c => c.class_id === classId)
+      const classInfo = teacherClasses.find((c: any) => c.class_id === classId)
       if (!classInfo) continue
 
       // Get all students in class
@@ -72,7 +72,7 @@ export async function GET(request: Request) {
       if (studentIds.length === 0) {
         results.push({
           classId,
-          className: classInfo.classes?.name || 'Unknown Class',
+          className: (classInfo as any).classes?.name || 'Unknown Class',
           totalStudents: 0,
           quizzes: [],
           topicErrorRates: [],
@@ -86,12 +86,12 @@ export async function GET(request: Request) {
         .select('id, title, paragraph_id')
         .eq('class_id', classId)
 
-      const assignmentIds = assignments?.map(a => a.id) || []
+      const assignmentIds = assignments?.map((a: any) => a.id) || []
 
       if (assignmentIds.length === 0) {
         results.push({
           classId,
-          className: classInfo.classes?.name || 'Unknown Class',
+          className: (classInfo as any).classes?.name || 'Unknown Class',
           totalStudents: studentIds.length,
           quizzes: [],
           topicErrorRates: [],
@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         .select('id, assignment_id')
         .in('assignment_id', assignmentIds)
 
-      const blockIds = blocks?.map(b => b.id) || []
+      const blockIds = blocks?.map((b: any) => b.id) || []
 
       // Get student answers for these blocks
       const { data: answers } = blockIds.length > 0
@@ -175,11 +175,11 @@ export async function GET(request: Request) {
         const chapter = paragraph.chapters[0]
         const subject = chapter.subjects[0]
 
-        const quizId = assignment.id
-        const topicId = subject.id
+        const quizId = assignment.id as string
+        const topicId = subject.id as string
 
         // Aggregate by quiz
-        const quizKey = quizId
+        const quizKey = quizId as string
         const existing = quizMap.get(quizKey) || {
           quizId,
           quizTitle: assignment.title || 'Untitled Quiz',
@@ -198,7 +198,7 @@ export async function GET(request: Request) {
         quizMap.set(quizKey, existing)
 
         // Aggregate by topic
-        const topicKey = topicId
+        const topicKey = topicId as string
         const topicExisting = topicMap.get(topicKey) || {
           topicId,
           topicName: subject.title,
@@ -244,7 +244,7 @@ export async function GET(request: Request) {
 
       results.push({
         classId,
-        className: classInfo.classes?.name || 'Unknown Class',
+        className: (classInfo as any).classes?.name || 'Unknown Class',
         totalStudents: studentIds.length,
         quizzes: quizzes.sort((a, b) => b.averageScore - a.averageScore),
         topicErrorRates,

@@ -156,7 +156,7 @@ export async function GET(request: Request) {
     const trendArray: TrendData[] = Array.from(trendMap.entries())
       .map(([date, data]) => ({
         date,
-        averageScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length),
+        averageScore: Math.round(data.scores.reduce((sum: number, a: number) => sum + a, 0) / data.scores.length),
         attemptCount: data.count,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -182,7 +182,7 @@ export async function GET(request: Request) {
       summary: {
         totalAttempts: safe.length,
         averageScore: safe.length > 0
-          ? Math.round(safe.reduce((sum, a) => sum + (a.score ?? 0), 0) / safe.length)
+          ? Math.round(safe.reduce((sum: number, a: any) => sum + (a.score ?? 0), 0) / safe.length)
           : 0,
       },
     })
