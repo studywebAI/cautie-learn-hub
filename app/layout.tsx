@@ -48,6 +48,7 @@ const themeBootstrapScript = `
     const root = document.documentElement;
     root.classList.remove('theme-light', 'theme-sand', 'theme-legacy', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');
     root.classList.add('theme-' + resolved);
+    root.classList.toggle('dark', resolved === 'dark');
     root.classList.remove('ui-font-georgia', 'ui-font-legacy');
     root.classList.add('ui-font-legacy');
   } catch {}

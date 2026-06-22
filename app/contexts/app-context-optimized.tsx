@@ -159,6 +159,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const root = document.documentElement;
     root.classList.remove('theme-light', 'theme-dark', 'theme-pastel');
     root.classList.add(`theme-${currentTheme}`);
+    root.classList.toggle('dark', currentTheme === 'dark');
   }, []);
 
   // Initialize session

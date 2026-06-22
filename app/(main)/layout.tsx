@@ -56,7 +56,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
                 <AppSidebar />
             </Suspense>
-            <SidebarInset className="h-screen bg-background relative text-[hsl(var(--sidebar-active-foreground))] transition-all duration-300 ease-in-out">
+            <SidebarInset className="h-dvh bg-background relative text-[hsl(var(--sidebar-active-foreground))] transition-all duration-300 ease-in-out">
                 <div
                   className={`${
                     isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"

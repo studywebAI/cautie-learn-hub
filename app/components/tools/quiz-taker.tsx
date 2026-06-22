@@ -3281,15 +3281,18 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
         data={{ citation: currentQuestion?.citation, media: currentQuestion?.media }}
       />
 
-      {/* ── Bottom nav ── full width, buttons at edges */}
+      {/* ── Bottom nav ── full width, buttons at edges. flex-wrap + order so Previous/Next
+          always share the first row and stay independently tappable on narrow screens;
+          the optional Stop/Not-relevant buttons wrap to their own row instead of
+          squeezing Previous/Next off-screen. */}
       <div className="shrink-0 border-t border-border bg-white dark:bg-card px-3 sm:px-5 py-3 sm:py-3.5">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
 
           {/* Previous */}
           <Button
             type="button"
             variant="outline"
-            className="relative h-10 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
+            className="relative order-1 h-10 shrink-0 ps-9 sm:ps-11 pe-3 sm:pe-5 text-[13px]"
             onClick={handlePrevious}
             disabled={currentIndex === 0}
           >
@@ -3299,8 +3302,21 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
             </span>
           </Button>
 
-          {/* Center: stop button (adaptive) or not-relevant */}
-          <div className="flex items-center gap-2">
+          {/* Next / Finish */}
+          <Button
+            type="button"
+            onClick={handleNext}
+            className="relative order-2 h-10 shrink-0 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90 sm:order-3"
+          >
+            {nextButtonLabel}
+            <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
+              <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
+            </span>
+          </Button>
+
+          {/* Center: stop button (adaptive) or not-relevant — wraps to its own row on mobile */}
+          {(effectiveMode === 'adaptive' || (inputMode === 'research' && !notRelevantIds.has(currentQuestion.id))) && (
+          <div className="order-3 flex w-full shrink-0 basis-full items-center justify-center gap-2 sm:order-2 sm:w-auto sm:basis-auto sm:justify-start">
             {effectiveMode === 'adaptive' && (
               <Button
                 type="button"
@@ -3325,18 +3341,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               </Button>
             )}
           </div>
-
-          {/* Next / Finish */}
-          <Button
-            type="button"
-            onClick={handleNext}
-            className="relative h-10 ps-3 sm:ps-5 pe-9 sm:pe-11 text-[13px] font-medium bg-[var(--accent-brand)] text-white hover:opacity-90"
-          >
-            {nextButtonLabel}
-            <span className="pointer-events-none absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-r-lg bg-primary-foreground/15">
-              <ChevronRight size={16} strokeWidth={2} className="opacity-70" aria-hidden="true" />
-            </span>
-          </Button>
+          )}
 
         </div>
       </div>

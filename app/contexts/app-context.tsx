@@ -260,6 +260,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       'theme-rose',
     );
     root.classList.add(`theme-${currentTheme}`);
+    root.classList.toggle('dark', currentTheme === 'dark');
   }, []);
 
   const applyFont = useCallback((_currentFont: FontType) => {
