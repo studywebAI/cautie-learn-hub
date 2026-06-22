@@ -1,6 +1,11 @@
 # Cautie Learn Hub — Backlog Checklist
 
-> **WORKFLOW (MVP MODE):** Claude bewerkt bestanden ALLEEN lokaal in `/home/user/cautie-learn-hub/`. Geen git commands van Claude. Jij doet `git add/commit/push` zelf naar `main` wanneer je klaar bent. Snelheid > perfectie.
+> **🚀 PERMANENTE WORKFLOW (MVP MODE - TESTED & WORKING):**
+> 1. Claude edits files lokaal in `/home/user/cautie-learn-hub/` (cloud sessie)
+> 2. Claude AUTO-commits + AUTO-pushes naar `main` branch (GEEN special branches meer)
+> 3. Jij doet `git pull origin main` op je Windows machine (`C:\Projects\...`) wanneer je klaar bent
+> 4. Snelheid > perfectie — fix/revert als nodig
+> **NEVER:** Geen more `claude/session-nANUa` branch. Direct `main` only. TESTED 2024-06-22.
 
 ---
 
