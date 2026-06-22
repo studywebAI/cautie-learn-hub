@@ -1,6 +1,6 @@
 # Cautie Learn Hub — Backlog Checklist
 
-> Werkwijze: Claude bewerkt bestanden alleen lokaal in deze map. Geen `git commit`/`git push` vanuit Claude — jij doet dat zelf naar `main` wanneer je wilt.
+> **WORKFLOW (MVP MODE):** Claude bewerkt bestanden ALLEEN lokaal in `/home/user/cautie-learn-hub/`. Geen git commands van Claude. Jij doet `git add/commit/push` zelf naar `main` wanneer je klaar bent. Snelheid > perfectie.
 
 ---
 
