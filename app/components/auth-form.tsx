@@ -20,8 +20,11 @@ export function AuthForm({
   const [email, setEmail] = useState(searchParams?.email || '')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
-  const [step, setStep] = useState<'credentials' | '2fa'>('credentials')
+  const [step, setStep] = useState<'credentials' | 'email-verification' | 'totp-challenge'>('credentials')
   const [error, setError] = useState<string | null>(null)
+  const [tempEmail, setTempEmail] = useState('')
+  const [tempPassword, setTempPassword] = useState('')
+  const [requires2FA, setRequires2FA] = useState(false)
 
   const handleGoogleSignIn = async () => {
     try {
@@ -67,12 +70,90 @@ export function AuthForm({
         return
       }
 
-      // Move to code verification step
-      setStep('2fa')
+      // Store temp credentials for potential 2FA check
+      setTempEmail(email)
+      setTempPassword(password)
+
+      // Check if this user has 2FA enabled
+      if (!isSignUp) {
+        try {
+          const statusResponse = await fetch('/api/auth/2fa/status')
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json()
+            if (statusData.enabled) {
+              setRequires2FA(true)
+              setStep('totp-challenge')
+              setCode('')
+              setIsLoading(false)
+              return
+            }
+          }
+        } catch (err) {
+          console.error('Failed to check 2FA status:', err)
+          // Continue to email verification if 2FA check fails
+        }
+      }
+
+      // Move to email verification step
+      setStep('email-verification')
       setCode('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error')
     } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleTotpChallenge = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      if (!code) {
+        setError('Please enter a TOTP code')
+        setIsLoading(false)
+        return
+      }
+
+      // Verify TOTP code server-side
+      const verifyResponse = await fetch('/api/auth/2fa/verify-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: tempEmail, code }),
+      })
+
+      if (!verifyResponse.ok) {
+        const data = await verifyResponse.json()
+        setError(data.error || 'Invalid TOTP code')
+        setIsLoading(false)
+        return
+      }
+
+      // TOTP verified, now verify email OTP
+      const supabase = createClient()
+      const emailCodeResponse = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: tempEmail,
+          password: tempPassword,
+          isSignUp: false,
+        }),
+      })
+
+      if (!emailCodeResponse.ok) {
+        setError('Failed to send email verification code')
+        setIsLoading(false)
+        return
+      }
+
+      // Move to email verification step
+      setStep('email-verification')
+      setCode('')
+      setIsLoading(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed')
       setIsLoading(false)
     }
   }

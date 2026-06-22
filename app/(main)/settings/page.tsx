@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import { ThemePicker } from '@/components/settings/theme-picker';
 import { NotificationPreferences } from '@/components/notifications/notification-preferences';
+import { TwoFASetup } from '@/components/settings/2fa-setup';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,6 +62,8 @@ export default function SettingsPage() {
   const [usesDefaultOpenAIKey, setUsesDefaultOpenAIKey] = useState(false);
   const [logCodeQuery, setLogCodeQuery] = useState('');
   const [adaptiveSensitivity, setAdaptiveSensitivity] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
+  const [oauthProvider, setOauthProvider] = useState<string | null>(null);
+  const [googleEmail, setGoogleEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -69,6 +72,17 @@ export default function SettingsPage() {
       setAdaptiveSensitivity(savedSensitivity);
     }
   }, []);
+
+  // Check OAuth provider and linked account
+  useEffect(() => {
+    if (!session?.user) return;
+    const provider = session.user.user_metadata?.provider;
+    const providerEmail = session.user.user_metadata?.email || session.user.email;
+    if (provider) {
+      setOauthProvider(provider);
+      setGoogleEmail(providerEmail);
+    }
+  }, [session?.user]);
 
   const updateAdaptiveSensitivity = (value: 'conservative' | 'balanced' | 'aggressive') => {
     setAdaptiveSensitivity(value);
@@ -130,7 +144,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tabParam = (searchParams?.get('tab') || '').toLowerCase();
-    const validTabs = new Set(['personalization', 'account', 'general', 'studysets', 'subscription', 'help', 'log-codes']);
+    const validTabs = new Set(['personalization', 'account', 'general', 'studysets', 'subscription', 'help', 'log-codes', '2fa']);
     if (validTabs.has(tabParam)) {
       setActiveTab(tabParam);
       return;
@@ -268,6 +282,7 @@ export default function SettingsPage() {
   const tabItems = [
     { id: 'personalization', label: tr({ en: 'Personalization', nl: 'Personalisatie' }) },
     { id: 'account', label: tr({ en: 'Account', nl: 'Account' }) },
+    { id: '2fa', label: tr({ en: 'Two-Factor Auth', nl: 'Twee-factor auth' }) },
     { id: 'general', label: tr({ en: 'General', nl: 'Algemeen' }) },
     { id: 'studysets', label: tr({ en: 'Studysets', nl: 'Studiesets' }) },
     { id: 'subscription', label: tr({ en: 'Subscription', nl: 'Abonnement' }) },
@@ -454,7 +469,7 @@ export default function SettingsPage() {
                 <CardHeader>
                   <CardTitle>{tr({ en: 'Account', nl: 'Account' })}</CardTitle>
                   <CardDescription>
-                    {tr({ en: 'Your name, email, password, and support code.', nl: 'Je naam, e-mail, wachtwoord en supportcode.' })}
+                    {tr({ en: 'Your name, email, password, support code, and linked accounts.', nl: 'Je naam, e-mail, wachtwoord, supportcode en gekoppelde accounts.' })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -534,8 +549,32 @@ export default function SettingsPage() {
                       </p>
                     )}
                   </div>
+
+                  <div className="grid gap-2 max-w-md">
+                    <Label>{tr({ en: 'Linked accounts', nl: 'Gekoppelde accounts' })}</Label>
+                    {oauthProvider === 'google' ? (
+                      <div className="flex items-center justify-between rounded-lg border border-border p-3 bg-muted/20">
+                        <div>
+                          <p className="text-sm font-medium">{tr({ en: 'Google', nl: 'Google' })}</p>
+                          <p className="text-xs text-muted-foreground">{googleEmail}</p>
+                        </div>
+                        <span className="text-xs font-medium text-green-600">{tr({ en: 'Connected', nl: 'Verbonden' })}</span>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {tr({
+                          en: 'No OAuth providers linked. Sign in with Google from the login page to link your account.',
+                          nl: 'Geen OAuth-providers gekoppeld. Meld je aan met Google op de login-pagina om je account te koppelen.',
+                        })}
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
+              )}
+
+              {activeTab === '2fa' && (
+              <TwoFASetup isDutch={isDutch} />
               )}
 
               {activeTab === 'general' && (

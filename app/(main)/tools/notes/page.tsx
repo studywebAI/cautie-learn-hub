@@ -41,7 +41,7 @@ import {
 } from '@/lib/tools/notes-canonical-adapter';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { sanitizeEditorHtml as importedSanitizeEditorHtml } from '@/lib/sanitize';
-import { resolveSpeechLocale } from '@/hooks/use-browser-speech';
+import { resolveSpeechLocale } from '@/lib/speech-locale';
 import { SourcesPill, SourcesSidebar, type SourcesPanelData } from '@/components/tools/sources-panel';
 
 type BrowserSpeechRecognition = {
