@@ -219,12 +219,30 @@ export function AuthForm({
   return (
     <div className="w-full max-w-lg space-y-6 rounded-lg border border-border surface-panel p-8">
         <div className="text-center">
-          <h2 className="text-2xl md:text-3xl">{step === 'credentials' ? (isSignUp ? 'Create an account' : 'Welcome back') : 'Check your email'}</h2>
-          <p className="mt-2 text-sm text-muted-foreground md:text-base">
-            {step === 'credentials'
-              ? `Enter your email and password to ${isSignUp ? 'create an account' : 'sign in'}`
-              : 'Enter the verification code sent to your email'}
-          </p>
+          {step === 'credentials' && (
+            <>
+              <h2 className="text-2xl md:text-3xl">{isSignUp ? 'Create an account' : 'Welcome back'}</h2>
+              <p className="mt-2 text-sm text-muted-foreground md:text-base">
+                {`Enter your email and password to ${isSignUp ? 'create an account' : 'sign in'}`}
+              </p>
+            </>
+          )}
+          {step === 'totp-challenge' && (
+            <>
+              <h2 className="text-2xl md:text-3xl">Two-Factor Authentication</h2>
+              <p className="mt-2 text-sm text-muted-foreground md:text-base">
+                Enter the 6-digit code from your authenticator app
+              </p>
+            </>
+          )}
+          {step === 'email-verification' && (
+            <>
+              <h2 className="text-2xl md:text-3xl">Check your email</h2>
+              <p className="mt-2 text-sm text-muted-foreground md:text-base">
+                Enter the verification code sent to your email
+              </p>
+            </>
+          )}
         </div>
 
         {(searchParams?.message || error) && (
@@ -349,6 +367,53 @@ export function AuthForm({
                     Forgot password?
                   </a>
                 )}
+              </div>
+            </form>
+          ) : step === 'totp-challenge' ? (
+            <form onSubmit={handleTotpChallenge} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="totp-code">Authenticator Code</Label>
+                <Input
+                  id="totp-code"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  required
+                  disabled={isLoading}
+                  className="h-12 text-center text-2xl tracking-widest"
+                />
+                <p className="text-center text-sm text-muted-foreground">
+                  Enter the 6-digit code from your authenticator app
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Button type="submit" disabled={isLoading || code.length !== 6} className="h-10 w-full">
+                  {isLoading ? (
+                    <>
+                      <Spinner size={16} color="white" className="mr-2" />
+                      Verifying...
+                    </>
+                  ) : (
+                    'Verify Code'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStep('credentials')
+                    setError(null)
+                    setCode('')
+                    setRequires2FA(false)
+                  }}
+                  disabled={isLoading}
+                  className="h-10 w-full"
+                >
+                  Back
+                </Button>
               </div>
             </form>
           ) : (

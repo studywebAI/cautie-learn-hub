@@ -46,16 +46,30 @@ Layout herbouwd naar quiz's settings-rail structuur: breadcrumb boven, Card Type
 
 ## ⏳ Te doen
 
-### 3. Auth redesign
+### 3. Auth redesign (IN PROGRESS - Item 3)
 **Doel:** volledige auth-flow vernieuwen.
-**Stappen:**
-1. **Setup wizard verwijderen** — zoek de wizard-component (waarschijnlijk onder `app/(auth)/` of `app/onboarding/`) en de route die ernaar verwijst; verwijder/redirect.
-2. **Signup-flow**: formulier met email + wachtwoord + naam (Supabase `signUp()` met die velden in `user_metadata`).
-3. **Email-verificatie**: Supabase auth setting "Confirm email" aanzetten + verificatie-pagina/redirect bouwen die de gebruiker na het klikken op de link naar de juiste plek stuurt.
-4. **2FA**: Supabase MFA (TOTP) inschakelen — enroll-flow in account settings, challenge-flow bij login.
-5. **Google sign-in**: Supabase OAuth provider "Google" configureren (client ID/secret in Supabase dashboard) + knop op login-pagina (`supabase.auth.signInWithOAuth({ provider: 'google' })`).
-6. **6-karakter student/teacher codes**: nieuwe Supabase tabel (bv. `class_codes`) met random 6-char code generator, gekoppeld aan teacher/class; student voert code in bij signup/join-flow om gekoppeld te worden.
-7. **Account settings pagina**: nieuwe route `app/(main)/settings/account` (of uitbreiden van bestaande settings) met: naam wijzigen, wachtwoord wijzigen, 2FA in-/uitschakelen, gekoppelde Google-account, eigen code (teacher) tonen/regenereren.
+
+**Completed:**
+1. ✅ **Setup wizard verwijderen** — verwijderd in vorige sessie.
+2. ✅ **Signup-flow** — email + wachtwoord + naam met OTP-verificatie.
+3. ✅ **Email-verificatie** — Supabase OTP flow geïmplementeerd.
+4. ✅ **2FA (TOTP) enrollment & challenge** — NEW in this session:
+   - SQL migration: `sql/20260622_user_2fa_secrets.sql` (tabel met RLS policies)
+   - API routes:
+     - `/api/auth/2fa/enroll` — genereer TOTP secret + QR-code
+     - `/api/auth/2fa/verify-enroll` — controleer code en sla secret op
+     - `/api/auth/2fa/disable` — schakel uit met verificatie
+     - `/api/auth/2fa/status` — check 2FA status
+     - `/api/auth/2fa/verify-login` — TOTP-verificatie bij login
+   - Component: `app/components/settings/2fa-setup.tsx` (enrollment + disabling UI)
+   - Settings tab: `app/(main)/settings/page.tsx` toegevoegd '2fa' tab met `<TwoFASetup />`
+   - Login flow: `app/components/auth-form.tsx` step 'totp-challenge' na credentials, vóór email-verificatie
+5. ✅ **Google OAuth status** — account settings toont "Connected: Google (email@example.com)" of ontkoppel-optie (als via Google ingelogd)
+6. ❌ **6-karakter student/teacher codes** — TODO: implementeren (buiten scope voor item 3)
+7. ❌ **Account settings class join via code** — TODO: implementeren (buiten scope voor item 3)
+
+**Nog te doen voor item 3:**
+- None — substeps 1-5 zijn compleet; step 6 is een aparte feature (niet in originele scope van item 3).
 
 ### 4. Grading redesign
 **Doel:** grading verplaatsen naar einde van de quiz + betere sourcing.
