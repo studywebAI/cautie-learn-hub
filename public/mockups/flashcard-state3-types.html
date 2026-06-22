@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cautie — Flashcard State 3 (Study Screen) Mockups</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d0d0d;color:#e5e5e5;min-height:100vh}
+.layout{display:flex;gap:0;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:#111;border-right:1px solid #1c1c1c;padding:24px 16px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar h1{font-size:15px;font-weight:700;margin-bottom:4px;color:#e5e5e5}
+.sidebar p{font-size:11px;color:#555;margin-bottom:24px}
+.nav-section{font-size:10px;font-weight:600;color:#444;letter-spacing:.1em;text-transform:uppercase;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:#666;transition:all .15s;margin-bottom:1px;text-decoration:none}
+.nav-item:hover{background:#1a1a1a;color:#ccc}
+.nav-item.active{background:rgba(127,137,98,.15);color:#7f8962}
+.nav-num{font-size:10px;color:#444;min-width:18px}
+.nav-soon{font-size:8px;margin-left:auto;padding:1px 5px;border-radius:8px;background:#1e1e1e;color:#555}
+.main{flex:1;padding:40px 48px;max-width:1180px}
+.page-header{margin-bottom:56px}
+.page-header h2{font-size:28px;font-weight:700;margin-bottom:8px}
+.page-header p{font-size:14px;color:#666;max-width:680px;line-height:1.6}
+.section{margin-bottom:80px;scroll-margin-top:40px}
+.section-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.section-badge{display:inline-block;font-size:11px;font-weight:600;color:#7f8962;background:rgba(127,137,98,.1);padding:2px 10px;border-radius:4px;margin-bottom:10px}
+.section-badge.soon{color:#c99a4a;background:rgba(201,154,74,.1)}
+.section-desc{font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;max-width:760px}
+.hint-row{font-size:10.5px;color:#3e3e3e;margin-bottom:18px}
+.variants{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+
+/* ─── FLIP CARD ─── */
+.fc-wrap{perspective:1200px}
+.fc-tag{font-size:10px;font-weight:600;color:#666;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.fc-tag span.t{color:#7f8962;background:rgba(127,137,98,.1);padding:2px 8px;border-radius:4px;font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+.flipcard{position:relative;width:100%;height:190px;cursor:pointer}
+.flipcard-inner{position:absolute;inset:0;transition:transform .45s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.flipcard.flipped .flipcard-inner{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;border-radius:14px;border:1px solid #1e1e1e;background:#161616;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center}
+.fc-face.back{transform:rotateY(180deg);background:#171c14;border-color:rgba(127,137,98,.35)}
+.fc-side-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#3e3e3e;position:absolute;top:12px;left:14px}
+.fc-front-text{font-size:16px;font-weight:500;color:#e5e5e5;line-height:1.35}
+.fc-back-text{font-size:14px;color:#cfe0c8;line-height:1.4}
+.fc-flip-hint{font-size:9px;color:#333;position:absolute;bottom:10px}
+.fc-chip{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid rgba(127,137,98,.3);color:#7f8962;background:rgba(127,137,98,.08)}
+.fc-mcq{display:flex;flex-direction:column;gap:5px;width:100%;margin-top:4px}
+.fc-mcq-opt{font-size:11px;padding:6px 10px;border-radius:7px;border:1px solid #232323;color:#aaa;background:#1a1a1a;text-align:left;display:flex;align-items:center;gap:6px}
+.fc-mcq-opt.cor{border-color:#4ade80;background:rgba(74,222,128,.08);color:#cdebcd}
+.fc-tf-row{display:flex;gap:10px;margin-top:4px}
+.fc-tf-btn{font-size:11px;font-weight:700;padding:6px 16px;border-radius:8px;border:1.5px solid}
+.fc-tf-true{color:#4ade80;border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.06)}
+.fc-tf-false{color:#f87171;border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.06)}
+.fc-tf-correct{font-size:10px;color:#666;margin-top:2px}
+
+/* ─── TYPE THE ANSWER ─── */
+.ta-card{border-radius:14px;border:1px solid #1e1e1e;background:#161616;padding:22px;display:flex;flex-direction:column;gap:12px;min-height:190px}
+.ta-front{font-size:15px;font-weight:500;color:#e5e5e5;text-align:center;padding-top:6px}
+.ta-input-row{display:flex;gap:6px}
+.ta-input{flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:8px 10px;font-size:12px;color:#ddd}
+.ta-check-btn{font-size:11px;font-weight:600;padding:8px 12px;border-radius:8px;background:#7f8962;color:#0d0d0d;border:none}
+.ta-result{font-size:11px;border-radius:8px;padding:8px 10px;display:none}
+.ta-result.show{display:block}
+.ta-result.correct{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);color:#cdebcd}
+.ta-result.close{background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.3);color:#fde68a}
+.ta-hint{font-size:9.5px;color:#444}
+
+/* ─── MATCH GAME ─── */
+.match-board{border:1px solid #1c1c1c;border-radius:14px;background:#141414;padding:18px}
+.match-timer{font-size:10px;color:#666;display:flex;justify-content:space-between;margin-bottom:12px}
+.match-timer b{color:#7f8962}
+.match-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.match-tile{font-size:11px;padding:10px 8px;border-radius:9px;border:1px solid #232323;background:#1a1a1a;color:#bbb;text-align:center;cursor:pointer;min-height:46px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.match-tile:hover{border-color:#3a3a3a}
+.match-tile.sel{border-color:#7f8962;background:rgba(127,137,98,.12);color:#fff}
+.match-tile.matched{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.06);color:#4ade80;opacity:.5}
+
+/* Divider */
+.divider{border:none;border-top:1px solid #1a1a1a;margin:50px 0}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <h1>Cautie</h1>
+  <p>Flashcards — State 3 Study Screen<br>(Quizlet-native question types)</p>
+  <div class="nav-section">Question Types</div>
+  <a class="nav-item active" href="#flip"><span class="nav-num">01</span> Flip</a>
+  <a class="nav-item" href="#mcq"><span class="nav-num">02</span> Multiple Choice</a>
+  <a class="nav-item" href="#tf"><span class="nav-num">03</span> True / False<span class="nav-soon">soon</span></a>
+  <a class="nav-item" href="#type"><span class="nav-num">04</span> Type the Answer</a>
+  <a class="nav-item" href="#match"><span class="nav-num">05</span> Match<span class="nav-soon">soon</span></a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<div class="page-header">
+  <h2>Flashcard State 3 — Question Type Mockups</h2>
+  <p>These are the 5 question types selectable in State 2 (options screen), shown here as they'd appear in State 3 (study screen). Flip, Multiple Choice and Type the Answer are already implemented in flashcard-viewer.tsx. True/False and Match are mocked here first — viewer build comes after this round. 3 layout variants per type.</p>
+</div>
+
+<!-- 01 FLIP -->
+<section class="section" id="flip">
+  <div class="section-badge">01 · live</div>
+  <div class="section-title">Flip</div>
+  <div class="section-desc">Quizlet's "Flashcards" mode. Term/cue fragment on front, matching answer fragment on back. Click to flip.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Plain<span class="t">flip</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">the organ that pumps blood</div><span class="fc-flip-hint">↻ tap to flip</span></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the heart</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">With hint chip (Assisted)<span class="t">flip</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">powerhouse of the cell</div><span class="fc-chip">💡 power + house</span></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">the mitochondria</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Reversed direction<span class="t">flip</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">Paris</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Back</span><div class="fc-back-text">capital of France</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 02 MULTIPLE CHOICE -->
+<section class="section" id="mcq">
+  <div class="section-badge">02 · live</div>
+  <div class="section-title">Multiple Choice</div>
+  <div class="section-desc">Quizlet "Test" mode style. Flip reveals the back as a few answer choices — one correct, distractors from the same domain.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Biology<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">the organ that pumps blood</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ the heart</div>
+              <div class="fc-mcq-opt">the liver</div>
+              <div class="fc-mcq-opt">the kidneys</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">History (4 options)<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">year the Eighty Years' War began</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ 1568</div>
+              <div class="fc-mcq-opt">1648</div>
+              <div class="fc-mcq-opt">1492</div>
+              <div class="fc-mcq-opt">1776</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Vocab<span class="t">multiple-choice</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Front</span><div class="fc-front-text">ubiquitous</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Choices</span>
+            <div class="fc-mcq">
+              <div class="fc-mcq-opt cor">✓ present everywhere</div>
+              <div class="fc-mcq-opt">rare and unusual</div>
+              <div class="fc-mcq-opt">loud and abrasive</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 03 TRUE / FALSE -->
+<section class="section" id="tf">
+  <div class="section-badge soon">03 · coming soon</div>
+  <div class="section-title">True / False</div>
+  <div class="section-desc">Quizlet "Test" mode style. Front is a statement, flip reveals whether it's true or false, plus a one-line correction if false. Needs a new render path in flashcard-viewer.tsx — not wired yet.</div>
+  <div class="hint-row">click any card to flip ↻</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">True example<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">The heart has four chambers.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-true">True</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">False example<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face"><span class="fc-side-label">Statement</span><div class="fc-front-text" style="font-size:14px">Sharks are mammals.</div></div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-false">False</span></div>
+            <div class="fc-tf-correct">Sharks are fish</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Big buttons (tap before flip)<span class="t">true-false</span></div>
+      <div class="flipcard" data-flip>
+        <div class="flipcard-inner">
+          <div class="fc-face">
+            <span class="fc-side-label">Statement</span>
+            <div class="fc-front-text" style="font-size:14px">Water boils at 100°C at sea level.</div>
+            <div class="fc-tf-row">
+              <span class="fc-tf-btn fc-tf-true">True</span>
+              <span class="fc-tf-btn fc-tf-false">False</span>
+            </div>
+          </div>
+          <div class="fc-face back"><span class="fc-side-label">Answer</span>
+            <div class="fc-tf-row"><span class="fc-tf-btn fc-tf-true">True</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 04 TYPE THE ANSWER -->
+<section class="section" id="type">
+  <div class="section-badge">04 · live (as "fill-blank")</div>
+  <div class="section-title">Type the Answer</div>
+  <div class="section-desc">Quizlet "Spell"/"Write" style without audio. See one side, type the matching answer yourself, then check against the real answer. Already implemented as the "fill-blank" StudyMode.</div>
+  <div class="hint-row">type an answer, then press Check</div>
+  <div class="variants">
+    <div class="fc-wrap">
+      <div class="fc-tag">Plain<span class="t">type-answer</span></div>
+      <div class="ta-card">
+        <span class="fc-side-label" style="position:static">Front</span>
+        <div class="ta-front">the organ that pumps blood</div>
+        <div class="ta-input-row">
+          <input class="ta-input" data-answer="the heart" placeholder="type your answer…">
+          <button class="ta-check-btn" data-check>Check</button>
+        </div>
+        <div class="ta-result"></div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">Close-match feedback<span class="t">type-answer</span></div>
+      <div class="ta-card">
+        <span class="fc-side-label" style="position:static">Front</span>
+        <div class="ta-front">capital of France</div>
+        <div class="ta-input-row">
+          <input class="ta-input" data-answer="paris" data-near="pari" placeholder="type your answer…">
+          <button class="ta-check-btn" data-check>Check</button>
+        </div>
+        <div class="ta-result"></div>
+        <div class="ta-hint">typo-tolerant: small misspellings still count close</div>
+      </div>
+    </div>
+    <div class="fc-wrap">
+      <div class="fc-tag">With letter-count hint<span class="t">type-answer</span></div>
+      <div class="ta-card">
+        <span class="fc-side-label" style="position:static">Front</span>
+        <div class="ta-front">powerhouse of the cell <span class="fc-chip" style="margin-left:4px">12 letters</span></div>
+        <div class="ta-input-row">
+          <input class="ta-input" data-answer="mitochondria" placeholder="type your answer…">
+          <button class="ta-check-btn" data-check>Check</button>
+        </div>
+        <div class="ta-result"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<hr class="divider">
+
+<!-- 05 MATCH -->
+<section class="section" id="match">
+  <div class="section-badge soon">05 · coming soon</div>
+  <div class="section-title">Match</div>
+  <div class="section-desc">Quizlet "Match" mode. Race the clock connecting every term to its definition. Needs a dedicated multi-card board component — not built yet, this is a static mockup of the end state.</div>
+  <div class="hint-row">click two tiles to pair them — matched pairs fade green</div>
+  <div class="variants">
+
+    <div class="fc-wrap">
+      <div class="fc-tag">Small board (3 pairs)<span class="t">match</span></div>
+      <div class="match-board">
+        <div class="match-timer"><span>0:08 elapsed</span><span><b>1</b> / 3 paired</span></div>
+        <div class="match-grid">
+          <div class="match-tile matched">the heart</div>
+          <div class="match-tile">mitochondria</div>
+          <div class="match-tile sel">pumps blood</div>
+          <div class="match-tile">powerhouse of the cell</div>
+          <div class="match-tile">the liver</div>
+          <div class="match-tile">filters toxins</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-wrap">
+      <div class="fc-tag">Mid-game (6 pairs)<span class="t">match</span></div>
+      <div class="match-board">
+        <div class="match-timer"><span>0:21 elapsed</span><span><b>4</b> / 6 paired</span></div>
+        <div class="match-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="match-tile matched">Paris</div>
+          <div class="match-tile matched">capital of France</div>
+          <div class="match-tile matched">Berlin</div>
+          <div class="match-tile matched">capital of Germany</div>
+          <div class="match-tile sel">Rome</div>
+          <div class="match-tile">capital of Spain</div>
+          <div class="match-tile">Madrid</div>
+          <div class="match-tile sel">capital of Italy</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-wrap">
+      <div class="fc-tag">Finished — best time<span class="t">match</span></div>
+      <div class="match-board">
+        <div class="match-timer"><span style="color:#4ade80">0:34 — new best ⚡</span><span><b>6</b> / 6 paired</span></div>
+        <div class="match-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="match-tile matched">term</div>
+          <div class="match-tile matched">definition</div>
+          <div class="match-tile matched">term</div>
+          <div class="match-tile matched">definition</div>
+          <div class="match-tile matched">term</div>
+          <div class="match-tile matched">definition</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+document.querySelectorAll('[data-flip]').forEach((el) => {
+  el.addEventListener('click', () => el.classList.toggle('flipped'));
+});
+
+document.querySelectorAll('[data-check]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const card = btn.closest('.ta-card');
+    const input = card.querySelector('.ta-input');
+    const result = card.querySelector('.ta-result');
+    const given = input.value.trim().toLowerCase();
+    const answer = input.dataset.answer;
+    const near = input.dataset.near;
+    result.classList.add('show');
+    if (given === answer) {
+      result.className = 'ta-result show correct';
+      result.textContent = '✓ Correct — ' + answer;
+    } else if (near && given === near) {
+      result.className = 'ta-result show close';
+      result.textContent = '~ Close enough — ' + answer;
+    } else {
+      result.className = 'ta-result show close';
+      result.textContent = 'Answer: ' + answer;
+    }
+  });
+});
+
+document.querySelectorAll('.match-tile').forEach((tile) => {
+  tile.addEventListener('click', () => {
+    if (tile.classList.contains('matched')) return;
+    tile.classList.toggle('sel');
+  });
+});
+
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) cur = s.id; });
+  navItems.forEach(n => n.classList.toggle('active', n.getAttribute('href') === '#' + cur));
+});
+</script>
+</body>
+</html>

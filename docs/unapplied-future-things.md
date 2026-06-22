@@ -223,6 +223,9 @@ This file tracks features that are in codebase planning/partial state but are no
 - `Flashcards.interleaving_mode`: intentionally mix domains/topics.
 - `Flashcards.semantic_linking`: link cards by meaning graph, not only tags.
 - `Flashcards.error_tagging`: tag misses by error-type taxonomy.
+- `Flashcards.pronunciation_practice_mode`: Quizlet "Spell"/Memrise-style mode — hear the term via TTS, type or speak it back; needs audio playback + speech recognition, not yet built.
+- `Flashcards.true_false_question_type`: statement-card interaction (front: statement, back: true/false) — added to State 2 options list as "Soon", needs a flashcard-viewer.tsx render path.
+- `Flashcards.match_question_type`: Quizlet "Match" pairing game (race the clock connecting terms to definitions) — added to State 2 options list as "Soon", needs a dedicated multi-card board component.
 
 ### 6.8 Notes
 - `Notes.capture_mode`: choose lecture/live/revision/research capture profile.

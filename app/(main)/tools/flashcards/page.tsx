@@ -155,6 +155,8 @@ function FlashcardsPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCards, setGeneratedCards] = useState<Flashcard[] | null>(null);
   const [studyMode, setStudyMode] = useState<StudyMode>('flip');
+  // Practice mode — mirrors quiz's classic/assisted/adaptive triad (feedback timing + difficulty), separate from the interaction type below
+  const [practiceMode, setPracticeMode] = useState<'classic' | 'assisted' | 'adaptive'>('classic');
   const [cardStartSide, setCardStartSide] = useState<'term' | 'explanation'>('term');
   const [flashcardCount, setFlashcardCount] = useState(10);
   const [knowledgeScore, setKnowledgeScore] = useState(50);
@@ -206,24 +208,17 @@ function FlashcardsPageContent() {
   }, [contentClass]);
 
 
+  // Question types — Quizlet-native interaction formats (Flashcards/Test/Match), not quiz-borrowed exercises.
+  // True/False and Match are listed but disabled until flashcard-viewer.tsx gets matching components (see mockups).
   const modeOptions = React.useMemo(
     () => [
-      ...t.flashcards.studyModeOptions
-        .filter((option) => option.value === 'flip' || option.value === 'multiple-choice' || option.value === 'assisted')
-        .map((option) =>
-          option.value === 'flip'
-            ? { ...option, label: 'Standard', description: 'Classic flip card — see one side, flip to reveal the other' }
-            : option.value === 'multiple-choice'
-              ? { ...option, label: 'Multiple choice' }
-              : option
-        ),
-      {
-        value: 'fill-blank',
-        label: 'Fill in the blank',
-        description: 'See one side of a pair (e.g. a year), flip, then write down the matching answer (e.g. the event) yourself before checking',
-      },
-    ],
-    [t.flashcards.studyModeOptions]
+      { value: 'flip', label: 'Flip', description: 'Classic flip card — see one side, flip to reveal the other', comingSoon: false },
+      { value: 'multiple-choice', label: 'Multiple choice', description: 'Choose the correct answer from a few options', comingSoon: false },
+      { value: 'true-false', label: 'True / false', description: 'A short statement — decide if it is true or false', comingSoon: true },
+      { value: 'fill-blank', label: 'Type the answer', description: 'See one side, then type the matching answer yourself before checking', comingSoon: false },
+      { value: 'match', label: 'Match', description: 'Race the clock pairing terms with their definitions', comingSoon: true },
+    ] as const,
+    []
   );
 
   const resolveComputeClass = (requestedCount: number): 'light' | 'standard' | 'heavy' => {
@@ -900,10 +895,44 @@ function FlashcardsPageContent() {
                 </div>
               </div>
 
-              {/* Study Mode */}
+              {/* Practice Mode — mirrors quiz's classic/assisted/adaptive triad */}
               <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
                 <div className="flex items-center justify-between gap-1">
-                  <p className={S}>What study mode do you want?</p>
+                  <p className={S}>What mode do you want?</p>
+                  <InfoTooltip contentClassName="max-w-[200px]">
+                    <p><span className="text-foreground">Classic</span> — study the set once, no extra help.</p>
+                    <p><span className="text-foreground">Assisted</span> — hints and mnemonics shown along the way.</p>
+                    <p><span className="text-foreground">Adaptive</span> — AI mixes question types, unlimited cards.</p>
+                  </InfoTooltip>
+                </div>
+                <div className="space-y-1">
+                  {([
+                    { value: 'classic', label: 'Classic' },
+                    { value: 'assisted', label: 'Assisted' },
+                    { value: 'adaptive', label: 'Adaptive' },
+                  ] as const).map((e) => (
+                    <button
+                      key={e.value}
+                      type="button"
+                      onClick={() => setPracticeMode(e.value)}
+                      disabled={isLoading}
+                      className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] border ${
+                        practiceMode === e.value
+                          ? 'border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-foreground'
+                          : 'border-transparent text-muted-foreground hover:bg-muted/40'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${practiceMode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                      <span>{e.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Question Type — Quizlet-native interaction formats */}
+              <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
+                <div className="flex items-center justify-between gap-1">
+                  <p className={S}>What question type do you want?</p>
                   <InfoTooltip contentClassName="max-w-[200px]">
                     {modeOptions.map((option) => (
                       <p key={option.value}><span className="text-foreground">{option.label}</span> — {option.description}</p>
@@ -915,16 +944,21 @@ function FlashcardsPageContent() {
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setStudyMode(normalizeStudyMode(option.value))}
-                      disabled={isLoading}
+                      onClick={() => !option.comingSoon && setStudyMode(normalizeStudyMode(option.value))}
+                      disabled={isLoading || option.comingSoon}
                       className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] border ${
-                        studyMode === option.value
-                          ? 'border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-foreground'
-                          : 'border-transparent text-muted-foreground hover:bg-muted/40'
+                        option.comingSoon
+                          ? 'border-transparent text-muted-foreground/40 cursor-not-allowed'
+                          : studyMode === option.value
+                            ? 'border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-foreground'
+                            : 'border-transparent text-muted-foreground hover:bg-muted/40'
                       }`}
                     >
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${studyMode === option.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
-                      <span>{option.label}</span>
+                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${!option.comingSoon && studyMode === option.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
+                      <span className="flex-1">{option.label}</span>
+                      {option.comingSoon && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/70">Soon</span>
+                      )}
                     </button>
                   ))}
                 </div>
