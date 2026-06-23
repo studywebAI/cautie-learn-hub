@@ -8,15 +8,15 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { Spinner } from '@/components/ui/spinner';
-import type { StudyMode } from '@/components/tools/flashcard-viewer';
 import type { AppContextType } from '@/contexts/app-context';
 import type { AdvancedToolSettings } from '@/lib/tools/advanced-settings-schema';
+import type { ContentClassification } from '@/lib/tools/content-classifier';
 
-interface ModeOption {
-  readonly value: StudyMode;
-  readonly label: string;
-  readonly description: string;
-  readonly comingSoon: boolean;
+interface FlashcardTypeDefinition {
+  value: string;
+  label: string;
+  description: string;
+  requiresResearchMode?: boolean;
 }
 
 interface FlashcardsOptionsPanelProps {
@@ -31,13 +31,14 @@ interface FlashcardsOptionsPanelProps {
   setKnowledgeScore: (value: number) => void;
   practiceMode: 'classic' | 'assisted' | 'adaptive';
   setPracticeMode: (mode: 'classic' | 'assisted' | 'adaptive') => void;
-  studyMode: StudyMode;
-  setStudyMode: (mode: StudyMode) => void;
   flashcardCount: number;
   setFlashcardCount: (count: number) => void;
   isLoading: boolean;
   sourceText: string;
-  modeOptions: readonly any[];
+  visibleCardTypes: FlashcardTypeDefinition[];
+  enabledCardTypes: string[];
+  toggleCardType: (value: string) => void;
+  contentClass: ContentClassification | null;
   saveAdvancedSettingsPatch: (patch: Partial<AdvancedToolSettings>, context?: { tool?: string; isLiveGeneratedQuiz?: boolean }) => Promise<{ ok: boolean; conflicts?: any; error?: any }>;
   handleGenerate: (text: string) => Promise<void>;
   autoGenerateTitle: (text: string) => string;
@@ -55,13 +56,14 @@ export function FlashcardsOptionsPanel({
   setKnowledgeScore,
   practiceMode,
   setPracticeMode,
-  studyMode,
-  setStudyMode,
   flashcardCount,
   setFlashcardCount,
   isLoading,
   sourceText,
-  modeOptions,
+  visibleCardTypes,
+  enabledCardTypes,
+  toggleCardType,
+  contentClass,
   saveAdvancedSettingsPatch,
   handleGenerate,
   autoGenerateTitle,
@@ -92,8 +94,70 @@ export function FlashcardsOptionsPanel({
       {/* Body: card types (left) + settings rail (right) */}
       <div className="flex flex-1 overflow-hidden bg-background">
 
-        {/* ── Left: Empty (reserved for future use) ── */}
-        <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg" />
+        {/* ── Left: Card Types accordion ── */}
+        <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg">
+          <div className="p-4 pb-2">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className={S}>Card Types</p>
+              <span className="text-[11px] text-muted-foreground">{enabledCardTypes.length} selected</span>
+            </div>
+          </div>
+
+          <div className="mx-4 mb-4 rounded-lg border border-border/60 overflow-visible bg-card">
+            {visibleCardTypes.map((typeDef, idx, arr) => {
+              const isSelected = enabledCardTypes.includes(typeDef.value);
+              const isFirst = idx === 0;
+              const isLast = idx === arr.length - 1;
+              return (
+                <div
+                  key={typeDef.value}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => toggleCardType(typeDef.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleCardType(typeDef.value)}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/40 last:border-b-0 transition-all ${isFirst ? 'rounded-t-lg' : ''} ${isLast ? 'rounded-b-lg' : ''} ${isSelected ? 'bg-[var(--accent-brand)]/10' : 'hover:bg-muted/40'}`}
+                >
+                  <div
+                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                      isSelected
+                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]'
+                        : 'border-muted-foreground/25 hover:border-[var(--accent-brand)]/50'
+                    }`}
+                  >
+                    {isSelected && <span className="block h-[6px] w-[6px] rounded-full bg-white" />}
+                  </div>
+                  <span className={`text-[13px] flex-1 ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {typeDef.label}
+                  </span>
+                  <InfoTooltip contentClassName="max-w-[224px]">
+                    {typeDef.description}
+                  </InfoTooltip>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Content classification tags */}
+          {contentClass && (
+            <div className="mx-4 mb-4 flex flex-wrap gap-1.5">
+              {contentClass.vocabulary === 'y' && (
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Vocabulary</span>
+              )}
+              {contentClass.code === 'y' && (
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Code</span>
+              )}
+              {contentClass.processes === 'y' && (
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Processes</span>
+              )}
+              {contentClass.people === 'y' && (
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">People</span>
+              )}
+              {contentClass.dates === 'y' && (
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Dates</span>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* ── Right rail: Settings ── */}
         <div className="w-[280px] shrink-0 bg-background m-3 ml-0 rounded-lg overflow-y-auto">
@@ -161,41 +225,6 @@ export function FlashcardsOptionsPanel({
                   >
                     <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${practiceMode === e.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
                     <span>{e.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Question Type — Quizlet-native interaction formats */}
-            <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
-              <div className="flex items-center justify-between gap-1">
-                <p className={S}>Welk vraagtype wil je?</p>
-                <InfoTooltip contentClassName="max-w-[200px]">
-                  {modeOptions.map((option) => (
-                    <p key={option.value}><span className="text-foreground">{option.label}</span> — {option.description}</p>
-                  ))}
-                </InfoTooltip>
-              </div>
-              <div className="space-y-1">
-                {modeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => !option.comingSoon && setStudyMode(option.value)}
-                    disabled={isLoading || option.comingSoon}
-                    className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors text-[13px] border ${
-                      option.comingSoon
-                        ? 'border-transparent text-muted-foreground/40 cursor-not-allowed'
-                        : studyMode === option.value
-                          ? 'border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10 text-foreground'
-                          : 'border-transparent text-muted-foreground hover:bg-muted/40'
-                    }`}
-                  >
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors ${!option.comingSoon && studyMode === option.value ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'}`} />
-                    <span className="flex-1">{option.label}</span>
-                    {option.comingSoon && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground/70">Soon</span>
-                    )}
                   </button>
                 ))}
               </div>

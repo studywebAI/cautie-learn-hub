@@ -164,6 +164,7 @@ function FlashcardsPageContent() {
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
+  const [enabledCardTypes, setEnabledCardTypes] = useState<string[]>(['term-definition']);
   const launchHandledRef = useRef(false);
   const performanceRecordedRef = useRef(false);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -185,18 +186,28 @@ function FlashcardsPageContent() {
 
 
 
-  // Question types — Quizlet-native interaction formats (Flashcards/Test/Match), not quiz-borrowed exercises.
-  // True/False and Match are listed but disabled until flashcard-viewer.tsx gets matching components (see mockups).
-  const modeOptions = React.useMemo(
-    () => [
-      { value: 'flip', label: 'Flip', description: 'Classic flip card — see one side, flip to reveal the other', comingSoon: false },
-      { value: 'multiple-choice', label: 'Multiple choice', description: 'Choose the correct answer from a few options', comingSoon: false },
-      { value: 'true-false', label: 'True / false', description: 'A short statement — decide if it is true or false', comingSoon: true },
-      { value: 'fill-blank', label: 'Type the answer', description: 'See one side, then type the matching answer yourself before checking', comingSoon: false },
-      { value: 'match', label: 'Match', description: 'Race the clock pairing terms with their definitions', comingSoon: true },
-    ] as const,
-    []
+  const visibleCardTypes = React.useMemo(
+    () => FLASHCARD_TYPE_DEFINITIONS.filter(
+      (def) =>
+        (!def.requiresResearchMode || explanationMode === 'research') &&
+        isFlashcardTypeAvailable(def.value, contentClass)
+    ),
+    [contentClass, explanationMode]
   );
+
+  useEffect(() => {
+    setEnabledCardTypes((prev) => {
+      const allowed = prev.filter((v) => visibleCardTypes.some((t) => t.value === v));
+      return allowed.length > 0 ? allowed : ['term-definition'];
+    });
+  }, [visibleCardTypes]);
+
+  const toggleCardType = (value: string) => {
+    setEnabledCardTypes((prev) => {
+      const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+      return next.length > 0 ? next : prev;
+    });
+  };
 
   const resolveComputeClass = (requestedCount: number): 'light' | 'standard' | 'heavy' => {
     const budget = advancedSettings?.safety.performance_budget || 'auto';
@@ -277,7 +288,7 @@ function FlashcardsPageContent() {
             includeCitations: true,
             includeHints: true,
             includeAssistedHints: requestedMode === 'assisted',
-            enabledTypes: ['term-definition'],
+            enabledTypes: enabledCardTypes,
             sourcePolicy: {
               wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
               wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
@@ -316,7 +327,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [advancedSettings, customTitle, explanationMode, flashcardCount, imageDataUri, knowledgeScore, language, region, saveToRecents, schoolingLevel, studyMode, t.flashcards.generatingTitle, toast, contentClass]);
+  }, [advancedSettings, customTitle, enabledCardTypes, explanationMode, flashcardCount, imageDataUri, knowledgeScore, language, region, saveToRecents, schoolingLevel, studyMode, t.flashcards.generatingTitle, toast, contentClass]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -397,6 +408,15 @@ function FlashcardsPageContent() {
     if (s('knowledgeScore') && !Number.isNaN(Number(s('knowledgeScore')))) setKnowledgeScore(Math.max(0, Math.min(100, Number(s('knowledgeScore')))));
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
     if (s('explanationMode') === 'research') setExplanationMode('research');
+    const storedTypes = s('enabledCardTypes');
+    if (storedTypes) {
+      try {
+        const parsed = JSON.parse(storedTypes);
+        if (Array.isArray(parsed) && parsed.length > 0) setEnabledCardTypes(parsed);
+      } catch {
+        // ignore malformed value
+      }
+    }
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
@@ -404,6 +424,7 @@ function FlashcardsPageContent() {
   useEffect(() => { localStorage.setItem('tools.flashcards.knowledgeScore', String(knowledgeScore)); }, [knowledgeScore]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
   useEffect(() => { localStorage.setItem('tools.flashcards.explanationMode', explanationMode); }, [explanationMode]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.enabledCardTypes', JSON.stringify(enabledCardTypes)); }, [enabledCardTypes]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -509,6 +530,7 @@ function FlashcardsPageContent() {
               onImageDataUriChange={setImageDataUri}
               onSubmit={(compiledText) => {
                 setSourceText(compiledText);
+                setCustomTitle(autoGenerateTitle(compiledText));
                 setPhase('options');
               }}
               isLoading={false}
@@ -596,13 +618,14 @@ function FlashcardsPageContent() {
         setKnowledgeScore={setKnowledgeScore}
         practiceMode={practiceMode}
         setPracticeMode={setPracticeMode}
-        studyMode={studyMode}
-        setStudyMode={setStudyMode}
         flashcardCount={flashcardCount}
         setFlashcardCount={setFlashcardCount}
         isLoading={isLoading}
         sourceText={sourceText}
-        modeOptions={modeOptions}
+        visibleCardTypes={visibleCardTypes}
+        enabledCardTypes={enabledCardTypes}
+        toggleCardType={toggleCardType}
+        contentClass={contentClass}
         saveAdvancedSettingsPatch={saveAdvancedSettingsPatch}
         handleGenerate={handleGenerate}
         autoGenerateTitle={autoGenerateTitle}
