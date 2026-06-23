@@ -16,15 +16,10 @@ import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ToolInputBox } from '@/components/tools/tool-input-box';
-import { PillSelector } from '@/components/tools/pill-selector';
-import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
-import { ImportToolbar } from '@/components/tools/import-toolbar';
-import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/import-parsers';
 import { getToolStrings } from '@/lib/tool-i18n';
-import { Switch } from '@/components/ui/switch';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { RecentsDialog } from '@/components/tools/recents-dialog';
 import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
@@ -36,7 +31,6 @@ import { postClassShareItem } from '@/lib/class-share/client';
 import { classifyContent, isFlashcardTypeAvailable } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
 import { PageHeader } from '@/components/ui/page-header';
-import { SkeletonGroup, SkeletonCard } from '@/components/ui/skeleton';
 
 type Phase = 'input' | 'options' | 'study';
 
