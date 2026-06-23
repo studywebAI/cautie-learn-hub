@@ -753,7 +753,7 @@ function AgendaPageContent() {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 rounded-xl px-3.5"
+                className="h-9 rounded-xl px-3.5 text-foreground"
                 onClick={() => setIsCalendarDialogOpen(true)}
                 title="Connect your Apple Calendar, Google Calendar, Outlook, or other CalDAV-compatible service"
               >
@@ -763,7 +763,7 @@ function AgendaPageContent() {
             </div>
 
             {isStudent && (
-              <Button className="h-9 rounded-xl px-3.5" onClick={() => setIsCreateTaskOpen(true)}>
+              <Button className="h-9 rounded-xl px-3.5 text-foreground" onClick={() => setIsCreateTaskOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Activity
               </Button>

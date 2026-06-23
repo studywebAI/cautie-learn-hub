@@ -20,8 +20,6 @@ import type { ContentClassification } from '@/lib/tools/content-classifier';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { QUIZ_TYPE_DEFINITIONS, QUIZ_TYPES } from '@/lib/tools/quiz-shared';
 import type { QuizMode, AnswerFeedback, Phase } from '@/lib/tools/quiz-shared';
-import { RecentsDialog } from '@/components/tools/recents-dialog';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 
 const QuizTaker = dynamic(() => import('@/components/tools/quiz-taker').then((module) => module.QuizTaker), { ssr: false });
 const QuizOptionsPanel = dynamic(() => import('@/components/tools/quiz-options-panel').then((module) => module.QuizOptionsPanel), { ssr: false });

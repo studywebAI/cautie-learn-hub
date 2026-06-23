@@ -21,8 +21,6 @@ import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
-import { RecentsDialog } from '@/components/tools/recents-dialog';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
