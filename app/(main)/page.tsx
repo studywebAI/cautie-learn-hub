@@ -21,6 +21,8 @@ import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
 import { RecentActivityFeed } from "@/components/dashboard/teacher/recent-activity-feed";
 import { AnnouncementsStrip } from "@/components/dashboard/announcements-strip";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
 
 // Thin wrapper so we can reference it inside TeacherSummaryDashboard
 function RecentActivityFeedSection() {
@@ -77,9 +79,10 @@ function getDayLabel(): string {
 }
 
 function StudentDashboard() {
-  const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
+  const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects, role } = useContext(AppContext) as AppContextType;
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState<string>('');
+  const [deadlineFilter, setDeadlineFilter] = useState<string>('All');
 
   useEffect(() => {
     if (isLikelyBotClient()) return;
@@ -156,63 +159,69 @@ function StudentDashboard() {
     }).length;
 
   return (
-    <div className="page-content grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-5">
-        {/* Greeting header */}
-        <div className="lg:col-span-3 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
-            <p className="page-subtitle mt-0.5">
-              {getDayLabel()}
-              {todayTaskCount > 0 && (
-                <> · <span className="text-[var(--accent-brand)]">{todayTaskCount} {todayTaskCount === 1 ? 'task' : 'tasks'} due today</span></>
-              )}
-            </p>
-          </div>
-          <NotificationPopover />
+    <div className="page-content flex flex-col gap-5">
+      {/* Greeting header */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
+          <p className="page-subtitle mt-0.5">
+            {getDayLabel()}
+            {todayTaskCount > 0 && (
+              <> · <span className="text-[var(--accent-brand)]">{todayTaskCount} {todayTaskCount === 1 ? 'task' : 'tasks'} due today</span></>
+            )}
+          </p>
         </div>
+        <NotificationPopover />
+      </div>
 
-        {/* Main column */}
-        <div className="lg:col-span-2 flex flex-col gap-4 md:gap-5">
-            <AnnouncementsStrip />
-            <TodayPlanCard
-              assignments={assignments}
-              personalTasks={personalTasks}
-              classes={classes}
-              schoolSlots={schoolSlots}
-            />
-            <TodaysStudysetTasks />
-            <ScheduledStudyItems />
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
-              <AnalyticsDashboard />
-            </Suspense>
-            <MySubjects subjects={subjects} />
-        </div>
+      {/* Sidebar + Main layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+        {/* Sidebar */}
+        <DashboardSidebar userRole={role} />
 
-        {/* Sidebar rail */}
-        <div className="lg:col-span-1 flex flex-col gap-4 md:gap-5">
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-20 mb-2" /></CardHeader><CardContent><div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-9 w-full" />)}</div></CardContent></Card>}>
-              <GradesMiniCard />
-            </Suspense>
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-24 mb-2" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>}>
-              <UpcomingExamsStudysets />
-            </Suspense>
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-20 mb-2" /></CardHeader><CardContent><div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-8 w-full" />)}</div></CardContent></Card>}>
-              <LearningPulse />
-            </Suspense>
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-24 mb-2" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>}>
-              <WeakSpotsPanel />
-            </Suspense>
-            <Alerts alerts={alerts} />
-            <UpcomingDeadlines />
+        {/* Main content */}
+        <div className="flex flex-col gap-4 md:gap-5">
+          <AnnouncementsStrip />
+          <TodayPlanCard
+            assignments={assignments}
+            personalTasks={personalTasks}
+            classes={classes}
+            schoolSlots={schoolSlots}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
+              <CardDescription className="mt-2">
+                <DashboardFilters
+                  filters={['All', 'Homework', 'Tests']}
+                  active={deadlineFilter}
+                  onFilterChange={setDeadlineFilter}
+                />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+                <UpcomingDeadlines />
+              </Suspense>
+            </CardContent>
+          </Card>
+          <TodaysStudysetTasks />
+          <ScheduledStudyItems />
+          <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
+            <AnalyticsDashboard />
+          </Suspense>
+          <MySubjects subjects={subjects} />
         </div>
+      </div>
     </div>
   );
 }
 
 function TeacherSummaryDashboard() {
-    const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments } = useContext(AppContext) as AppContextType;
+    const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments, role } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
     const [unreadMessages, setUnreadMessages] = useState(0);
+    const [assignmentFilter, setAssignmentFilter] = useState<string>('All');
 
     useEffect(() => {
       if (typeof window === 'undefined') return;
@@ -329,9 +338,24 @@ function TeacherSummaryDashboard() {
                 <Button asChild size="sm"><Link href="/classes">Create your first class</Link></Button>
               </div>
             ) : (
-              <div className="grid gap-4 lg:grid-cols-3">
-                {/* Left: Recent activity + quick links */}
-                <div className="lg:col-span-2 flex flex-col gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+                {/* Sidebar */}
+                <DashboardSidebar userRole={role} />
+
+                {/* Main content */}
+                <div className="flex flex-col gap-4 md:gap-5">
+                  {/* Announcements section */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base">Announcements</CardTitle>
+                      <CardDescription>Recent class announcements</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">No recent announcements</p>
+                    </CardContent>
+                  </Card>
+
+                  {/* Recent activity */}
                   <RecentActivityFeedSection />
 
                   {/* Quick links to active class */}
@@ -355,28 +379,55 @@ function TeacherSummaryDashboard() {
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Right: Classes list */}
-                <div className="rounded-xl surface-panel border border-border p-4 h-fit">
-                  <p className="text-xs font-medium text-muted-foreground mb-2.5">Your classes</p>
-                  <div className="space-y-1">
-                    {teacherClasses.slice(0, 8).map((cls) => (
-                      <Link
-                        key={cls.id}
-                        href={`/class/${cls.id}?tab=group`}
-                        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors"
-                      >
-                        <span className="flex items-center gap-2">
-                          <School className="h-3.5 w-3.5 text-[var(--accent-brand)] shrink-0" />
-                          <span className="truncate">{cls.name}</span>
-                        </span>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      </Link>
-                    ))}
-                    {teacherClasses.length > 8 && (
-                      <p className="text-xs text-muted-foreground px-3 pt-1">+{teacherClasses.length - 8} more</p>
-                    )}
+                  {/* To Grade + Recent Submissions grid */}
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">To Grade</CardTitle>
+                        <CardDescription>Pending submissions</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">No pending submissions</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Recent Submissions</CardTitle>
+                        <CardDescription>Latest from students</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">No recent submissions</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Post Announcement + Manage Attendance grid */}
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Post Announcement</CardTitle>
+                        <CardDescription>Share with your classes</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button asChild className="w-full">
+                          <Link href="/agenda">Create Announcement</Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">Manage Attendance</CardTitle>
+                        <CardDescription>Track student attendance</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button asChild className="w-full" variant="outline">
+                          <Link href="/agenda">View Attendance</Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               </div>
