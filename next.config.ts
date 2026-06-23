@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   transpilePackages: ['lucide-react'],
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    // Next 16 defaults dynamic route caching to 0s, forcing a fresh RSC fetch
+    // (and the nearest loading.tsx fallback) on every single navigation, even
+    // to a page visited seconds ago. Restore caching so revisits are instant.
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
 
   images: {
