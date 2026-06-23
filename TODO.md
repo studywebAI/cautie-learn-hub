@@ -17,9 +17,8 @@ Living dump of everything in the repo tagged as "do later" — real `TODO`/`FIXM
 ## Pending decisions (from `BACKLOG_CHECKLIST.md`)
 
 - **Quiz Duel (1v1)** — built (`app/components/tools/quiz-duel.tsx`, `app/ai/flows/generate-quiz-duel-data.ts`) but not wired into the app anywhere.
-  - Option A: launch it — add a "Duel Mode" button in the quiz tool, mount `<QuizDuel />`. Low effort, feature is complete.
-  - Option B: delete it — remove component, flow, and `flow-executor.ts` registration. Low effort.
-  - Still waiting on user preference.
+  - **User decision (2026-06-23):** don't launch the existing 1v1 duel as-is. Real intent is bigger: a **live multiplayer game mode** — teacher or student hosts a session, others join, Kahoot-style. The current `quiz-duel.tsx` is a smaller building block for this, not the end goal.
+  - Deferred — this is a new real-time/multiplayer feature (needs a hosting/joining flow, live session state, probably websockets/realtime channel), not a small wiring task. Revisit as its own sprint when prioritized.
 - **Studyset Materials panel "Add" button** (`app/components/studyset/materials-panel.tsx`) — does nothing, explicit "Coming soon" stub. Needs full upload flow (picker, storage, DB). Out of scope until a later sprint.
 
 ## Real `TODO`/`FIXME` code/doc comments found in repo
