@@ -68,15 +68,24 @@ function MaterialPageContent() {
       setIsLoading(true);
       setError(null);
       try {
-        // Fetch material
-        const materialResponse = await fetch(`/api/materials/${materialId}`);
+        // Fetch material and role in parallel (independent)
+        const [materialResponse, roleResponse] = await Promise.all([
+          fetch(`/api/materials/${materialId}`),
+          fetch("/api/user/role"),
+        ]);
+
+        if (roleResponse.ok) {
+          const roleData = await roleResponse.json();
+          setUserRole(roleData.role);
+        }
+
         if (materialResponse.ok) {
           const materialData: MaterialReference = await materialResponse.json();
           setMaterial(materialData);
           setArtifact(null);
           setArtifactVersions([]);
 
-          // Fetch blocks
+          // Fetch blocks (depends on material existing)
           const blocksResponse = await fetch(`/api/materials/${materialId}/blocks`);
           if (blocksResponse.ok) {
             const blocksData = await blocksResponse.json();
@@ -84,17 +93,17 @@ function MaterialPageContent() {
           }
         } else {
           // Fallback: resolve toolbox artifact by id
-          const artifactsResponse = await fetch('/api/tools/v2/artifacts');
+          const artifactsResponse = await fetch("/api/tools/v2/artifacts");
           if (!artifactsResponse.ok) {
             const errorData = await materialResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Failed to fetch material/artifact');
+            throw new Error(errorData.error || "Failed to fetch material/artifact");
           }
 
           const artifacts: ArtifactRecord[] = await artifactsResponse.json();
           const matchedArtifact = artifacts.find((a) => a.id === materialId) || null;
           if (!matchedArtifact) {
             const errorData = await materialResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Material or artifact not found');
+            throw new Error(errorData.error || "Material or artifact not found");
           }
 
           setArtifact(matchedArtifact);
@@ -107,18 +116,15 @@ function MaterialPageContent() {
             setArtifactVersions(artifactHistory.versions || []);
           }
         }
-
-        // Fetch user role
-        const roleResponse = await fetch('/api/user/role');
-        if (roleResponse.ok) {
-          const roleData = await roleResponse.json();
-          setUserRole(roleData.role);
-        }
       } catch (err: any) {
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
+    };
+
+    fetchData();
+  }, [materialId]);
     };
 
     fetchData();
