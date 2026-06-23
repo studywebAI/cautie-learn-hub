@@ -19,12 +19,13 @@ export async function GET(request: NextRequest) {
         title,
         description,
         status,
+        is_in_poll,
         created_at,
         created_by,
         votes(count)
       `
       )
-      .eq('status', status)
+      .eq('is_in_poll', true)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
