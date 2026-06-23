@@ -171,21 +171,6 @@ function FlashcardsPageContent() {
   const { toast } = useToast();
   const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const advancedHydratedRef = useRef(false);
-  const openParam = searchParams.get('open');
-  const [showRecentsDialog, setShowRecentsDialog] = useState(false);
-  const openHandledRef = useRef(false);
-
-  // Handle open parameter (recents or microsoft)
-  useEffect(() => {
-    if (!openParam || openHandledRef.current) return;
-    openHandledRef.current = true;
-
-    if (openParam === 'microsoft') {
-      window.dispatchEvent(new Event('cautie:open-microsoft-picker'));
-    } else if (openParam === 'recents') {
-      setShowRecentsDialog(true);
-    }
-  }, [openParam]);
 
   // Classify source text after user stops typing (800 ms debounce)
   useEffect(() => {
@@ -509,7 +494,6 @@ function FlashcardsPageContent() {
         hideSidebar={true}
         breadcrumbIcon={<Copy className="h-4 w-4" />}
       >
-        <MicrosoftAppStrip returnTo="/tools/flashcards" />
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
@@ -623,31 +607,6 @@ function FlashcardsPageContent() {
         handleGenerate={handleGenerate}
         autoGenerateTitle={autoGenerateTitle}
       />
-    );
-  }
-
-  // Recents Dialog
-  if (showRecentsDialog && phase === 'input') {
-    return (
-      <WorkbenchShell
-        title="Flashcards"
-        sidebar={<div />}
-        hideSidebar={true}
-        breadcrumbIcon={<Copy className="h-4 w-4" />}
-      >
-        <RecentsDialog
-          toolId="flashcards"
-          onSelect={(sourceText) => {
-            setSourceText(sourceText);
-            setPhase('options');
-            setShowRecentsDialog(false);
-          }}
-          onClose={() => {
-            setShowRecentsDialog(false);
-            setPhase('input');
-          }}
-        />
-      </WorkbenchShell>
     );
   }
 
