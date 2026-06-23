@@ -1,4 +1,4 @@
-import { IdeasProvider } from '@/app/contexts/IdeasContext'
+import { IdeasProvider } from '@/contexts/IdeasContext'
 
 interface Idea {
   id: string
