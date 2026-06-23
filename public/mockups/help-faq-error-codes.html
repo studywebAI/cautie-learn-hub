@@ -194,67 +194,129 @@ const faqData = [
     category: 'Getting Started',
     items: [
       {
-        q: 'What is loper?',
-        a: 'loper is an intelligent learning platform that helps students study more effectively through adaptive quizzes, flashcards, and personalized study tools.'
+        q: 'How do I create my first set of flashcards or a quiz?',
+        a: 'Tap "Create" from your dashboard, choose Flashcards, Quiz, or Notes, then add your terms or questions. You can also import content from a document or photo to get started faster.'
       },
       {
-        q: 'How do I create my first quiz?',
-        a: 'Navigate to the Quiz section, select your study material, and click "Generate Quiz". The AI will automatically detect key concepts and create questions tailored to your knowledge level.'
+        q: 'Can I use the app without creating an account?',
+        a: 'You can browse some public content without an account, but creating a free account lets you save your progress, sync across devices, and create your own materials.'
       },
       {
-        q: 'Can I import my own questions?',
-        a: 'Yes! You can upload questions from CSV, PDF, or manually add them one by one. We support all common question types including multiple choice, true/false, and short answer.'
+        q: 'Is the app available on mobile and desktop?',
+        a: 'Yes — the app works in your browser and as a mobile app, with your content syncing across all signed-in devices.'
       }
     ]
   },
   {
-    category: 'Classes & Subjects',
+    category: 'Studying (Quiz / Flashcards / Notes)',
     items: [
       {
-        q: 'How do I organize my classes?',
-        a: 'Use the Subjects section to create class folders. Within each subject, you can create study sets, assign them to specific topics, and manage multiple quiz variations.'
+        q: "Why isn't my new set or note showing up on my other device?",
+        a: 'Drafts and in-progress edits only sync once saved or published. If a set still shows as a draft, finish editing and save it, then check the other device again.'
       },
       {
-        q: 'Can I share classes with students?',
-        a: 'Yes! Each study set has a sharing option. You can generate a unique link to share with students or colleagues. You can also manage permissions per person.'
+        q: 'Why does my study progress look different on my phone vs. my laptop?',
+        a: 'Some progress is tracked per device by design, so it may not be fully unified everywhere. Check your sync settings to confirm progress sync is enabled for your account.'
       },
       {
-        q: 'What if I need to update a quiz after sharing it?',
-        a: 'You can edit quizzes anytime. Changes will apply to new attempts, while historical results remain unchanged. Students will see an update notification.'
+        q: 'I lost my internet connection while editing — did I lose my changes?',
+        a: "If you see an 'unsaved changes' warning, reconnect and save before closing the tab or app. We recommend saving frequently on an unstable connection."
+      },
+      {
+        q: 'Can I study offline?',
+        a: 'Many study modes can be downloaded or cached for offline use, but creating new content or syncing changes requires an internet connection.'
+      },
+      {
+        q: 'Can I turn my notes into flashcards or a quiz automatically?',
+        a: 'Yes — you can generate flashcards or quiz questions directly from your notes, then edit them afterward for accuracy.'
       }
     ]
   },
   {
-    category: 'Tools & Studying',
+    category: 'Classes & Teachers',
     items: [
       {
-        q: 'How does the adaptive mode work?',
-        a: 'Adaptive mode adjusts question difficulty in real-time based on your answers. As you answer correctly, questions become harder. Incorrect answers result in slightly easier questions to reinforce concepts.'
+        q: 'How do I share study materials with my class?',
+        a: 'Create a class space, invite students via a join code or link, and share sets, quizzes, or notes directly to that class so all members can access them.'
       },
       {
-        q: 'What are flashcards useful for?',
-        a: 'Flashcards are perfect for memorization and quick review. They use spaced repetition to show you cards at optimal intervals, maximizing long-term retention.'
+        q: 'Can I see how my students are performing on assignments?',
+        a: 'Yes — teachers can view class-level and individual completion/accuracy stats for assigned quizzes or flashcard sets to identify who needs extra support.'
       },
       {
-        q: 'How can I track my progress?',
-        a: 'The Analytics dashboard shows your performance over time, including accuracy rates, time spent, common weak areas, and improvement trends across all your study sets.'
+        q: 'Is the app safe to use with students under data privacy laws like FERPA/GDPR?',
+        a: "We don't sell or use student education data for advertising or other non-educational purposes. Schools/districts can request a data privacy agreement — check with your school IT before adopting any new classroom tool."
+      },
+      {
+        q: 'Can students see each other\'s grades or quiz scores?',
+        a: 'No — by default only the teacher can see individual student scores. Students see only their own results unless a teacher enables a shared leaderboard.'
+      },
+      {
+        q: 'How do I remove a student from my class?',
+        a: "Go to your class roster and remove the student. This revokes their access to class materials but does not delete their personal account."
       }
     ]
   },
   {
-    category: 'Account & Settings',
+    category: 'Account & Privacy',
     items: [
       {
-        q: 'How do I change my password?',
-        a: 'Go to Settings > Account Security, click "Change Password", and follow the verification steps. You'll be logged out for security and need to log in again.'
+        q: 'How do I delete my account?',
+        a: 'Go to Account Settings → Delete Account. This permanently removes your profile and content, and the process should never require excessive steps to complete.'
       },
       {
-        q: 'Can I download my study history?',
-        a: 'Yes! Visit Settings > Data Export to download your quiz results, flashcard progress, and study statistics in CSV or PDF format.'
+        q: 'Can I export or download a copy of my data?',
+        a: 'Yes — you can request an export of your sets, notes, and account data from Account Settings, separate from any deletion request.'
       },
       {
-        q: 'Is my data secure and private?',
-        a: 'All data is encrypted in transit and at rest. We never share your study data with third parties. See our Privacy Policy for complete details.'
+        q: 'If I delete my account, is my data gone immediately everywhere, including backups?',
+        a: 'Your data is removed from active systems right away, but it may persist briefly in encrypted backups until those backups cycle out, consistent with standard backup-retention practices.'
+      },
+      {
+        q: 'Do you sell my data or my students\' data to advertisers?',
+        a: 'No — personal study data and student records are not sold or used for ad targeting. See our Privacy Policy for full details on what we collect and why.'
+      }
+    ]
+  },
+  {
+    category: 'Subscription & Billing',
+    items: [
+      {
+        q: 'How do I cancel my subscription?',
+        a: 'Cancel from your account settings or through the app store/platform you subscribed through. Cancelling stops future renewals but does not end your current billing period early.'
+      },
+      {
+        q: 'I deleted the app — am I still being charged?',
+        a: 'Yes — deleting or uninstalling the app does not cancel your subscription. You must cancel through your account or app store settings to stop billing.'
+      },
+      {
+        q: 'Will I be charged automatically after my free trial ends?',
+        a: 'Yes — unless you cancel before the trial ends (typically at least 24 hours prior), your trial converts to a paid subscription automatically.'
+      },
+      {
+        q: 'I reinstalled the app or got a new device — how do I get my premium features back?',
+        a: "Sign in with the same account and use 'Restore Purchases' in your account settings to reinstate your paid features without being charged again."
+      }
+    ]
+  },
+  {
+    category: 'Troubleshooting',
+    items: [
+      {
+        q: 'The app is crashing or freezing — what should I do?',
+        a: 'Force-close and reopen the app, update to the latest version, and restart your device. If it persists, reinstalling often resolves issues caused by corrupted local data.'
+      },
+      {
+        q: "My sets/notes aren't syncing between devices — how do I fix it?",
+        a: "Make sure you're signed into the same account on all devices, check your internet connection, and try signing out and back in to force a re-sync."
+      },
+      {
+        q: "The site or app won't load correctly or looks broken.",
+        a: 'Clear your browser cache and cookies, make sure your browser is updated, or try a different browser. On mobile, update the app to the latest version.'
+      },
+      {
+        q: 'I got an error with a code attached — what does it mean?',
+        a: 'Open the Error Codes tab above, paste the code into the search bar, and you\'ll get a plain-language explanation of what happened. The code is also automatically sent to our team so we can investigate.'
       }
     ]
   }
