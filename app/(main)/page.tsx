@@ -24,7 +24,28 @@ import { AnnouncementsStrip } from "@/components/dashboard/announcements-strip";
 
 // Thin wrapper so we can reference it inside TeacherSummaryDashboard
 function RecentActivityFeedSection() {
-  return <RecentActivityFeed />;
+  return (
+    <Suspense fallback={
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="h-3.5 w-3.5 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-2 w-48" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    }>
+      <RecentActivityFeed />
+    </Suspense>
+  );
 }
 
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
