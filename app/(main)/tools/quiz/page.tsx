@@ -20,6 +20,8 @@ import type { ContentClassification } from '@/lib/tools/content-classifier';
 import { FunLoader } from '@/components/tools/fun-loader';
 import { QUIZ_TYPE_DEFINITIONS, QUIZ_TYPES } from '@/lib/tools/quiz-shared';
 import type { QuizMode, AnswerFeedback, Phase } from '@/lib/tools/quiz-shared';
+import { RecentsDialog } from '@/components/tools/recents-dialog';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 
 const QuizTaker = dynamic(() => import('@/components/tools/quiz-taker').then((module) => module.QuizTaker), { ssr: false });
 const QuizOptionsPanel = dynamic(() => import('@/components/tools/quiz-options-panel').then((module) => module.QuizOptionsPanel), { ssr: false });
@@ -42,6 +44,7 @@ function QuizPageContent() {
   const launchRequested = searchParams.get('launch') === '1';
   const launchMode = searchParams.get('mode') || '';
   const autostartRequested = searchParams.get('autostart') === '1';
+  const openParam = searchParams.get('open');
 
   const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(searchParams.get('sourceText') || '');
@@ -76,6 +79,10 @@ function QuizPageContent() {
   const [aiCategories, setAiCategories] = useState<Record<string, string> | null>(null);
   const [aiCategoryLoading, setAiCategoryLoading] = useState(false);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Recents dialog
+  const [showRecentsDialog, setShowRecentsDialog] = useState(false);
+  const openHandledRef = useRef(false);
 
   const adaptiveCap = 50;
   const runCounterRef = useRef(0);
@@ -383,6 +390,18 @@ function QuizPageContent() {
     }
   }, [buildGenerationInput, mode, questionTypes, title, toast]);
 
+  // Handle open parameter (recents or microsoft)
+  useEffect(() => {
+    if (!openParam || openHandledRef.current) return;
+    openHandledRef.current = true;
+
+    if (openParam === 'microsoft') {
+      window.dispatchEvent(new Event('cautie:open-microsoft-picker'));
+    } else if (openParam === 'recents') {
+      setShowRecentsDialog(true);
+    }
+  }, [openParam]);
+
   // Studyset launch — load preset and auto-generate when launched from a plan task
   useEffect(() => {
     if (!launchRequested || !taskId || !studysetId || launchHandledRef.current) return;
@@ -581,6 +600,7 @@ function QuizPageContent() {
         breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
       >
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
+          <MicrosoftAppStrip returnTo="/tools/quiz" />
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
               <h1 className="text-2xl tracking-tight">Create a Quiz</h1>
@@ -669,6 +689,32 @@ function QuizPageContent() {
   // OPTIONS PHASE - Show settings
   if (phase === 'options') {
     return renderOptions();
+  }
+
+  // Recents Dialog
+  if (showRecentsDialog) {
+    return (
+      <WorkbenchShell
+        title="Quiz"
+        sidebar={<div />}
+        hideSidebar={true}
+        breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
+      >
+        <RecentsDialog
+          toolId="quiz"
+          onSelect={(sourceText) => {
+            setSourceText(sourceText);
+            setPhase('analyzing');
+            setShowRecentsDialog(false);
+            handleInputSubmit(sourceText);
+          }}
+          onClose={() => {
+            setShowRecentsDialog(false);
+            setPhase('input');
+          }}
+        />
+      </WorkbenchShell>
+    );
   }
 
   // Fallback - should not reach here

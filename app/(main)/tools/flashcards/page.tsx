@@ -25,6 +25,8 @@ import { parseFlashcardsFromMarkdown, parseFlashcardsFromHtml } from '@/lib/impo
 import { getToolStrings } from '@/lib/tool-i18n';
 import { Switch } from '@/components/ui/switch';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { RecentsDialog } from '@/components/tools/recents-dialog';
+import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
@@ -185,6 +187,21 @@ function FlashcardsPageContent() {
   const { toast } = useToast();
   const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const advancedHydratedRef = useRef(false);
+  const openParam = searchParams.get('open');
+  const [showRecentsDialog, setShowRecentsDialog] = useState(false);
+  const openHandledRef = useRef(false);
+
+  // Handle open parameter (recents or microsoft)
+  useEffect(() => {
+    if (!openParam || openHandledRef.current) return;
+    openHandledRef.current = true;
+
+    if (openParam === 'microsoft') {
+      window.dispatchEvent(new Event('cautie:open-microsoft-picker'));
+    } else if (openParam === 'recents') {
+      setShowRecentsDialog(true);
+    }
+  }, [openParam]);
 
   // Classify source text after user stops typing (800 ms debounce)
   useEffect(() => {
@@ -591,6 +608,7 @@ function FlashcardsPageContent() {
         breadcrumbIcon={<Copy className="h-4 w-4" />}
       >
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
+          <MicrosoftAppStrip returnTo="/tools/flashcards" />
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
               <h1 className="text-2xl tracking-tight">Create Flashcards</h1>
@@ -1048,6 +1066,31 @@ function FlashcardsPageContent() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  // Recents Dialog
+  if (showRecentsDialog && phase === 'input') {
+    return (
+      <WorkbenchShell
+        title="Flashcards"
+        sidebar={<div />}
+        hideSidebar={true}
+        breadcrumbIcon={<Copy className="h-4 w-4" />}
+      >
+        <RecentsDialog
+          toolId="flashcards"
+          onSelect={(sourceText) => {
+            setSourceText(sourceText);
+            setPhase('options');
+            setShowRecentsDialog(false);
+          }}
+          onClose={() => {
+            setShowRecentsDialog(false);
+            setPhase('input');
+          }}
+        />
+      </WorkbenchShell>
     );
   }
 
