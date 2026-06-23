@@ -1,8 +1,9 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- SUPABASE POSTGRESQL SCHEMA: IDEAS BOARD FEATURE
 -- Production-ready with RLS, indexes, and comprehensive comments
 -- ============================================================================
 
+-- Drop existing objects for safe re-deployment
 DROP TABLE IF EXISTS votes CASCADE;
 DROP TABLE IF EXISTS ideas CASCADE;
 
