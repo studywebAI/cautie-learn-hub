@@ -599,8 +599,8 @@ function QuizPageContent() {
         hideSidebar={true}
         breadcrumbIcon={<BrainCircuit className="h-4 w-4" />}
       >
+        <MicrosoftAppStrip returnTo="/tools/quiz" />
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
-          <MicrosoftAppStrip returnTo="/tools/quiz" />
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
               <h1 className="text-2xl tracking-tight">Create a Quiz</h1>

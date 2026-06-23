@@ -57,7 +57,6 @@ type FlashcardTypeDefinition = {
   label: string;
   description: string;
   requiresResearchMode?: boolean;
-  requiresFlag?: string; // content classifier flag that must be 'y'
 };
 
 const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
@@ -169,17 +168,7 @@ function FlashcardsPageContent() {
   const [customTitle, setCustomTitle] = useState('');
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
   const [saveToRecents, setSaveToRecents] = useState(true);
-  const [activeRecallOnly, setActiveRecallOnly] = useState(false);
-  const [interleavingMode, setInterleavingMode] = useState(true);
-  const [semanticLinking, setSemanticLinking] = useState(true);
-  const [errorTagging, setErrorTagging] = useState(true);
-  const [memoryStrengthMeter, setMemoryStrengthMeter] = useState(true);
-  const [timePerCardSeconds, setTimePerCardSeconds] = useState(0);
-  const [autoFlipDelayMs, setAutoFlipDelayMs] = useState(0);
-  const [showCitations, setShowCitations] = useState(true);
-  const [mnemonicHints, setMnemonicHints] = useState(true);
   const [explanationMode, setExplanationMode] = useState<'literal' | 'research'>('literal');
-  const [enabledCardTypes, setEnabledCardTypes] = useState<string[]>(['term-definition']);
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
@@ -217,15 +206,6 @@ function FlashcardsPageContent() {
     };
   }, [sourceText]);
 
-  // Auto-suggest Term first for vocabulary content (only on first classification)
-  const vocabSuggestedRef = useRef(false);
-  useEffect(() => {
-    if (!contentClass || vocabSuggestedRef.current) return;
-    if (contentClass.vocabulary === 'y') {
-      vocabSuggestedRef.current = true;
-      setCardStartSide('term');
-    }
-  }, [contentClass]);
 
 
   // Question types — Quizlet-native interaction formats (Flashcards/Test/Match), not quiz-borrowed exercises.
@@ -248,35 +228,16 @@ function FlashcardsPageContent() {
     if (budget === 'high') return requestedCount > 16 ? 'heavy' : 'standard';
     return requestedCount > 20 ? 'heavy' : 'standard';
   };
-  const startSideOptions = React.useMemo(
-    () => [
-      { value: 'term', label: 'Term first' },
-      { value: 'explanation', label: 'Explanation first' },
-    ],
-    []
-  );
 
-  const visibleCardTypes = React.useMemo(
-    () => FLASHCARD_TYPE_DEFINITIONS.filter(
-      (def) =>
-        (!def.requiresResearchMode || explanationMode === 'research') &&
-        isFlashcardTypeAvailable(def.value, contentClass)
-    ),
-    [contentClass, explanationMode]
-  );
+  // Generate title from first few words/keywords of source text
+  const autoGenerateTitle = (text: string): string => {
+    const words = text.trim().split(/\s+/).slice(0, 4).join(' ');
+    return words.length > 0 ? words : 'Generated Flashcards';
+  };
 
-  useEffect(() => {
-    setEnabledCardTypes((prev) => {
-      const allowed = prev.filter((v) => visibleCardTypes.some((t) => t.value === v));
-      return allowed.length > 0 ? allowed : ['term-definition'];
-    });
-  }, [visibleCardTypes]);
-
-  const toggleCardType = (value: string) => {
-    setEnabledCardTypes((prev) => {
-      const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
-      return next.length > 0 ? next : prev;
-    });
+  // Determine cardStartSide dynamically based on content classification
+  const determineCardStartSide = (): 'term' | 'explanation' => {
+    return contentClass?.vocabulary === 'y' ? 'term' : 'explanation';
   };
 
   const handleGenerate = useCallback(async (
@@ -314,7 +275,8 @@ function FlashcardsPageContent() {
       }
       const requestedMode = overrides?.mode || studyMode;
       const requestedCount = overrides?.count ?? flashcardCount;
-      const requestedTitle = overrides?.title || customTitle.trim() || 'Generated Flashcards';
+      const requestedTitle = overrides?.title || customTitle.trim() || autoGenerateTitle(text);
+      const dynamicCardStartSide = determineCardStartSide();
 
       const run = await runToolFlowV2({
         toolId: 'flashcards',
@@ -334,22 +296,11 @@ function FlashcardsPageContent() {
             regionCode: String(region || 'global').toUpperCase(),
             studyMode: requestedMode,
             explanationMode,
-            includeCitations: showCitations,
-            includeHints: mnemonicHints,
-            includeAssistedHints: mnemonicHints && requestedMode === 'assisted',
-            enabledTypes: enabledCardTypes,
-            flashcardsOptions: {
-              activeRecallOnly,
-              interleavingMode,
-              semanticLinking,
-              errorTagging,
-              memoryStrengthMeter,
-              timePerCardSeconds,
-              autoFlipDelayMs,
-              showCitations,
-              mnemonicHints,
-              explanationMode,
-            },
+            cardStartSide: dynamicCardStartSide,
+            includeCitations: true,
+            includeHints: true,
+            includeAssistedHints: requestedMode === 'assisted',
+            enabledTypes: ['term-definition'],
             sourcePolicy: {
               wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
               wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
@@ -374,6 +325,7 @@ function FlashcardsPageContent() {
       });
       const response = run?.output_payload || run;
       setGeneratedCards(response.flashcards);
+      setCardStartSide(dynamicCardStartSide);
       setCurrentView('study');
       setStudyCompleted(false);
     } catch (error) {
@@ -387,7 +339,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [activeRecallOnly, advancedSettings, autoFlipDelayMs, customTitle, enabledCardTypes, errorTagging, explanationMode, flashcardCount, imageDataUri, interleavingMode, knowledgeScore, language, memoryStrengthMeter, mnemonicHints, region, saveToRecents, schoolingLevel, semanticLinking, showCitations, studyMode, t.flashcards.generatingTitle, timePerCardSeconds, toast]);
+  }, [advancedSettings, customTitle, explanationMode, flashcardCount, imageDataUri, knowledgeScore, language, region, saveToRecents, schoolingLevel, studyMode, t.flashcards.generatingTitle, toast, contentClass]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -464,62 +416,17 @@ function FlashcardsPageContent() {
   useEffect(() => {
     const s = (k: string) => localStorage.getItem(`tools.flashcards.${k}`);
     if (s('mode')) setStudyMode(normalizeStudyMode(s('mode')));
-    if (s('cardStartSide') === 'explanation') setCardStartSide('explanation');
     if (s('count') && !Number.isNaN(Number(s('count')))) setFlashcardCount(Number(s('count')));
     if (s('knowledgeScore') && !Number.isNaN(Number(s('knowledgeScore')))) setKnowledgeScore(Math.max(0, Math.min(100, Number(s('knowledgeScore')))));
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
-    if (s('activeRecallOnly') === 'true') setActiveRecallOnly(true);
-    if (s('interleavingMode') === 'false') setInterleavingMode(false);
-    if (s('semanticLinking') === 'false') setSemanticLinking(false);
-    if (s('errorTagging') === 'false') setErrorTagging(false);
-    if (s('memoryStrengthMeter') === 'false') setMemoryStrengthMeter(false);
-    if (s('timePerCardSeconds') && !Number.isNaN(Number(s('timePerCardSeconds')))) setTimePerCardSeconds(Number(s('timePerCardSeconds')));
-    if (s('autoFlipDelayMs') && !Number.isNaN(Number(s('autoFlipDelayMs')))) setAutoFlipDelayMs(Number(s('autoFlipDelayMs')));
-    if (s('showCitations') === 'false') setShowCitations(false);
-    if (s('mnemonicHints') === 'false') setMnemonicHints(false);
     if (s('explanationMode') === 'research') setExplanationMode('research');
-    const storedTypes = s('enabledCardTypes');
-    if (storedTypes) {
-      try {
-        const parsed = JSON.parse(storedTypes);
-        if (Array.isArray(parsed) && parsed.length > 0) setEnabledCardTypes(parsed);
-      } catch {
-        // ignore malformed value
-      }
-    }
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.cardStartSide', cardStartSide); }, [cardStartSide]);
   useEffect(() => { localStorage.setItem('tools.flashcards.count', String(flashcardCount)); }, [flashcardCount]);
   useEffect(() => { localStorage.setItem('tools.flashcards.knowledgeScore', String(knowledgeScore)); }, [knowledgeScore]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.activeRecallOnly', String(activeRecallOnly)); }, [activeRecallOnly]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.interleavingMode', String(interleavingMode)); }, [interleavingMode]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.semanticLinking', String(semanticLinking)); }, [semanticLinking]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.errorTagging', String(errorTagging)); }, [errorTagging]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.memoryStrengthMeter', String(memoryStrengthMeter)); }, [memoryStrengthMeter]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.timePerCardSeconds', String(timePerCardSeconds)); }, [timePerCardSeconds]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.autoFlipDelayMs', String(autoFlipDelayMs)); }, [autoFlipDelayMs]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.showCitations', String(showCitations)); }, [showCitations]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.mnemonicHints', String(mnemonicHints)); }, [mnemonicHints]);
   useEffect(() => { localStorage.setItem('tools.flashcards.explanationMode', explanationMode); }, [explanationMode]);
-  useEffect(() => { localStorage.setItem('tools.flashcards.enabledCardTypes', JSON.stringify(enabledCardTypes)); }, [enabledCardTypes]);
-
-  useEffect(() => {
-    if (!advancedSettings || advancedHydratedRef.current) return;
-    advancedHydratedRef.current = true;
-    setActiveRecallOnly(Boolean(advancedSettings.flashcards.active_recall_only));
-    setInterleavingMode(Boolean(advancedSettings.flashcards.interleaving_mode));
-    setSemanticLinking(Boolean(advancedSettings.flashcards.semantic_linking));
-    setErrorTagging(Boolean(advancedSettings.flashcards.error_tagging));
-    setMemoryStrengthMeter(Boolean(advancedSettings.flashcards.memory_strength_meter));
-    setTimePerCardSeconds(Number(advancedSettings.flashcards.time_per_card_seconds || 0));
-    setAutoFlipDelayMs(Number(advancedSettings.flashcards.auto_flip_delay_ms || 0));
-    setShowCitations(Boolean(advancedSettings.flashcards.show_citations));
-    setMnemonicHints(Boolean(advancedSettings.flashcards.mnemonic_hints));
-    setExplanationMode(advancedSettings.flashcards.explanation_mode === 'research' ? 'research' : 'literal');
-  }, [advancedSettings]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -610,8 +517,8 @@ function FlashcardsPageContent() {
         hideSidebar={true}
         breadcrumbIcon={<Copy className="h-4 w-4" />}
       >
+        <MicrosoftAppStrip returnTo="/tools/flashcards" />
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
-          <MicrosoftAppStrip returnTo="/tools/flashcards" />
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
               <h1 className="text-2xl tracking-tight">Create Flashcards</h1>
@@ -680,15 +587,6 @@ function FlashcardsPageContent() {
               onCompletionChange={setStudyCompleted}
               onComplete={handleFlashcardComplete}
               settings={{
-                activeRecallOnly,
-                interleavingMode,
-                semanticLinking,
-                errorTagging,
-                memoryStrengthMeter,
-                timePerCardSeconds,
-                autoFlipDelayMs,
-                showCitations,
-                mnemonicHints,
                 explanationMode,
               }}
             />
@@ -724,36 +622,14 @@ function FlashcardsPageContent() {
         setPracticeMode={setPracticeMode}
         studyMode={studyMode}
         setStudyMode={setStudyMode}
-        cardStartSide={cardStartSide}
-        setCardStartSide={setCardStartSide}
         flashcardCount={flashcardCount}
         setFlashcardCount={setFlashcardCount}
-        saveToRecents={saveToRecents}
-        setSaveToRecents={setSaveToRecents}
-        visibleCardTypes={visibleCardTypes}
-        enabledCardTypes={enabledCardTypes}
-        toggleCardType={toggleCardType}
-        contentClass={contentClass}
-        showCitations={showCitations}
-        setShowCitations={setShowCitations}
-        mnemonicHints={mnemonicHints}
-        setMnemonicHints={setMnemonicHints}
-        activeRecallOnly={activeRecallOnly}
-        setActiveRecallOnly={setActiveRecallOnly}
-        interleavingMode={interleavingMode}
-        setInterleavingMode={setInterleavingMode}
-        semanticLinking={semanticLinking}
-        setSemanticLinking={setSemanticLinking}
-        errorTagging={errorTagging}
-        setErrorTagging={setErrorTagging}
-        memoryStrengthMeter={memoryStrengthMeter}
-        setMemoryStrengthMeter={setMemoryStrengthMeter}
         isLoading={isLoading}
         sourceText={sourceText}
         modeOptions={modeOptions}
-        startSideOptions={startSideOptions}
         saveAdvancedSettingsPatch={saveAdvancedSettingsPatch}
         handleGenerate={handleGenerate}
+        autoGenerateTitle={autoGenerateTitle}
       />
     );
   }
