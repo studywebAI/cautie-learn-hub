@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Layout 4 - Student & Teacher</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #7f8962;
+            --primary-light: #a3b87e;
+            --primary-dark: #5a6240;
+            --bg: #f2f2f2;
+            --fg: #1a1a1a;
+            --card: #fbfbfb;
+            --border: #e5e5e5;
+            --muted: #666666;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --destructive: #ef4444;
+            --info: #3b82f6;
+        }
+
+        body {
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            letter-spacing: -0.022em;
+        }
+
+        .section-header {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 3rem 0 1.5rem;
+            letter-spacing: -0.016em;
+        }
+
+        /* Layout 4: Sidebar + Main */
+        .dashboard-shell {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-shell {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--fg);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            background: hsl(75, 17%, 90%);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Alert/Hero Card */
+        .alert-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+        }
+
+        .alert-card .card-title {
+            color: white;
+        }
+
+        .alert-card .card-description {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Item List */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .item {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .item:hover {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .item-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 0.25rem;
+            letter-spacing: -0.01em;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .badge-default {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: #78350f;
+        }
+
+        .badge-destructive {
+            background: var(--destructive);
+            color: white;
+        }
+
+        .badge-outline {
+            background: white;
+            border-color: var(--border);
+            color: var(--fg);
+        }
+
+        /* Next Hour Hero */
+        .next-hour {
+            background: linear-gradient(135deg, var(--info) 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .next-hour .card-title {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.75rem;
+        }
+
+        .next-hour-class {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .next-hour-time {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* Filter Pills */
+        .filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            border-color: var(--primary);
+        }
+
+        .filter-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Button */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.625rem 1rem;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(127, 137, 98, 0.2);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--fg);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg);
+            border-color: var(--primary);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Form Elements */
+        .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            background: white;
+            color: var(--fg);
+            margin-bottom: 0.75rem;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(127, 137, 98, 0.1);
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Stat Box */
+        .stat-box {
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Mockup Container */
+        .mockup {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .mockup-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media print {
+            .mockup {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Dashboard Layout 4 - Sidebar + Main (Final)</h1>
+        <p style="color: var(--muted); margin-bottom: 2rem;">Professional student and teacher dashboards using cautie-learn-hub theme</p>
+
+        <!-- ====== STUDENT DASHBOARD ====== -->
+        <div class="mockup">
+            <div class="mockup-title">STUDENT DASHBOARD</div>
+
+            <div class="dashboard-shell">
+                <!-- Sidebar Navigation -->
+                <div class="sidebar">
+                    <div class="sidebar-title">Dashboard</div>
+                    <button class="nav-item active">Overview</button>
+                    <a href="/dashboard" class="nav-item">All Assignments</a>
+                    <a href="/schedule" class="nav-item">Schedule</a>
+
+                    <div class="sidebar-title" style="margin-top: 1.5rem;">Tools</div>
+                    <a href="/subjects" class="nav-item">My Subjects</a>
+                    <a href="/ideas" class="nav-item">Ideas Board</a>
+                    <a href="/materials" class="nav-item">Materials</a>
+                    <a href="/settings" class="nav-item">Settings</a>
+                </div>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <!-- Next Hour Alert -->
+                    <div class="card alert-card">
+                        <div class="card-header">
+                            <div class="card-title">⏰ Next Class</div>
+                        </div>
+                        <div style="font-size: 22px; font-weight: 700; margin-bottom: 0.5rem;">Mathematics 101</div>
+                        <div>9:00 - 10:00 • Room 205</div>
+                    </div>
+
+                    <!-- Announcements -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📢 Announcements</div>
+                            <div class="card-description">Latest updates from your teachers</div>
+                        </div>
+                        <div class="item-list">
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Quiz Rescheduled</h4>
+                                    <div class="item-meta">Math • Friday at 2pm • 2 days ago</div>
+                                </div>
+                            </div>
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Essay Deadline Extended</h4>
+                                    <div class="item-meta">English • Next Wednesday • 1 day ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Deadlines with Filters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📅 Upcoming Deadlines</div>
+                            <div class="card-description">Filter to see what's coming up</div>
+                        </div>
+                        <div class="filter-pills">
+                            <button class="filter-pill active">All</button>
+                            <button class="filter-pill">Homework</button>
+                            <button class="filter-pill">Tests</button>
+                        </div>
+                        <div class="item-list">
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Chapter 5 Reading</h4>
+                                    <div class="item-meta">English</div>
+                                </div>
+                                <span class="badge badge-destructive">Due Today</span>
+                            </div>
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Math Problem Set 6</h4>
+                                    <div class="item-meta">Mathematics</div>
+                                </div>
+                                <span class="badge badge-success">✓ Done</span>
+                            </div>
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>History Project</h4>
+                                    <div class="item-meta">History</div>
+                                </div>
+                                <span class="badge badge-warning">Tomorrow</span>
+                            </div>
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Science Lab Report</h4>
+                                    <div class="item-meta">Science</div>
+                                </div>
+                                <span class="badge badge-outline">In 3 days</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TEACHER DASHBOARD ====== -->
+        <div class="mockup">
+            <div class="mockup-title">TEACHER DASHBOARD</div>
+
+            <div class="dashboard-shell">
+                <!-- Sidebar Navigation -->
+                <div class="sidebar">
+                    <div class="sidebar-title">Dashboard</div>
+                    <button class="nav-item active">Overview</button>
+                    <a href="/grading" class="nav-item">Grades</a>
+                    <a href="/submissions" class="nav-item">Submissions</a>
+
+                    <div class="sidebar-title" style="margin-top: 1.5rem;">Class Tools</div>
+                    <a href="/class-roster" class="nav-item">Class Roster</a>
+                    <a href="/announcements" class="nav-item">Announcements</a>
+                    <a href="/attendance" class="nav-item">Attendance</a>
+                    <a href="/settings" class="nav-item">Settings</a>
+                </div>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <!-- Next Hour Alert -->
+                    <div class="card next-hour">
+                        <div class="card-title">Next Class</div>
+                        <div class="next-hour-class">Mathematics 101</div>
+                        <div class="next-hour-time">10:00 - 11:00 • Room 305 • 15 minutes</div>
+                    </div>
+
+                    <!-- To Grade + Recent Submissions Grid -->
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">✏️ To Grade</div>
+                            </div>
+                            <div class="item-list">
+                                <div class="item">
+                                    <div class="item-content">
+                                        <h4>Essay Draft</h4>
+                                        <div class="item-meta">28 students</div>
+                                    </div>
+                                    <span class="badge badge-warning">18 left</span>
+                                </div>
+                                <div class="item">
+                                    <div class="item-content">
+                                        <h4>Quiz Responses</h4>
+                                        <div class="item-meta">28 students</div>
+                                    </div>
+                                    <span class="badge badge-success">✓ Done</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">📥 Recent Submissions</div>
+                            </div>
+                            <div class="item-list">
+                                <div class="item">
+                                    <div class="item-content">
+                                        <h4>Sarah Johnson</h4>
+                                        <div class="item-meta">Essay Draft • 2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div class="item">
+                                    <div class="item-content">
+                                        <h4>James Chen</h4>
+                                        <div class="item-meta">Math Set • 30 min ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming with Filters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">📅 Upcoming Deadlines</div>
+                            <div class="card-description">Class schedule and deadlines</div>
+                        </div>
+                        <div class="filter-pills">
+                            <button class="filter-pill active">All</button>
+                            <button class="filter-pill">Tests</button>
+                            <button class="filter-pill">Assignments</button>
+                        </div>
+                        <div class="item-list">
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Quiz 5</h4>
+                                    <div class="item-meta">Mathematics 101</div>
+                                </div>
+                                <span class="badge badge-warning">Tomorrow</span>
+                            </div>
+                            <div class="item">
+                                <div class="item-content">
+                                    <h4>Essay Due</h4>
+                                    <div class="item-meta">English 201</div>
+                                </div>
+                                <span class="badge badge-outline">Thursday</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Post Announcement + Manage Attendance Grid -->
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">📣 Post Announcement</div>
+                            </div>
+                            <div class="form-group">
+                                <textarea class="form-textarea" placeholder="Type your announcement..."></textarea>
+                            </div>
+                            <select class="form-select">
+                                <option>All students</option>
+                                <option>Specific student</option>
+                                <option>Other teacher</option>
+                            </select>
+                            <button class="btn btn-full">Post</button>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">✓ Manage Attendance</div>
+                            </div>
+                            <select class="form-select">
+                                <option>Select a class...</option>
+                                <option>Mathematics 101</option>
+                                <option>English 201</option>
+                                <option>Science 301</option>
+                            </select>
+                            <div class="grid grid-2" style="gap: 0.5rem; margin-top: 1rem;">
+                                <button class="btn">Mark Present</button>
+                                <button class="btn btn-secondary">Mark Absent</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align: center; color: var(--muted); padding: 2rem 0; border-top: 1px solid var(--border); margin-top: 4rem;">
+            <p>Dashboard Layout 4: Sidebar + Main (Two-column)</p>
+            <p style="font-size: 13px; margin-top: 0.5rem;">Print for mockup reference (Ctrl+P or Cmd+P)</p>
+        </footer>
+    </div>
+</body>
+</html>

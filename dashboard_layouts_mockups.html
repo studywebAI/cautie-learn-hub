@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Layouts - Student & Teacher (Correct)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f6;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin: 3rem 0 1rem;
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding-bottom: 1rem;
+        }
+
+        .section-header {
+            font-size: 28px;
+            margin: 2rem 0 1.5rem;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .layout {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            page-break-inside: avoid;
+        }
+
+        .layout-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #000;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .layout-content {
+            min-height: 400px;
+        }
+
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .grid-left {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .grid-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Card styles */
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .item {
+            padding: 1rem;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-title {
+            color: #000;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .item-meta {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .badge {
+            background: #fff3cd;
+            color: #997404;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .next-hour {
+            background: #e3f2fd;
+            border-left: 4px solid #0066cc;
+            padding: 1.5rem;
+            border-radius: 6px;
+            color: #0066cc;
+        }
+
+        .next-hour-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .next-hour-time {
+            font-size: 12px;
+        }
+
+        /* Stream Layout */
+        .stream-layout {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .stream-section {
+            margin-bottom: 2rem;
+        }
+
+        .stream-title {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        .stream-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .grid-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .grid-card-title {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        /* Sidebar Layout */
+        .sidebar-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Tabbed Layout */
+        .tabbed-layout {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 2rem;
+        }
+
+        .top-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .top-tab.active {
+            color: #000;
+            border-bottom-color: #000;
+        }
+
+        .tab-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill.active {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #000;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #000;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #333;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                padding: 0;
+            }
+            .layout {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e0e0e0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Dashboard Layout Mockups (CORRECT)</h1>
+        <p style="color: #666; margin-bottom: 2rem;">Student & Teacher dashboards - Dashboard blocks only (Grades/Details in separate tabs)</p>
+
+        <!-- ====== STUDENT DASHBOARDS ====== -->
+        <div style="margin-bottom: 4rem;">
+            <div style="background: #000; color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                <h2 style="font-size: 28px; margin: 0;">STUDENT DASHBOARD</h2>
+                <p style="color: #ccc; margin: 0.5rem 0 0;">Dashboard-only view: Assignments, Announcements, Deadlines, Next Hour</p>
+            </div>
+
+            <!-- LAYOUT 1: Grid Priority -->
+            <div class="layout">
+                <div class="layout-title">Layout 1: Grid Priority (Main + Sidebar)</div>
+                <div class="layout-content">
+                    <div class="grid-layout">
+                        <div class="grid-left">
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Assignments</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Chapter 5 Reading</div>
+                                        <div class="item-meta">English</div>
+                                    </div>
+                                    <span class="badge">Due today</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Problem Set 6</div>
+                                        <div class="item-meta">Mathematics</div>
+                                    </div>
+                                    <span class="badge success">✓ Graded</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Lab Report</div>
+                                        <div class="item-meta">Science</div>
+                                    </div>
+                                    <span class="badge">Due Thu</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Announcements</h3>
+                                <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #0066cc;">
+                                    <div style="font-weight: 600; font-size: 12px; margin-bottom: 4px;">Quiz Rescheduled</div>
+                                    <div style="color: #666; font-size: 11px;">Math Quiz moved to Friday • 2 days ago</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-right">
+                            <div class="next-hour">
+                                <div class="next-hour-title">Next Hour</div>
+                                <div>Math Class</div>
+                                <div class="next-hour-time">9:00 - 10:00 • Room 205</div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Upcoming</h3>
+                                <div class="filter-pills" style="margin-bottom: 1rem;">
+                                    <button class="filter-pill active">All</button>
+                                    <button class="filter-pill">Homework</button>
+                                    <button class="filter-pill">Tests</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 8px;">
+                                    <span style="font-size: 12px; color: #000;">Math HW</span>
+                                    <span style="font-size: 12px; color: #d32f2f;">Today</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span style="font-size: 12px; color: #000;">History Project</span>
+                                    <span style="font-size: 12px; color: #666;">Tomorrow</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 2: Stream -->
+            <div class="layout">
+                <div class="layout-title">Layout 2: Stream (Feed Style)</div>
+                <div class="layout-content">
+                    <div class="stream-layout">
+                        <div class="stream-section">
+                            <div class="stream-title">Next Hour</div>
+                            <div class="next-hour">
+                                <div class="next-hour-title">Math Class starts in 15 min</div>
+                                <div class="next-hour-time">9:00 - 10:00 • Room 205</div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">Assignments</div>
+                            <div class="stream-item">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>
+                                        <strong style="display: block; margin-bottom: 4px;">Chapter 5 Reading</strong>
+                                        <div style="color: #666; font-size: 11px;">English</div>
+                                    </div>
+                                    <span class="badge">Due today</span>
+                                </div>
+                            </div>
+                            <div class="stream-item">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <div>
+                                        <strong style="display: block; margin-bottom: 4px;">Problem Set 6</strong>
+                                        <div style="color: #666; font-size: 11px;">Mathematics</div>
+                                    </div>
+                                    <span class="badge success">✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">Announcements</div>
+                            <div class="stream-item">
+                                <strong style="display: block; margin-bottom: 4px;">Quiz Rescheduled</strong>
+                                <div style="color: #666; font-size: 11px;">Friday at 2pm • 2 days ago</div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">Upcoming</div>
+                            <div class="filter-pills">
+                                <button class="filter-pill active">All</button>
+                                <button class="filter-pill">Homework</button>
+                                <button class="filter-pill">Tests</button>
+                            </div>
+                            <div class="stream-item" style="margin-top: 1rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <strong>History Project</strong>
+                                    <span style="color: #666; font-size: 12px;">Tomorrow</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 3: Cards Grid -->
+            <div class="layout">
+                <div class="layout-title">Layout 3: Cards Grid (Compact)</div>
+                <div class="layout-content">
+                    <div class="cards-grid">
+                        <div class="grid-card">
+                            <div class="grid-card-title">Next Hour</div>
+                            <div style="background: #e3f2fd; border-radius: 6px; padding: 1.5rem; color: #0066cc;">
+                                <div style="font-weight: 600; margin-bottom: 8px;">Math Class</div>
+                                <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">15 min</div>
+                                <div style="font-size: 11px;">Room 205</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Assignments</div>
+                            <div style="padding: 1rem; background: #fff3cd; border-radius: 6px; margin-bottom: 10px; color: #997404;">
+                                <div style="font-weight: 600; font-size: 12px;">Chapter 5 Reading</div>
+                                <div style="font-size: 10px;">Due today</div>
+                            </div>
+                            <div style="padding: 1rem; background: #d4edda; border-radius: 6px; color: #155724;">
+                                <div style="font-weight: 600; font-size: 12px;">Problem Set 6 ✓</div>
+                                <div style="font-size: 10px;">Graded</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Announcements</div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                <div style="font-weight: 600; font-size: 12px;">Quiz Rescheduled</div>
+                                <div style="color: #666; font-size: 10px;">Friday • 2 days ago</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Upcoming</div>
+                            <div class="filter-pills" style="margin-bottom: 1rem;">
+                                <button class="filter-pill active">All</button>
+                                <button class="filter-pill">HW</button>
+                                <button class="filter-pill">Tests</button>
+                            </div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                <div style="font-weight: 600; font-size: 12px;">History Project</div>
+                                <div style="color: #666; font-size: 10px;">Tomorrow</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 4: Sidebar + Main -->
+            <div class="layout">
+                <div class="layout-title">Layout 4: Sidebar + Main (Two-column)</div>
+                <div class="layout-content">
+                    <div class="sidebar-layout">
+                        <div class="main-content">
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Assignments</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Chapter 5 Reading</div>
+                                        <div class="item-meta">English • Due today</div>
+                                    </div>
+                                    <span class="badge">Due</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Problem Set 6</div>
+                                        <div class="item-meta">Mathematics</div>
+                                    </div>
+                                    <span class="badge success">✓</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Lab Report</div>
+                                        <div class="item-meta">Science</div>
+                                    </div>
+                                    <span class="badge">Due Thu</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Announcements</h3>
+                                <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #0066cc;">
+                                    <div style="font-weight: 600; font-size: 12px;">Quiz Rescheduled</div>
+                                    <div style="color: #666; font-size: 11px;">Friday • 2 days ago</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar">
+                            <div class="next-hour">
+                                <div class="next-hour-title">Next Hour</div>
+                                <div>Math Class</div>
+                                <div class="next-hour-time">9:00 - 10:00</div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Upcoming</h3>
+                                <div class="filter-pills" style="margin-bottom: 1rem;">
+                                    <button class="filter-pill active" style="width: auto;">All</button>
+                                    <button class="filter-pill" style="width: auto;">HW</button>
+                                    <button class="filter-pill" style="width: auto;">Tests</button>
+                                </div>
+                                <div style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+                                    <div style="font-size: 12px; color: #000; font-weight: 500;">Math HW</div>
+                                    <div style="font-size: 11px; color: #d32f2f;">Today</div>
+                                </div>
+                                <div style="padding: 8px 0;">
+                                    <div style="font-size: 12px; color: #000; font-weight: 500;">History</div>
+                                    <div style="font-size: 11px; color: #666;">Tomorrow</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 5: Tabbed -->
+            <div class="layout">
+                <div class="layout-title">Layout 5: Tabbed (Multi-view)</div>
+                <div class="layout-content">
+                    <div class="tabbed-layout">
+                        <div class="top-tabs">
+                            <button class="top-tab active">Overview</button>
+                            <button class="top-tab">Assignments</button>
+                            <button class="top-tab">Announcements</button>
+                            <button class="top-tab">Upcoming</button>
+                        </div>
+
+                        <div class="tab-content">
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Next Class</h3>
+                                <div class="next-hour">
+                                    <div class="next-hour-title">Math Class</div>
+                                    <div class="next-hour-time">9:00 - 10:00 • Room 205</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Due Soon</h3>
+                                <div style="padding: 1rem; background: #fff3cd; border-radius: 6px; margin-bottom: 10px; color: #997404;">
+                                    <div style="font-weight: 600; font-size: 12px;">Chapter 5 Reading</div>
+                                    <div style="font-size: 10px;">Due today</div>
+                                </div>
+                                <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                    <div style="font-weight: 600; font-size: 12px;">Lab Report</div>
+                                    <div style="font-size: 10px;">Due Thursday</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Latest News</h3>
+                                <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                    <div style="font-weight: 600; font-size: 12px;">Quiz Rescheduled</div>
+                                    <div style="color: #666; font-size: 10px;">Friday • 2 days ago</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Filter</h3>
+                                <div class="filter-pills">
+                                    <button class="filter-pill active">All</button>
+                                    <button class="filter-pill">Homework</button>
+                                    <button class="filter-pill">Tests</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TEACHER DASHBOARDS ====== -->
+        <div>
+            <div style="background: #000; color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                <h2 style="font-size: 28px; margin: 0;">TEACHER DASHBOARD</h2>
+                <p style="color: #ccc; margin: 0.5rem 0 0;">Dashboard-only view: Next Hour, To Grade, Recent Submissions, Upcoming, Post Announcement, Manage Attendance</p>
+            </div>
+
+            <!-- LAYOUT 1: Grid Priority -->
+            <div class="layout">
+                <div class="layout-title">Layout 1: Grid Priority (Main + Sidebar)</div>
+                <div class="layout-content">
+                    <div class="grid-layout">
+                        <div class="grid-left">
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">To Grade</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Essay Draft</div>
+                                        <div class="item-meta">28 students • 18 pending</div>
+                                    </div>
+                                    <span class="badge">18 left</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Quiz Responses</div>
+                                        <div class="item-meta">28 students</div>
+                                    </div>
+                                    <span class="badge success">✓ Done</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Recent Submissions</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Sarah Johnson</div>
+                                        <div class="item-meta">Essay Draft • 2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">James Chen</div>
+                                        <div class="item-meta">Math Set • 30 min ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid-right">
+                            <div class="next-hour">
+                                <div class="next-hour-title">Next Hour</div>
+                                <div>Mathematics 101</div>
+                                <div class="next-hour-time">10:00 - 11:00 • Room 305</div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Upcoming</h3>
+                                <div class="filter-pills" style="margin-bottom: 1rem;">
+                                    <button class="filter-pill active">All</button>
+                                    <button class="filter-pill">Tests</button>
+                                    <button class="filter-pill">Homework</button>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; margin-bottom: 8px;">
+                                    <span style="font-size: 12px; color: #000;">Quiz 5</span>
+                                    <span style="font-size: 12px; color: #d32f2f;">Tomorrow</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                    <span style="font-size: 12px; color: #000;">Essay Due</span>
+                                    <span style="font-size: 12px; color: #666;">Thursday</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Post Announcement</h3>
+                                <div class="form-group">
+                                    <textarea class="form-textarea" placeholder="Message..." style="min-height: 70px;"></textarea>
+                                </div>
+                                <select class="form-select" style="margin-bottom: 0.5rem; font-size: 12px;">
+                                    <option>All students</option>
+                                    <option>Specific student</option>
+                                    <option>Other teacher</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 2: Stream -->
+            <div class="layout">
+                <div class="layout-title">Layout 2: Stream (Workflow Style)</div>
+                <div class="layout-content">
+                    <div class="stream-layout">
+                        <div class="stream-section">
+                            <div class="stream-title">Next Hour</div>
+                            <div class="next-hour">
+                                <div class="next-hour-title">Mathematics 101 in 15 min</div>
+                                <div class="next-hour-time">10:00 - 11:00 • Room 305</div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">To Grade</div>
+                            <div class="stream-item">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <strong>Essay Draft</strong>
+                                    <span class="badge">18 pending</span>
+                                </div>
+                                <div style="color: #666; font-size: 11px;">28 students • Assigned 3 days ago</div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">Recent Submissions</div>
+                            <div class="stream-item">
+                                <strong style="display: block; margin-bottom: 4px;">Sarah Johnson</strong>
+                                <div style="color: #666; font-size: 11px;">Essay Draft • 2 hours ago</div>
+                            </div>
+                            <div class="stream-item" style="margin-top: 8px;">
+                                <strong style="display: block; margin-bottom: 4px;">James Chen</strong>
+                                <div style="color: #666; font-size: 11px;">Math Problem Set • 30 min ago</div>
+                            </div>
+                        </div>
+
+                        <div class="stream-section">
+                            <div class="stream-title">Upcoming</div>
+                            <div class="filter-pills">
+                                <button class="filter-pill active">All</button>
+                                <button class="filter-pill">Tests</button>
+                                <button class="filter-pill">Homework</button>
+                            </div>
+                            <div class="stream-item" style="margin-top: 1rem;">
+                                <strong>Quiz 5</strong>
+                                <div style="color: #666; font-size: 11px;">Tomorrow</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 3: Cards Grid -->
+            <div class="layout">
+                <div class="layout-title">Layout 3: Cards Grid (Dashboard Style)</div>
+                <div class="layout-content">
+                    <div class="cards-grid">
+                        <div class="grid-card">
+                            <div class="grid-card-title">Next Hour</div>
+                            <div style="background: #e3f2fd; border-radius: 6px; padding: 1.5rem; color: #0066cc;">
+                                <div style="font-weight: 600; margin-bottom: 8px;">Mathematics 101</div>
+                                <div style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">15 min</div>
+                                <div style="font-size: 11px;">Room 305</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">To Grade</div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; margin-bottom: 10px;">
+                                <div style="color: #666; font-size: 11px;">Essays</div>
+                                <div style="font-size: 18px; font-weight: 600;">18/28</div>
+                            </div>
+                            <div style="padding: 1rem; background: #d4edda; border-radius: 6px; color: #155724;">
+                                <div style="color: inherit; font-size: 11px;">Quizzes</div>
+                                <div style="font-size: 18px; font-weight: 600;">28/28 ✓</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Recent</div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; margin-bottom: 10px;">
+                                <div style="font-weight: 600; font-size: 12px;">Sarah Johnson</div>
+                                <div style="color: #666; font-size: 10px;">2 hours ago</div>
+                            </div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                <div style="font-weight: 600; font-size: 12px;">James Chen</div>
+                                <div style="color: #666; font-size: 10px;">30 min ago</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Upcoming</div>
+                            <div class="filter-pills" style="margin-bottom: 1rem;">
+                                <button class="filter-pill active">All</button>
+                                <button class="filter-pill">Tests</button>
+                            </div>
+                            <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px;">
+                                <div style="font-weight: 600; font-size: 12px;">Quiz 5</div>
+                                <div style="color: #666; font-size: 10px;">Tomorrow</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Post Announcement</div>
+                            <textarea class="form-textarea" placeholder="Message..." style="min-height: 70px; margin-bottom: 8px;"></textarea>
+                            <select class="form-select" style="font-size: 11px; padding: 6px; margin-bottom: 0;">
+                                <option>All students</option>
+                                <option>Specific student</option>
+                            </select>
+                        </div>
+
+                        <div class="grid-card">
+                            <div class="grid-card-title">Manage Attendance</div>
+                            <select class="form-select" style="margin-bottom: 1rem;">
+                                <option>Select class...</option>
+                                <option>Math 101</option>
+                                <option>English Lit</option>
+                            </select>
+                            <button class="btn" style="padding: 8px;">Mark Attendance</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 4: Sidebar + Main -->
+            <div class="layout">
+                <div class="layout-title">Layout 4: Sidebar + Main (Productive)</div>
+                <div class="layout-content">
+                    <div class="sidebar-layout">
+                        <div class="main-content">
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">To Grade</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Essay Draft</div>
+                                        <div class="item-meta">18 pending out of 28</div>
+                                    </div>
+                                    <span class="badge">→ Grade</span>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Quiz Responses</div>
+                                        <div class="item-meta">All graded</div>
+                                    </div>
+                                    <span class="badge success">✓</span>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 14px; margin: 0 0 1rem; font-weight: 600;">Recent Activity</h3>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">Sarah Johnson submitted Essay</div>
+                                    </div>
+                                    <div style="color: #666; font-size: 11px;">2h ago</div>
+                                </div>
+                                <div class="item">
+                                    <div>
+                                        <div class="item-title">James Chen submitted Math Set</div>
+                                    </div>
+                                    <div style="color: #666; font-size: 11px;">30m ago</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sidebar">
+                            <div class="next-hour">
+                                <div class="next-hour-title">Next Hour</div>
+                                <div>Mathematics 101</div>
+                                <div class="next-hour-time">10:00 - 11:00</div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Upcoming</h3>
+                                <div class="filter-pills" style="margin-bottom: 1rem;">
+                                    <button class="filter-pill active" style="width: auto;">All</button>
+                                    <button class="filter-pill" style="width: auto;">Tests</button>
+                                </div>
+                                <div style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+                                    <div style="font-size: 12px; color: #000; font-weight: 500;">Quiz 5</div>
+                                    <div style="font-size: 11px; color: #d32f2f;">Tomorrow</div>
+                                </div>
+                                <div style="padding: 8px 0;">
+                                    <div style="font-size: 12px; color: #000; font-weight: 500;">Essay Due</div>
+                                    <div style="font-size: 11px; color: #666;">Thursday</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Attendance</h3>
+                                <select class="form-select" style="margin-bottom: 8px;">
+                                    <option>Select class...</option>
+                                    <option>Math 101</option>
+                                </select>
+                                <button class="btn" style="padding: 6px; font-size: 12px;">Mark</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LAYOUT 5: Tabbed -->
+            <div class="layout">
+                <div class="layout-title">Layout 5: Tabbed (Class-first)</div>
+                <div class="layout-content">
+                    <div class="tabbed-layout">
+                        <div class="top-tabs">
+                            <button class="top-tab active">Overview</button>
+                            <button class="top-tab">To Grade</button>
+                            <button class="top-tab">Submissions</button>
+                            <button class="top-tab">Tools</button>
+                        </div>
+
+                        <div class="tab-content">
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Next Class</h3>
+                                <div class="next-hour">
+                                    <div class="next-hour-title">Mathematics 101</div>
+                                    <div class="next-hour-time">10:00 - 11:00 • Room 305</div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Quick Stats</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 16px; font-weight: 600;">28</div>
+                                        <div style="color: #666; font-size: 10px;">Students</div>
+                                    </div>
+                                    <div style="padding: 1rem; background: #f9f9f9; border-radius: 6px; text-align: center;">
+                                        <div style="font-size: 16px; font-weight: 600;">18</div>
+                                        <div style="color: #666; font-size: 10px;">To Grade</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Announcements</h3>
+                                <textarea class="form-textarea" placeholder="Post announcement..." style="margin-bottom: 8px; min-height: 60px;"></textarea>
+                                <select class="form-select" style="margin-bottom: 8px;">
+                                    <option>All students</option>
+                                    <option>Specific student</option>
+                                </select>
+                                <button class="btn" style="padding: 8px; font-size: 12px;">Post</button>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="font-size: 13px; margin: 0 0 1rem; font-weight: 600;">Manage Attendance</h3>
+                                <select class="form-select" style="margin-bottom: 8px;">
+                                    <option>Select class...</option>
+                                    <option>Math 101</option>
+                                    <option>English Lit</option>
+                                </select>
+                                <button class="btn" style="padding: 8px; font-size: 12px;">Quick Attendance</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align: center; color: #666; padding: 2rem 0; border-top: 1px solid #e0e0e0; margin-top: 4rem;">
+            <p>Professional Dashboard Layouts • Student & Teacher Views (Correct Blocks Only)</p>
+            <p style="font-size: 12px;">Print this page for high-quality mockups (Ctrl+P or Cmd+P)</p>
+        </footer>
+    </div>
+</body>
+</html>
