@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check, AlertCircle, Lightbulb } from 'lucide-react'
+import { useIdeas } from '@/app/contexts/IdeasContext'
 
 interface Idea {
   id: string
@@ -17,8 +18,9 @@ interface Idea {
 }
 
 export default function IdeasPage() {
-  // Ideas state
-  const [ideas, setIdeas] = useState<Idea[]>([])
+  // Get ideas from context (fetched server-side)
+  const contextIdeas = useIdeas()
+  const [ideas, setIdeas] = useState<Idea[]>(contextIdeas)
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set())
 
   // Form state
@@ -26,43 +28,35 @@ export default function IdeasPage() {
   const [description, setDescription] = useState('')
 
   // UI state
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  // Fetch ideas on mount
+  // Initialize with context ideas and check votes
   useEffect(() => {
-    const fetchIdeas = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const res = await fetch('/api/ideas?status=active', { cache: 'no-store' })
-        if (!res.ok) throw new Error('Failed to load ideas')
+    setIdeas(contextIdeas)
 
-        const { data } = await res.json()
-        setIdeas(data || [])
-
-        // Check which ideas the user voted on
-        const voted = new Set<string>()
-        for (const idea of data || []) {
+    // Check which ideas the user voted on
+    const checkVotes = async () => {
+      const voted = new Set<string>()
+      for (const idea of contextIdeas) {
+        try {
           const voteRes = await fetch(`/api/ideas/${idea.id}/vote`, { cache: 'no-store' })
           if (voteRes.ok) {
             const { voted: hasVoted } = await voteRes.json()
             if (hasVoted) voted.add(idea.id)
           }
+        } catch (err) {
+          console.error('Vote check error:', err)
         }
-        setVotedIds(voted)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load ideas')
-      } finally {
-        setLoading(false)
       }
+      setVotedIds(voted)
     }
 
-    void fetchIdeas()
-  }, [])
+    void checkVotes()
+  }, [contextIdeas])
 
   // Handle idea submission
   const handleSubmitIdea = async () => {

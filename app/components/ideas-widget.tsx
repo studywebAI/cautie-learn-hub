@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lightbulb, TrendingUp, ArrowRight, AlertCircle } from 'lucide-react'
+import { useIdeas } from '@/app/contexts/IdeasContext'
 
 interface Idea {
   id: string
@@ -14,44 +15,38 @@ interface Idea {
 }
 
 export function IdeasWidget() {
-  const [ideas, setIdeas] = useState<Idea[]>([])
+  // Get ideas from context (fetched server-side)
+  const contextIdeas = useIdeas()
+  const [ideas, setIdeas] = useState<Idea[]>(contextIdeas.slice(0, 4))
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [quickIdea, setQuickIdea] = useState('')
   const [submitSuccess, setSubmitSuccess] = useState(false)
 
+  // Initialize with context ideas and check votes
   useEffect(() => {
-    const fetchIdeas = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const res = await fetch('/api/ideas?status=active&limit=4', { cache: 'no-store' })
-        if (!res.ok) throw new Error('Failed to load ideas')
+    setIdeas(contextIdeas.slice(0, 4))
 
-        const { data } = await res.json()
-        setIdeas(data || [])
-
-        // Check voted status
-        const voted = new Set<string>()
-        for (const idea of data || []) {
+    const checkVotes = async () => {
+      const voted = new Set<string>()
+      for (const idea of contextIdeas) {
+        try {
           const voteRes = await fetch(`/api/ideas/${idea.id}/vote`, { cache: 'no-store' })
           if (voteRes.ok) {
             const { voted: hasVoted } = await voteRes.json()
             if (hasVoted) voted.add(idea.id)
           }
+        } catch (err) {
+          console.error('Vote check error:', err)
         }
-        setVotedIds(voted)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load')
-      } finally {
-        setLoading(false)
       }
+      setVotedIds(voted)
     }
 
-    void fetchIdeas()
-  }, [])
+    void checkVotes()
+  }, [contextIdeas])
 
   const handleQuickSubmit = async () => {
     if (!quickIdea.trim()) return
