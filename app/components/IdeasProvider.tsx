@@ -13,8 +13,7 @@ export async function IdeasProviderWrapper({ children }: { children: React.React
   let ideas: Idea[] = []
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9003'
-    const res = await fetch(`${baseUrl}/api/ideas?status=active`, {
+    const res = await fetch(new URL('/api/ideas?status=active', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').toString(), {
       cache: 'no-store',
     })
 
