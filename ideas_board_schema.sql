@@ -24,7 +24,7 @@ CREATE TABLE ideas (
 
   -- Core content fields
   title VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
+  description TEXT,
 
   -- Status tracking: active (visible), pending (waiting review), completed (implemented)
   status VARCHAR(20) NOT NULL DEFAULT 'active'
