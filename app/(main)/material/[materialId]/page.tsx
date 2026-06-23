@@ -125,10 +125,6 @@ function MaterialPageContent() {
 
     fetchData();
   }, [materialId]);
-    };
-
-    fetchData();
-  }, [materialId]);
 
   const renderContent = () => {
     if (artifact) {
