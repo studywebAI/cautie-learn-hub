@@ -169,10 +169,18 @@ function StudentDashboard() {
 
         {/* Sidebar rail */}
         <div className="lg:col-span-1 flex flex-col gap-4 md:gap-5">
-            <GradesMiniCard />
-            <UpcomingExamsStudysets />
-            <LearningPulse />
-            <WeakSpotsPanel />
+            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-20 mb-2" /></CardHeader><CardContent><div className="space-y-2">{[1,2].map(i => <Skeleton key={i} className="h-9 w-full" />)}</div></CardContent></Card>}>
+              <GradesMiniCard />
+            </Suspense>
+            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-24 mb-2" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>}>
+              <UpcomingExamsStudysets />
+            </Suspense>
+            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-20 mb-2" /></CardHeader><CardContent><div className="space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-8 w-full" />)}</div></CardContent></Card>}>
+              <LearningPulse />
+            </Suspense>
+            <Suspense fallback={<Card><CardHeader><Skeleton className="h-5 w-24 mb-2" /></CardHeader><CardContent><Skeleton className="h-20 w-full" /></CardContent></Card>}>
+              <WeakSpotsPanel />
+            </Suspense>
             <Alerts alerts={alerts} />
             <UpcomingDeadlines />
         </div>
@@ -366,9 +374,9 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { role, isLoading, session, classes } = useContext(AppContext) as AppContextType;
-  
+
   // Check for cached data directly to avoid skeleton flash
-  const cached = typeof window !== 'undefined' 
+  const cached = typeof window !== 'undefined'
     ? JSON.parse(window.localStorage.getItem('studyweb-cached-dashboard') || 'null')
     : null;
   const hasCachedData = cached && cached.classes && cached.classes.length > 0;
