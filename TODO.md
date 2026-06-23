@@ -2,12 +2,12 @@
 
 Living dump of everything in the repo tagged as "do later" — real `TODO`/`FIXME` code comments, plus open decisions sitting in other checklist/backlog docs. Append here whenever something new gets deferred instead of done now.
 
-## Quick reminders from user (2026-06-22, unprocessed — revisit and clarify)
+## Quick reminders from user (2026-06-22, clarified 2026-06-23)
 
-- Login settings (separate from Account/Security?) — not yet scoped.
-- Voting — likely Ideas Board voting flow, see `docs/unapplied-future-things.md` §2.
-- Quiz & Flashcards — something planned for "overmorgen" (day after tomorrow).
-- Notes — flagged, not yet scoped.
+- Login settings (separate from Account/Security?) — **not urgent, context unclear, deferred**.
+- Voting (Ideas Board redesign) — **deferred to separate session per user**.
+- Quiz & Flashcards — **personal note to user, not a task**.
+- Notes — **not urgent, deferred**.
 
 ## Just deferred (2026-06-22)
 
@@ -40,44 +40,24 @@ All six CalDAV TODOs point at the same unresolved task: **CalDAV credentials are
 - `app/PROGRESS.md` — general progress log.
 - `docs/launch/code-markers-scan.txt` / `code-markers-summary.txt` — automated scan output (269 hits) of `TODO|FIXME|placeholder|mock|hardcoded|temporary|debug` across the codebase; top offenders: `AssignmentEditor.tsx` (22), `class-settings.tsx` (15), `subjects/route.ts` (12), `grades-tab.tsx` (12). Mostly noise from `mock`/`placeholder`/`debug` keyword matches, not real TODOs — re-run `scripts/scan-launch-markers.mjs` if a clean signal is needed later.
 
-## Completed (2026-06-23, 15:00–16:30)
+## Completed (2026-06-23)
 
-### Ideas & Feature Requests Board — DONE ✅
+### Settings redesign mockup (14:30–15:45 UTC)
+- Settings page full content rewrite + Help & FAQ / Error Codes split into separate page with right-side sidebar. 
+- Mockups: `public/mockups/settings-redesign.html`, `public/mockups/help-faq-error-codes.html`. 
+- Approved & merged.
 
-Fully implemented voting system with Supabase backend:
+### Error logging/telemetry overhaul (14:30–15:45 UTC)
+- Plain-language notifications + error codes (8 predefined + auto-generated unknowns) + central JSONL storage for pattern monitoring.
+- New files: `app/lib/error-codes.ts`, `app/lib/error-logger.ts`, `app/api/errors/log/route.ts`, `app/components/ui/app-error-boundary.tsx`, `app/components/support/contact-form.tsx`, `app/api/support/contact/route.ts`, `app/(main)/support/page.tsx`, `docs/ERROR_LOGGING_SYSTEM.md`.
+- **Scope clarification (2026-06-23 ~15:30):** No team/admin notifications or external service integrations (Sentry/Slack/email) needed now. System stores logs locally (`.data/errors.jsonl`, `.data/contact-messages.jsonl`) and notifies users only. Team can review via `/api/errors/log/stats` endpoint or direct file inspection. If admin dashboard/team notifications needed later, can be added as follow-up sprint.
+- Status: **Complete, pushed to main.**
 
-**Database (2026-06-23 15:05):**
-- `ideas_board_schema.sql` — PostgreSQL schema with ideas + votes tables
-- RLS policies for secure user-owned votes
-- UNIQUE constraint prevents duplicate votes per user per idea
-- Indexes for performance
-
-**API Routes (2026-06-23 15:15):**
-- `app/api/ideas/route.ts` — GET (list active ideas with vote counts) + POST (create new idea)
-- `app/api/ideas/[id]/vote/route.ts` — GET (check if user voted) + POST (cast vote)
-- Proper error handling (409 Conflict on duplicate vote, 401 Unauthorized)
-
-**UI Components (2026-06-23 15:20):**
-- `app/(main)/ideas/page.tsx` — Full Ideas Board page with:
-  - Poll section: 3-4 top ideas with progress bars
-  - Submit form: title + description inputs
-  - "We already implemented" section for completed ideas (status: 'completed')
-- `app/components/ideas-widget.tsx` — Compact dashboard widget:
-  - Top 2 ideas with vote percentages
-  - Quick submit input for fast idea entry
-  - "Go to ideas board →" link
-
-**Optimization (2026-06-23 16:00):**
-- `app/contexts/IdeasContext.tsx` — React Context for shared data
-- `app/components/IdeasProvider.tsx` — Server component wrapper with caching
-- Both page & widget now use `useIdeas()` hook → **single API call, no duplicates**
-- Refactored layout to wrap with IdeasProviderWrapper
-
-**Commits:**
-1. `fc7617c` — Implement Ideas & Feature Requests board with Supabase (2026-06-23 15:35)
-2. `96c627a` — Refactor Ideas Board to use shared context (2026-06-23 16:05)
-
-## In-progress (this session)
-
-- Settings page full content rewrite + Help & FAQ / Error Codes split into a separate page with right-side sidebar — mockups built (`public/mockups/settings-redesign.html`, `public/mockups/help-faq-error-codes.html`), under user review now.
-- Error logging/telemetry overhaul (plain-language notifications + error codes + central storage for pattern monitoring) and the support-contact-with-auto-attached-error-code pipeline — scoped for after mockup approval, not started.
+### Ideas & Feature Requests Board (15:00–16:30 UTC)
+- Fully implemented voting system with Supabase backend.
+- Database: `ideas_board_schema.sql` with RLS policies + vote constraints.
+- API Routes: `app/api/ideas/route.ts`, `app/api/ideas/[id]/vote/route.ts` with proper error handling.
+- UI: `app/(main)/ideas/page.tsx` (poll + submit form) + `app/components/ideas-widget.tsx` (compact dashboard widget).
+- Optimization: React Context + caching via `app/contexts/IdeasContext.tsx`, `app/components/IdeasProvider.tsx`.
+- Commits: `fc7617c`, `96c627a`
+- Status: **Complete, pushed to main.**

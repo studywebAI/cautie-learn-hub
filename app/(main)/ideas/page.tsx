@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check, AlertCircle, Lightbulb } from 'lucide-react'
-import { useIdeas } from '@/app/contexts/IdeasContext'
+import { useIdeas } from '@/contexts/IdeasContext'
 
 interface Idea {
   id: string
