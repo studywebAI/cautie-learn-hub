@@ -1167,7 +1167,7 @@ export function AppSidebar() {
                             isActive={isMenuItemActive(item.href)}
                             tooltip={item.label}
                           >
-                            <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                            <Link href={item.href} onClick={() => setOpenMobile(false)}>
                               <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                               <span className="text-[13px] font-medium leading-4">{item.label}</span>
                             </Link>
@@ -1194,7 +1194,7 @@ export function AppSidebar() {
                           isActive={isMenuItemActive(item.href)}
                           tooltip={item.label}
                         >
-                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                             <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </Link>
@@ -1219,7 +1219,7 @@ export function AppSidebar() {
                           isActive={isMenuItemActive(item.href)}
                           tooltip={item.label}
                         >
-                          <Link prefetch={false} href={item.href} onClick={() => setOpenMobile(false)}>
+                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
                             <item.icon className="h-4 w-4 text-[var(--accent-brand)]" />
                             <span className="text-[13px] font-medium leading-4">{item.label}</span>
                           </Link>
@@ -1278,7 +1278,7 @@ export function AppSidebar() {
                         tooltip={item.label}
                         className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
                       >
-                        <Link prefetch={false} href={item.href}>
+                        <Link href={item.href}>
                           <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
                           <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                         </Link>
@@ -1304,7 +1304,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link prefetch={false} href={item.href}>
+                      <Link href={item.href}>
                         <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
@@ -1329,7 +1329,7 @@ export function AppSidebar() {
                       isActive={isMenuItemActive(item.href)}
                       tooltip={item.label}
                     >
-                      <Link prefetch={false} href={item.href}>
+                      <Link href={item.href}>
                         <item.icon className="h-4 w-4 shrink-0 text-[var(--accent-brand)] group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
                         <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
                       </Link>
