@@ -2,6 +2,13 @@
 
 Living dump of everything in the repo tagged as "do later" — real `TODO`/`FIXME` code comments, plus open decisions sitting in other checklist/backlog docs. Append here whenever something new gets deferred instead of done now.
 
+## Quick reminders from user (2026-06-22, unprocessed — revisit and clarify)
+
+- Login settings (separate from Account/Security?) — not yet scoped.
+- Voting — likely Ideas Board voting flow, see `docs/unapplied-future-things.md` §2.
+- Quiz & Flashcards — something planned for "overmorgen" (day after tomorrow).
+- Notes — flagged, not yet scoped.
+
 ## Just deferred (2026-06-22)
 
 - **Removed:** "Home Page Layout" (Grid/List view toggle) from `public/mockups/settings-redesign.html` Personalization tab — not a real feature, dropped from the mockup.
