@@ -32,87 +32,40 @@ import { PageHeader } from '@/components/ui/page-header';
 
 type Phase = 'input' | 'options' | 'study';
 
+type FlashcardTypeValue =
+  | 'term-definition'
+  | 'multiple-choice'
+  | 'image-card'
+  | 'cloze'
+  | 'example-sentence'
+  | 'true-false'
+  | 'compare-pair'
+  | 'mnemonic'
+  | 'formula'
+  | 'process-step'
+  | 'date-event'
+  | 'reversed-direction';
+
 type FlashcardTypeDefinition = {
-  value:
-    | 'term-definition'
-    | 'multiple-choice'
-    | 'image-card'
-    | 'cloze'
-    | 'example-sentence'
-    | 'true-false'
-    | 'compare-pair'
-    | 'mnemonic'
-    | 'formula'
-    | 'process-step'
-    | 'date-event'
-    | 'reversed-direction';
+  value: FlashcardTypeValue;
   label: string;
   description: string;
   requiresResearchMode?: boolean;
 };
 
-const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
-  {
-    value: 'term-definition',
-    label: 'Term & Definition',
-    description: 'A term/cue fragment on one side, a matching description fragment on the other',
-  },
-  {
-    value: 'multiple-choice',
-    label: 'Multiple Choice',
-    description: 'Same term/cue fragment, but the back is also offered as answer choices to pick from',
-  },
-  {
-    value: 'true-false',
-    label: 'True / False',
-    description: 'A short statement on the front, whether it is true or false on the back',
-  },
-  {
-    value: 'cloze',
-    label: 'Cloze (Fill in the Blank)',
-    description: 'A sentence with the key term replaced by a blank — fill in the missing word',
-  },
-  {
-    value: 'example-sentence',
-    label: 'Example Sentence',
-    description: 'A sentence using the term in context with the term blanked out',
-  },
-  {
-    value: 'compare-pair',
-    label: 'Compare Pair',
-    description: 'Names two related items, the key distinguishing fact between them on the back',
-  },
-  {
-    value: 'mnemonic',
-    label: 'Mnemonic',
-    description: 'Same term/definition fragment, plus a memory aid (association, rhyme, image cue)',
-  },
-  {
-    value: 'formula',
-    label: 'Formula',
-    description: 'Front names a formula/law/equation, back is the expression itself',
-  },
-  {
-    value: 'process-step',
-    label: 'Process Step',
-    description: 'Front names a step in a sequence, back is what happens during that step',
-  },
-  {
-    value: 'date-event',
-    label: 'Date & Event',
-    description: 'A date or period on one side, the matching event on the other',
-  },
-  {
-    value: 'reversed-direction',
-    label: 'Reversed Direction',
-    description: 'Same term/definition fragment, flagged to also be studied back-to-front',
-  },
-  {
-    value: 'image-card',
-    label: 'Image Card',
-    description: 'Front shows a photo of the term, back is a short description — only available in Research mode',
-    requiresResearchMode: true,
-  },
+const FLASHCARD_TYPE_VALUES: { value: FlashcardTypeValue; requiresResearchMode?: boolean }[] = [
+  { value: 'term-definition' },
+  { value: 'multiple-choice' },
+  { value: 'true-false' },
+  { value: 'cloze' },
+  { value: 'example-sentence' },
+  { value: 'compare-pair' },
+  { value: 'mnemonic' },
+  { value: 'formula' },
+  { value: 'process-step' },
+  { value: 'date-event' },
+  { value: 'reversed-direction' },
+  { value: 'image-card', requiresResearchMode: true },
 ];
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
@@ -186,13 +139,15 @@ function FlashcardsPageContent() {
 
 
 
-  const visibleCardTypes = React.useMemo(
-    () => FLASHCARD_TYPE_DEFINITIONS.filter(
-      (def) =>
-        (!def.requiresResearchMode || explanationMode === 'research') &&
-        isFlashcardTypeAvailable(def.value, contentClass)
-    ),
-    [contentClass, explanationMode]
+  const visibleCardTypes = React.useMemo<FlashcardTypeDefinition[]>(
+    () => FLASHCARD_TYPE_VALUES
+      .filter(
+        (def) =>
+          (!def.requiresResearchMode || explanationMode === 'research') &&
+          isFlashcardTypeAvailable(def.value, contentClass)
+      )
+      .map((def) => ({ ...def, ...t.flashcards.cardTypes[def.value] })),
+    [contentClass, explanationMode, t]
   );
 
   useEffect(() => {
@@ -497,13 +452,13 @@ function FlashcardsPageContent() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            {m === 'literal' ? 'Literal' : 'Research'}
+            {m === 'literal' ? t.flashcards.panel.literalToggle : t.flashcards.panel.researchToggle}
           </button>
         ))}
         {/* Info tooltip */}
         <InfoTooltip side="bottom" contentClassName="max-w-[240px]">
-          <p><span className="text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
-          <p><span className="text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+          <p>{t.flashcards.panel.literalTooltip}</p>
+          <p>{t.flashcards.panel.researchTooltip}</p>
         </InfoTooltip>
       </div>
     );
@@ -518,9 +473,9 @@ function FlashcardsPageContent() {
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl tracking-tight">Create Flashcards</h1>
+              <h1 className="text-2xl tracking-tight">{t.flashcards.panel.createTitle}</h1>
               <p className="text-sm text-muted-foreground">
-                Paste your notes, upload a file, or drop a link
+                {t.flashcards.panel.pasteSubtitle}
               </p>
             </div>
             <ToolInputBox
@@ -534,7 +489,7 @@ function FlashcardsPageContent() {
                 setPhase('options');
               }}
               isLoading={false}
-              submitLabel="Next"
+              submitLabel={t.flashcards.panel.nextButton}
               speechLanguage={language}
               hideToolSwitcher
               bottomSlot={modeToggle}
@@ -553,7 +508,7 @@ function FlashcardsPageContent() {
   if (phase === 'study' && generatedCards && currentView === 'study') {
     return (
       <div className="h-full flex flex-col">
-        <PageHeader title="Study Flashcards" hideBreadcrumb />
+        <PageHeader title={t.flashcards.panel.studyTitle} hideBreadcrumb />
         <NotesReminder topicId="flashcard-study" topicName="Flashcard topic" />
         <div className="flex-1 min-h-0 overflow-auto flex flex-col">
           <div className="p-3 md:p-4 flex items-center justify-between border-b border-border/20">
@@ -609,6 +564,8 @@ function FlashcardsPageContent() {
       <FlashcardsOptionsPanel
         appContext={appContext}
         profileName={profileName}
+        panel={t.flashcards.panel}
+        generateLabel={t.flashcards.generate}
         phase={phase}
         setPhase={setPhase}
         setSourceText={setSourceText}

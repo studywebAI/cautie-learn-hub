@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import type { AppContextType } from '@/contexts/app-context';
 import type { AdvancedToolSettings } from '@/lib/tools/advanced-settings-schema';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
+import type { ToolStrings } from '@/lib/tool-i18n';
 
 interface FlashcardTypeDefinition {
   value: string;
@@ -22,6 +23,8 @@ interface FlashcardTypeDefinition {
 interface FlashcardsOptionsPanelProps {
   appContext: AppContextType | null;
   profileName: string;
+  panel: ToolStrings['flashcards']['panel'];
+  generateLabel: string;
   phase: 'input' | 'options' | 'study';
   setPhase: (phase: 'input' | 'options' | 'study') => void;
   setSourceText: (text: string) => void;
@@ -47,6 +50,8 @@ interface FlashcardsOptionsPanelProps {
 export function FlashcardsOptionsPanel({
   appContext,
   profileName,
+  panel,
+  generateLabel,
   phase,
   setPhase,
   setSourceText,
@@ -98,8 +103,8 @@ export function FlashcardsOptionsPanel({
         <div className="flex-1 overflow-y-auto bg-background m-3 rounded-lg">
           <div className="p-4 pb-2">
             <div className="flex items-center justify-between mb-2.5">
-              <p className={S}>Card Types</p>
-              <span className="text-[11px] text-muted-foreground">{enabledCardTypes.length} selected</span>
+              <p className={S}>{panel.cardTypesLabel}</p>
+              <span className="text-[11px] text-muted-foreground">{enabledCardTypes.length} {panel.selectedSuffix}</span>
             </div>
           </div>
 
@@ -141,19 +146,19 @@ export function FlashcardsOptionsPanel({
           {contentClass && (
             <div className="mx-4 mb-4 flex flex-wrap gap-1.5">
               {contentClass.vocabulary === 'y' && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Vocabulary</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{panel.tagVocabulary}</span>
               )}
               {contentClass.code === 'y' && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Code</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{panel.tagCode}</span>
               )}
               {contentClass.processes === 'y' && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Processes</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{panel.tagProcesses}</span>
               )}
               {contentClass.people === 'y' && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">People</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{panel.tagPeople}</span>
               )}
               {contentClass.dates === 'y' && (
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">Dates</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-muted text-muted-foreground">{panel.tagDates}</span>
               )}
             </div>
           )}
@@ -166,16 +171,16 @@ export function FlashcardsOptionsPanel({
             {/* Title */}
             <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className={S}>Flashcards title (optional)</p>
+                <p className={S}>{panel.titleLabel}</p>
                 <InfoTooltip contentClassName="max-w-[224px]">
-                  Give your flashcard set a name. This appears in your results.
+                  {panel.titleTooltip}
                 </InfoTooltip>
               </div>
               <Input
                 value={customTitle}
                 onChange={(e) => setCustomTitle(e.target.value)}
                 className="h-8 text-[13px] border-border/30"
-                placeholder="e.g. Chapter 4 — Photosynthesis"
+                placeholder={panel.titlePlaceholder}
                 disabled={isLoading}
               />
             </div>
@@ -183,7 +188,7 @@ export function FlashcardsOptionsPanel({
             {/* Knowledge Level */}
             <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className={S}>How much do you already know?</p>
+                <p className={S}>{panel.knowledgeLabel}</p>
               </div>
               <Slider
                 value={[knowledgeScore]}
@@ -192,25 +197,25 @@ export function FlashcardsOptionsPanel({
                 disabled={isLoading}
               />
               <div className="flex justify-between text-[11px] text-muted-foreground">
-                <span>Nothing</span><span>A lot</span>
+                <span>{panel.knowledgeNothing}</span><span>{panel.knowledgeLot}</span>
               </div>
             </div>
 
             {/* Practice Mode — mirrors quiz's classic/assisted/adaptive triad */}
             <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-1">
-                <p className={S}>Welke modus wil je?</p>
+                <p className={S}>{panel.modeLabel}</p>
                 <InfoTooltip contentClassName="max-w-[200px]">
-                  <p><span className="text-foreground">Classic</span> — studeer de set eenmaal, geen extra hulp.</p>
-                  <p><span className="text-foreground">Assisted</span> — hints en ezelsbruggetjes onderweg.</p>
-                  <p><span className="text-foreground">Adaptive</span> — AI mengt vraagtypen, onbeperkt.</p>
+                  <p><span className="text-foreground">{panel.modeClassic}</span> — {panel.modeTooltipClassic}</p>
+                  <p><span className="text-foreground">{panel.modeAssisted}</span> — {panel.modeTooltipAssisted}</p>
+                  <p><span className="text-foreground">{panel.modeAdaptive}</span> — {panel.modeTooltipAdaptive}</p>
                 </InfoTooltip>
               </div>
               <div className="space-y-1">
                 {([
-                  { value: 'classic', label: 'Classic' },
-                  { value: 'assisted', label: 'Assisted' },
-                  { value: 'adaptive', label: 'Adaptive' },
+                  { value: 'classic', label: panel.modeClassic },
+                  { value: 'assisted', label: panel.modeAssisted },
+                  { value: 'adaptive', label: panel.modeAdaptive },
                 ] as const).map((e) => (
                   <button
                     key={e.value}
@@ -233,7 +238,7 @@ export function FlashcardsOptionsPanel({
             {/* Card Count */}
             <div className="rounded-lg border border-border/60 bg-card px-3 py-3 space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <p className={S}>How many cards?</p>
+                <p className={S}>{panel.cardCountLabel}</p>
                 <span className="text-[13px] font-medium text-[var(--accent-brand)]">{flashcardCount}</span>
               </div>
               <Slider
@@ -260,7 +265,7 @@ export function FlashcardsOptionsPanel({
             setCustomTitle('');
           }}
         >
-          Back
+          {panel.backButton}
           <span className="pointer-events-none absolute inset-y-0 start-0 flex w-8 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
             <ChevronLeft size={14} strokeWidth={2} className="opacity-50" aria-hidden="true" />
           </span>
@@ -277,9 +282,9 @@ export function FlashcardsOptionsPanel({
           disabled={isLoading || !sourceText.trim()}
         >
           {isLoading ? (
-            <><Spinner size={14} className="mr-2" />Generating...</>
+            <><Spinner size={14} className="mr-2" />{panel.generatingButton}</>
           ) : (
-            <><Copy className="mr-2 h-3.5 w-3.5" />Generate Flashcards</>
+            <><Copy className="mr-2 h-3.5 w-3.5" />{generateLabel}</>
           )}
         </Button>
       </div>
