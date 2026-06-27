@@ -273,9 +273,13 @@ export const notificationPreferencesSchema = z.object({
 
 export const createPersonalTaskSchema = z.object({
   title: titleSchema,
-  description: descriptionSchema,
-  due_date: z.string().datetime().optional().nullable(),
-  subject: z.string().max(500).optional().nullable()
+  description: descriptionSchema.optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD
+  due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD
+  subject: z.string().max(500).optional().nullable(),
+  priority: z.enum(['low', 'medium', 'high']).optional(),
+  estimated_duration: z.number().int().positive().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export const updatePersonalTaskSchema = z.object({
