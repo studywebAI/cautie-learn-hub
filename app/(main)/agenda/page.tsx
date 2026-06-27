@@ -14,10 +14,10 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
-import { CalendarSubscribePanel } from '@/components/agenda/calendar-subscribe-panel';
+import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageSection } from '@/components/layout/page-section';
-import { PlusCircle, SlidersHorizontal, Calendar } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -634,6 +634,7 @@ function AgendaPageContent() {
   };
 
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [selectedCalendarProvider, setSelectedCalendarProvider] = useState<'apple' | 'google' | 'outlook' | 'caldav' | null>(null);
 
   const handleEventMove = async (eventId: string, newDate: Date) => {
     const event = events.find((row) => row.id === eventId);
@@ -745,22 +746,12 @@ function AgendaPageContent() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <CalendarSubscribePanel
-                role={role || ''}
-                classes={(classes || []).filter((c) => c.status !== 'archived').map((c) => ({ id: c.id, name: c.name }))}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-xl px-3.5 text-foreground"
-                onClick={() => setIsCalendarDialogOpen(true)}
-                title="Connect your Apple Calendar, Google Calendar, Outlook, or other CalDAV-compatible service"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Connect Calendar
-              </Button>
-            </div>
+            <CalendarProvidersCircle
+              onProviderClick={(provider) => {
+                setSelectedCalendarProvider(provider);
+                setIsCalendarDialogOpen(true);
+              }}
+            />
 
             {isStudent && (
               <Button className="h-9 rounded-xl px-3.5 text-foreground" onClick={() => setIsCreateTaskOpen(true)}>
@@ -835,6 +826,7 @@ function AgendaPageContent() {
         setIsOpen={setIsCalendarDialogOpen}
         userId={(session as any)?.user?.id ?? null}
         classes={(classes || []).map((c: any) => ({ id: c.id, name: c.name || c.title || '' }))}
+        initialProvider={selectedCalendarProvider}
       />
     </PageSection>
   );
