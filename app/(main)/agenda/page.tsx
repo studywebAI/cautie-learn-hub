@@ -619,19 +619,12 @@ function AgendaPageContent() {
     const createdPayload = await response.json().catch(() => ({}));
     const createdItem = createdPayload?.item;
     if (createdItem?.id) {
-      // Immediate local reflection for teacher UX, then background revalidate.
+      // Immediate local reflection for teacher UX
       setTeacherAgendaItems((prev) => [createdItem, ...prev]);
     }
 
-    const params = new URLSearchParams();
-    params.set('classIds', overlayClassIds.join(','));
-    void fetch(`/api/agenda/teacher-overlay?${params.toString()}`)
-      .then(async (refreshed) => {
-        if (!refreshed.ok) return;
-        const data = await refreshed.json();
-        setTeacherAgendaItems(data?.items || []);
-      })
-      .catch(() => {});
+    // Trigger a full refresh on next render
+    setAgendaReloadKey((prev) => prev + 1);
   };
 
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
