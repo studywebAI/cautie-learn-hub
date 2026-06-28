@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { CautieLogo } from '@/components/cautie-logo';
 import {
   Workflow,
   Menu,
@@ -1248,6 +1249,9 @@ export function AppSidebar() {
       collapsible="icon"
     >
       <SidebarContent className="px-2 py-2 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
+        <div className="mb-3 flex justify-center">
+          <CautieLogo size="md" />
+        </div>
         {renderTeacherClassSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
