@@ -528,8 +528,9 @@ function AgendaPageContent() {
     const personalEvents = (personalTasks || []).map((task: PersonalTask) => ({
       id: task.id,
       title: task.title,
-      subject: 'Personal',
-      date: parseISO(task.due_date || task.created_at),
+      subject: task.subject || 'Personal',
+      date: parseISO(task.date || task.due_date || task.created_at),
+      description: task.description || undefined,
       type: 'personal' as const,
       href: `/agenda#${task.id}`,
       priority: (task as any).priority,
