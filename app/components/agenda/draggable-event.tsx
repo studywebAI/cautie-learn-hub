@@ -30,6 +30,14 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
   };
 
   const getDeadlineStyle = () => {
+    // Color for personal tasks based on priority
+    if (event.type === 'personal') {
+      const priority = (event as any).priority || 'medium';
+      if (priority === 'high') return { accentColor: '#EF4444' }; // Red
+      if (priority === 'medium') return { accentColor: '#FF9500' }; // Orange
+      return { accentColor: '#3B82F6' }; // Blue for low
+    }
+
     const isStudyset =
       event.subject === 'Studyset' ||
       event.item_type === 'studyset' ||
@@ -93,17 +101,22 @@ export function DraggableEvent({ event, onEventClick, compact = false }: Draggab
       }}
       {...attributes}
       {...listeners}
-      className={`rounded-md border-l-4 border-l-transparent surface-panel px-2 py-1 cursor-grab active:cursor-grabbing ${
+      className={`rounded-md border-l-4 border-l-transparent surface-panel px-2.5 py-2 cursor-grab active:cursor-grabbing transition-all ${
         isDragging ? 'opacity-50' : 'hover:surface-interactive'
       }`}
       onClick={handleClick}
     >
-      <div className={`min-w-0 flex-1 ${compact ? 'hidden xl:block' : ''}`}>
-        <p className="truncate text-[10px] text-muted-foreground">
+      <div className={`min-w-0 flex-1 ${compact && event.type !== 'personal' ? 'hidden xl:block' : ''}`}>
+        <p className="truncate text-[10px] font-medium text-muted-foreground">
           {event.subject}{event.class_name ? ` | ${event.class_name}` : ''}
         </p>
-        <p className="truncate text-[13px] text-foreground">{event.title}</p>
-        {event.chapter_title && (
+        <p className="truncate text-[13px] font-medium text-foreground">{event.title}</p>
+        {event.description && event.type === 'personal' && (
+          <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+            {event.description}
+          </p>
+        )}
+        {event.chapter_title && event.type !== 'personal' && (
           <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
             {event.chapter_title}
           </p>

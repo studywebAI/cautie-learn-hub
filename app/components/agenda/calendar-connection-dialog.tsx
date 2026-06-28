@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ interface CalendarConnectionDialogProps {
   setIsOpen: (open: boolean) => void;
   userId?: string | null;
   classes?: Array<{ id: string; name: string }> | null;
+  initialProvider?: CalendarProvider | null;
 }
 
 export function CalendarConnectionDialog({
@@ -39,6 +40,7 @@ export function CalendarConnectionDialog({
   setIsOpen,
   userId,
   classes,
+  initialProvider,
 }: CalendarConnectionDialogProps) {
   const { toast } = useToast();
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
@@ -51,6 +53,13 @@ export function CalendarConnectionDialog({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [caldavUrl, setCaldavUrl] = useState('');
+
+  // Update selectedProvider if initialProvider is provided
+  useEffect(() => {
+    if (initialProvider && isOpen) {
+      setSelectedProvider(initialProvider);
+    }
+  }, [initialProvider, isOpen]);
 
   const loadAccounts = async () => {
     try {

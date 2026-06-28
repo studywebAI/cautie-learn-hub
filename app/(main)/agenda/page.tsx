@@ -14,10 +14,10 @@ import { ViewToggle } from '@/components/agenda/view-toggle';
 import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dialog';
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
-import { CalendarSubscribePanel } from '@/components/agenda/calendar-subscribe-panel';
+import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageSection } from '@/components/layout/page-section';
-import { PlusCircle, SlidersHorizontal, Calendar } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -528,8 +528,9 @@ function AgendaPageContent() {
     const personalEvents = (personalTasks || []).map((task: PersonalTask) => ({
       id: task.id,
       title: task.title,
-      subject: 'Personal',
-      date: parseISO(task.due_date || task.created_at),
+      subject: task.subject || 'Personal',
+      date: parseISO(task.date || task.due_date || task.created_at),
+      description: task.description || undefined,
       type: 'personal' as const,
       href: `/agenda#${task.id}`,
       priority: (task as any).priority,
@@ -618,22 +619,16 @@ function AgendaPageContent() {
     const createdPayload = await response.json().catch(() => ({}));
     const createdItem = createdPayload?.item;
     if (createdItem?.id) {
-      // Immediate local reflection for teacher UX, then background revalidate.
+      // Immediate local reflection for teacher UX
       setTeacherAgendaItems((prev) => [createdItem, ...prev]);
     }
 
-    const params = new URLSearchParams();
-    params.set('classIds', overlayClassIds.join(','));
-    void fetch(`/api/agenda/teacher-overlay?${params.toString()}`)
-      .then(async (refreshed) => {
-        if (!refreshed.ok) return;
-        const data = await refreshed.json();
-        setTeacherAgendaItems(data?.items || []);
-      })
-      .catch(() => {});
+    // Trigger a full refresh on next render
+    setAgendaReloadKey((prev) => prev + 1);
   };
 
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [selectedCalendarProvider, setSelectedCalendarProvider] = useState<'apple' | 'google' | 'outlook' | 'caldav' | null>(null);
 
   const handleEventMove = async (eventId: string, newDate: Date) => {
     const event = events.find((row) => row.id === eventId);
@@ -745,25 +740,15 @@ function AgendaPageContent() {
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5">
-              <CalendarSubscribePanel
-                role={role || ''}
-                classes={(classes || []).filter((c) => c.status !== 'archived').map((c) => ({ id: c.id, name: c.name }))}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 rounded-xl px-3.5"
-                onClick={() => setIsCalendarDialogOpen(true)}
-                title="Connect your Apple Calendar, Google Calendar, Outlook, or other CalDAV-compatible service"
-              >
-                <Calendar className="mr-2 h-4 w-4" />
-                Connect Calendar
-              </Button>
-            </div>
+            <CalendarProvidersCircle
+              onProviderClick={(provider) => {
+                setSelectedCalendarProvider(provider);
+                setIsCalendarDialogOpen(true);
+              }}
+            />
 
             {isStudent && (
-              <Button className="h-9 rounded-xl px-3.5" onClick={() => setIsCreateTaskOpen(true)}>
+              <Button className="h-9 rounded-xl surface-interactive px-3.5 text-foreground hover:surface-chip" onClick={() => setIsCreateTaskOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Activity
               </Button>
@@ -835,6 +820,7 @@ function AgendaPageContent() {
         setIsOpen={setIsCalendarDialogOpen}
         userId={(session as any)?.user?.id ?? null}
         classes={(classes || []).map((c: any) => ({ id: c.id, name: c.name || c.title || '' }))}
+        initialProvider={selectedCalendarProvider}
       />
     </PageSection>
   );

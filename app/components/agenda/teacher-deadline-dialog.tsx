@@ -471,7 +471,16 @@ export function TeacherDeadlineDialog({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                    disabled={(date) => {
+                      const dayOfWeek = date.getDay();
+                      return dayOfWeek === 0 || dayOfWeek === 6;
+                    }}
+                  />
                 </PopoverContent>
               </Popover>
             </div>

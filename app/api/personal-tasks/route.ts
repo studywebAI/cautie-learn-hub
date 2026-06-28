@@ -45,12 +45,23 @@ export async function POST(request: NextRequest) {
   if ('error' in validation) {
     return validation.error
   }
-  const { title, description, due_date, subject } = validation.data
+  const { title, description, date, due_date, subject, priority, estimated_duration, tags } = validation.data
 
   const { data, error } = await supabase
     .from('personal_tasks')
     .insert([
-      { title, description, due_date, subject, user_id: user.id },
+      {
+        title,
+        description: description || null,
+        date: date || null,
+        due_date: due_date || null,
+        subject: subject || null,
+        priority: priority || 'medium',
+        estimated_duration: estimated_duration || null,
+        tags: tags || [],
+        status: 'pending',
+        user_id: user.id,
+      },
     ])
     .select()
     .single();

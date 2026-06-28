@@ -21,8 +21,6 @@ import { ExportToolbar } from '@/components/tools/export-toolbar';
 import { flashcardsToMarkdown, flashcardsToHtml } from '@/lib/export-formatters';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
-import { RecentsDialog } from '@/components/tools/recents-dialog';
-import { MicrosoftAppStrip } from '@/components/tools/microsoft-app-strip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
 import { SendToClassButton } from '@/components/tools/send-to-class-button';
@@ -34,87 +32,40 @@ import { PageHeader } from '@/components/ui/page-header';
 
 type Phase = 'input' | 'options' | 'study';
 
+type FlashcardTypeValue =
+  | 'term-definition'
+  | 'multiple-choice'
+  | 'image-card'
+  | 'cloze'
+  | 'example-sentence'
+  | 'true-false'
+  | 'compare-pair'
+  | 'mnemonic'
+  | 'formula'
+  | 'process-step'
+  | 'date-event'
+  | 'reversed-direction';
+
 type FlashcardTypeDefinition = {
-  value:
-    | 'term-definition'
-    | 'multiple-choice'
-    | 'image-card'
-    | 'cloze'
-    | 'example-sentence'
-    | 'true-false'
-    | 'compare-pair'
-    | 'mnemonic'
-    | 'formula'
-    | 'process-step'
-    | 'date-event'
-    | 'reversed-direction';
+  value: FlashcardTypeValue;
   label: string;
   description: string;
   requiresResearchMode?: boolean;
 };
 
-const FLASHCARD_TYPE_DEFINITIONS: FlashcardTypeDefinition[] = [
-  {
-    value: 'term-definition',
-    label: 'Term & Definition',
-    description: 'A term/cue fragment on one side, a matching description fragment on the other',
-  },
-  {
-    value: 'multiple-choice',
-    label: 'Multiple Choice',
-    description: 'Same term/cue fragment, but the back is also offered as answer choices to pick from',
-  },
-  {
-    value: 'true-false',
-    label: 'True / False',
-    description: 'A short statement on the front, whether it is true or false on the back',
-  },
-  {
-    value: 'cloze',
-    label: 'Cloze (Fill in the Blank)',
-    description: 'A sentence with the key term replaced by a blank — fill in the missing word',
-  },
-  {
-    value: 'example-sentence',
-    label: 'Example Sentence',
-    description: 'A sentence using the term in context with the term blanked out',
-  },
-  {
-    value: 'compare-pair',
-    label: 'Compare Pair',
-    description: 'Names two related items, the key distinguishing fact between them on the back',
-  },
-  {
-    value: 'mnemonic',
-    label: 'Mnemonic',
-    description: 'Same term/definition fragment, plus a memory aid (association, rhyme, image cue)',
-  },
-  {
-    value: 'formula',
-    label: 'Formula',
-    description: 'Front names a formula/law/equation, back is the expression itself',
-  },
-  {
-    value: 'process-step',
-    label: 'Process Step',
-    description: 'Front names a step in a sequence, back is what happens during that step',
-  },
-  {
-    value: 'date-event',
-    label: 'Date & Event',
-    description: 'A date or period on one side, the matching event on the other',
-  },
-  {
-    value: 'reversed-direction',
-    label: 'Reversed Direction',
-    description: 'Same term/definition fragment, flagged to also be studied back-to-front',
-  },
-  {
-    value: 'image-card',
-    label: 'Image Card',
-    description: 'Front shows a photo of the term, back is a short description — only available in Research mode',
-    requiresResearchMode: true,
-  },
+const FLASHCARD_TYPE_VALUES: { value: FlashcardTypeValue; requiresResearchMode?: boolean }[] = [
+  { value: 'term-definition' },
+  { value: 'multiple-choice' },
+  { value: 'true-false' },
+  { value: 'cloze' },
+  { value: 'example-sentence' },
+  { value: 'compare-pair' },
+  { value: 'mnemonic' },
+  { value: 'formula' },
+  { value: 'process-step' },
+  { value: 'date-event' },
+  { value: 'reversed-direction' },
+  { value: 'image-card', requiresResearchMode: true },
 ];
 
 const normalizeStudyMode = (value: string | null | undefined): StudyMode => {
@@ -166,6 +117,7 @@ function FlashcardsPageContent() {
   const [studyCompleted, setStudyCompleted] = useState(false);
   const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
+  const [enabledCardTypes, setEnabledCardTypes] = useState<string[]>(['term-definition']);
   const launchHandledRef = useRef(false);
   const performanceRecordedRef = useRef(false);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,21 +125,6 @@ function FlashcardsPageContent() {
   const { toast } = useToast();
   const { settings: advancedSettings, savePatch: saveAdvancedSettingsPatch } = useAdvancedToolSettings();
   const advancedHydratedRef = useRef(false);
-  const openParam = searchParams.get('open');
-  const [showRecentsDialog, setShowRecentsDialog] = useState(false);
-  const openHandledRef = useRef(false);
-
-  // Handle open parameter (recents or microsoft)
-  useEffect(() => {
-    if (!openParam || openHandledRef.current) return;
-    openHandledRef.current = true;
-
-    if (openParam === 'microsoft') {
-      window.dispatchEvent(new Event('cautie:open-microsoft-picker'));
-    } else if (openParam === 'recents') {
-      setShowRecentsDialog(true);
-    }
-  }, [openParam]);
 
   // Classify source text after user stops typing (800 ms debounce)
   useEffect(() => {
@@ -202,18 +139,30 @@ function FlashcardsPageContent() {
 
 
 
-  // Question types — Quizlet-native interaction formats (Flashcards/Test/Match), not quiz-borrowed exercises.
-  // True/False and Match are listed but disabled until flashcard-viewer.tsx gets matching components (see mockups).
-  const modeOptions = React.useMemo(
-    () => [
-      { value: 'flip', label: 'Flip', description: 'Classic flip card — see one side, flip to reveal the other', comingSoon: false },
-      { value: 'multiple-choice', label: 'Multiple choice', description: 'Choose the correct answer from a few options', comingSoon: false },
-      { value: 'true-false', label: 'True / false', description: 'A short statement — decide if it is true or false', comingSoon: true },
-      { value: 'fill-blank', label: 'Type the answer', description: 'See one side, then type the matching answer yourself before checking', comingSoon: false },
-      { value: 'match', label: 'Match', description: 'Race the clock pairing terms with their definitions', comingSoon: true },
-    ] as const,
-    []
+  const visibleCardTypes = React.useMemo<FlashcardTypeDefinition[]>(
+    () => FLASHCARD_TYPE_VALUES
+      .filter(
+        (def) =>
+          (!def.requiresResearchMode || explanationMode === 'research') &&
+          isFlashcardTypeAvailable(def.value, contentClass)
+      )
+      .map((def) => ({ ...def, ...t.flashcards.cardTypes[def.value] })),
+    [contentClass, explanationMode, t]
   );
+
+  useEffect(() => {
+    setEnabledCardTypes((prev) => {
+      const allowed = prev.filter((v) => visibleCardTypes.some((t) => t.value === v));
+      return allowed.length > 0 ? allowed : ['term-definition'];
+    });
+  }, [visibleCardTypes]);
+
+  const toggleCardType = (value: string) => {
+    setEnabledCardTypes((prev) => {
+      const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+      return next.length > 0 ? next : prev;
+    });
+  };
 
   const resolveComputeClass = (requestedCount: number): 'light' | 'standard' | 'heavy' => {
     const budget = advancedSettings?.safety.performance_budget || 'auto';
@@ -294,7 +243,7 @@ function FlashcardsPageContent() {
             includeCitations: true,
             includeHints: true,
             includeAssistedHints: requestedMode === 'assisted',
-            enabledTypes: ['term-definition'],
+            enabledTypes: enabledCardTypes,
             sourcePolicy: {
               wikipediaEnabled: Boolean(advancedSettings?.sources.wikipedia_enabled),
               wikipediaDepth: advancedSettings?.sources.wikipedia_depth,
@@ -333,7 +282,7 @@ function FlashcardsPageContent() {
     } finally {
       setIsLoading(false);
     }
-  }, [advancedSettings, customTitle, explanationMode, flashcardCount, imageDataUri, knowledgeScore, language, region, saveToRecents, schoolingLevel, studyMode, t.flashcards.generatingTitle, toast, contentClass]);
+  }, [advancedSettings, customTitle, enabledCardTypes, explanationMode, flashcardCount, imageDataUri, knowledgeScore, language, region, saveToRecents, schoolingLevel, studyMode, t.flashcards.generatingTitle, toast, contentClass]);
 
   useEffect(() => {
     if (!sourceTextFromParams || isAssignmentContext || sourceParamsHandledRef.current) return;
@@ -414,6 +363,15 @@ function FlashcardsPageContent() {
     if (s('knowledgeScore') && !Number.isNaN(Number(s('knowledgeScore')))) setKnowledgeScore(Math.max(0, Math.min(100, Number(s('knowledgeScore')))));
     if (s('saveToRecents') === 'false') setSaveToRecents(false);
     if (s('explanationMode') === 'research') setExplanationMode('research');
+    const storedTypes = s('enabledCardTypes');
+    if (storedTypes) {
+      try {
+        const parsed = JSON.parse(storedTypes);
+        if (Array.isArray(parsed) && parsed.length > 0) setEnabledCardTypes(parsed);
+      } catch {
+        // ignore malformed value
+      }
+    }
   }, []);
 
   useEffect(() => { localStorage.setItem('tools.flashcards.mode', studyMode); }, [studyMode]);
@@ -421,6 +379,7 @@ function FlashcardsPageContent() {
   useEffect(() => { localStorage.setItem('tools.flashcards.knowledgeScore', String(knowledgeScore)); }, [knowledgeScore]);
   useEffect(() => { localStorage.setItem('tools.flashcards.saveToRecents', String(saveToRecents)); }, [saveToRecents]);
   useEffect(() => { localStorage.setItem('tools.flashcards.explanationMode', explanationMode); }, [explanationMode]);
+  useEffect(() => { localStorage.setItem('tools.flashcards.enabledCardTypes', JSON.stringify(enabledCardTypes)); }, [enabledCardTypes]);
 
   const handleRestart = () => {
     setGeneratedCards(null);
@@ -493,13 +452,13 @@ function FlashcardsPageContent() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            {m === 'literal' ? 'Literal' : 'Research'}
+            {m === 'literal' ? t.flashcards.panel.literalToggle : t.flashcards.panel.researchToggle}
           </button>
         ))}
         {/* Info tooltip */}
         <InfoTooltip side="bottom" contentClassName="max-w-[240px]">
-          <p><span className="text-foreground">Literal</span> — cards stick to exactly what's explicitly in your text.</p>
-          <p><span className="text-foreground">Research</span> — cards may connect ideas beyond your text, and explain their reasoning on each card.</p>
+          <p>{t.flashcards.panel.literalTooltip}</p>
+          <p>{t.flashcards.panel.researchTooltip}</p>
         </InfoTooltip>
       </div>
     );
@@ -511,13 +470,12 @@ function FlashcardsPageContent() {
         hideSidebar={true}
         breadcrumbIcon={<Copy className="h-4 w-4" />}
       >
-        <MicrosoftAppStrip returnTo="/tools/flashcards" />
         <div className="flex h-full w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl space-y-4">
             <div className="space-y-1.5 text-center">
-              <h1 className="text-2xl tracking-tight">Create Flashcards</h1>
+              <h1 className="text-2xl tracking-tight">{t.flashcards.panel.createTitle}</h1>
               <p className="text-sm text-muted-foreground">
-                Paste your notes, upload a file, or drop a link
+                {t.flashcards.panel.pasteSubtitle}
               </p>
             </div>
             <ToolInputBox
@@ -527,10 +485,11 @@ function FlashcardsPageContent() {
               onImageDataUriChange={setImageDataUri}
               onSubmit={(compiledText) => {
                 setSourceText(compiledText);
+                setCustomTitle(autoGenerateTitle(compiledText));
                 setPhase('options');
               }}
               isLoading={false}
-              submitLabel="Next"
+              submitLabel={t.flashcards.panel.nextButton}
               speechLanguage={language}
               hideToolSwitcher
               bottomSlot={modeToggle}
@@ -549,7 +508,7 @@ function FlashcardsPageContent() {
   if (phase === 'study' && generatedCards && currentView === 'study') {
     return (
       <div className="h-full flex flex-col">
-        <PageHeader title="Study Flashcards" hideBreadcrumb />
+        <PageHeader title={t.flashcards.panel.studyTitle} hideBreadcrumb />
         <NotesReminder topicId="flashcard-study" topicName="Flashcard topic" />
         <div className="flex-1 min-h-0 overflow-auto flex flex-col">
           <div className="p-3 md:p-4 flex items-center justify-between border-b border-border/20">
@@ -605,6 +564,8 @@ function FlashcardsPageContent() {
       <FlashcardsOptionsPanel
         appContext={appContext}
         profileName={profileName}
+        panel={t.flashcards.panel}
+        generateLabel={t.flashcards.generate}
         phase={phase}
         setPhase={setPhase}
         setSourceText={setSourceText}
@@ -614,42 +575,18 @@ function FlashcardsPageContent() {
         setKnowledgeScore={setKnowledgeScore}
         practiceMode={practiceMode}
         setPracticeMode={setPracticeMode}
-        studyMode={studyMode}
-        setStudyMode={setStudyMode}
         flashcardCount={flashcardCount}
         setFlashcardCount={setFlashcardCount}
         isLoading={isLoading}
         sourceText={sourceText}
-        modeOptions={modeOptions}
+        visibleCardTypes={visibleCardTypes}
+        enabledCardTypes={enabledCardTypes}
+        toggleCardType={toggleCardType}
+        contentClass={contentClass}
         saveAdvancedSettingsPatch={saveAdvancedSettingsPatch}
         handleGenerate={handleGenerate}
         autoGenerateTitle={autoGenerateTitle}
       />
-    );
-  }
-
-  // Recents Dialog
-  if (showRecentsDialog && phase === 'input') {
-    return (
-      <WorkbenchShell
-        title="Flashcards"
-        sidebar={<div />}
-        hideSidebar={true}
-        breadcrumbIcon={<Copy className="h-4 w-4" />}
-      >
-        <RecentsDialog
-          toolId="flashcards"
-          onSelect={(sourceText) => {
-            setSourceText(sourceText);
-            setPhase('options');
-            setShowRecentsDialog(false);
-          }}
-          onClose={() => {
-            setShowRecentsDialog(false);
-            setPhase('input');
-          }}
-        />
-      </WorkbenchShell>
     );
   }
 
