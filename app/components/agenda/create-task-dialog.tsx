@@ -153,6 +153,11 @@ export function CreateTaskDialog({ isOpen, setIsOpen, onTaskCreated, initialDate
                   onSelect={handleDateSelect}
                   initialFocus
                   className="pointer-events-auto"
+                  disabled={(date) => {
+                    // Disable weekends (Saturday = 6, Sunday = 0)
+                    const dayOfWeek = date.getDay();
+                    return dayOfWeek === 0 || dayOfWeek === 6;
+                  }}
                 />
               </PopoverContent>
             </Popover>
