@@ -9,6 +9,7 @@ import { AppContextProvider } from "@/contexts/app-context";
 import { GlobalRequestLogger } from "@/components/debug/global-request-logger";
 import { ChunkRecovery } from "@/components/runtime/chunk-recovery";
 import { IdeasProviderWrapper } from "@/components/IdeasProvider";
+import { StartupSplash } from "@/components/startup-splash";
 
 const fontAtkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
@@ -75,6 +76,7 @@ export default function RootLayout({
         <AppContextProvider>
           <IdeasProviderWrapper>
             <ChunkRecovery />
+            <StartupSplash visible={true} />
             {shouldEnableRequestLogger ? (
               <Suspense fallback={null}>
                 <GlobalRequestLogger />

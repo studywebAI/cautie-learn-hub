@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Concept - Futuristic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-darker: #050810;
+            --accent-1: #00d9ff;
+            --accent-2: #ff0080;
+            --accent-3: #00ff9f;
+            --accent-4: #ffd700;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --border-color: rgba(0, 217, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 280px;
+            background: rgba(5, 8, 16, 0.6);
+            backdrop-filter: blur(10px);
+            border-right: 2px solid var(--border-color);
+            padding: 2rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-1), transparent);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'Space Mono', monospace;
+            letter-spacing: 2px;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .nav-item:hover {
+            color: var(--accent-1);
+            border-left-color: var(--accent-1);
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .nav-item.active {
+            color: var(--accent-1);
+            border-left-color: var(--accent-1);
+            background: rgba(0, 217, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            background: linear-gradient(180deg, rgba(10, 14, 39, 0.5) 0%, rgba(26, 31, 58, 0.5) 100%);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-1);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(5, 8, 16, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-1), transparent);
+        }
+
+        .card:hover {
+            border-color: var(--accent-1);
+            background: rgba(0, 217, 255, 0.08);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 20px;
+        }
+
+        .badge-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid var(--accent-1);
+            color: var(--accent-1);
+            background: rgba(0, 217, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .badge:hover {
+            background: rgba(0, 217, 255, 0.2);
+            color: var(--accent-3);
+            border-color: var(--accent-3);
+        }
+
+        .badge.active {
+            background: var(--accent-1);
+            color: var(--bg-dark);
+        }
+
+        .item {
+            padding: 1.2rem;
+            border-left: 3px solid transparent;
+            background: rgba(0, 217, 255, 0.02);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .item:hover {
+            border-left-color: var(--accent-2);
+            background: rgba(255, 0, 128, 0.08);
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            font-size: 14px;
+        }
+
+        .item-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .item-status {
+            display: inline-block;
+            margin-top: 0.6rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-due {
+            background: rgba(255, 0, 128, 0.2);
+            color: var(--accent-2);
+        }
+
+        .status-done {
+            background: rgba(0, 255, 159, 0.2);
+            color: var(--accent-3);
+        }
+
+        .status-pending {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--accent-4);
+        }
+
+        /* ===== NEXT HOUR HERO ===== */
+        .hero-card {
+            background: linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(255, 0, 128, 0.1) 100%);
+            border: 2px solid var(--accent-1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 217, 255, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-time {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent-1);
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-class {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-room {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== FORM ELEMENTS ===== */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .form-input, .form-select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            background: rgba(0, 217, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid var(--accent-1);
+            background: rgba(0, 217, 255, 0.1);
+            color: var(--accent-1);
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--accent-1);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 1400px) {
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">⚡ CAUTIE</div>
+
+            <div class="nav-section">
+                <div class="nav-label">Dashboard</div>
+                <div class="nav-item active">📊 Overview</div>
+                <div class="nav-item">📚 Assignments</div>
+                <div class="nav-item">🎓 Grades</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">Tools</div>
+                <div class="nav-item">💡 Ideas Board</div>
+                <div class="nav-item">📖 Materials</div>
+                <div class="nav-item">📝 Notes</div>
+                <div class="nav-item">⚙️ Settings</div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">For Teachers</div>
+                <div class="nav-item">👥 Class Roster</div>
+                <div class="nav-item">📊 Analytics</div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- STUDENT DASHBOARD -->
+            <div class="header">
+                <div>
+                    <div class="header-title">Dashboard</div>
+                    <div class="header-subtitle">Monday, June 23, 2025 • 8:45 AM</div>
+                </div>
+            </div>
+
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Current Status</div>
+                    <div class="stat-value">Active</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Due This Week</div>
+                    <div class="stat-value">3</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Streak 🔥</div>
+                    <div class="stat-value">12</div>
+                </div>
+            </div>
+
+            <!-- NEXT HOUR -->
+            <div class="hero-card">
+                <div style="position: relative; z-index: 1;">
+                    <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">⏰ NEXT CLASS IN</div>
+                    <div class="hero-time">14:00</div>
+                    <div class="hero-class">Mathematics 101</div>
+                    <div class="hero-room">Room 205 • Prof. Smith</div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- ANNOUNCEMENTS -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📢</span>
+                            Announcements
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item">
+                            <div class="item-title">Quiz Rescheduled</div>
+                            <div class="item-meta">Math • Friday at 2pm</div>
+                            <span class="item-status status-pending">Updated 2d ago</span>
+                        </div>
+                        <div class="item">
+                            <div class="item-title">Essay Deadline Extended</div>
+                            <div class="item-meta">English • Next Wednesday</div>
+                            <span class="item-status status-pending">Updated 1d ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPCOMING DEADLINES -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📅</span>
+                            Deadlines
+                        </div>
+                        <div class="badge-group">
+                            <div class="badge active">All</div>
+                            <div class="badge">Homework</div>
+                            <div class="badge">Tests</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item" style="border-left-color: var(--accent-2);">
+                            <div class="item-title">Chapter 5 Reading</div>
+                            <div class="item-meta">English</div>
+                            <span class="item-status status-due">DUE TODAY</span>
+                        </div>
+                        <div class="item" style="border-left-color: var(--accent-3);">
+                            <div class="item-title">Problem Set 6</div>
+                            <div class="item-meta">Mathematics</div>
+                            <span class="item-status status-done">SUBMITTED ✓</span>
+                        </div>
+                        <div class="item">
+                            <div class="item-title">History Project</div>
+                            <div class="item-meta">History</div>
+                            <span class="item-status status-pending">DUE TOMORROW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEACHER DASHBOARD PREVIEW (Below Student) -->
+    <div style="margin-top: 4rem; padding: 4rem 2rem; background: linear-gradient(180deg, rgba(10, 14, 39, 0.3) 0%, rgba(26, 31, 58, 0.3) 100%); border-top: 2px solid var(--border-color);">
+        <div style="max-width: 1400px; margin: 0 auto;">
+            <h2 style="font-size: 24px; margin-bottom: 2rem; color: var(--accent-2);">📊 TEACHER DASHBOARD</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- NEXT HOUR -->
+                <div class="card">
+                    <div class="hero-card" style="margin-bottom: 0;">
+                        <div style="position: relative; z-index: 1;">
+                            <div style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">⏰ NEXT CLASS</div>
+                            <div class="hero-time">10:00</div>
+                            <div class="hero-class">Mathematics 101</div>
+                            <div class="hero-room">Room 305 • 28 Students</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TO GRADE & SUBMISSIONS GRID -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="card" style="padding: 1.5rem;">
+                        <div class="stat-label" style="margin-bottom: 1rem;">To Grade</div>
+                        <div class="stat-value" style="color: var(--accent-2);">18</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 0.5rem;">of 28 essays</div>
+                    </div>
+                    <div class="card" style="padding: 1.5rem;">
+                        <div class="stat-label" style="margin-bottom: 1rem;">Recent</div>
+                        <div class="stat-value" style="color: var(--accent-3);">5</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 0.5rem;">last 2 hours</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <!-- MANAGE TOOLS -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📝</span>
+                            Post Announcement
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message</label>
+                        <textarea placeholder="Type your announcement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Send to</label>
+                        <select class="form-select">
+                            <option>All students</option>
+                            <option>Specific student</option>
+                            <option>Other teachers</option>
+                        </select>
+                    </div>
+                    <button class="btn">Send</button>
+                </div>
+
+                <!-- ATTENDANCE -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">✓</span>
+                            Manage Attendance
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Select Class</label>
+                        <select class="form-select">
+                            <option>Mathematics 101</option>
+                            <option>English 201</option>
+                            <option>Science 301</option>
+                        </select>
+                    </div>
+                    <div class="grid-2">
+                        <button class="btn">Present</button>
+                        <button class="btn" style="border-color: var(--accent-2); color: var(--accent-2);">Absent</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                <!-- UPCOMING -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📅</span>
+                            Upcoming
+                        </div>
+                        <div class="badge-group">
+                            <div class="badge active">All</div>
+                            <div class="badge">Tests</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item">
+                            <div class="item-title">Quiz 5</div>
+                            <div class="item-meta">Mathematics 101</div>
+                            <span class="item-status status-due">TOMORROW</span>
+                        </div>
+                        <div class="item">
+                            <div class="item-title">Essay Due</div>
+                            <div class="item-meta">English 201</div>
+                            <span class="item-status status-pending">Thursday</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECENT SUBMISSIONS -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📥</span>
+                            Recent Submissions
+                        </div>
+                    </div>
+                    <div>
+                        <div class="item">
+                            <div class="item-title">Sarah Johnson</div>
+                            <div class="item-meta">Essay Draft • 2h ago</div>
+                        </div>
+                        <div class="item">
+                            <div class="item-title">James Chen</div>
+                            <div class="item-meta">Math Problem Set • 30m ago</div>
+                        </div>
+                        <div class="item">
+                            <div class="item-title">Emma Davis</div>
+                            <div class="item-meta">Project File • 5m ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

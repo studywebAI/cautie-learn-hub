@@ -35,13 +35,13 @@ export function CautieLogoAnimation({ onComplete, autoPlay = true }: CautieLogoA
   }, [autoPlay, onComplete]);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative w-full h-full flex items-center justify-start pl-8">
       {/* Main SVG with handwriting and highlight */}
       <svg
         ref={svgRef}
         viewBox="0 0 400 120"
-        className="w-full max-w-2xl"
-        preserveAspectRatio="xMidYMid meet"
+        className="w-full max-w-4xl"
+        preserveAspectRatio="xMinYMid meet"
       >
         <defs>
           {/* Gradient for the highlight sweep effect */}
