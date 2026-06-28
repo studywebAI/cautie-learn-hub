@@ -18,7 +18,7 @@ export function CautieLogoAnimation({ onComplete, autoPlay = true }: CautieLogoA
   const fullText = 'cautie';
   const charDelay = 120; // ms per character
   const typingDuration = fullText.length * charDelay; // ~720ms
-  const highlightDuration = 1200; // ms
+  const highlightDuration = 1400; // ms
 
   useEffect(() => {
     if (!autoPlay) return;
@@ -47,46 +47,53 @@ export function CautieLogoAnimation({ onComplete, autoPlay = true }: CautieLogoA
   }, [autoPlay, onComplete]);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-start">
-      {/* Text container */}
-      <div className="relative inline-block">
-        {/* Text */}
-        <div className="text-9xl font-black tracking-tighter text-foreground relative z-10">
+    <div className="relative w-full h-screen flex items-center justify-center overflow-hidden">
+      {/* Full screen text container */}
+      <div className="relative w-full text-center px-8">
+        {/* Main text - normal font weight */}
+        <div className="text-[180px] md:text-[220px] lg:text-[280px] font-medium tracking-tight text-foreground relative inline-block w-full">
           {displayText}
-          {/* Cursor blink during typing */}
-          {!isComplete && displayText.length < fullText.length && (
-            <span className="animate-pulse">|</span>
+
+          {/* Highlight effect - looks like marker highlighter */}
+          {highlightActive && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                // Marker highlight effect with blur and opacity
+                background: `linear-gradient(
+                  180deg,
+                  transparent 0%,
+                  rgba(217, 119, 87, 0) 15%,
+                  rgba(217, 119, 87, 0.5) 35%,
+                  rgba(217, 119, 87, 0.6) 50%,
+                  rgba(217, 119, 87, 0.5) 65%,
+                  rgba(217, 119, 87, 0) 85%,
+                  transparent 100%
+                )`,
+                backdropFilter: 'blur(0.5px)',
+                animation: `highlightSweep ${highlightDuration}ms ease-in-out forwards`,
+                WebkitBackdropFilter: 'blur(0.5px)',
+              }}
+            />
           )}
         </div>
-
-        {/* Highlight sweep overlay - bottom to top */}
-        {highlightActive && (
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'linear-gradient(180deg, transparent 0%, #d97757 45%, #d97757 55%, transparent 100%)',
-              animation: `highlightSweep ${highlightDuration}ms ease-in-out forwards`,
-              opacity: 0.4,
-            }}
-          />
-        )}
       </div>
 
       {/* CSS Animations */}
       <style>{`
         @keyframes highlightSweep {
           0% {
-            transform: translateY(100%);
+            transform: translateY(150%);
             opacity: 0;
           }
-          10% {
-            opacity: 0.4;
+          5% {
+            opacity: 1;
           }
-          90% {
-            opacity: 0.4;
+          95% {
+            opacity: 1;
           }
           100% {
-            transform: translateY(-100%);
+            transform: translateY(-150%);
             opacity: 0;
           }
         }
