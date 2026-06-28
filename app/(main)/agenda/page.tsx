@@ -755,7 +755,7 @@ function AgendaPageContent() {
             />
 
             {isStudent && (
-              <Button className="h-9 rounded-xl px-3.5 text-foreground" onClick={() => setIsCreateTaskOpen(true)}>
+              <Button className="h-9 rounded-xl surface-interactive px-3.5 text-foreground hover:surface-chip" onClick={() => setIsCreateTaskOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Activity
               </Button>
