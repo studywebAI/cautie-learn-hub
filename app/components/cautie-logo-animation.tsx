@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { SHOW_CAUTIE_LOGO } from '@/lib/branding';
 
 interface CautieLogoAnimationProps {
@@ -11,187 +11,82 @@ interface CautieLogoAnimationProps {
 export function CautieLogoAnimation({ onComplete, autoPlay = true }: CautieLogoAnimationProps) {
   if (!SHOW_CAUTIE_LOGO) return null;
 
-  const [phase, setPhase] = useState<'writing' | 'highlighting' | 'complete'>('writing');
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [displayText, setDisplayText] = useState('');
+  const [highlightActive, setHighlightActive] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+
+  const fullText = 'cautie';
+  const charDelay = 120; // ms per character
+  const typingDuration = fullText.length * charDelay; // ~720ms
+  const highlightDuration = 1200; // ms
 
   useEffect(() => {
     if (!autoPlay) return;
 
-    // Writing animation: 2.5 seconds
-    const writingTimer = setTimeout(() => {
-      setPhase('highlighting');
-    }, 2500);
+    // Typing animation
+    let charIndex = 0;
+    const typingInterval = setInterval(() => {
+      if (charIndex <= fullText.length) {
+        setDisplayText(fullText.slice(0, charIndex));
+        charIndex++;
+      } else {
+        clearInterval(typingInterval);
+        // Start highlight after typing completes
+        setTimeout(() => {
+          setHighlightActive(true);
+          // Complete animation after highlight
+          setTimeout(() => {
+            setIsComplete(true);
+            onComplete?.();
+          }, highlightDuration);
+        }, 200);
+      }
+    }, charDelay);
 
-    // Highlight animation: 1.2 seconds after writing completes
-    const highlightTimer = setTimeout(() => {
-      setPhase('complete');
-      onComplete?.();
-    }, 2500 + 1200);
-
-    return () => {
-      clearTimeout(writingTimer);
-      clearTimeout(highlightTimer);
-    };
+    return () => clearInterval(typingInterval);
   }, [autoPlay, onComplete]);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-start pl-8">
-      {/* Main SVG with handwriting and highlight */}
-      <svg
-        ref={svgRef}
-        viewBox="0 0 400 120"
-        className="w-full max-w-4xl"
-        preserveAspectRatio="xMinYMid meet"
-      >
-        <defs>
-          {/* Gradient for the highlight sweep effect */}
-          <linearGradient
-            id="highlightGradient"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor="transparent" />
-            <stop offset="40%" stopColor="#d97757" stopOpacity="0.6" />
-            <stop offset="60%" stopColor="#d97757" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="transparent" />
-          </linearGradient>
+    <div className="relative w-full h-full flex items-center justify-start">
+      {/* Text container */}
+      <div className="relative inline-block">
+        {/* Text */}
+        <div className="text-9xl font-black tracking-tighter text-foreground relative z-10">
+          {displayText}
+          {/* Cursor blink during typing */}
+          {!isComplete && displayText.length < fullText.length && (
+            <span className="animate-pulse">|</span>
+          )}
+        </div>
 
-          {/* Clipping path for the text */}
-          <clipPath id="textClip">
-            <text
-              x="50%"
-              y="50%"
-              dominantBaseline="middle"
-              textAnchor="middle"
-              fontSize="72"
-              fontWeight="600"
-              fontFamily="Plus Jakarta Sans, sans-serif"
-              letterSpacing="-2"
-            >
-              cautie
-            </text>
-          </clipPath>
-        </defs>
-
-        {/* Background text (for reference) - invisible */}
-        <text
-          x="50%"
-          y="50%"
-          dominantBaseline="middle"
-          textAnchor="middle"
-          fontSize="72"
-          fontWeight="600"
-          fontFamily="Plus Jakarta Sans, sans-serif"
-          letterSpacing="-2"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          opacity="0"
-        >
-          cautie
-        </text>
-
-        {/* Writing animation - animated strokes */}
-        {phase !== 'complete' && (
-          <g clipPath="url(#textClip)">
-            {/* Each letter gets its own animated stroke for better control */}
-            {['c', 'a', 'u', 't', 'i', 'e'].map((letter, idx) => (
-              <text
-                key={`writing-${idx}`}
-                x="50%"
-                y="50%"
-                dominantBaseline="middle"
-                textAnchor="middle"
-                fontSize="72"
-                fontWeight="600"
-                fontFamily="Plus Jakarta Sans, sans-serif"
-                letterSpacing="-2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{
-                  animation: `drawStroke 2.5s ease-in-out forwards`,
-                  animationDelay: `${idx * 0.35}s`,
-                  opacity: phase === 'writing' ? 1 : 0,
-                  transition: 'opacity 0.3s ease-out',
-                }}
-              >
-                {letter}
-              </text>
-            ))}
-          </g>
+        {/* Highlight sweep overlay - bottom to top */}
+        {highlightActive && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, transparent 0%, #d97757 45%, #d97757 55%, transparent 100%)',
+              animation: `highlightSweep ${highlightDuration}ms ease-in-out forwards`,
+              opacity: 0.4,
+            }}
+          />
         )}
-
-        {/* Final text - visible after animations */}
-        {(phase === 'highlighting' || phase === 'complete') && (
-          <>
-            {/* Static text */}
-            <text
-              x="50%"
-              y="50%"
-              dominantBaseline="middle"
-              textAnchor="middle"
-              fontSize="72"
-              fontWeight="600"
-              fontFamily="Plus Jakarta Sans, sans-serif"
-              letterSpacing="-2"
-              fill="currentColor"
-              style={{
-                opacity: phase === 'highlighting' || phase === 'complete' ? 1 : 0,
-                transition: 'opacity 0.3s ease-out',
-              }}
-            >
-              cautie
-            </text>
-
-            {/* Highlight sweep effect */}
-            {phase === 'highlighting' && (
-              <rect
-                x="0"
-                y="0"
-                width="400"
-                height="120"
-                fill="url(#highlightGradient)"
-                style={{
-                  animation: 'highlightSweep 1.2s ease-in-out forwards',
-                  transformOrigin: '0 0',
-                }}
-              />
-            )}
-          </>
-        )}
-      </svg>
+      </div>
 
       {/* CSS Animations */}
       <style>{`
-        @keyframes drawStroke {
-          from {
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 1000;
-            opacity: 1;
-          }
-          to {
-            stroke-dasharray: 1000;
-            stroke-dashoffset: 0;
-            opacity: 1;
-          }
-        }
-
         @keyframes highlightSweep {
-          from {
-            transform: translateX(-120px) translateY(-120px) rotate(25deg);
+          0% {
+            transform: translateY(100%);
             opacity: 0;
           }
-          50% {
-            opacity: 1;
+          10% {
+            opacity: 0.4;
           }
-          to {
-            transform: translateX(420px) translateY(120px) rotate(25deg);
+          90% {
+            opacity: 0.4;
+          }
+          100% {
+            transform: translateY(-100%);
             opacity: 0;
           }
         }
