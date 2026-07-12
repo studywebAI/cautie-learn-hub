@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { useToast } from '@/hooks/use-toast';
 import { PageSection } from '@/components/layout/page-section';
 import {
@@ -289,7 +289,7 @@ export default function StudysetSettingsPage() {
     return (
       <PageSection className="[--accent-brand:#6b7c4e]">
         <div className="flex min-h-[50vh] items-center justify-center">
-          <CautieLoader />
+          <Loader />
         </div>
       </PageSection>
     );

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 import { AppContext, AppContextType } from '@/contexts/app-context';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 
 type GradeSet = {
   id: string;

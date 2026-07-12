@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TrendingUp, Target, BarChart3, ChevronRight, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
 import { AppContext } from '@/contexts/app-context';
 import { StudentQuizAnalytics } from '@/components/analytics/student-quiz-analytics';

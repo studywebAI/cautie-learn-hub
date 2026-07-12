@@ -7,7 +7,7 @@ import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen, MessageSquare, UserCheck } from "lucide-react";
-import { CautieLoader } from "@/components/ui/cautie-loader";
+import Loader from '@/components/ui/loader';
 import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Alert, Subject } from '@/lib/types';

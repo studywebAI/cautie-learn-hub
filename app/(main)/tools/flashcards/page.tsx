@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useSavedRun } from '@/hooks/use-saved-run';
 import { ChevronLeft, Copy, Loader2 } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { FunLoader } from '@/components/tools/fun-loader';
+import Loader from '@/components/ui/loader';
 import { FlashcardViewer, StudyMode } from '@/components/tools/flashcard-viewer';
 import { AppContext } from '@/contexts/app-context';
 import { NotesReminder } from '@/components/analytics/notes-reminder';

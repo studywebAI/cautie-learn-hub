@@ -15,7 +15,7 @@ import {
   Cell,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { CautieLoader } from '@/components/ui/cautie-loader'
+import Loader from '@/components/ui/loader';
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
 

@@ -17,7 +17,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import type { Quiz } from '@/lib/types';
 import { classifyContent, isQuizTypeAvailable } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
-import { FunLoader } from '@/components/tools/fun-loader';
+import Loader from '@/components/ui/loader';
 import { QUIZ_TYPE_DEFINITIONS, QUIZ_TYPES } from '@/lib/tools/quiz-shared';
 import type { QuizMode, AnswerFeedback, Phase } from '@/lib/tools/quiz-shared';
 

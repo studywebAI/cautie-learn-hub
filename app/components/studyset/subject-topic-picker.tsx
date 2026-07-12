@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { CheckCircle2, ChevronRight } from 'lucide-react';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 
 // Real "subject pick" source — walks the user's actual curriculum
 // (subjects → chapters → paragraphs, the same hierarchy /subjects uses)
@@ -140,7 +140,7 @@ export function SubjectTopicPicker({
   if (loadingSubjects) {
     return (
       <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-10">
-        <CautieLoader />
+        <Loader />
       </div>
     );
   }
@@ -187,7 +187,7 @@ export function SubjectTopicPicker({
           <p className="mb-2 text-[12px] font-medium text-muted-foreground">Chapter</p>
           {loadingChapters ? (
             <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-6">
-              <CautieLoader />
+              <Loader />
             </div>
           ) : chapters.length === 0 ? (
             <p className="text-xs text-muted-foreground">No chapters found for this subject yet.</p>
@@ -225,7 +225,7 @@ export function SubjectTopicPicker({
           </p>
           {loadingParagraphs ? (
             <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-6">
-              <CautieLoader />
+              <Loader />
             </div>
           ) : paragraphs.length === 0 ? (
             <p className="text-xs text-muted-foreground">No paragraphs found for this chapter yet — the whole chapter works too.</p>

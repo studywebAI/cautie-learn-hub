@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
 
 const BRAND = '#6b7c4e';

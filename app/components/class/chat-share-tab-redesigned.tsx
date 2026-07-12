@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { ImagePlus, X } from 'lucide-react';
 
 type Reaction = { emoji: string; count: number; reactedByMe: boolean };

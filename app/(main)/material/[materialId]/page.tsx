@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import type { MaterialReference } from '@/lib/teacher-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';

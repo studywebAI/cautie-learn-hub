@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarClock, CheckCircle2, GraduationCap } from 'lucide-react';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 
 // Real "class template" source — pulled from the user's actual `/api/agenda/feed`
 // (the same unified agenda the rest of the app uses), so picking a test/assignment
@@ -97,7 +97,7 @@ export function AgendaTemplatePicker({
   if (loading) {
     return (
       <div className="flex items-center justify-center rounded-xl border border-border/60 bg-background py-10">
-        <CautieLoader />
+        <Loader />
       </div>
     );
   }

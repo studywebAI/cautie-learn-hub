@@ -22,7 +22,7 @@ import { parseNotesFromMarkdown, parseNotesFromHtml } from '@/lib/import-parsers
 import { AppContext } from '@/contexts/app-context';
 import { getToolStrings } from '@/lib/tool-i18n';
 import { PageHeader } from '@/components/ui/page-header';
-import { FunLoader } from '@/components/tools/fun-loader';
+import Loader from '@/components/ui/loader';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { PaintOverlay } from '@/components/tools/paint-overlay';
 import { TextHighlighterToolbar } from '@/components/tools/text-highlighter';

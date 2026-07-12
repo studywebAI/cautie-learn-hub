@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { useToast } from '@/hooks/use-toast';
 import { PageSection } from '@/components/layout/page-section';
 
@@ -209,7 +209,7 @@ export default function StudysetChangesPage() {
     return (
       <PageSection className="[--accent-brand:#6b7c4e]">
         <div className="flex min-h-[50vh] items-center justify-center">
-          <CautieLoader />
+          <Loader />
         </div>
       </PageSection>
     );

@@ -8,7 +8,7 @@ import { JoinClassDialog } from './join-class-dialog';
 import { PlusCircle, Search } from 'lucide-react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { ClassCard } from '../teacher/class-card';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { useToast } from '@/hooks/use-toast';
 
 

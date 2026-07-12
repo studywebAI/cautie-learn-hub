@@ -15,7 +15,7 @@ import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dial
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
 import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
-import { CautieLoader } from '@/components/ui/cautie-loader';
+import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
