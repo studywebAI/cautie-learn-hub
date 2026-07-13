@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 type SubjectAnalytics = {
   name: string;

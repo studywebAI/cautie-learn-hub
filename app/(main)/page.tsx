@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen, MessageSquare, UserCheck } from "lucide-react";
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Alert, Subject } from '@/lib/types';

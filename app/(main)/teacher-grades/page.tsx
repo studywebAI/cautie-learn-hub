@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import Link from 'next/link';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 type GradeSet = {
   id: string;

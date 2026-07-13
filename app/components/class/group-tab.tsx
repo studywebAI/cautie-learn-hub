@@ -8,6 +8,7 @@ import { Check, X, Clock, BookOpen, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 /* ─── Types ─── */
 type Student = {

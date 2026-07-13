@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Copy } from 'lucide-react';
 import {

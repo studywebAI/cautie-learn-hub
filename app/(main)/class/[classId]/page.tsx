@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { logClassTabEvent } from '@/lib/class-tab-telemetry';
 import { STUDENT_CLASS_TAB_IDS, TEACHER_CLASS_TAB_IDS } from '@/lib/class-tabs';
 import { NotesReminder } from '@/components/analytics/notes-reminder';

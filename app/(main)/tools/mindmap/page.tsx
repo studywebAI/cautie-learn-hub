@@ -13,6 +13,7 @@ import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { PageHeader } from '@/components/ui/page-header';
 import { useToast } from '@/hooks/use-toast';
 import Loader from '@/components/ui/loader';
+import { FunLoader } from '@/components/tools/fun-loader';
 import { Mindmap } from '@/components/tools/mindmap';
 import { Switch } from '@/components/ui/switch';
 import { classifyContent } from '@/lib/tools/content-classifier';

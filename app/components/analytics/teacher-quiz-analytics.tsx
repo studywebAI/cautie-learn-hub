@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'

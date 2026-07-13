@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 const BRAND = 'var(--accent-brand)';
 

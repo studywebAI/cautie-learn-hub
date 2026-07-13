@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 
 const parseCanonicalHost = () => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -10,7 +11,9 @@ const parseCanonicalHost = () => {
   }
 };
 
-export function proxy(request: NextRequest) {
+const PUBLIC_ROUTES = ['/login', '/auth', '/api/auth', '/share'];
+
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const userAgent = request.headers.get('user-agent') || '';
@@ -47,31 +50,65 @@ export function proxy(request: NextRequest) {
     });
   }
 
+  // Canonical host redirect (e.g. non-www -> www, or custom domain enforcement)
   const canonicalHost = parseCanonicalHost();
-  if (!canonicalHost) {
-    const response = NextResponse.next();
+  if (canonicalHost) {
+    const requestHost = request.nextUrl.host.toLowerCase();
+    if (requestHost !== canonicalHost) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.host = canonicalHost;
+      redirectUrl.protocol = canonicalHost.includes('localhost') ? 'http:' : 'https:';
+      return NextResponse.redirect(redirectUrl, 308);
+    }
+  }
+
+  const withToolHeaders = (response: NextResponse) => {
     if (path.startsWith('/tools/') || path === '/integrations/microsoft/picker') {
       response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
       response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
     }
     return response;
+  };
+
+  // Auth check does not apply to API routes, public routes, or static/noise paths
+  const isPublicRoute = PUBLIC_ROUTES.some(route => path.startsWith(route));
+  if (isPublicRoute || path.startsWith('/api') || isNoisePath) {
+    return withToolHeaders(NextResponse.next());
   }
 
-  const requestHost = request.nextUrl.host.toLowerCase();
-  if (requestHost === canonicalHost) {
-    const response = NextResponse.next();
-    if (path.startsWith('/tools/') || path === '/integrations/microsoft/picker') {
-      response.headers.set('Cross-Origin-Opener-Policy', 'unsafe-none');
-      response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  let response = withToolHeaders(NextResponse.next());
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set(name, value);
+          response = withToolHeaders(NextResponse.next());
+          response.cookies.set(name, value, options);
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.delete(name);
+          response = withToolHeaders(NextResponse.next());
+          response.cookies.delete(name);
+        },
+      },
     }
-    return response;
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.host = canonicalHost;
-  redirectUrl.protocol = canonicalHost.includes('localhost') ? 'http:' : 'https:';
-
-  return NextResponse.redirect(redirectUrl, 308);
+  return response;
 }
 
 export const config = {

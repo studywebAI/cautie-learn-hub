@@ -17,6 +17,7 @@ import { CalendarConnectionDialog } from '@/components/agenda/calendar-connectio
 import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
 import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';

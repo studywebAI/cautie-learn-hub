@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import GradeMetrics from '@/components/grades/grade-metrics';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 
 type Class = {
   id: string;

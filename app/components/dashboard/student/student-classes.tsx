@@ -9,6 +9,7 @@ import { PlusCircle, Search } from 'lucide-react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { ClassCard } from '../teacher/class-card';
 import Loader from '@/components/ui/loader';
+import { CautieLoader } from '@/components/ui/cautie-loader';
 import { useToast } from '@/hooks/use-toast';
 
 
