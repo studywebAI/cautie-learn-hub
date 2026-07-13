@@ -173,7 +173,7 @@ export function SourcesSidebar({
                   href={data.media.source}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[12px] text-[var(--accent-brand)] hover:underline"
+                  className="inline-flex items-center gap-1 text-[12px] text-foreground hover:underline"
                 >
                   {data.media.title || data.media.source}
                   <ExternalLink className="h-3 w-3" />
@@ -192,7 +192,7 @@ export function SourcesSidebar({
                 href={data.media.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[12px] text-[var(--accent-brand)] hover:underline"
+                className="inline-flex items-center gap-1 text-[12px] text-foreground hover:underline"
               >
                 {data.media.title || data.media.source || data.media.url}
                 <ExternalLink className="h-3 w-3" />

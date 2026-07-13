@@ -130,7 +130,7 @@ export function Timeline({ title = 'Timeline', initialEvents = [], onSave }: Tim
         ) : (
           <div className="relative">
             {/* Center line */}
-            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[var(--accent-brand)]/20 to-[var(--accent-brand)]/5" />
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-muted-foreground/20 to-muted-foreground/5" />
 
             {/* Events */}
             <div className="space-y-8">

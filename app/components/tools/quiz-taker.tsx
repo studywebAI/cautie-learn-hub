@@ -102,12 +102,12 @@ function MCQRadioList({ question, answer, disabled, onChange, reveal, correctOpt
   );
 }
 
-// Variant C: Color Blocks — uses brand color in different tones (no rainbow)
+// Variant C: Color Blocks — neutral tones (no rainbow)
 const BRAND_TONES = [
-  'bg-[var(--accent-brand)] text-white',
-  'bg-[var(--accent-brand)]/75 text-white',
-  'bg-[var(--accent-brand)]/50 text-foreground',
-  'bg-[var(--accent-brand)]/30 text-foreground',
+  'bg-zinc-700 text-white',
+  'bg-zinc-500 text-white',
+  'bg-zinc-300 text-foreground',
+  'bg-zinc-200 text-foreground',
 ];
 
 function MCQColorBlocks({ question, answer, disabled, onChange, reveal, correctOptionId }: {
@@ -264,7 +264,7 @@ function OrderingDragHandles({ question, answer, disabled, onChange }: {
               overId === id && draggingId !== null ? 'bg-[var(--accent-brand)]/5 border-[var(--accent-brand)]/30' : '',
             ].join(' ')}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[13px] leading-none text-[var(--accent-brand)]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[13px] leading-none text-foreground">
               {idx + 1}
             </span>
             <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
@@ -1251,7 +1251,7 @@ function ArgumentAnalysis({ question, answer, disabled, onChange }: {
   // Gentle tag colors — rotated, no harsh colors
   const tagColors: Record<string, string> = {};
   const palette = [
-    'bg-[var(--accent-brand)]/15 text-[var(--accent-brand)] border-[var(--accent-brand)]/40',
+    'bg-slate-500/12 text-slate-700 dark:text-slate-300 border-slate-400/40',
     'bg-blue-500/12 text-blue-700 dark:text-blue-300 border-blue-400/40',
     'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-400/40',
     'bg-purple-500/12 text-purple-700 dark:text-purple-300 border-purple-400/40',
@@ -1367,7 +1367,7 @@ function RankingQuestion({ question, answer, disabled, onChange }: {
                   : 'border-border bg-background'
               }`}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)]/15 text-[12px] leading-none text-[var(--accent-brand)]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-[12px] leading-none text-foreground">
                 #{idx + 1}
               </span>
               <svg className="h-5 w-5 shrink-0 text-muted-foreground/50" viewBox="0 0 16 16" fill="currentColor">
@@ -1393,7 +1393,7 @@ function DragDropCategorize({ question, answer, disabled, onChange }: {
   const userMap: Record<string, string> = answer?.kind === 'matching' ? answer.value : {};
 
   const catColors = [
-    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]',
+    'border-slate-400/50 bg-slate-500/10 text-slate-700 dark:text-slate-300',
     'border-blue-400/50 bg-blue-500/10 text-blue-700 dark:text-blue-300',
     'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-300',
     'border-purple-400/50 bg-purple-500/10 text-purple-700 dark:text-purple-300',
@@ -1443,7 +1443,7 @@ function DragDropCategorize({ question, answer, disabled, onChange }: {
                     onClick={() => assign(item.id, cat)}
                     className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${
                       assigned === cat
-                        ? catColorMap[cat] ?? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                        ? catColorMap[cat] ?? 'border-slate-400 bg-slate-500/10 text-slate-700 dark:text-slate-300'
                         : 'border-border bg-background text-muted-foreground hover:bg-muted/60'
                     }`}
                   >
@@ -1493,12 +1493,12 @@ function VennQuestion({ question, answer, disabled, onChange }: {
   }
 
   const circleStyle = [
-    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/8 text-[var(--accent-brand)]',
+    'border-slate-400/50 bg-slate-500/8 text-slate-700 dark:text-slate-300',
     'border-blue-400/50 bg-blue-500/8 text-blue-700 dark:text-blue-300',
     'border-amber-400/50 bg-amber-500/8 text-amber-700 dark:text-amber-300',
   ];
   const zoneColors = [
-    'border-[var(--accent-brand)]/50 bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]',
+    'border-slate-400/50 bg-slate-500/10 text-slate-700 dark:text-slate-300',
     'border-blue-400/50 bg-blue-500/10 text-blue-700 dark:text-blue-300',
     'border-amber-400/50 bg-amber-500/10 text-amber-700 dark:text-amber-300',
     'border-purple-400/40 bg-purple-500/8 text-purple-700 dark:text-purple-300',
@@ -1651,7 +1651,7 @@ function ScenarioQuestion({ question, answer, disabled, onChange, reveal, correc
             <button
               type="button"
               onClick={() => setShowFull((p) => !p)}
-              className="text-[11px] text-[var(--accent-brand)] underline underline-offset-2"
+              className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
               {showFull ? 'Show less' : 'Read full scenario'}
             </button>
@@ -1754,7 +1754,7 @@ function TimelineVisual({ question, answer, disabled, onChange }: {
             setDraggingId(null);
           }}
         >
-          <div className="absolute inset-0 rounded-full bg-[var(--accent-brand)]/20" />
+          <div className="absolute inset-0 rounded-full bg-muted-foreground/20" />
 
           {/* Placed event markers */}
           {placedEvents.map((ev) => {
@@ -1767,7 +1767,7 @@ function TimelineVisual({ question, answer, disabled, onChange }: {
                 className="absolute top-1/2 -translate-y-1/2"
               >
                 {/* Dot */}
-                <div className="h-4 w-4 rounded-full border-2 border-white bg-[var(--accent-brand)] shadow-md" />
+                <div className="h-4 w-4 rounded-full border-2 border-white bg-foreground shadow-md" />
                 {/* Label chip above */}
                 <div
                   className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-black/[0.08] dark:border-white/[0.08] bg-white dark:bg-card px-2 py-0.5 text-[11px] text-foreground shadow-sm cursor-pointer"
@@ -2318,7 +2318,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                 {modalRow.correct ? <IconCheck size={9} strokeWidth={2} /> : <IconX size={9} strokeWidth={2} />}
               </span>
               <span className="text-[12px] text-muted-foreground">Q{modalRow.idx + 1}</span>
-              <span className="rounded-full bg-[var(--accent-brand)]/10 px-2 py-0.5 text-[10px] text-[var(--accent-brand)]">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                 {getTypeLabel(modalRow.type)}
               </span>
               {modalRow.responseMs > 0 && (
@@ -2434,7 +2434,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
       </div>
 
       {/* Full progress bar */}
-      <div className="h-[3px] w-full shrink-0 bg-[var(--accent-brand)]" />
+      <div className="h-[3px] w-full shrink-0 bg-foreground/15" />
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-auto">
@@ -2552,7 +2552,7 @@ function QuizResults({ quiz, answers, signals, sourceText, notRelevantIds, onRes
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 mb-0.5">
                             <span className="text-[10px] text-muted-foreground">Q{row.idx + 1}</span>
-                            <span className="rounded-full bg-[var(--accent-brand)]/10 px-1.5 py-0.5 text-[9px] text-[var(--accent-brand)]">{getTypeLabel(row.type)}</span>
+                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{getTypeLabel(row.type)}</span>
                           </div>
                           <p className="text-[12.5px] text-foreground line-clamp-1">
                             {row.question.question.replace(/_{3,}/g, '____')}
@@ -3173,7 +3173,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--accent-brand)] text-[11px] leading-none text-white">
                 {currentIndex + 1}
               </span>
-              <span className="flex items-center rounded-full bg-[var(--accent-brand)]/12 px-2 py-1 text-[10px] leading-none text-[var(--accent-brand)]">
+              <span className="flex items-center rounded-full bg-muted px-2 py-1 text-[10px] leading-none text-muted-foreground">
                 {getTypeLabel(currentQuestion.type ?? 'multiple-choice')}
               </span>
             </div>
@@ -3286,7 +3286,7 @@ export function QuizTaker({ quiz, mode, sourceText, onRestart, runtimeSettings, 
                 <div className="flex items-center justify-between gap-3">
                   <button
                     type="button"
-                    className="text-[11.5px] font-medium text-[var(--accent-brand)] hover:underline underline-offset-2"
+                    className="text-[11.5px] font-medium text-muted-foreground hover:text-foreground hover:underline underline-offset-2"
                     onClick={() => {
                       const next = !showWhy;
                       setShowWhy(next);

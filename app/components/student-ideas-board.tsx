@@ -70,7 +70,7 @@ export function StudentIdeasBoard() {
       {/* Submit form */}
       <div className="rounded-lg border border-border bg-background p-4 space-y-3">
         <div className="flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-[var(--accent-brand)]" />
+          <Lightbulb className="h-4 w-4 text-muted-foreground" />
           <h3 className="font-medium text-sm">Share Your Ideas</h3>
         </div>
 
