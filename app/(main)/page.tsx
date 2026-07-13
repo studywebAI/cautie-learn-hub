@@ -6,12 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { School, Users, FileText, Activity, ChevronRight, ClipboardList, BarChart2, Calendar, BookOpen, MessageSquare, UserCheck } from "lucide-react";
-import Loader from '@/components/ui/loader';
+import { Users, ChevronRight, ClipboardList, BarChart2, Calendar, MessageSquare, UserCheck } from "lucide-react";
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { Alerts } from "@/components/dashboard/alerts";
 import { MySubjects } from "@/components/dashboard/my-subjects";
-import type { Alert, Subject } from '@/lib/types';
+import type { Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { ScheduledStudyItems } from "@/components/dashboard/scheduled-study-items";
 import { LearningPulse } from "@/components/dashboard/learning-pulse";
@@ -158,8 +156,6 @@ function StudentDashboard() {
     cover_image_url: s.cover_image_url, description: s.description,
   }));
 
-  const alerts: Alert[] = [];
-
   const welcomeName =
     normalizeDisplayName(displayName) ||
     normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
@@ -250,9 +246,8 @@ function StudentDashboard() {
 }
 
 function TeacherSummaryDashboard() {
-    const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments, role } = useContext(AppContext) as AppContextType;
+    const { classes, assignments, isLoading, session, refetchClasses, refetchAssignments, role } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
-    const [assignmentFilter, setAssignmentFilter] = useState<string>('All');
     const [teacherDashboardPrefs, setTeacherDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
 
     useEffect(() => {
@@ -284,7 +279,6 @@ function TeacherSummaryDashboard() {
     if (isLoading || !classes) return <DashboardSkeleton />;
 
     const teacherClasses = (Array.isArray(classes) ? classes : []).filter((c: any) => c?.status !== 'archived');
-    const totalStudents = students?.length || 0;
     const welcomeName =
       normalizeDisplayName(displayName) ||
       normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
@@ -315,7 +309,7 @@ function TeacherSummaryDashboard() {
                 <TeacherMessageComposer classId={resolvedClassId} variant="icon" />
                 <DashboardCustomizeMenu
                   role="teacher"
-                  widgetKeys={['agenda', 'quickAccess', 'submissions']}
+                  widgetKeys={['agenda', 'quickAccess']}
                   shortcutOptions={QUICK_ACCESS_SHORTCUTS.map(s => ({ key: s.key, label: s.label }))}
                   onChange={setTeacherDashboardPrefs}
                 />
@@ -362,22 +356,7 @@ function TeacherSummaryDashboard() {
                     </div>
                   )}
 
-                  {/* To Grade + Recent Submissions grid */}
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <TeacherToGradeCard classIds={teacherClassIds} />
-
-                    {teacherDashboardPrefs.widgets.submissions && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Recent Submissions</CardTitle>
-                          <CardDescription>Latest from students</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">No recent submissions</p>
-                        </CardContent>
-                      </Card>
-                    )}
-                  </div>
+                  <TeacherToGradeCard classIds={teacherClassIds} />
 
                   {/* Post Announcement + Manage Attendance grid */}
                   <div className="grid gap-4 lg:grid-cols-2">

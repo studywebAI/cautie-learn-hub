@@ -13,7 +13,7 @@ import { SlidersHorizontal } from 'lucide-react';
 
 export type WidgetKey =
   | 'deadlines' | 'studyToday' | 'scheduled' | 'analytics' | 'subjects'
-  | 'agenda' | 'quickAccess' | 'submissions';
+  | 'agenda' | 'quickAccess';
 
 export type DashboardPrefs = {
   density: 'comfortable' | 'compact';
@@ -23,7 +23,7 @@ export type DashboardPrefs = {
 
 const ALL_WIDGET_KEYS: WidgetKey[] = [
   'deadlines', 'studyToday', 'scheduled', 'analytics', 'subjects',
-  'agenda', 'quickAccess', 'submissions',
+  'agenda', 'quickAccess',
 ];
 
 export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
@@ -40,7 +40,6 @@ const WIDGET_LABELS: Record<WidgetKey, string> = {
   subjects: 'My subjects',
   agenda: 'Agenda widget',
   quickAccess: 'Quick access',
-  submissions: 'Recent submissions',
 };
 
 const storageKey = (role: 'student' | 'teacher') => `studyweb-dashboard-prefs-${role}`;

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +42,7 @@ const teacherNavItems = [
 ];
 
 export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
+  const pathname = usePathname();
   if (!userRole) return null;
 
   const navItems = userRole === 'student' ? studentNavItems : teacherNavItems;
@@ -50,7 +52,7 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
       <nav className="rounded-lg surface-panel border border-border p-3 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = item.id === 'overview';
+          const isActive = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href);
 
           return (
             <Link
