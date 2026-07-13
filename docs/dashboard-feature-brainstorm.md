@@ -41,7 +41,7 @@
 11. `[!]` "Leerlingen die achterblijven"-signalering — vervalt, is te zien uit de data zelf, docent bepaalt dat zelf.
 12. `[~]` Geen los data-widget. Wordt: simpele link naar Attendance, gekoppeld aan de klas die **nu** in het rooster zit (niet per se de handmatig geselecteerde actieve klas).
 13. `[~]` **Notitie voor later (geen dashboard-feature, hoort bij Agenda-file-uploads):** bij een bestand in een agenda-item zichtbaar wie het heeft geplaatst + tijdstip; voor docenten een 3-dots-menu per upload om te zien wie het heeft geopend.
-14. `[ ]` Nog niet besproken — open.
+14. `[!]` Klassenbetrokkenheid-score — vervalt, slecht idee.
 
 ### B5. Communicatie
 15. `[~]` Recente berichten-widget krijgt een **snel-antwoord** optie (1 bericht terugsturen), gekoppeld aan het bestaande messaging-systeem.
@@ -49,9 +49,9 @@
 17. `[~]` Ouder-communicatie-log — interessant, hoort bij een toekomstig "management"-rol concept. Noteren, niet nu bouwen.
 
 ### B6. Class management
-18. `[ ]` Nog niet besproken — open.
-19. `[ ]` Nog niet besproken — open.
-20. `[ ]` Nog niet besproken — open.
+18. `[!]` Snel-toegang "nieuwe opdracht/toets aanmaken" — hoort niet op dashboard, **verplaatst naar de Subjects-brainstorm** (zie onderaan dit doc).
+19. `[!]` Klas-wisselaar met live-stats in de dropdown — niet goed, vervalt. Los daarvan: de klas-wisselaar zelf heeft sowieso een nieuwe visuele update nodig — genoteerd onder Sidebar hieronder.
+20. `[!]` Interactieve-les-snelstart (quiz/poll direct starten) — dom idee, vervalt.
 
 ### B7. Analytics/inzicht
 21. `[x]` = zelfde als B2.7 — **uitklapbare stat-rij**: klik op bv. "Average grade" → kies specifieke klas of totaalgemiddelde → klapt uit naar een grafiekje eronder. Geldt voor de andere stats in de rij ook.
@@ -76,9 +76,15 @@
 - **Ouder-communicatie-log** (B5.17) — hoort bij een toekomstig management-rol concept.
 - **Per-vraag sterk/zwak-statistiek** (B8.25) — puur cijfermatig, expliciet geen AI-samenvatting.
 
-## Nog open (niet besproken)
-- `B4.14` — Klassenbetrokkenheid-score
-- `B6.18/19/20` — Snel-toegang nieuwe opdracht, klas-wisselaar met live-stats, interactieve-les-snelstart
+---
+
+## Notities voor andere tabs (verzameld tijdens dashboard-werk, blijft in dit doc zodat alles op één plek staat)
+
+### Subjects
+- `[ ]` Snel-toegang "nieuwe opdracht/toets aanmaken" als prominente actie (verplaatst vanaf dashboard B6.18) — hoort inhoudelijk bij Subjects, niet bij het dashboard.
+
+### Sidebar
+- `[ ]` Klas-wisselaar (in de sidebar/teacher-dropdown) heeft een visuele update nodig — los van het "live-stats in dropdown"-idee dat is afgekeurd (B6.19), de component zelf is aan vernieuwing toe qua uiterlijk.
 
 ---
 
@@ -99,6 +105,4 @@
 **Bewust niet gebouwd (te riskant/onzeker qua databron, geen quick win):**
 - `B4.12` — Attendance-link exact aan "klas nu in het rooster" koppelen. De school-schedule-endpoint filtert op "zichtbaar voor studenten" en is niet betrouwbaar voor docent-gebruik zonder eerst het rooster-datamodel voor docenten uit te zoeken. Blijft voorlopig gewoon gekoppeld aan de handmatig actieve klas.
 
-**Nog open, nooit besproken (niet gebouwd, wacht op beslissing):**
-- `B4.14` — Klassenbetrokkenheid-score
-- `B6.18/19/20` — Snel-toegang nieuwe opdracht, klas-wisselaar met live-stats, interactieve-les-snelstart
+**Alle punten nu beslist.** B4.14 en B6.18/19/20 zijn afgekeurd (zie hierboven) — B6.18 leeft door als een Subjects-notitie, de klas-wisselaar-update staat onder Sidebar. Dashboard qua features/layout is hiermee compleet; enige open vraag is de visuele sweep hieronder.

@@ -464,7 +464,7 @@ export function RecentsSidebar() {
                   title={item.title}
                   onClick={() => handleClick(item)}
                 >
-                  <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                  <Icon className="h-3.5 w-3.5 text-sidebar-foreground/70" />
                 </button>
               </AnimateIcon>
             );
@@ -530,7 +530,7 @@ export function RecentsSidebar() {
               className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-sidebar-accent/45 transition-colors cursor-pointer group"
               onClick={() => handleClick(item)}
             >
-              <Icon className="h-3 w-3 text-[var(--accent-brand)] shrink-0" />
+              <Icon className="h-3 w-3 text-sidebar-foreground/70 shrink-0" />
               {item.source === 'studyset' ? (
                 <button
                   type="button"
@@ -569,33 +569,33 @@ export function RecentsSidebar() {
                     className="h-6 w-6 shrink-0 rounded-md"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <MoreHorizontal className="h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                    <MoreHorizontal className="h-3.5 w-3.5 text-sidebar-foreground/70" />
                   </Button>
                 </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56" onClick={(event) => event.stopPropagation()}>
                     <DropdownMenuItem onClick={() => router.push(getOpenHref(item))}>
                       <span>Open</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setIsRecentsSettingsOpen(true)}>
                       <span>Settings</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => void handleCopyLink(item)}>
                       <span>Copy link</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => openShareToUserDialog(item)}>
                       <span>Share to user</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => void handleShareViaApp(item)}>
                       <span>Share via</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => openShareToClassDialog(item)} disabled={classes.length === 0}>
                       <span>Share to class</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-[var(--accent-brand)]" />
+                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -613,12 +613,12 @@ export function RecentsSidebar() {
         >
           {expanded ? (
             <>
-              <ChevronUp className="h-3 w-3 text-[var(--accent-brand)]" />
+              <ChevronUp className="h-3 w-3 text-sidebar-foreground/70" />
               {t.showLess}
             </>
           ) : (
             <>
-              <ChevronDown className="h-3 w-3 text-[var(--accent-brand)]" />
+              <ChevronDown className="h-3 w-3 text-sidebar-foreground/70" />
               {t.showMore} {visibleRecents.length - 3} {t.more}
             </>
           )}
