@@ -105,7 +105,7 @@ export function UpcomingExamsStudysets() {
               ? 'border-transparent bg-red-100 text-red-700'
               : days <= 14
                 ? 'border-transparent bg-amber-100 text-amber-700'
-                : 'border-transparent bg-[#e8eddf] text-[#4a5735]';
+                : 'border-transparent bg-muted text-muted-foreground';
           const daysLabel =
             days < 0 ? 'Past' : days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
           return (
@@ -121,7 +121,7 @@ export function UpcomingExamsStudysets() {
               </div>
               <div className="mt-1 flex items-center gap-2">
                 {item.subject ? (
-                  <span className="rounded-full bg-[#e8eddf] px-2 py-0.5 text-[11px] font-medium text-[#4a5735]">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                     {item.subject}
                   </span>
                 ) : null}
@@ -135,7 +135,7 @@ export function UpcomingExamsStudysets() {
         <Link
           prefetch={false}
           href="/tools/studyset"
-          className="flex items-center gap-1 pt-1 text-xs font-medium text-[var(--accent-brand)] hover:underline"
+          className="flex items-center gap-1 pt-1 text-xs font-medium text-foreground hover:underline"
         >
           View all
           <ArrowRight className="h-3.5 w-3.5" />

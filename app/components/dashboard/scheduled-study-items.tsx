@@ -174,7 +174,7 @@ export function ScheduledStudyItems() {
                   {TOOL_LABELS[item.tool]} · {format(new Date(item.scheduled_for), 'EEE d MMM, HH:mm')}
                 </p>
               </div>
-              <Button asChild size="sm" style={{ backgroundColor: '#6b7c4e' }}>
+              <Button asChild size="sm">
                 <a href={startHref(item)}>
                   Start
                   <ArrowRight className="ml-1.5 h-3.5 w-3.5" />

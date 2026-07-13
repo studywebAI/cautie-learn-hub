@@ -59,7 +59,7 @@ export function DashboardSidebar({ userRole }: DashboardSidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors',
                 isActive
-                  ? 'bg-[var(--accent-brand)] text-white'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-foreground hover:bg-[hsl(var(--interactive-hover))]'
               )}
             >

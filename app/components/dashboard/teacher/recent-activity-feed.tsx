@@ -31,7 +31,7 @@ function relativeTime(iso: string): string {
 function FeedIcon({ category }: { category: FeedItem['category'] }) {
   const cls = 'h-3.5 w-3.5 shrink-0';
   if (category === 'messages') return <MessageSquare className={`${cls} text-blue-500`} />;
-  if (category === 'results') return <FileText className={`${cls} text-[var(--accent-brand)]`} />;
+  if (category === 'results') return <FileText className={`${cls} text-emerald-600`} />;
   if (category === 'attendance') return <UserCheck className={`${cls} text-amber-600`} />;
   return <Info className={`${cls} text-muted-foreground`} />;
 }
@@ -96,8 +96,8 @@ export function RecentActivityFeed() {
             onClick={() => setFilter(f.key)}
             className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
               filter === f.key
-                ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-                : 'bg-transparent border-border text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)]'
+                ? 'bg-primary border-primary text-primary-foreground'
+                : 'bg-transparent border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
             }`}
           >
             {f.label}

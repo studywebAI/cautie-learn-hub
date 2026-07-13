@@ -23,8 +23,8 @@ export function DashboardFilters({
           className={cn(
             'text-[12px] px-2.5 py-1 rounded-full border transition-colors',
             active === filter
-              ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-              : 'bg-transparent border-border text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)]'
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'bg-transparent border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
           )}
         >
           {filter}

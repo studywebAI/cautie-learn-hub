@@ -145,7 +145,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
       <div className="rounded-xl surface-panel border border-border p-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs text-muted-foreground">Today&apos;s plan</p>
-          <Link href="/agenda" className="text-xs text-[var(--accent-brand)] hover:opacity-80 flex items-center gap-1">
+          <Link href="/agenda" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1">
             Open agenda <ChevronRight className="h-3 w-3" />
           </Link>
         </div>
@@ -166,19 +166,19 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
             </span>
           )}
         </div>
-        <Link href="/agenda" className="text-xs text-[var(--accent-brand)] hover:opacity-80 flex items-center gap-1">
+        <Link href="/agenda" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1">
           Open agenda <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
 
       {/* Today's schedule strip */}
       {todaySlots.length > 0 && (
-        <div className="rounded-lg bg-[#f4f5f0] border border-[#dde0d0] p-3 space-y-1.5">
-          <p className="text-[10px] text-[#7f8962]">Today&apos;s schedule</p>
+        <div className="rounded-lg bg-[var(--accent-brand)]/8 border border-[var(--accent-brand)]/25 p-3 space-y-1.5">
+          <p className="text-[10px] text-[var(--accent-brand)]">Today&apos;s schedule</p>
           <div className="space-y-1">
             {todaySlots.slice(0, 4).map(slot => (
               <div key={slot.id} className="flex items-center gap-2 text-sm">
-                <span className="text-[11px] font-medium text-[#7f8962] w-12 shrink-0 tabular-nums">
+                <span className="text-[11px] font-medium text-[var(--accent-brand)] w-12 shrink-0 tabular-nums">
                   {slot.start_time.slice(0, 5)}
                 </span>
                 <span className="text-[12px] text-foreground truncate">{slot.title}</span>
@@ -202,8 +202,8 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
               onClick={() => setFilter(f)}
               className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${
                 filter === f
-                  ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)] text-white'
-                  : 'bg-transparent border-border text-muted-foreground hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)]'
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-transparent border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
               }`}
             >
               {f === 'all' ? 'All' : f === 'tests' ? 'Tests' : f === 'homework' ? 'Homework' : 'Events'}
@@ -218,7 +218,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
           {filteredItems.map(item => {
             const href = item.class_id ? `/class/${item.class_id}` : '/agenda';
             const icon = item.type === 'test'
-              ? <FlaskConical className="h-3.5 w-3.5 shrink-0 text-[var(--accent-brand)]" />
+              ? <FlaskConical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               : item.type === 'personal'
               ? <BookOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               : <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
@@ -226,7 +226,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
             const dueLabel = item.isOverdue
               ? <span className="text-[10px] text-destructive bg-destructive/10 rounded px-1.5 py-0.5">Overdue</span>
               : item.isToday
-              ? <span className="text-[10px] text-[#7f8962] bg-[#f4f5f0] rounded px-1.5 py-0.5">Today</span>
+              ? <span className="text-[10px] text-[var(--accent-brand)] bg-[var(--accent-brand)]/10 rounded px-1.5 py-0.5">Today</span>
               : <span className="text-[10px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">Tomorrow</span>;
 
             return (

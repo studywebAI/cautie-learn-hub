@@ -50,8 +50,8 @@ function ProgressBar({ percent }: { percent: number }) {
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
       <div
-        className="h-full rounded-full transition-all"
-        style={{ width: `${percent}%`, backgroundColor: '#6b7c4e' }}
+        className="h-full rounded-full bg-foreground transition-all"
+        style={{ width: `${percent}%` }}
       />
     </div>
   );
@@ -135,7 +135,7 @@ export function TodaysStudysetTasks() {
             {/* Chips row */}
             <div className="flex flex-wrap items-center gap-1.5 mb-2">
               {primary.subject && (
-                <span className="rounded-full bg-[#6b7c4e]/10 px-2 py-0.5 text-xs font-medium text-[#4a5735]">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   {primary.subject.toLowerCase()}
                 </span>
               )}
@@ -157,14 +157,14 @@ export function TodaysStudysetTasks() {
             </div>
 
             {primary.due_today_tasks > 0 && (
-              <p className="mt-1.5 text-xs font-medium text-[#6b7c4e]">
+              <p className="mt-1.5 text-xs font-medium text-[var(--accent-brand)]">
                 {primary.due_today_tasks} task{primary.due_today_tasks > 1 ? 's' : ''} due today
               </p>
             )}
 
             <div className="mt-3 flex items-center gap-2">
               {primary.next_action_href && (
-                <Button asChild size="sm" style={{ backgroundColor: '#6b7c4e' }}>
+                <Button asChild size="sm">
                   <Link prefetch={false} href={primary.next_action_href}>
                     {primary.next_action_label || 'Keep going'}
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5" />

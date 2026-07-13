@@ -83,7 +83,7 @@ export function GradesMiniCard() {
         </div>
         <Link
           href="/grades"
-          className="text-xs text-[var(--accent-brand)] hover:opacity-80 flex items-center gap-1"
+          className="text-xs text-foreground hover:opacity-70 flex items-center gap-1"
         >
           All grades <ChevronRight className="h-3 w-3" />
         </Link>

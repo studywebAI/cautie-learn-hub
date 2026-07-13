@@ -80,7 +80,7 @@ export function AnnouncementsStrip() {
   return (
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Bell className="h-4 w-4 text-[var(--accent-brand)]" />
+        <Bell className="h-4 w-4 text-muted-foreground" />
         <p className="text-sm">Announcements</p>
       </div>
 
