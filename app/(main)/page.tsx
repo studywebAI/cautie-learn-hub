@@ -21,9 +21,12 @@ import { NotificationPopover } from "@/components/notifications/notification-pop
 import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
 import { RecentActivityFeed } from "@/components/dashboard/teacher/recent-activity-feed";
-import { AnnouncementsStrip } from "@/components/dashboard/announcements-strip";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
+import { StudentStatRow } from "@/components/dashboard/student-stat-row";
+import { TeacherMessageCard } from "@/components/dashboard/teacher-message-card";
+import { TeacherMessageComposer } from "@/components/dashboard/teacher-message-composer";
+import { DashboardCustomizeMenu, loadDashboardPrefs, DEFAULT_DASHBOARD_PREFS, type DashboardPrefs } from "@/components/dashboard/dashboard-customize-menu";
 
 // Thin wrapper so we can reference it inside TeacherSummaryDashboard
 function RecentActivityFeedSection() {
@@ -84,6 +87,11 @@ function StudentDashboard() {
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState<string>('');
   const [deadlineFilter, setDeadlineFilter] = useState<string>('All');
+  const [dashboardPrefs, setDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
+
+  useEffect(() => {
+    setDashboardPrefs(loadDashboardPrefs());
+  }, []);
 
   useEffect(() => {
     if (isLikelyBotClient()) return;
@@ -164,7 +172,7 @@ function StudentDashboard() {
       {/* Greeting header */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
+          <h1 className="page-title">Welcome back, {welcomeName}</h1>
           <p className="page-subtitle mt-0.5">
             {getDayLabel()}
             {todayTaskCount > 0 && (
@@ -172,8 +180,14 @@ function StudentDashboard() {
             )}
           </p>
         </div>
-        <NotificationPopover />
+        <div className="flex items-center gap-1">
+          <DashboardCustomizeMenu onChange={setDashboardPrefs} />
+          <NotificationPopover />
+        </div>
       </div>
+
+      {/* Stat row */}
+      <StudentStatRow subjectsCount={subjects.length} />
 
       {/* Sidebar + Main layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
@@ -181,37 +195,42 @@ function StudentDashboard() {
         <DashboardSidebar userRole={role} />
 
         {/* Main content */}
-        <div className="flex flex-col gap-4 md:gap-5">
-          <AnnouncementsStrip />
+        <div className={`flex flex-col ${dashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+          <TeacherMessageCard />
           <TodayPlanCard
             assignments={assignments}
             personalTasks={personalTasks}
             classes={classes}
             schoolSlots={schoolSlots}
           />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
-              <CardDescription className="mt-2">
-                <DashboardFilters
-                  filters={['All', 'Homework', 'Tests']}
-                  active={deadlineFilter}
-                  onFilterChange={setDeadlineFilter}
-                />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-                <UpcomingDeadlines />
-              </Suspense>
-            </CardContent>
-          </Card>
-          <TodaysStudysetTasks />
-          <ScheduledStudyItems />
-          <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
-            <AnalyticsDashboard />
-          </Suspense>
-          <MySubjects subjects={subjects} />
+          <GradesMiniCard />
+          {dashboardPrefs.widgets.deadlines && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
+                <CardDescription className="mt-2">
+                  <DashboardFilters
+                    filters={['All', 'Homework', 'Tests']}
+                    active={deadlineFilter}
+                    onFilterChange={setDeadlineFilter}
+                  />
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<Skeleton className="h-40 w-full" />}>
+                  <UpcomingDeadlines />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
+          {dashboardPrefs.widgets.studyToday && <TodaysStudysetTasks />}
+          {dashboardPrefs.widgets.scheduled && <ScheduledStudyItems />}
+          {dashboardPrefs.widgets.analytics && (
+            <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
+              <AnalyticsDashboard />
+            </Suspense>
+          )}
+          {dashboardPrefs.widgets.subjects && <MySubjects subjects={subjects} />}
         </div>
       </div>
     </div>
@@ -408,13 +427,11 @@ function TeacherSummaryDashboard() {
                   <div className="grid gap-4 lg:grid-cols-2">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">Post Announcement</CardTitle>
-                        <CardDescription>Share with your classes</CardDescription>
+                        <CardTitle className="text-base">Send message</CardTitle>
+                        <CardDescription>To the whole class or one student</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Button asChild className="w-full">
-                          <Link href="/agenda">Create Announcement</Link>
-                        </Button>
+                        <TeacherMessageComposer classId={resolvedClassId} />
                       </CardContent>
                     </Card>
 

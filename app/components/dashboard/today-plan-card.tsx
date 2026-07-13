@@ -1,10 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { isToday, isTomorrow, isPast, parseISO, format } from 'date-fns';
+import { isToday, isTomorrow, isPast, parseISO, format, addDays, startOfDay } from 'date-fns';
 import Link from 'next/link';
 import { Calendar, ChevronRight, Clock, FileText, BookOpen, FlaskConical } from 'lucide-react';
 import type { ClassAssignment, ClassInfo, PersonalTask } from '@/contexts/app-context';
+
+type WeekDayItem = { id: string; title: string; type: PlanItemType };
+type WeekDay = { date: Date; label: string; items: WeekDayItem[] };
+type PlanItemType = 'assignment' | 'test' | 'personal' | 'event';
 
 type PlanItem = {
   id: string;
@@ -17,6 +21,7 @@ type PlanItem = {
   isOverdue: boolean;
   isToday: boolean;
   isTomorrow: boolean;
+  material_id?: string | null;
 };
 
 type Filter = 'all' | 'tests' | 'homework' | 'events';
@@ -90,6 +95,7 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
         type: typeFromAssignment(a),
         due_date: a.due_date,
         due_time: null,
+        material_id: a.material_id ?? null,
         isOverdue: overdue,
         isToday: todayFlag,
         isTomorrow: tomorrowFlag,
@@ -132,13 +138,49 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
     return items;
   }, [assignments, personalTasks, classes]);
 
+  // 7-day strip: tests/homework titles per day, each opens the item directly in Agenda.
+  const weekDays = useMemo<WeekDay[]>(() => {
+    const start = startOfDay(new Date());
+    const days: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
+      const date = addDays(start, i);
+      return { date, label: format(date, i === 0 ? "'Today'" : 'EEE d'), items: [] };
+    });
+
+    const place = (id: string, title: string, type: PlanItemType, dueDateIso: string | null) => {
+      if (!dueDateIso) return;
+      let due: Date;
+      try { due = startOfDay(parseISO(dueDateIso)); } catch { return; }
+      const dayIndex = days.findIndex(d => d.date.getTime() === due.getTime());
+      if (dayIndex === -1) return;
+      days[dayIndex].items.push({ id, title, type });
+    };
+
+    for (const a of Array.isArray(assignments) ? assignments : []) {
+      place(a.id, a.title, typeFromAssignment(a), a.due_date);
+    }
+    for (const t of Array.isArray(personalTasks) ? personalTasks : []) {
+      place(t.id, t.title, 'personal', t.due_date ?? null);
+    }
+
+    return days;
+  }, [assignments, personalTasks]);
+
+  const hasWeekItems = weekDays.some(d => d.items.length > 0);
+
+  // Only suggest practice for items that actually link to real content —
+  // a free-text task title has nothing to build a suggestion from.
+  const practiceSuggestion = useMemo(
+    () => allItems.find(i => (i.isToday || i.isTomorrow) && !i.isOverdue && i.material_id),
+    [allItems]
+  );
+
   const filteredItems = useMemo(
     () => allItems.filter(i => matchesFilter(i, filter)),
     [allItems, filter]
   );
 
   const todayCount = allItems.filter(i => i.isToday || i.isOverdue).length;
-  const hasAnything = allItems.length > 0 || todaySlots.length > 0;
+  const hasAnything = allItems.length > 0 || todaySlots.length > 0 || hasWeekItems;
 
   if (!hasAnything) {
     return (
@@ -170,6 +212,35 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
           Open agenda <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
+
+      {/* Week strip: tests/homework titles per day, click opens the item directly */}
+      {hasWeekItems && (
+        <div className="grid grid-cols-7 gap-1">
+          {weekDays.map(day => (
+            <div key={day.date.toISOString()} className="min-w-0">
+              <p className="text-[9px] text-muted-foreground truncate mb-1">{day.label}</p>
+              <div className="space-y-0.5">
+                {day.items.slice(0, 2).map(item => (
+                  <Link
+                    prefetch={false}
+                    key={item.id}
+                    href={`/agenda?itemId=${item.id}`}
+                    title={item.title}
+                    className={`block truncate rounded px-1 py-0.5 text-[9px] leading-tight hover:bg-[hsl(var(--interactive-hover))] transition-colors ${
+                      item.type === 'test' ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+                {day.items.length > 2 && (
+                  <p className="text-[9px] text-muted-foreground px-1">+{day.items.length - 2}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Today's schedule strip */}
       {todaySlots.length > 0 && (
@@ -249,6 +320,23 @@ export function TodayPlanCard({ assignments, personalTasks, classes, schoolSlots
             );
           })}
         </div>
+      )}
+
+      {practiceSuggestion && (
+        <Link
+          prefetch={false}
+          href={`/material/${practiceSuggestion.material_id}`}
+          className="flex items-center gap-2.5 rounded-lg border border-border p-2.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors group"
+        >
+          <FlaskConical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-medium truncate">
+              {practiceSuggestion.type === 'test' ? 'Test coming up' : 'Due soon'} — practice now
+            </p>
+            <p className="text-[10px] text-muted-foreground truncate">{practiceSuggestion.title}</p>
+          </div>
+          <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        </Link>
       )}
 
       {filteredItems.length === 0 && allItems.length > 0 && (

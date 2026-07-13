@@ -590,6 +590,15 @@ function AgendaPageContent() {
     if (event.href) router.push(event.href);
   };
 
+  // Deep-link support: ?itemId=<event id> auto-opens that item once events are loaded
+  // (used by the dashboard's "today's plan" and week-strip widgets).
+  useEffect(() => {
+    const itemId = searchParams.get('itemId');
+    if (!itemId || events.length === 0) return;
+    const event = events.find((row) => row.id === itemId);
+    if (event) handleEventClick(event);
+  }, [searchParams, events]);
+
   const handleTeacherDeadlineCreated = async (item: {
     title: string;
     description: string;

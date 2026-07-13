@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: count, error } = await (supabase as any)
+  const { count, error } = await (supabase as any)
     .from('notifications')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', user.id)
