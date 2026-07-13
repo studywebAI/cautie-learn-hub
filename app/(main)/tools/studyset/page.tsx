@@ -782,7 +782,7 @@ export default function StudysetPage() {
           <p className="text-sm text-muted-foreground">Build once, follow day-by-day.</p>
         </div>
         {view === 'home' && (
-          <Button type="button" onClick={startCreate} style={{ backgroundColor: '#6b7c4e' }}>
+          <Button type="button" onClick={startCreate} style={{ backgroundColor: 'var(--accent-brand)' }}>
             <Plus className="mr-2 h-4 w-4" />
             New studyset
           </Button>
@@ -801,7 +801,7 @@ export default function StudysetPage() {
                   value={homeSearch}
                   onChange={(e) => setHomeSearch(e.target.value)}
                   placeholder="Search studysets…"
-                  className="h-9 w-full rounded-lg border border-border bg-white pl-8 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[#6b7c4e]/60 focus:ring-1 focus:ring-[#6b7c4e]/30"
+                  className="h-9 w-full rounded-lg border border-border bg-white pl-8 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[var(--accent-brand)]/60 focus:ring-1 focus:ring-[var(--accent-brand)]/30"
                 />
               </div>
               <div className="flex items-center gap-1 rounded-lg border border-border bg-white p-1">
@@ -812,7 +812,7 @@ export default function StudysetPage() {
                     onClick={() => setHomeSort(s)}
                     className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors capitalize ${
                       homeSort === s
-                        ? 'bg-[#6b7c4e] text-white'
+                        ? 'bg-[var(--accent-brand)] text-white'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -833,14 +833,14 @@ export default function StudysetPage() {
 
           {!loadingStudysets && studysets.length === 0 && (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6b7c4e]/10 mb-4">
-                <Route className="h-6 w-6 text-[#6b7c4e]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-brand)]/10 mb-4">
+                <Route className="h-6 w-6 text-[var(--accent-brand)]" />
               </div>
               <p className="text-sm font-medium text-foreground mb-1">No studysets yet</p>
               <p className="text-xs text-muted-foreground mb-5 max-w-xs">
                 Create your first studyset — pick your study days, add your materials and we generate a day-by-day plan.
               </p>
-              <Button type="button" onClick={startCreate} style={{ backgroundColor: '#6b7c4e' }}>
+              <Button type="button" onClick={startCreate} style={{ backgroundColor: 'var(--accent-brand)' }}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create studyset
               </Button>
@@ -931,7 +931,7 @@ export default function StudysetPage() {
                           key={item.id}
                           type="button"
                           onClick={() => router.push(`/tools/studyset/${item.id}`)}
-                          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-[#6b7c4e]/40 hover:shadow-sm"
+                          className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-[var(--accent-brand)]/40 hover:shadow-sm"
                         >
                           <div
                             className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
@@ -1015,8 +1015,9 @@ export default function StudysetPage() {
             {STEP_TITLES.map((_, index) => (
               <div
                 key={index}
-                className="h-1 flex-1 rounded-full transition-all duration-300"
-                style={{ backgroundColor: index <= step ? '#6b7c4e' : '#e5e7eb' }}
+                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                  index <= step ? 'bg-[var(--accent-brand)]' : 'bg-muted'
+                }`}
               />
             ))}
           </div>
@@ -1028,7 +1029,7 @@ export default function StudysetPage() {
               <div className="flex items-start gap-4">
                 <div
                   className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white text-sm"
-                  style={{ backgroundColor: '#6b7c4e' }}
+                  style={{ backgroundColor: 'var(--accent-brand)' }}
                 >
                   {step + 1}
                 </div>
@@ -1075,13 +1076,13 @@ export default function StudysetPage() {
                             onClick={() => setSourceMethod(option.id)}
                             className={`flex flex-col items-start gap-2 rounded-xl border px-4 py-3 text-left transition-all ${
                               selected
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
-                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30'
+                                : 'border-border bg-background hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/5'
                             }`}
                           >
                             <span
                               className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
+                                selected ? 'bg-[var(--accent-brand)] text-white' : 'bg-surface-chip text-muted-foreground'
                               }`}
                             >
                               <OptionIcon className="h-4 w-4" />
@@ -1094,7 +1095,7 @@ export default function StudysetPage() {
                     </div>
 
                     {linkedSeed && (
-                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[#eef1e7] px-3.5 py-2.5 text-xs text-[#4a5735]">
+                      <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--accent-brand)]/10 px-3.5 py-2.5 text-xs text-[var(--accent-brand)]">
                         <span className="inline-flex min-w-0 items-center gap-1.5">
                           <Link2 className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">
@@ -1144,8 +1145,8 @@ export default function StudysetPage() {
                             title={option.id}
                             className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
                               selected
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#6b7c4e]'
-                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                                : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/5'
                             }`}
                           >
                             <ActiveIcon className="h-4 w-4" />
@@ -1219,7 +1220,7 @@ export default function StudysetPage() {
                       <>
                         <span
                           className="flex h-6 w-6 items-center justify-center rounded-full text-white text-xs"
-                          style={{ backgroundColor: '#6b7c4e' }}
+                          style={{ backgroundColor: 'var(--accent-brand)' }}
                         >
                           {selectedDateStrings.length}
                         </span>
@@ -1277,7 +1278,7 @@ export default function StudysetPage() {
                   {/* File upload */}
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">Upload files</label>
-                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-background px-4 py-6 text-center transition-colors hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5">
+                    <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-background px-4 py-6 text-center transition-colors hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/5">
                       <Upload className="h-6 w-6 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium text-foreground">Click to upload files</p>
@@ -1323,12 +1324,12 @@ export default function StudysetPage() {
                         onChange={(e) => setUrlInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addUrlSource(); } }}
                         placeholder="Paste a URL, YouTube link…"
-                        className="h-9 flex-1 rounded-lg border border-border bg-white px-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[#6b7c4e]/60"
+                        className="h-9 flex-1 rounded-lg border border-border bg-white px-3 text-sm outline-none placeholder:text-muted-foreground focus:border-[var(--accent-brand)]/60"
                       />
                       <button
                         type="button"
                         onClick={addUrlSource}
-                        className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition-colors hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5"
+                        className="flex h-9 items-center gap-1.5 rounded-lg border border-border bg-white px-3 text-sm font-medium text-foreground transition-colors hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/5"
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add
@@ -1432,13 +1433,13 @@ export default function StudysetPage() {
                             onClick={() => toggleTool(tool.id)}
                             className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                               selected
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
-                                : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30'
+                                : 'border-border bg-background hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/5'
                             }`}
                           >
                             <span
                               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                                selected ? 'bg-[#6b7c4e] text-white' : 'bg-surface-chip text-muted-foreground'
+                                selected ? 'bg-[var(--accent-brand)] text-white' : 'bg-surface-chip text-muted-foreground'
                               }`}
                             >
                               <ToolIcon className="h-4 w-4" />
@@ -1475,8 +1476,8 @@ export default function StudysetPage() {
                               title={qt.description}
                               className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                                 selected
-                                  ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#4a5735]'
-                                  : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                                  : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                               }`}
                             >
                               {qt.label}
@@ -1502,8 +1503,8 @@ export default function StudysetPage() {
                             onClick={() => setDifficulty(opt.value)}
                             className={`rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${
                               difficulty === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
-                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30 text-[var(--accent-brand)]'
+                                : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                             }`}
                           >
                             {opt.label}
@@ -1524,8 +1525,8 @@ export default function StudysetPage() {
                             onClick={() => setDepth(opt.value)}
                             className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
                               depth === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
-                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30 text-[var(--accent-brand)]'
+                                : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                             }`}
                           >
                             {opt.label}
@@ -1546,8 +1547,8 @@ export default function StudysetPage() {
                             onClick={() => setTone(opt.value)}
                             className={`flex-1 rounded-xl border px-3 py-2.5 text-center text-xs transition-all ${
                               tone === opt.value
-                                ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30 text-[#4a5735]'
-                                : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                                ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30 text-[var(--accent-brand)]'
+                                : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                             }`}
                           >
                             {opt.label}
@@ -1562,7 +1563,7 @@ export default function StudysetPage() {
                       <select
                         value={outputLanguage}
                         onChange={(e) => setOutputLanguage(e.target.value)}
-                        className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:border-[#6b7c4e]/60 focus:outline-none focus:ring-1 focus:ring-[#6b7c4e]/30"
+                        className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:border-[var(--accent-brand)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--accent-brand)]/30"
                       >
                         {LANGUAGE_OPTIONS.map((opt) => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1581,7 +1582,7 @@ export default function StudysetPage() {
                           type="button"
                           onClick={() => setOnlyMySources((v) => !v)}
                           className={`relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-                            onlyMySources ? 'bg-[#6b7c4e]' : 'bg-muted'
+                            onlyMySources ? 'bg-[var(--accent-brand)]' : 'bg-muted'
                           }`}
                           role="switch"
                           aria-checked={onlyMySources}
@@ -1602,7 +1603,7 @@ export default function StudysetPage() {
                           type="button"
                           onClick={() => setIncludeExamples((v) => !v)}
                           className={`relative inline-flex h-6 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-                            includeExamples ? 'bg-[#6b7c4e]' : 'bg-muted'
+                            includeExamples ? 'bg-[var(--accent-brand)]' : 'bg-muted'
                           }`}
                           role="switch"
                           aria-checked={includeExamples}
@@ -1651,7 +1652,7 @@ export default function StudysetPage() {
                   onClick={goNext}
                   disabled={!canNext || creating}
                   className="ml-auto flex items-center gap-1.5 rounded-lg px-6 py-2.5 text-sm text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: canNext ? '#6b7c4e' : undefined }}
+                  style={{ backgroundColor: canNext ? 'var(--accent-brand)' : undefined }}
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -1662,7 +1663,7 @@ export default function StudysetPage() {
                   onClick={() => void createStudyset()}
                   disabled={!isStepFourReady || creating}
                   className="ml-auto rounded-lg px-6 py-2.5 text-sm text-white transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: isStepFourReady ? '#6b7c4e' : undefined }}
+                  style={{ backgroundColor: isStepFourReady ? 'var(--accent-brand)' : undefined }}
                 >
                   {creating ? 'Creating studyset…' : 'Create studyset'}
                 </button>

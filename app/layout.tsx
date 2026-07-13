@@ -41,10 +41,11 @@ export const viewport: Viewport = {
 const themeBootstrapScript = `
 (() => {
   try {
-    const themes = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'rose'];
+    const themes = ['light', 'sand', 'dark'];
     const saved = localStorage.getItem('studyweb-theme');
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const resolvedSaved = saved === 'sunset' ? 'sand' : saved;
+    const legacyMap = { sunset: 'sand', legacy: 'light', ocean: 'light', forest: 'light', rose: 'light' };
+    const resolvedSaved = legacyMap[saved] || saved;
     const resolved = themes.includes(resolvedSaved || '') ? resolvedSaved : (systemDark ? 'dark' : 'light');
     const root = document.documentElement;
     root.classList.remove('theme-light', 'theme-sand', 'theme-legacy', 'theme-dark', 'theme-ocean', 'theme-forest', 'theme-sunset', 'theme-rose');

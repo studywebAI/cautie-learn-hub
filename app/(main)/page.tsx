@@ -372,7 +372,7 @@ function TeacherSummaryDashboard() {
                           { href: `/class/${resolvedClassId}?tab=share`, icon: MessageSquare, label: 'Chat' },
                         ].map(({ href, icon: Icon, label }) => (
                           <Link key={href} href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors">
-                            <Icon className="h-3.5 w-3.5 text-[var(--accent-brand)] shrink-0" />
+                            <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             <span className="truncate">{label}</span>
                           </Link>
                         ))}

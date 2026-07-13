@@ -61,7 +61,7 @@ export function InviteTab({
             className={[
               'px-5 py-1.5 rounded-md text-sm transition-all',
               mode === 'students'
-                ? 'bg-[#7f8962] text-white shadow-sm'
+                ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             ].join(' ')}
           >
@@ -72,7 +72,7 @@ export function InviteTab({
             className={[
               'px-5 py-1.5 rounded-md text-sm transition-all',
               mode === 'teachers'
-                ? 'bg-[#7f8962] text-white shadow-sm'
+                ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             ].join(' ')}
           >
@@ -117,7 +117,7 @@ export function InviteTab({
                   disabled={!activeCode}
                 >
                   {copiedCode
-                    ? <Check className="h-4 w-4 text-[#7f8962]" />
+                    ? <Check className="h-4 w-4 text-[var(--accent-brand)]" />
                     : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
@@ -130,7 +130,7 @@ export function InviteTab({
               className="flex items-center gap-2 w-full rounded-md border border-border px-3 py-2 text-[13px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-left disabled:opacity-40 disabled:pointer-events-none"
             >
               {copiedLink
-                ? <Check className="h-3.5 w-3.5 text-[#7f8962] shrink-0" />
+                ? <Check className="h-3.5 w-3.5 text-[var(--accent-brand)] shrink-0" />
                 : <Copy className="h-3.5 w-3.5 shrink-0" />}
               <span className="truncate">{activeLink || '—'}</span>
             </button>

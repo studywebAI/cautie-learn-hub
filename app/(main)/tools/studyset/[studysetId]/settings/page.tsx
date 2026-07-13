@@ -40,8 +40,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ICON_OPTIONS, COLOR_OPTIONS, colorHex, statusMeta } from '@/components/studyset/style-options';
 
-const BRAND = '#6b7c4e';
-const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
+const BRAND = 'var(--accent-brand)';
+const CARD = 'surface-panel rounded-2xl border border-border shadow-sm p-5';
 const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 const CALENDAR_CLASSES = {
   day_selected:
@@ -287,7 +287,7 @@ export default function StudysetSettingsPage() {
 
   if (loading) {
     return (
-      <PageSection className="[--accent-brand:#6b7c4e]">
+      <PageSection>
         <div className="flex min-h-[50vh] items-center justify-center">
           <Loader />
         </div>
@@ -297,7 +297,7 @@ export default function StudysetSettingsPage() {
 
   if (!data) {
     return (
-      <PageSection className="[--accent-brand:#6b7c4e]">
+      <PageSection>
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
           <p className="text-sm font-medium text-foreground mb-1">Studyset not found</p>
           <Button asChild variant="outline" className="mt-3">
@@ -312,7 +312,7 @@ export default function StudysetSettingsPage() {
   const hex = colorHex(selectedColor);
 
   return (
-    <PageSection className="[--accent-brand:#6b7c4e]">
+    <PageSection>
       <div className="mb-4">
         <Button asChild variant="ghost" size="sm">
           <Link href={`/tools/studyset/${studysetId}`}>
@@ -364,8 +364,8 @@ export default function StudysetSettingsPage() {
                       title={option.id}
                       className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
                         selected
-                          ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#6b7c4e]'
-                          : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/50 hover:bg-[#6b7c4e]/5'
+                          ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                          : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/50 hover:bg-[var(--accent-brand)]/5'
                       }`}
                     >
                       <ActiveIcon className="h-4 w-4" />

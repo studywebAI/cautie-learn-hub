@@ -10,7 +10,7 @@ import { getDictionary } from '@/lib/get-dictionary';
 import type { Dictionary, Locale } from '@/lib/get-dictionary';
 
 export type UserRole = 'student' | 'teacher';
-export type ThemeType = 'light' | 'sand' | 'legacy' | 'dark' | 'ocean' | 'forest' | 'rose';
+export type ThemeType = 'light' | 'sand' | 'dark';
 export type FontType = 'ibm-plex';
 export type RegionCode =
   | 'global'
@@ -129,7 +129,15 @@ export type AppContextType = {
 
 export const AppContext = createContext<AppContextType | null>(null);
 
-const THEME_VALUES: ThemeType[] = ['light', 'sand', 'legacy', 'dark', 'ocean', 'forest', 'rose'];
+const THEME_VALUES: ThemeType[] = ['light', 'sand', 'dark'];
+
+const LEGACY_THEME_MAP: Record<string, ThemeType> = {
+  sunset: 'sand',
+  legacy: 'light',
+  ocean: 'light',
+  forest: 'light',
+  rose: 'light',
+};
 
 const isThemeType = (value: string | null): value is ThemeType => {
   return value !== null && THEME_VALUES.includes(value as ThemeType);
@@ -143,7 +151,7 @@ const getSystemTheme = (): ThemeType => {
 const getInitialTheme = (): ThemeType => {
   if (typeof window === 'undefined') return 'light';
   const savedTheme = window.localStorage.getItem('studyweb-theme');
-  if (savedTheme === 'sunset') return 'sand';
+  if (savedTheme && LEGACY_THEME_MAP[savedTheme]) return LEGACY_THEME_MAP[savedTheme];
   if (isThemeType(savedTheme)) return savedTheme;
   return getSystemTheme();
 };

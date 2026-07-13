@@ -11,13 +11,11 @@ import { AppContext } from '@/contexts/app-context';
 import { StudentQuizAnalytics } from '@/components/analytics/student-quiz-analytics';
 import { TeacherQuizAnalytics } from '@/components/analytics/teacher-quiz-analytics';
 
-const BRAND = '#6b7c4e';
-
 function TeacherAnalytics() {
   return (
-    <PageSection className="[--accent-brand:#6b7c4e]">
+    <PageSection>
       <div className="mb-6">
-        <h1 className="text-2xl text-foreground">Analytics</h1>
+        <h1 className="page-title">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track your classes' performance and identify areas for improvement.
         </p>
@@ -42,9 +40,9 @@ export default function AnalyticsOverviewPage() {
 
 function StudentAnalytics() {
   return (
-    <PageSection className="[--accent-brand:#6b7c4e]">
+    <PageSection>
       <div className="mb-6">
-        <h1 className="text-2xl text-foreground">Analytics</h1>
+        <h1 className="page-title">Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Track your performance and progress across quizzes and topics.
         </p>

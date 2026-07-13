@@ -76,9 +76,9 @@ export const COLOR_OPTIONS: ColorOption[] = [
 
 export function colorHex(colorId: string | null | undefined) {
   const found = COLOR_OPTIONS.find((option) => option.id === colorId);
-  if (!found) return '#6b7c4e';
+  if (!found) return '#1E7A4B';
   const match = found.swatchClass.match(/#([0-9a-fA-F]{6})/);
-  return match ? `#${match[1]}` : '#6b7c4e';
+  return match ? `#${match[1]}` : '#1E7A4B';
 }
 
 export function iconForId(iconId: string | null | undefined): LucideIcon {
@@ -88,14 +88,14 @@ export function iconForId(iconId: string | null | undefined): LucideIcon {
 export function statusMeta(status: string) {
   switch (status) {
     case 'due':
-      return { label: 'Due', className: 'bg-[#fbe9e7] text-[#9b3a32] border border-[#f1c4bf]' };
+      return { label: 'Due', className: 'bg-destructive/10 text-destructive border border-destructive/25' };
     case 'completed':
-      return { label: 'Completed', className: 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]' };
+      return { label: 'Completed', className: 'bg-success/10 text-success border border-success/25' };
     case 'draft':
       return { label: 'Draft', className: 'bg-muted text-muted-foreground border border-border/60' };
     case 'archived':
       return { label: 'Archived', className: 'bg-muted text-muted-foreground border border-border/60' };
     default:
-      return { label: 'Active', className: 'bg-[#eef1e7] text-[#5b6b41] border border-[#d8e0c8]' };
+      return { label: 'Active', className: 'bg-surface-chip text-muted-foreground border border-border/60' };
   }
 }

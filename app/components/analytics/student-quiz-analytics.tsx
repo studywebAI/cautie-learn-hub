@@ -280,13 +280,7 @@ export function StudentQuizAnalytics() {
                         {topic.correctAnswers}/{topic.totalAttempts}
                       </td>
                       <td className="py-3 px-3 text-center">
-                        <span
-                          className="inline-flex items-center justify-center w-12 h-12 rounded-full font-semibold"
-                          style={{
-                            backgroundColor: `${BRAND}1a`,
-                            color: BRAND,
-                          }}
-                        >
+                        <span className="inline-flex items-center justify-center w-12 h-12 rounded-full surface-chip font-semibold text-foreground">
                           {topic.averageScore}%
                         </span>
                       </td>

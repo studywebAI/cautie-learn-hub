@@ -18,7 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
 
-const BRAND = '#6b7c4e';
+const BRAND = 'var(--accent-brand)';
 
 type ScoreTrendPoint = {
   date: string;
@@ -92,10 +92,7 @@ function StatBox({
   return (
     <Card>
       <CardContent className="flex items-center gap-3 p-4">
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-          style={{ backgroundColor: `${BRAND}1a`, color: BRAND }}
-        >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
           {icon}
         </div>
         <div className="min-w-0">
@@ -326,9 +323,7 @@ export default function StudysetAnalyticsPage() {
   }
 
   return (
-    <PageSection
-      className="[--accent-brand:#6b7c4e]"
-    >
+    <PageSection>
       {/* Back + heading */}
       <div className="mb-4">
         <Button asChild variant="ghost" size="sm">
@@ -346,7 +341,7 @@ export default function StudysetAnalyticsPage() {
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <Badge
             variant="outline"
-            style={{ borderColor: `${BRAND}55`, color: BRAND }}
+            className="border-[var(--accent-brand)]/35 text-[var(--accent-brand)]"
           >
             <BookOpen className="mr-1 h-3 w-3" />
             Studyset

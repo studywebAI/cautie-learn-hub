@@ -25,7 +25,7 @@ import Loader from '@/components/ui/loader';
 import { useToast } from '@/hooks/use-toast';
 import { PageSection } from '@/components/layout/page-section';
 
-const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
+const CARD = 'surface-panel rounded-2xl border border-border shadow-sm p-5';
 const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
 
 type ManualEntry = {
@@ -117,11 +117,11 @@ function describeManualChange(entry: ManualEntry): { headline: string; details: 
 function aiStatusMeta(status: string) {
   switch (status) {
     case 'done':
-      return { label: 'Applied', className: 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]' };
+      return { label: 'Applied', className: 'bg-success/10 text-success border border-success/25' };
     case 'dismissed':
       return { label: 'Dismissed', className: 'bg-muted text-muted-foreground border border-border/60' };
     default:
-      return { label: 'Pending', className: 'bg-[#fdf3da] text-[#8a6a13] border border-[#f0e0b0]' };
+      return { label: 'Pending', className: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900' };
   }
 }
 
@@ -207,7 +207,7 @@ export default function StudysetChangesPage() {
 
   if (loading) {
     return (
-      <PageSection className="[--accent-brand:#6b7c4e]">
+      <PageSection>
         <div className="flex min-h-[50vh] items-center justify-center">
           <Loader />
         </div>
@@ -216,7 +216,7 @@ export default function StudysetChangesPage() {
   }
 
   return (
-    <PageSection className="[--accent-brand:#6b7c4e]">
+    <PageSection>
       <div className="mb-4">
         <Button asChild variant="ghost" size="sm">
           <Link href={`/tools/studyset/${studysetId}`}>
@@ -246,7 +246,7 @@ export default function StudysetChangesPage() {
           {aiCount} AI {aiCount === 1 ? 'suggestion' : 'suggestions'}
         </span>
         {pendingAiCount > 0 && (
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#fdf3da] px-3 py-1.5 text-xs font-medium text-[#8a6a13] border border-[#f0e0b0]">
+          <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900">
             <Clock className="h-3.5 w-3.5" />
             {pendingAiCount} waiting on you
           </span>
@@ -301,7 +301,7 @@ export default function StudysetChangesPage() {
               const busy = respondingId === entry.id;
               return (
                 <div key={`ai-${entry.id}`} className={`${CARD} flex items-start gap-3`}>
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8eddf] text-[#4a5735]">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-chip text-muted-foreground">
                     <KindIcon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -313,7 +313,7 @@ export default function StudysetChangesPage() {
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${sm.className}`}>
                         {sm.label}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#eef1e7] px-2 py-0.5 text-[10px] font-medium text-[#5b6b41]">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-chip px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                         <Sparkles className="h-3 w-3" />
                         Cautie AI
                       </span>

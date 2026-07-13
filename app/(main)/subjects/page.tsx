@@ -53,8 +53,9 @@ function SubjectsPageContent() {
 
   if (isTeacher && !teacherClassId) {
     return (
-      <div className="page-content">
-        <div className="rounded-xl border border-sidebar-border/80 bg-sidebar-accent/40 p-8 text-[13px] text-sidebar-foreground">
+      <div className="page-content flex flex-col gap-5">
+        <h1 className="page-title">Subjects</h1>
+        <div className="rounded-xl border border-border surface-panel p-8 text-[13px] text-muted-foreground">
           No Active Class Selected. Select or create a class first.
         </div>
       </div>
@@ -75,7 +76,8 @@ function SubjectsPageContent() {
       : [];
 
     return (
-      <div className="page-content">
+      <div className="page-content flex flex-col gap-5">
+        <h1 className="page-title">Subjects</h1>
         <TodaysAgenda
           assignments={teacherAssignments}
           personalTasks={teacherTasks}
@@ -87,7 +89,8 @@ function SubjectsPageContent() {
   }
 
   return (
-    <div className="page-content">
+    <div className="page-content flex flex-col gap-5">
+      <h1 className="page-title">Subjects</h1>
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
   );

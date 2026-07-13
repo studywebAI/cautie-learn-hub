@@ -160,7 +160,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
 
   if (!data) {
     return (
-      <div className="rounded-lg border border-border bg-white px-4 py-8 text-center text-sm text-muted-foreground dark:bg-[hsl(var(--surface-1))]">
+      <div className="rounded-lg border border-border surface-panel px-4 py-8 text-center text-sm text-muted-foreground">
         <p>{error || 'Failed to load'}</p>
         <Button variant="outline" size="sm" className="mt-3" onClick={() => void load()}>Retry</Button>
       </div>
@@ -196,7 +196,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               className={cn(
                 'px-3 py-1.5 rounded-md text-[12px] font-500 transition-colors',
                 showTeachers
-                  ? 'bg-[var(--accent-brand)] text-background'
+                  ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
               )}
             >
@@ -210,7 +210,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
             </span>
             {showTeachers && (
               <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#7f8962]" />
+                <span className="h-2 w-2 rounded-full bg-slate-500" />
                 {isDutch ? 'Docenten' : 'Teachers'} ({data.teachers.length})
               </span>
             )}
@@ -238,7 +238,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
               'grid items-center gap-3 px-4 py-3 transition-colors hover:bg-[hsl(var(--interactive-hover))]',
               i > 0 || students.length > 0 ? 'border-t border-border/40' : '',
             )}
-            style={{ gridTemplateColumns: teacherCols, borderLeft: '3px solid var(--accent-brand)' }}
+            style={{ gridTemplateColumns: teacherCols, borderLeft: '3px solid hsl(215,16%,47%)' }}
           >
             <div>
               <p className="text-[13px] leading-snug">{t.name}</p>
@@ -299,8 +299,8 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                         className={cn(
                           'flex h-7 w-7 items-center justify-center rounded transition-colors text-[13px]',
                           att.isPresent === true
-                            ? 'bg-[var(--accent-brand)] text-background'
-                            : 'bg-muted text-[var(--accent-brand)] hover:bg-muted/80',
+                            ? 'bg-green-600 text-white'
+                            : 'bg-muted text-green-600 hover:bg-muted/80',
                           att.saving && 'opacity-60'
                         )}
                       >
@@ -371,7 +371,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                       <div>
                         <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Afwezigheid' : 'Absences'}</p>
                         <p className={cn('text-[16px] mt-1',
-                          absences > 2 ? 'text-red-600' : absences > 0 ? 'text-amber-600' : 'text-[var(--accent-brand)]'
+                          absences > 2 ? 'text-red-600' : absences > 0 ? 'text-amber-600' : 'text-green-600'
                         )}>
                           {absences}
                         </p>
@@ -379,7 +379,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                       <div>
                         <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Gemiddelde' : 'Average'}</p>
                         <p className={cn('text-[16px] mt-1',
-                          avg === null ? 'text-muted-foreground' : avg >= 7 ? 'text-[var(--accent-brand)]' : avg >= 5.5 ? 'text-amber-600' : 'text-red-600'
+                          avg === null ? 'text-muted-foreground' : avg >= 7 ? 'text-green-600' : avg >= 5.5 ? 'text-amber-600' : 'text-red-600'
                         )}>
                           {avg !== null ? avg.toFixed(1) : '—'}
                         </p>
@@ -387,7 +387,7 @@ export function GroupTab({ classId, isTeacher, cachedData, parentLoading = false
                       <div>
                         <p className="text-[10px] text-muted-foreground/60">{isDutch ? 'Status' : 'Status'}</p>
                         <p className="text-[12px] mt-2">
-                          {att.isPresent === true && <span className="text-[var(--accent-brand)]">✓ {isDutch ? 'Aanwezig' : 'Present'}</span>}
+                          {att.isPresent === true && <span className="text-green-600">✓ {isDutch ? 'Aanwezig' : 'Present'}</span>}
                           {att.isPresent === false && <span className="text-red-600">✗ {isDutch ? 'Afwezig' : 'Absent'}</span>}
                           {att.isPresent === null && <span className="text-muted-foreground">—</span>}
                           {att.wasTooLate && <span className="text-amber-600"> · {isDutch ? 'Te laat' : 'Late'}</span>}

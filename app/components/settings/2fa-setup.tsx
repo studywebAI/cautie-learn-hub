@@ -145,12 +145,12 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
           <div className="flex items-center gap-3 rounded-lg border border-border p-3 bg-muted/20">
             {is2FAEnabled ? (
               <>
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-success" />
                 <span className="text-sm font-medium">{tr({ en: 'Enabled', nl: 'Ingeschakeld' })}</span>
               </>
             ) : (
               <>
-                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <AlertCircle className="h-5 w-5 text-muted-foreground" />
                 <span className="text-sm font-medium">{tr({ en: 'Disabled', nl: 'Uitgeschakeld' })}</span>
               </>
             )}
@@ -163,7 +163,7 @@ export function TwoFASetup({ isDutch = false }: TwoFASetupProps) {
             </div>
           )}
           {success && (
-            <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-600">
+            <div className="rounded-lg bg-success/10 p-3 text-sm text-success">
               {success}
             </div>
           )}

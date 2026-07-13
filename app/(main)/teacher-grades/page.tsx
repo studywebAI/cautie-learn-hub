@@ -34,10 +34,10 @@ function GradeCard({ grade }: { grade: GradeSet }) {
   const pct = total > 0 ? Math.round((graded / total) * 100) : 0;
 
   const statusColor = {
-    draft: 'bg-gray-100 text-gray-700',
+    draft: 'surface-chip text-muted-foreground',
     in_progress: 'bg-amber-100 text-amber-800',
     completed: 'bg-green-100 text-green-800',
-  }[grade.status] || 'bg-gray-100 text-gray-700';
+  }[grade.status] || 'surface-chip text-muted-foreground';
 
   return (
     <Link href={`/teacher-grades/${grade.id}`}>
@@ -67,7 +67,7 @@ function GradeCard({ grade }: { grade: GradeSet }) {
               {pct}%
             </div>
             <div className="w-16 h-1.5 bg-border rounded-full overflow-hidden mt-1">
-              <div className="h-full bg-[var(--accent-brand)]" style={{ width: `${pct}%` }} />
+              <div className="h-full bg-foreground" style={{ width: `${pct}%` }} />
             </div>
           </div>
         </div>
@@ -155,21 +155,21 @@ export default function TeacherGradesLanding() {
       <div className="grid grid-cols-3 gap-3">
         <Link href="/teacher-grades/new">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
-            <Plus className="h-4 w-4 text-[var(--accent-brand)]" />
+            <Plus className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm">{isDutch ? 'Nieuwe Cijfers' : 'New Grade'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Maak een nieuwe cijferlijst' : 'Create a new grade set'}</p>
           </div>
         </Link>
         <Link href="/teacher-grades?view=all">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
-            <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm">{isDutch ? 'Bestaande Cijfers' : 'Existing Grades'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Bekijk en beheer cijfers' : 'View & manage grades'}</p>
           </div>
         </Link>
         <Link href="/teacher-grades/metrics">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
-            <CheckSquare className="h-4 w-4 text-[var(--accent-brand)]" />
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
             <p className="text-sm">{isDutch ? 'Metrics' : 'Metrics'}</p>
             <p className="text-xs text-muted-foreground">{isDutch ? 'Analyseer en vergelijk' : 'Analyze & compare'}</p>
           </div>

@@ -241,9 +241,9 @@ export default function IdeasPage() {
               )}
 
               {submitSuccess && (
-                <div className="flex gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <Check className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-                  <p className="text-sm text-green-700 dark:text-green-400">
+                <div className="flex gap-3 p-3 rounded-lg bg-success/10 border border-success/20">
+                  <Check className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                  <p className="text-sm text-success">
                     Thanks! Your idea has been submitted.
                   </p>
                 </div>
@@ -291,7 +291,7 @@ export default function IdeasPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-muted-foreground" />
               We already implemented
             </CardTitle>
           </CardHeader>
@@ -300,7 +300,7 @@ export default function IdeasPage() {
               {completedIdeas.map((idea) => (
                 <div key={idea.id} className="p-4 rounded-lg border border-border/50">
                   <div className="flex items-start gap-3">
-                    <Check className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">{idea.title}</h4>
                       {idea.description && (

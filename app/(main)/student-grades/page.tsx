@@ -94,7 +94,7 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
         </div>
       </div>
       {currentAvg !== null && (
-        <div className="rounded-lg bg-[#f4f5f0] border border-[#dde0d0] p-3">
+        <div className="rounded-lg surface-chip border border-border p-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Current average in {selectedClass}</p>

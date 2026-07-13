@@ -376,7 +376,7 @@ export default function StepThreeGrading({ onBack, onSave, data, isSaving }: Ste
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
               <div
-                className="h-full bg-[var(--accent-brand)] transition-all"
+                className="h-full bg-foreground transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>

@@ -157,13 +157,13 @@ export function AgendaTemplatePicker({
               }}
               className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition-all ${
                 selected
-                  ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 ring-1 ring-[#6b7c4e]/30'
-                  : 'border-border bg-background hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 ring-1 ring-[var(--accent-brand)]/30'
+                  : 'border-border bg-background hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/5'
               }`}
             >
               <span
                 className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                  selected ? 'bg-[#6b7c4e] text-white' : 'bg-[#e8eddf] text-[#4a5735]'
+                  selected ? 'bg-[var(--accent-brand)] text-white' : 'bg-surface-chip text-muted-foreground'
                 }`}
               >
                 {selected ? <CheckCircle2 className="h-4 w-4" /> : <GraduationCap className="h-4 w-4" />}
@@ -172,7 +172,7 @@ export function AgendaTemplatePicker({
                 <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   {item.subjectTitle && (
-                    <span className="rounded-full bg-[#e8eddf] px-2 py-0.5 text-[10px] font-medium text-[#4a5735]">
+                    <span className="rounded-full bg-surface-chip px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                       {item.subjectTitle}
                     </span>
                   )}

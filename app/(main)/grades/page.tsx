@@ -74,7 +74,7 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
   return (
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <Calculator className="h-4 w-4 text-[var(--accent-brand)]" />
+        <Calculator className="h-4 w-4 text-muted-foreground" />
         <p className="text-sm">What grade do I need?</p>
       </div>
       <p className="text-xs text-muted-foreground">
@@ -105,7 +105,7 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
         </div>
       </div>
       {currentAvg !== null && (
-        <div className="rounded-lg bg-[#f4f5f0] border border-[#dde0d0] p-3">
+        <div className="rounded-lg surface-chip border border-border p-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Current average in {selectedClass}</p>

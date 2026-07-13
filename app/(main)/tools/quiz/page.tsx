@@ -558,7 +558,7 @@ function QuizPageContent() {
             onClick={() => setInputMode(m)}
             className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
               inputMode === m
-                ? 'bg-[var(--accent-brand)] text-white shadow-sm'
+                ? 'bg-foreground text-background shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >

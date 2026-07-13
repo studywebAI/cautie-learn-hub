@@ -114,10 +114,10 @@ export default function SupportPage() {
             filteredCodes.map((def) => {
               const msg = getErrorMessage(def.code, locale);
               const severityColor = {
-                info: 'bg-blue-50 border-blue-200',
-                warning: 'bg-yellow-50 border-yellow-200',
-                error: 'bg-red-50 border-red-200',
-                critical: 'bg-red-100 border-red-300',
+                info: 'surface-panel border-border',
+                warning: 'surface-panel border-border',
+                error: 'surface-interactive border-border',
+                critical: 'surface-interactive border-foreground/30',
               }[def.severity];
 
               return (

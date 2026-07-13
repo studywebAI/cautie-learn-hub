@@ -238,7 +238,7 @@ export function ClassSettingsRedesigned({
                   'px-4 py-3 text-[13px] font-500 text-left transition-colors',
                   idx > 0 && 'border-t border-border',
                   activeSection === section
-                    ? 'bg-[var(--accent-brand)] text-background'
+                    ? 'bg-primary text-primary-foreground'
                     : 'text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -280,7 +280,7 @@ export function ClassSettingsRedesigned({
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[var(--accent-brand)]"
+                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-ring"
                 />
               </SettingField>
 
@@ -291,7 +291,7 @@ export function ClassSettingsRedesigned({
                 <textarea
                   value={editDesc}
                   onChange={e => setEditDesc(e.target.value)}
-                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-[var(--accent-brand)] resize-none"
+                  className="w-full px-3 py-2 text-[13px] border border-border rounded-md bg-background focus:outline-none focus:border-ring resize-none"
                   rows={3}
                 />
               </SettingField>
@@ -454,7 +454,7 @@ function Toggle({
         onClick={() => onChange(!enabled)}
         className={cn(
           'w-11 h-6 rounded-full transition-colors duration-200 relative shrink-0',
-          enabled ? 'bg-[var(--accent-brand)]' : 'bg-muted-foreground/30'
+          enabled ? 'bg-primary' : 'bg-muted-foreground/30'
         )}
       >
         <div

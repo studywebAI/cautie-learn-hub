@@ -182,7 +182,7 @@ export default function GradeDetailPage() {
         <div className="flex justify-between items-center">
           <span className="text-muted-foreground">{isDutch ? 'Status' : 'Status'}:</span>
           <span className={`px-2 py-1 rounded text-xs font-medium ${
-            gradeSet.status === 'draft' ? 'bg-gray-100 text-gray-700' :
+            gradeSet.status === 'draft' ? 'surface-chip text-muted-foreground' :
             gradeSet.status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
             'bg-green-100 text-green-800'
           }`}>
@@ -217,7 +217,7 @@ export default function GradeDetailPage() {
             </div>
             <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-[var(--accent-brand)]"
+                className="h-full bg-foreground"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
@@ -251,7 +251,7 @@ export default function GradeDetailPage() {
                           <div className="flex items-center gap-1.5 flex-1 ml-2">
                             <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-[var(--accent-brand)]"
+                                className="h-full bg-foreground"
                                 style={{ width: `${stats.total > 0 ? (count / stats.total) * 100 : 0}%` }}
                               />
                             </div>

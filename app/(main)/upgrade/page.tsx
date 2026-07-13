@@ -90,7 +90,8 @@ export default function UpgradePage() {
 
   if (success) {
     return (
-      <div className="page-content">
+      <div className="page-content flex flex-col gap-5">
+        <h1 className="page-title">Upgrade</h1>
         <div className="flex items-center">
           <Button variant="outline" asChild>
             <Link prefetch={false} href="/settings">
@@ -117,7 +118,8 @@ export default function UpgradePage() {
   }
 
   return (
-    <div className="page-content">
+    <div className="page-content flex flex-col gap-5">
+      <h1 className="page-title">Upgrade</h1>
       <div className="flex items-center">
         <Button variant="outline" asChild>
           <Link prefetch={false} href="/settings">

@@ -94,9 +94,9 @@ function LaunchPageContent() {
           <button
             type="button"
             onClick={() => go('quick')}
-            className="flex w-full items-center gap-4 rounded-2xl border border-border bg-white/60 p-5 text-left transition hover:shadow-md hover:border-foreground/20 cursor-pointer"
+            className="flex w-full items-center gap-4 rounded-2xl border border-border surface-panel p-5 text-left transition hover:shadow-md hover:border-foreground/20 cursor-pointer"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8eddf] text-[#4a5735]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-chip text-muted-foreground">
               <Zap className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -109,7 +109,7 @@ function LaunchPageContent() {
           <button
             type="button"
             onClick={() => go('full')}
-            className="relative flex w-full items-center gap-4 rounded-2xl border-2 border-[var(--accent-brand)] bg-white p-6 text-left shadow-md transition hover:shadow-lg cursor-pointer"
+            className="relative flex w-full items-center gap-4 rounded-2xl border-2 border-[var(--accent-brand)] surface-panel p-6 text-left shadow-md transition hover:shadow-lg cursor-pointer"
           >
             <span className="absolute right-4 top-4 rounded-full bg-[var(--accent-brand)] px-2.5 py-0.5 text-[11px] font-medium text-white">
               Recommended
@@ -127,9 +127,9 @@ function LaunchPageContent() {
           <button
             type="button"
             onClick={() => go(null)}
-            className="flex w-full items-center gap-4 rounded-2xl border border-border bg-white/60 p-5 text-left transition hover:shadow-md hover:border-foreground/20 cursor-pointer"
+            className="flex w-full items-center gap-4 rounded-2xl border border-border surface-panel p-5 text-left transition hover:shadow-md hover:border-foreground/20 cursor-pointer"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e8eddf] text-[#4a5735]">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-surface-chip text-muted-foreground">
               <Settings2 className="h-5 w-5" />
             </span>
             <div className="min-w-0">

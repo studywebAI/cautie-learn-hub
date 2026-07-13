@@ -114,7 +114,8 @@ function MaterialPageContent() {
 
 
   return (
-    <div className="page-content">
+    <div className="page-content flex flex-col gap-5">
+      <h1 className="page-title">{materialDict.importTitle || 'Material'}</h1>
       <Card>
         <CardHeader>
           <CardTitle>{materialDict.importTitle}</CardTitle>

@@ -545,7 +545,7 @@ export default function GradingInterfacePage() {
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-background rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[var(--accent-brand)]"
+                  className="h-full bg-foreground"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>

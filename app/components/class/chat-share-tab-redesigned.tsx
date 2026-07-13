@@ -182,7 +182,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
             className={cn(
               'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
               channel === 'all'
-                ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                ? 'bg-muted text-foreground'
                 : 'hover:bg-muted/60'
             )}
           >
@@ -203,11 +203,11 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
               className={cn(
                 'flex items-center gap-2 rounded-[6px] px-2.5 py-2 text-[13px] text-foreground/70 transition-colors',
                 channel === 'teachers'
-                  ? 'bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                  ? 'bg-muted text-foreground'
                   : 'hover:bg-muted/60'
               )}
             >
-              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-[var(--accent-brand)]/10 text-[12px] text-[var(--accent-brand)]">
+              <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-violet-100 text-[12px] text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
                 T
               </span>
               {isDutch ? 'Docenten' : 'Teachers'}
@@ -252,7 +252,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                   <div key={msg.id} className={cn('group flex gap-2.5', isOwn ? 'flex-row-reverse justify-end' : 'flex-row justify-start')}>
                     <div className={cn('min-w-0 max-w-xs rounded-[12px] px-3.5 py-2.5',
                       isOwn
-                        ? 'bg-[var(--accent-brand)] text-background'
+                        ? 'bg-primary text-primary-foreground'
                         : 'bg-muted text-foreground'
                     )}>
                       {/* Meta line */}
@@ -294,8 +294,8 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                               className={cn(
                                 'rounded-full border px-[7px] py-[2px] text-[12px] transition-colors',
                                 r.reactedByMe
-                                  ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10'
-                                  : 'border-border bg-muted hover:border-[var(--accent-brand)]'
+                                  ? 'border-foreground bg-muted'
+                                  : 'border-border bg-muted hover:border-foreground/50'
                               )}
                             >
                               {r.emoji} {r.count}
@@ -309,7 +309,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                         <button
                           type="button"
                           onClick={() => setShowEmojis(showEmojis === msg.id ? null : msg.id)}
-                          className="invisible rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-[var(--accent-brand)] group-hover:visible"
+                          className="invisible rounded-full border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-foreground/50 group-hover:visible"
                         >
                           + react
                         </button>
@@ -398,7 +398,7 @@ export function ChatShareTabRedesigned({ classId }: { classId: string }) {
                   type="button"
                   disabled={!canSend}
                   onClick={() => void sendMessage()}
-                  className="rounded-[6px] border border-[var(--accent-brand)] bg-[var(--accent-brand)] px-3 py-1.5 text-[12px] text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-[6px] border border-primary bg-primary px-3 py-1.5 text-[12px] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {sending ? '…' : (isDutch ? 'Stuur' : 'Send')}
                 </button>

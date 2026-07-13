@@ -35,7 +35,7 @@ const EVENT_TYPE_OPTIONS = [
 const EVENT_TYPE_BADGE: Record<string, string> = {
   exam: 'bg-red-100 text-red-700',
   deadline: 'bg-amber-100 text-amber-700',
-  session: 'bg-[#e8eddf] text-[#4a5735]',
+  session: 'bg-green-100 text-green-700',
   other: 'bg-muted text-muted-foreground',
 };
 

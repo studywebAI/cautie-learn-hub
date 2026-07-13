@@ -11,7 +11,7 @@ export default function TeacherAnalyticsPage() {
 
   if (!isTeacher) {
     return (
-      <PageSection className="[--accent-brand:#6b7c4e]">
+      <PageSection>
         <div className="text-center">
           <p className="text-muted-foreground">You need to be a teacher to access this page.</p>
         </div>
@@ -20,9 +20,9 @@ export default function TeacherAnalyticsPage() {
   }
 
   return (
-    <PageSection className="[--accent-brand:#6b7c4e]">
+    <PageSection>
       <div className="mb-6">
-        <h1 className="text-2xl text-foreground">Class Analytics</h1>
+        <h1 className="page-title">Class Analytics</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Analyze your classes' quiz performance and identify areas for improvement.
         </p>

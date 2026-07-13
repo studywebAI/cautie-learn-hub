@@ -150,7 +150,7 @@ const TOOL_TYPES: Record<string, string> = {
 };
 
 const SECTION_HEADING = 'text-[11px] text-muted-foreground mb-3';
-const CARD = 'bg-white rounded-2xl border border-border shadow-sm p-5';
+const CARD = 'surface-panel rounded-2xl border border-border shadow-sm p-5';
 
 function toolMeta(taskType: string) {
   switch (taskType) {
@@ -182,14 +182,14 @@ function toIsoLocalDate(date: Date) {
 
 function readinessTone(percent: number) {
   if (percent >= 75) return 'var(--accent-brand)';
-  if (percent >= 40) return '#d6a312';
-  return '#c0524a';
+  if (percent >= 40) return 'var(--text-warning)';
+  return 'var(--text-danger)';
 }
 
 function chipTone(weakness: number) {
-  if (weakness > 70) return 'bg-[#fbe9e7] text-[#9b3a32] border border-[#f1c4bf]';
-  if (weakness >= 40) return 'bg-[#fdf3da] text-[#8a6a13] border border-[#f0e0b0]';
-  return 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]';
+  if (weakness > 70) return 'bg-destructive/10 text-destructive border border-destructive/25';
+  if (weakness >= 40) return 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900';
+  return 'bg-success/10 text-success border border-success/25';
 }
 
 function recommendationMeta(kind: string) {
@@ -207,10 +207,10 @@ function recommendationMeta(kind: string) {
 
 function momentumMeta(momentum?: string | null) {
   if (momentum === 'up') {
-    return { Icon: TrendingUp, label: 'Improving', className: 'bg-[#e8eddf] text-[#4a5735] border border-[#d4dcc2]' };
+    return { Icon: TrendingUp, label: 'Improving', className: 'bg-success/10 text-success border border-success/25' };
   }
   if (momentum === 'down') {
-    return { Icon: TrendingDown, label: 'Slipping', className: 'bg-[#fbe9e7] text-[#9b3a32] border border-[#f1c4bf]' };
+    return { Icon: TrendingDown, label: 'Slipping', className: 'bg-destructive/10 text-destructive border border-destructive/25' };
   }
   return { Icon: Minus, label: 'Steady', className: 'bg-muted text-muted-foreground border border-border' };
 }
@@ -554,7 +554,7 @@ export default function StudysetDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           {studyset?.subject && (
-            <span className="rounded-full bg-[#e8eddf] px-3 py-1 text-xs font-medium text-[#4a5735]">
+            <span className="rounded-full bg-surface-chip px-3 py-1 text-xs font-medium text-foreground">
               {studyset.subject}
             </span>
           )}
@@ -626,7 +626,7 @@ export default function StudysetDetailPage() {
                       asChild
                       variant="default"
                       className="w-full"
-                      style={{ backgroundColor: '#6b7c4e' }}
+                      style={{ backgroundColor: 'var(--accent-brand)' }}
                     >
                       <Link href={`/share/studyset/${shareToken}`} target="_blank">
                         Open share page
@@ -656,7 +656,7 @@ export default function StudysetDetailPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className={`${CARD} flex items-center gap-4`}>
           <svg width="72" height="72" viewBox="0 0 72 72" className="shrink-0">
-            <circle cx="36" cy="36" r={ringRadius} fill="none" stroke="#e8eddf" strokeWidth="8" />
+            <circle cx="36" cy="36" r={ringRadius} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
             <circle
               cx="36"
               cy="36"
@@ -706,20 +706,22 @@ export default function StudysetDetailPage() {
       {/* Exam countdown */}
       {examCountdown && (
         <div
-          className="rounded-2xl border p-5 shadow-sm"
-          style={{
-            backgroundColor:
-              examCountdown.days <= 7 ? '#fbe9e7' : examCountdown.days <= 14 ? '#fdf3da' : '#e8eddf',
-            borderColor:
-              examCountdown.days <= 7 ? '#f1c4bf' : examCountdown.days <= 14 ? '#f0e0b0' : '#d4dcc2',
-          }}
+          className={`rounded-2xl border p-5 shadow-sm ${
+            examCountdown.days <= 7
+              ? 'bg-destructive/10 border-destructive/25'
+              : examCountdown.days <= 14
+                ? 'bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900'
+                : 'bg-success/10 border-success/25'
+          }`}
         >
           <p
-            className="text-2xl"
-            style={{
-              color:
-                examCountdown.days <= 7 ? '#9b3a32' : examCountdown.days <= 14 ? '#8a6a13' : '#4a5735',
-            }}
+            className={`text-2xl ${
+              examCountdown.days <= 7
+                ? 'text-destructive'
+                : examCountdown.days <= 14
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-success'
+            }`}
           >
             {examCountdown.days < 0
               ? 'Exam has passed'
@@ -737,7 +739,7 @@ export default function StudysetDetailPage() {
           <h2 className={SECTION_HEADING}>ai brief</h2>
           <div className={`${CARD} flex flex-wrap items-start justify-between gap-4`}>
             <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8eddf] text-[#4a5735]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-chip text-muted-foreground">
                 <Sparkles className="h-4 w-4" />
               </span>
               <div className="min-w-0">
@@ -748,7 +750,7 @@ export default function StudysetDetailPage() {
                     {dailyPulse.focus_topics.slice(0, 4).map((topic, index) => (
                       <span
                         key={`${topic}-${index}`}
-                        className="rounded-full bg-[#fdf3da] px-2.5 py-0.5 text-[11px] font-medium text-[#8a6a13] border border-[#f0e0b0]"
+                        className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900"
                       >
                         {topic}
                       </span>
@@ -758,7 +760,7 @@ export default function StudysetDetailPage() {
               </div>
             </div>
             {aiBrief.recommendation?.href && (
-              <Button asChild size="sm" className="shrink-0" style={{ backgroundColor: '#6b7c4e' }}>
+              <Button asChild size="sm" className="shrink-0" style={{ backgroundColor: 'var(--accent-brand)' }}>
                 <Link href={aiBrief.recommendation.href}>Continue: {aiBrief.recommendation.taskTitle}</Link>
               </Button>
             )}
@@ -814,7 +816,7 @@ export default function StudysetDetailPage() {
               const busy = respondingId === rec.id;
               return (
                 <div key={rec.id} className={`${CARD} flex items-start gap-3`}>
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8eddf] text-[#4a5735]">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-chip text-muted-foreground">
                     <KindIcon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -824,7 +826,7 @@ export default function StudysetDetailPage() {
                         {label}
                       </Badge>
                       {rec.priority >= 90 && (
-                        <span className="rounded-full bg-[#fbe9e7] px-2 py-0.5 text-[10px] font-medium text-[#9b3a32] border border-[#f1c4bf]">
+                        <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive border border-destructive/25">
                           Urgent
                         </span>
                       )}
@@ -971,7 +973,7 @@ export default function StudysetDetailPage() {
                     onClick={() => scrollToDay(day.id)}
                     className={`min-w-[120px] shrink-0 rounded-xl border p-3 text-left transition-colors ${
                       day.completed
-                        ? 'border-[#d4dcc2] bg-[#e8eddf]'
+                        ? 'border-[var(--accent-brand)]/30 bg-[var(--accent-brand)]/10'
                         : 'border-border bg-white hover:border-[var(--accent-brand)]'
                     }`}
                   >
@@ -1039,7 +1041,7 @@ export default function StudysetDetailPage() {
           <div className={CARD}>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#e8eddf] px-3 py-1 text-sm font-medium text-[#4a5735]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">
                   <Sparkles className="h-4 w-4" />
                   Avg score: {adaptive?.avg_score ?? 0}%
                 </span>

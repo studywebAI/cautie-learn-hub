@@ -17,8 +17,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const BRAND = '#6b7c4e'
-
 type ClassAnalytics = {
   classId: string
   className: string
@@ -203,7 +201,7 @@ export function TeacherQuizAnalytics() {
                                 </p>
                               </div>
                               <div className="text-right shrink-0 ml-4">
-                                <p className="text-lg font-semibold" style={{ color: BRAND }}>
+                                <p className="text-lg font-semibold text-foreground">
                                   {quiz.averageScore}%
                                 </p>
                                 <p className="text-xs text-muted-foreground">avg score</p>
@@ -267,13 +265,7 @@ export function TeacherQuizAnalytics() {
                                 {topic.attemptCount}
                               </td>
                               <td className="py-3 px-3 text-center">
-                                <span
-                                  className="inline-flex items-center justify-center w-12 h-12 rounded-full font-semibold text-sm"
-                                  style={{
-                                    backgroundColor: `${BRAND}1a`,
-                                    color: BRAND,
-                                  }}
-                                >
+                                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full surface-chip font-semibold text-sm text-foreground">
                                   {topic.averageScore}%
                                 </span>
                               </td>

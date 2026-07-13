@@ -171,8 +171,8 @@ export function SubjectTopicPicker({
                 onClick={() => void pickSubject(s.id)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all ${
                   selected
-                    ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#4a5735]'
-                    : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                    ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                    : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                 }`}
               >
                 {s.title}
@@ -202,14 +202,14 @@ export function SubjectTopicPicker({
                     onClick={() => void pickChapter(c.id)}
                     className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-all ${
                       selected
-                        ? 'border-[#6b7c4e] bg-[#6b7c4e]/5 text-foreground'
-                        : 'border-border bg-background text-foreground hover:border-[#6b7c4e]/40 hover:bg-[#6b7c4e]/5'
+                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5 text-foreground'
+                        : 'border-border bg-background text-foreground hover:border-[var(--accent-brand)]/40 hover:bg-[var(--accent-brand)]/5'
                     }`}
                   >
                     <span className="truncate">
                       <span className="text-muted-foreground">Ch. {c.chapter_number}</span> {c.title}
                     </span>
-                    <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${selected ? 'text-[#6b7c4e]' : 'text-muted-foreground'}`} />
+                    <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${selected ? 'text-[var(--accent-brand)]' : 'text-muted-foreground'}`} />
                   </button>
                 );
               })}
@@ -240,8 +240,8 @@ export function SubjectTopicPicker({
                     onClick={() => toggleParagraph(p.id)}
                     className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all ${
                       selected
-                        ? 'border-[#6b7c4e] bg-[#6b7c4e]/10 text-[#4a5735]'
-                        : 'border-border bg-background text-muted-foreground hover:border-[#6b7c4e]/40 hover:text-foreground'
+                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]'
+                        : 'border-border bg-background text-muted-foreground hover:border-[var(--accent-brand)]/40 hover:text-foreground'
                     }`}
                   >
                     §{p.paragraph_number} {p.title}
@@ -257,7 +257,7 @@ export function SubjectTopicPicker({
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-4 py-3">
           <p className="min-w-0 truncate text-xs text-muted-foreground">
             {appliedLabel ? (
-              <span className="inline-flex items-center gap-1.5 text-[#4a5735]">
+              <span className="inline-flex items-center gap-1.5 text-[var(--accent-brand)]">
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
                 Linked: {appliedLabel}
               </span>
@@ -271,7 +271,7 @@ export function SubjectTopicPicker({
             type="button"
             onClick={apply}
             className="shrink-0 rounded-lg px-4 py-2 text-xs text-white transition-colors"
-            style={{ backgroundColor: '#6b7c4e' }}
+            style={{ backgroundColor: 'var(--accent-brand)' }}
           >
             {appliedLabel ? 'Update focus' : 'Use this topic'}
           </button>

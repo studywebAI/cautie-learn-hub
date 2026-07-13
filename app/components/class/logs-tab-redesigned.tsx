@@ -180,7 +180,7 @@ export function LogsTabRedesigned({
               className={cn(
                 'px-3 py-1.5 rounded-md text-[12px] font-500 transition-colors border',
                 filter === type
-                  ? 'bg-[var(--accent-brand)] text-background border-[var(--accent-brand)]'
+                  ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background border-border text-foreground/70 hover:border-foreground/50'
               )}
             >
@@ -190,7 +190,7 @@ export function LogsTabRedesigned({
         </div>
 
         {/* Log table */}
-        <div className="rounded-lg border border-border bg-white dark:bg-[hsl(var(--surface-1))] overflow-hidden">
+        <div className="rounded-lg border border-border surface-panel overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
@@ -226,7 +226,7 @@ export function LogsTabRedesigned({
                       className={cn(
                         'border-t border-border transition-colors cursor-pointer',
                         isSelected
-                          ? 'bg-[#edf1e5] dark:bg-[hsl(var(--accent-brand)/0.12)]'
+                          ? 'bg-muted'
                           : idx % 2 === 1
                             ? 'bg-muted/10 hover:bg-muted/30'
                             : 'hover:bg-muted/30'
@@ -268,7 +268,7 @@ export function LogsTabRedesigned({
 
       {/* Detail panel */}
       {selectedLog && (
-        <div className="w-80 shrink-0 rounded-lg border border-border bg-white dark:bg-[hsl(var(--surface-1))] self-start sticky top-4">
+        <div className="w-80 shrink-0 rounded-lg border border-border surface-panel self-start sticky top-4">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <h3 className="text-[14px] text-foreground">
               {isDutch ? 'Details' : 'Details'}

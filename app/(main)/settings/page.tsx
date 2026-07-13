@@ -558,7 +558,7 @@ export default function SettingsPage() {
                           <p className="text-sm font-medium">{tr({ en: 'Google', nl: 'Google' })}</p>
                           <p className="text-xs text-muted-foreground">{googleEmail}</p>
                         </div>
-                        <span className="text-xs font-medium text-green-600">{tr({ en: 'Connected', nl: 'Verbonden' })}</span>
+                        <span className="text-xs font-medium text-success">{tr({ en: 'Connected', nl: 'Verbonden' })}</span>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-foreground">
@@ -737,10 +737,10 @@ export default function SettingsPage() {
                           type="button"
                           onClick={() => updateAdaptiveSensitivity(option.id)}
                           className={cn(
-                            'flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors',
+                            'flex flex-col gap-1 rounded-xl border-2 p-4 text-left transition-colors',
                             adaptiveSensitivity === option.id
-                              ? 'border-[var(--accent-brand)] bg-[#e8eddf]/50'
-                              : 'border-border hover:border-[var(--accent-brand)]/50'
+                              ? 'border-primary surface-interactive'
+                              : 'border-border hover:border-muted-foreground/30'
                           )}
                         >
                           <span className="text-sm font-medium text-foreground">

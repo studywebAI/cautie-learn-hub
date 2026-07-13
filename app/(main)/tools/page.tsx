@@ -155,10 +155,10 @@ export default function ToolsPage() {
                   <button
                     key={tool.id}
                     onClick={() => router.push(tool.href)}
-                    className="group flex items-start gap-4 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-sm transition-all duration-150 hover:border-[var(--accent-brand)]/50 hover:shadow-md active:scale-[0.98]"
+                    className="group flex items-start gap-4 rounded-2xl border border-border/60 bg-card p-4 text-left shadow-sm transition-all duration-150 hover:border-foreground/30 hover:shadow-md active:scale-[0.98]"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--accent-brand)]/10 transition-colors group-hover:bg-[var(--accent-brand)]/18">
-                      <tool.icon className="h-5 w-5 text-[var(--accent-brand)]" strokeWidth={1.6} />
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl surface-chip transition-colors">
+                      <tool.icon className="h-5 w-5 text-foreground" strokeWidth={1.6} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="leading-snug">{tool.label}</p>

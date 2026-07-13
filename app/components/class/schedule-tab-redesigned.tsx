@@ -364,7 +364,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
   if (loading) {
     return (
       <div className="flex h-48 items-center justify-center">
-        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-[var(--accent-brand)]" />
+        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-foreground/50" />
       </div>
     );
   }
@@ -400,11 +400,10 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <button
                 type="button"
                 onClick={() => setViewMode('week')}
-                style={viewMode === 'week' ? { backgroundColor: '#7f8962', color: '#ffffff' } : undefined}
                 className={cn(
                   'border-r border-border px-3 py-[5px] text-[12px] transition-colors',
                   viewMode === 'week'
-                    ? 'border-[var(--accent-brand)]'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-background text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -413,11 +412,10 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
               <button
                 type="button"
                 onClick={() => setViewMode('day')}
-                style={viewMode === 'day' ? { backgroundColor: '#7f8962', color: '#ffffff' } : undefined}
                 className={cn(
                   'px-3 py-[5px] text-[12px] transition-colors',
                   viewMode === 'day'
-                    ? 'border-[var(--accent-brand)]'
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-background text-foreground/70 hover:bg-muted'
                 )}
               >
@@ -435,7 +433,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                     'rounded-[6px] border px-3 py-[5px] text-[12px] transition-colors',
                     editMode
                       ? 'border-amber-600 bg-amber-600/10 text-amber-600'
-                      : 'border-border bg-background text-foreground/70 hover:border-[var(--accent-brand)] hover:text-[var(--accent-brand)]'
+                      : 'border-border bg-background text-foreground/70 hover:border-foreground/50 hover:text-foreground'
                   )}
                 >
                   {editMode
@@ -448,8 +446,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                 <button
                   type="button"
                   onClick={() => setShowAddForm(!showAddForm)}
-                  style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
-                  className="flex items-center gap-1.5 rounded-[6px] border border-[var(--accent-brand)] px-3 py-[5px] text-[12px]"
+                  className="flex items-center gap-1.5 rounded-[6px] border border-primary bg-primary px-3 py-[5px] text-[12px] text-primary-foreground"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {isDutch ? 'Toevoegen' : 'Add slot'}
@@ -530,8 +527,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                   type="button"
                   onClick={() => void createSlot()}
                   disabled={saving}
-                  style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
-                  className="rounded-[6px] px-4 py-1.5 text-[12px] disabled:opacity-50"
+                  className="rounded-[6px] bg-primary px-4 py-1.5 text-[12px] text-primary-foreground disabled:opacity-50"
                 >
                   {saving ? '…' : (isDutch ? 'Opslaan' : 'Save')}
                 </button>
@@ -581,9 +577,9 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                             className={cn(
                               'min-h-[44px] rounded-[4px]',
                               slot
-                                ? 'border-l-[3px] border-l-[var(--accent-brand)] bg-[var(--accent-brand)]/10'
+                                ? 'border-l-[3px] border-l-foreground/40 bg-muted/50'
                                 : 'border-l-[3px] border-l-border bg-muted/30',
-                              editMode && slot && 'cursor-pointer outline outline-2 outline-dashed outline-[#c87d25]',
+                              editMode && slot && 'cursor-pointer outline outline-2 outline-dashed outline-amber-600',
                             )}
                             onDragOver={e => e.preventDefault()}
                             onDrop={e => {
@@ -603,7 +599,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                                 onDragEnd={() => setDragSlotId(null)}
                                 className="flex h-full flex-col p-[5px_6px]"
                               >
-                                <div className="text-[10px] text-[var(--accent-brand)]">
+                                <div className="text-[10px] text-muted-foreground">
                                   {fmt24(slot.start_time)}–{fmt24(slot.end_time)}
                                 </div>
                                 <div className="mt-0.5 text-[11px] text-foreground">
@@ -619,7 +615,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                                     <button
                                       type="button"
                                       onClick={e => { e.stopPropagation(); void duplicateSlotToNextDay(slot); }}
-                                      className="rounded p-0.5 text-muted-foreground hover:text-[var(--accent-brand)]"
+                                      className="rounded p-0.5 text-muted-foreground hover:text-foreground"
                                       title={isDutch ? 'Kopieer naar volgende dag' : 'Duplicate to next day'}
                                     >
                                       <CopyPlus className="h-3 w-3" />
@@ -681,7 +677,7 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
                         )}
                         style={{ gridTemplateColumns: '60px 1fr 60px' }}
                       >
-                        <div className="text-[12px] text-[var(--accent-brand)]">
+                        <div className="text-[12px] text-muted-foreground">
                           {fmt24(slot.start_time)}
                         </div>
                         <div>
@@ -769,7 +765,6 @@ export function ScheduleTabRedesigned({ classId, cachedData = null, parentLoadin
             <Button
               onClick={() => void saveEditSlot()}
               disabled={saving}
-              style={{ backgroundColor: '#7f8962', color: '#ffffff' }}
               className="hover:opacity-90"
             >
               {saving ? '…' : (isDutch ? 'Opslaan' : 'Save changes')}

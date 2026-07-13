@@ -103,7 +103,7 @@ export function SidebarProfile() {
         <Button
           variant="outline"
           size="sm"
-          className="w-full h-9 justify-start rounded-lg border-transparent bg-[var(--accent-brand)] text-xs text-white hover:brightness-95"
+          className="w-full h-9 justify-start rounded-lg border-transparent bg-primary text-xs text-primary-foreground hover:brightness-95"
           asChild
         >
           <Link href="/login">
@@ -149,7 +149,7 @@ export function SidebarProfile() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-md text-[var(--accent-brand)]"
+          className="h-8 w-8 rounded-md text-sidebar-foreground/70 hover:text-sidebar-foreground"
           asChild
         >
           <Link href="/upgrade" aria-label="Upgrade">
@@ -192,7 +192,7 @@ export function SidebarProfile() {
       <Button
         variant="outline"
         size="sm"
-        className="w-full h-9 justify-start rounded-lg border-transparent bg-[var(--accent-brand)] text-xs text-white hover:brightness-95"
+        className="w-full h-9 justify-start rounded-lg border-border bg-transparent text-xs text-sidebar-foreground hover:bg-sidebar-accent/50"
         asChild
       >
         <Link href="/upgrade">

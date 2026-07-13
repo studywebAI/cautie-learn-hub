@@ -247,19 +247,19 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   return (
     <>
-      <div className="space-y-6 text-[13px] text-[hsl(var(--sidebar-active-foreground))]">
+      <div className="space-y-6 text-[13px] text-foreground">
         {isTeacher && (
           <div className="flex justify-end">
-            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
+            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl">
               + Create Subject
             </Button>
           </div>
         )}
 
         {subjects.length === 0 ? (
-          <div className="py-16 text-center text-sidebar-foreground/80">
+          <div className="py-16 text-center text-muted-foreground">
             {isTeacher && (
-              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl border-sidebar-border/80 bg-sidebar-accent px-3 text-[13px] text-[hsl(var(--sidebar-active-foreground))] hover:bg-sidebar-accent/90">
+              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl">
                 Create First Subject
               </Button>
             )}
