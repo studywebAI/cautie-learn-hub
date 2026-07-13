@@ -1,89 +1,21 @@
 # Dashboard — Feature Brainstorm
 
-**Status:** Brainstormfase, niks gebouwd. Doel: alles verzamelen wat een dashboard zou kunnen bevatten — van competitors, van forums/reviews, en eigen ideeën/gemiste features — zodat we daaruit kunnen kiezen wat we bouwen.
+**Proces:** per punt `[x]` bouwen, `[~]` bouwen met aanpassing (aanpassing noteren), `[!]` niet doen. Reageer per punt of per sub-sectie, ik verwerk het en bouw wat akkoord is.
 
-**Proces:** Zelfde als het visuele reference-document. Loop erdoorheen, per punt: `[x]` bouwen, `[~]` bouwen met aanpassing (aanpassing noteren), `[!]` niet doen. Wat je niet aanraakt laat ik open staan — geen aanname dat het akkoord is, dit is puur een lange keuzelijst. Zodra de lijst doorlopen is, maak ik op basis van de `[x]`/`[~]`-punten een mockup voor Dashboard (student + teacher versie).
+**Herkomst-tags:** `[Competitor: naam]` / `[Forum/review]` / `[Eigen idee]` / `[Gemiste feature]`.
 
-**Herkomst-tags per punt:**
-- `[Competitor: naam]` — bestaat al zo (of vergelijkbaar) bij een concrete concurrent
-- `[Forum/review]` — expliciet genoemd als wens/pijnpunt in reviews, fora, of "wat mensen missen"-onderzoek
-- `[Eigen idee]` — door mij bedacht, past bij Cautie's positionering
-- `[Gemiste feature]` — iets wat Cautie nu simpelweg niet heeft maar logisch zou zijn gegeven de bestaande functionaliteit elders in de app
-
-Een punt kan meerdere tags hebben.
+**Kernprincipe:** het dashboard is geen los canvas met widgets — het is een **doorverwijs- en informatiepunt**. Bovenaan status, daaronder concrete doorverwijzingen naar agenda/grades/class/tools.
 
 ---
 
-## Kernprincipe voor dit dashboard (uit je bericht)
-
-Het dashboard is geen los canvas met widgets — het is een **doorverwijs- en informatiepunt**. Bovenaan algemene data/status, daaronder concrete doorverwijzingen naar de plek waar je verder moet (agenda, grades, class, tools). Niet "hier is alles", maar "hier is wat er speelt, en hier moet je zijn om er iets aan te doen."
-
----
-
-## Openstaand — wat je nog moet checken/goed- of afkeuren
-
-**Student-kant (sectie A) — al gebouwd, op 3 losse punten na die nog geen beslissing hebben:**
+## Nog open (student-kant, sectie A is verder al gebouwd)
 - `A2.10` — "Gemiste deadline"-waarschuwing
 - `A3.13` — Vak met laagste gemiddelde highlighten
-- `A6.20` — Wekelijkse samenvatting (stond op `[?]` twijfel, nog geen definitief oordeel)
-
-**Docent-kant (sectie B) — nog volledig open, hier start je nu bij B1:**
-Alle 27 punten in B1 t/m B9 hieronder, nul beslissingen tot nu toe.
-
-Zelfde format als bij A: reageer per punt (of per sub-sectie) met `[x]`/`[~]`/`[!]`, ik verwerk het meteen in de file en bouw wat akkoord is.
+- `A6.20` — Wekelijkse samenvatting (stond op `[?]` twijfel)
 
 ---
 
-## A. Student Dashboard — RONDE 1 BESLIST EN GEBOUWD
-
-Alle `[x]`/`[~]`-punten hierboven zijn geïmplementeerd: nieuwe stat-rij, week-strookje samengevoegd in Today's plan (deep-link naar agenda-item), grades-kaart met wissel recently-graded/to-grade (incl. nieuw `/api/student/grades/pending` endpoint), voorwaardelijke "oefen nu"-suggestie (alleen bij material-gekoppelde items), docent→klas/leerling-melding via de notificatie-inbox (nieuw `/api/notifications/send-message` endpoint + compose-dialoog + dashboard-kaart), en widget-personalisatie (aan/uit + compact-modus, in het schuifjes-menu naast de meldingenbel).
-
-### A1. Overzicht / status bovenaan
-1. `[x]` Begroeting blijft, wordt "Welcome back, [naam]" i.p.v. "Good afternoon" — datum eronder in kleinere tekst (structuur blijft, tekst verandert).
-2. `[~]` Stat-rij: **niet** "aantal classes" — wordt Subjects-count + Average grade (klikbaar → naar die klas/vak-specifieke grades) + Notifications (ongelezen-count uit de bestaande notificatie-inbox, getoond als getal-in-cirkel — **deze cirkel-weergave is dashboard-exclusief**, elders blijft het een gewone badge).
-3. `[!]` Samenvattende zin — vervalt, stat-rij (2) dekt dit beter.
-4. `[!]` Streak — vervalt.
-5. `[~]` Wordt: klein week-strookje met alléén toetsen/huiswerk-titels per dag, klikken opent dat item direct in Agenda (open het item zelf, niet alleen de dag). **Zelfde ding als punt 9** — gedupliceerd, samengevoegd.
-
-### A2. Doorverwijzing naar Agenda
-6. `[!]` "Volgend uur"-kaart — minder prioriteit dan 7, laten we voorlopig niet apart bouwen.
-7. `[~]` "Vandaag te doen"-lijst blijft het hoofdwidget, wordt herschreven/gemoderniseerd (inclusief punt 8 erin gevouwen — geen los "komende toets"-kaartje, toetsen krijgen gewoon meer visuele nadruk binnen deze lijst).
-8. → samengevoegd met 7.
-9. `[x]` = exact hetzelfde als de herziene punt 5 (week-strookje met toetsen/huiswerk, klik opent item direct). Eén widget, niet twee.
-10. `[ ]` Nog niet besproken — open.
-
-### A3. Doorverwijzing naar Grades
-11. `[~]` Eén kaart met **wisselknop** tussen "Recently graded" (titel + cijfer + gemiddelde) en "To grade" (toetsen die nog geen cijfer hebben). ⚠️ Afhankelijk van of er al een "to grade"-databron voor studenten bestaat — wordt nu uitgezocht, zie vraag hieronder.
-    - Notitie voor later (niet nu bouwen): toetsen moeten sowieso beter/robuuster bij Subjects — incl. inplannen via Agenda, browser-tab-detectie/anti-cheat, en dat je na de verlopen tijd niet meer kan invullen. Voor nu: minimale versie zodat dit dashboard-onderdeel werkt, geen losse sessie bouwen om dit heen en weer te fixen.
-12. `[!]` What-if calculator preview — niet op dashboard. Mogelijk later als losse, student-only extra feature (geen docent-kant), niet nu.
-13. `[ ]` Nog niet besproken — open.
-
-### A4. Doorverwijzing naar Subjects/Tools/Studysets
-14. `[!]` "Ga verder waar je gebleven was" — vervalt.
-15. `[~]` "Binnenkort een toets? Oefen nu" — **alleen** tonen als het agenda-item een gekoppeld vak/paragraaf/opdracht/bestand heeft om naar te verwijzen. Bij losse vrije tekst ("paragraaf 1 2 3") is er niks om een suggestie van te maken, dus dan geen kaart. ⚠️ Hangt af van of agenda-items al zo'n koppeling ondersteunen — wordt uitgezocht.
-16. `[!]` Recent bekeken materiaal — vervalt, zit al bij Subjects.
-
-### A5. Communicatie
-17. `[!]` Chat is uit Class verwijderd — dit punt in zijn oorspronkelijke vorm vervalt, zie 18.
-18. `[~]` Wordt: docent kan vanuit het eigen dashboard een gerichte melding/bericht sturen — naar een hele klas óf naar één specifieke leerling — géén losse chat-functie. Verschijnt op het dashboard van de ontvangende student(en) als berichtkaart (bv. "Bericht van meneer Kribbe: lokaal voor SK is nu 109"). ⚠️ Hangt af van of het bestaande announcement-systeem al per-leerling kan targetten — wordt uitgezocht.
-19. `[!]` Klasgenoten-activiteit — **absoluut niet**, privacy-principe: leren is privé, iedereen doet zijn eigen ding, studysets zijn toch bijna nooit hetzelfde. Dit principe geldt voor toekomstige features in het algemeen, niet alleen dit punt.
-
-### A6. Motivatie / gamification
-20. `[?]` Wekelijkse samenvatting — twijfel, niet gecommit. Risico op scope-vraag ("waar stop je dan": per week? cumulatief?) en onduidelijk of het echt gebruikt wordt. Lage prioriteit, niet in ronde 1.
-21. `[!]` Badges — vervalt.
-22. `[!]` Leaderboard — vervalt, expliciet afgekeurd ("slechtste idee tot nu toe"). Enige denkbare heropening: als er ooit live multiplayer-games komen, maar niet nu en niet als dashboard-feature.
-
-### A7. AI-ondersteund
-23. `[!]` Vervalt — hele sectie A7 geschrapt.
-24. `[!]` Vervalt — hele sectie A7 geschrapt.
-
-### A8. Personalisatie
-25. `[x]` Widgets aan/uit/herschikken — akkoord.
-26. `[x]` Compact/uitgebreid weergave-modus — akkoord.
-
----
-
-## B. Teacher Dashboard
+## B. Teacher Dashboard — hier zit je nu, alles nog open
 
 ### B1. Overzicht / status bovenaan
 1. `[ ]` Begroeting + datum + aantal klassen (**al aanwezig**, blijft).
@@ -109,7 +41,7 @@ Alle `[x]`/`[~]`-punten hierboven zijn geïmplementeerd: nieuwe stat-rij, week-s
 
 ### B5. Communicatie
 15. `[ ]` Recente berichten/vragen van leerlingen of ouders, met snel-antwoord. (**al aanwezig** via recent-activity-feed, blijft)
-16. `[ ]` Aankondiging plaatsen direct vanaf dashboard zonder naar Class te navigeren. (**al aanwezig**, blijft)
+16. `[ ]` Aankondiging plaatsen direct vanaf dashboard zonder naar Class te navigeren. (**al aanwezig**, blijft — nu vervangen door de nieuwe klas/leerling-melding uit sectie A18)
 17. `[ ]` Ouder-communicatie-log: wanneer voor het laatst contact was per leerling/klas — alleen relevant als Cautie ooit een ouder-rol krijgt, dus voorlopig noteren, niet bouwen. `[Competitor: ClassDojo]`
 
 ### B6. Class management
@@ -129,16 +61,3 @@ Alle `[x]`/`[~]`-punten hierboven zijn geïmplementeerd: nieuwe stat-rij, week-s
 ### B9. Personalisatie
 26. `[ ]` Widgets aan/uit/herschikken, zelfde als student-kant. `[Competitor: Canvas]`
 27. `[ ]` Rol-specifieke shortcuts vastpinnen (bv. docent die vooral toetsen maakt vs. docent die vooral aanwezigheid bijhoudt heeft andere prioriteiten). `[Eigen idee]`
-
----
-
-## C. Dingen die NIET op het dashboard moeten (bewust weglaten, expliciet genoemd in onderzoek als "clutter")
-
-- `[Forum/review]` Uurlijkse time-blocking met kleurcodes/energie-levels — te veel wrijving, mensen stoppen na een week.
-- `[Forum/review]` Habit-modules (water drinken, slaap, beweging) — leidt af van het eigenlijke doel (leren), hoort niet bij een studie-dashboard.
-- Weer-widgets, klok-widgets, muziek-widgets — leuk voor een persoonlijke Notion-pagina, niet functioneel voor een leerplatform; sluit ook niet aan bij "neutraal, functioneel" chrome-principe.
-
----
-
-## Volgende stap
-Loop door A + B, zet statussen. Ik maak daarna een mockup (apart artifact/voorstel) voor zowel de student- als de docent-kant van Dashboard, gebaseerd op de `[x]`/`[~]`-punten, met de "doorverwijspunt"-structuur (status bovenaan → concrete wijzers naar agenda/grades/tools) als leidend layoutprincipe.
