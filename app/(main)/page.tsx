@@ -27,6 +27,9 @@ import { StudentStatRow } from "@/components/dashboard/student-stat-row";
 import { TeacherMessageCard } from "@/components/dashboard/teacher-message-card";
 import { TeacherMessageComposer } from "@/components/dashboard/teacher-message-composer";
 import { DashboardCustomizeMenu, loadDashboardPrefs, DEFAULT_DASHBOARD_PREFS, type DashboardPrefs } from "@/components/dashboard/dashboard-customize-menu";
+import { TeacherStatRow } from "@/components/dashboard/teacher-stat-row";
+import { TeacherAgendaWidget } from "@/components/dashboard/teacher-agenda-widget";
+import { TeacherToGradeCard } from "@/components/dashboard/teacher-to-grade-card";
 
 // Thin wrapper so we can reference it inside TeacherSummaryDashboard
 function RecentActivityFeedSection() {
@@ -90,7 +93,7 @@ function StudentDashboard() {
   const [dashboardPrefs, setDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
 
   useEffect(() => {
-    setDashboardPrefs(loadDashboardPrefs());
+    setDashboardPrefs(loadDashboardPrefs('student'));
   }, []);
 
   useEffect(() => {
@@ -181,7 +184,7 @@ function StudentDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <DashboardCustomizeMenu onChange={setDashboardPrefs} />
+          <DashboardCustomizeMenu role="student" widgetKeys={['deadlines', 'studyToday', 'scheduled', 'analytics', 'subjects']} onChange={setDashboardPrefs} />
           <NotificationPopover />
         </div>
       </div>
@@ -240,8 +243,12 @@ function StudentDashboard() {
 function TeacherSummaryDashboard() {
     const { classes, assignments, students, isLoading, session, refetchClasses, refetchAssignments, role } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
-    const [unreadMessages, setUnreadMessages] = useState(0);
     const [assignmentFilter, setAssignmentFilter] = useState<string>('All');
+    const [teacherDashboardPrefs, setTeacherDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
+
+    useEffect(() => {
+      setTeacherDashboardPrefs(loadDashboardPrefs('teacher'));
+    }, []);
 
     useEffect(() => {
       if (typeof window === 'undefined') return;
@@ -265,23 +272,10 @@ function TeacherSummaryDashboard() {
       return () => window.removeEventListener('focus', refresh);
     }, [session, refetchClasses, refetchAssignments]);
 
-    // Fetch unread message count from notifications
-    useEffect(() => {
-      if (!session || isLikelyBotClient()) return;
-      fetch('/api/dashboard/teacher/activity?limit=50&type=messages')
-        .then(r => r.ok ? r.json() : { items: [] })
-        .then(d => {
-          const unread = (d?.items || []).filter((i: any) => !i.read).length;
-          setUnreadMessages(unread);
-        })
-        .catch(() => {});
-    }, [session]);
-
     if (isLoading || !classes) return <DashboardSkeleton />;
 
     const teacherClasses = (Array.isArray(classes) ? classes : []).filter((c: any) => c?.status !== 'archived');
     const totalStudents = students?.length || 0;
-    const activeAssignments = (Array.isArray(assignments) ? assignments : []).length;
     const welcomeName =
       normalizeDisplayName(displayName) ||
       normalizeDisplayName((session as any)?.user?.user_metadata?.display_name) ||
@@ -294,6 +288,8 @@ function TeacherSummaryDashboard() {
       ? (window.localStorage.getItem('studyweb-last-class-id') || activeClass?.id || '')
       : (activeClass?.id || '');
     const resolvedClassId = teacherClasses.find(c => c.id === activeClassId)?.id || activeClass?.id || '';
+    const resolvedClass = teacherClasses.find(c => c.id === resolvedClassId);
+    const teacherClassIds = teacherClasses.map(c => c.id);
 
     return (
         <div className="page-content flex flex-col gap-5">
@@ -301,56 +297,19 @@ function TeacherSummaryDashboard() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
-                <p className="page-subtitle mt-0.5">{getDayLabel()} · {teacherClasses.length} {teacherClasses.length === 1 ? 'class' : 'classes'}</p>
+                <p className="page-subtitle mt-0.5">
+                  {getDayLabel()}
+                  {resolvedClass && <> · Active class: <span className="text-foreground">{resolvedClass.name}</span></>}
+                </p>
               </div>
-              <NotificationPopover />
+              <div className="flex items-center gap-1">
+                <DashboardCustomizeMenu role="teacher" widgetKeys={['agenda', 'quickAccess', 'submissions']} onChange={setTeacherDashboardPrefs} />
+                <NotificationPopover />
+              </div>
             </div>
 
             {/* Stat row */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-              <div className="rounded-xl surface-panel border border-border p-3.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Classes</span>
-                  <School className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-                <div className="text-2xl">{teacherClasses.length}</div>
-              </div>
-              <div className="rounded-xl surface-panel border border-border p-3.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Students</span>
-                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-                <div className="text-2xl">{totalStudents}</div>
-              </div>
-              <div className="rounded-xl surface-panel border border-border p-3.5">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground">Assignments</span>
-                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-                <div className="text-2xl">{activeAssignments}</div>
-              </div>
-              {/* Messages card */}
-              {resolvedClassId ? (
-                <Link href={`/class/${resolvedClassId}?tab=share`} className="rounded-xl surface-panel border border-border p-3.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">Messages</span>
-                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-2xl">{unreadMessages}</div>
-                    {unreadMessages > 0 && <span className="text-[10px] text-[var(--accent-brand)]">unread</span>}
-                  </div>
-                </Link>
-              ) : (
-                <div className="rounded-xl surface-panel border border-border p-3.5">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground">Messages</span>
-                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                  <div className="text-2xl">{unreadMessages}</div>
-                </div>
-              )}
-            </div>
+            <TeacherStatRow classIds={teacherClassIds} classesCount={teacherClasses.length} />
 
             {teacherClasses.length === 0 ? (
               <div className="rounded-xl border border-dashed p-10 text-center">
@@ -363,23 +322,16 @@ function TeacherSummaryDashboard() {
                 <DashboardSidebar userRole={role} />
 
                 {/* Main content */}
-                <div className="flex flex-col gap-4 md:gap-5">
-                  {/* Announcements section */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Announcements</CardTitle>
-                      <CardDescription>Recent class announcements</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">No recent announcements</p>
-                    </CardContent>
-                  </Card>
+                <div className={`flex flex-col ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+                  {teacherDashboardPrefs.widgets.agenda && (
+                    <TeacherAgendaWidget assignments={assignments} classes={teacherClasses} />
+                  )}
 
                   {/* Recent activity */}
                   <RecentActivityFeedSection />
 
                   {/* Quick links to active class */}
-                  {resolvedClassId && (
+                  {teacherDashboardPrefs.widgets.quickAccess && resolvedClassId && (
                     <div className="rounded-xl surface-panel border border-border p-4">
                       <p className="text-xs font-medium text-muted-foreground mb-2">Quick access</p>
                       <div className="grid grid-cols-2 gap-1.5">
@@ -402,25 +354,19 @@ function TeacherSummaryDashboard() {
 
                   {/* To Grade + Recent Submissions grid */}
                   <div className="grid gap-4 lg:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">To Grade</CardTitle>
-                        <CardDescription>Pending submissions</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">No pending submissions</p>
-                      </CardContent>
-                    </Card>
+                    <TeacherToGradeCard classIds={teacherClassIds} />
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Recent Submissions</CardTitle>
-                        <CardDescription>Latest from students</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">No recent submissions</p>
-                      </CardContent>
-                    </Card>
+                    {teacherDashboardPrefs.widgets.submissions && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="text-base">Recent Submissions</CardTitle>
+                          <CardDescription>Latest from students</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">No recent submissions</p>
+                        </CardContent>
+                      </Card>
+                    )}
                   </div>
 
                   {/* Post Announcement + Manage Attendance grid */}
