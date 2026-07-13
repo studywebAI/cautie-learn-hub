@@ -45,6 +45,8 @@ function getTypeConfig(type: string): { icon: React.ReactNode; accent: string; l
     case 'assignment_due':
     case 'deadline_reminder':
       return { icon: <Clock className={cls} />, accent: 'text-red-600 bg-red-500/10', label: 'Deadline' };
+    case 'deadline_overdue':
+      return { icon: <AlertCircle className={cls} />, accent: 'text-red-600 bg-red-500/10', label: 'Overdue' };
     case 'scheduled_study_item_due':
       return { icon: <Clock className={cls} />, accent: 'text-[var(--accent-brand)] bg-[var(--accent-brand)]/10', label: 'Scheduled' };
     case 'submission_graded':

@@ -60,6 +60,15 @@ function RecentActivityFeedSection() {
 const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
+const QUICK_ACCESS_SHORTCUTS = [
+  { key: 'overview', hrefSuffix: (classId: string) => `/class/${classId}?tab=group`, icon: Users, label: 'Class overview' },
+  { key: 'grades', hrefSuffix: (classId: string) => `/class/${classId}?tab=grades`, icon: ClipboardList, label: 'Grades' },
+  { key: 'attendance', hrefSuffix: (classId: string) => `/class/${classId}?tab=group`, icon: UserCheck, label: 'Attendance' },
+  { key: 'analytics', hrefSuffix: (classId: string) => `/class/${classId}?tab=analytics`, icon: BarChart2, label: 'Analytics' },
+  { key: 'agenda', hrefSuffix: (classId: string) => `/agenda?classId=${classId}`, icon: Calendar, label: 'Agenda' },
+  { key: 'chat', hrefSuffix: (classId: string) => `/class/${classId}?tab=share`, icon: MessageSquare, label: 'Chat' },
+];
+
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
   const normalized = value.trim();
@@ -303,7 +312,13 @@ function TeacherSummaryDashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <DashboardCustomizeMenu role="teacher" widgetKeys={['agenda', 'quickAccess', 'submissions']} onChange={setTeacherDashboardPrefs} />
+                <TeacherMessageComposer classId={resolvedClassId} variant="icon" />
+                <DashboardCustomizeMenu
+                  role="teacher"
+                  widgetKeys={['agenda', 'quickAccess', 'submissions']}
+                  shortcutOptions={QUICK_ACCESS_SHORTCUTS.map(s => ({ key: s.key, label: s.label }))}
+                  onChange={setTeacherDashboardPrefs}
+                />
                 <NotificationPopover />
               </div>
             </div>
@@ -335,19 +350,14 @@ function TeacherSummaryDashboard() {
                     <div className="rounded-xl surface-panel border border-border p-4">
                       <p className="text-xs font-medium text-muted-foreground mb-2">Quick access</p>
                       <div className="grid grid-cols-2 gap-1.5">
-                        {[
-                          { href: `/class/${resolvedClassId}?tab=group`, icon: Users, label: 'Class overview' },
-                          { href: `/class/${resolvedClassId}?tab=grades`, icon: ClipboardList, label: 'Grades' },
-                          { href: `/class/${resolvedClassId}?tab=group`, icon: UserCheck, label: 'Attendance' },
-                          { href: `/class/${resolvedClassId}?tab=analytics`, icon: BarChart2, label: 'Analytics' },
-                          { href: `/agenda?classId=${resolvedClassId}`, icon: Calendar, label: 'Agenda' },
-                          { href: `/class/${resolvedClassId}?tab=share`, icon: MessageSquare, label: 'Chat' },
-                        ].map(({ href, icon: Icon, label }) => (
-                          <Link key={href} href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors">
-                            <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate">{label}</span>
-                          </Link>
-                        ))}
+                        {QUICK_ACCESS_SHORTCUTS
+                          .filter(s => teacherDashboardPrefs.pinnedShortcuts[s.key] !== false)
+                          .map(({ key, hrefSuffix, icon: Icon, label }) => (
+                            <Link key={key} href={`${hrefSuffix(resolvedClassId)}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors">
+                              <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                              <span className="truncate">{label}</span>
+                            </Link>
+                          ))}
                       </div>
                     </div>
                   )}

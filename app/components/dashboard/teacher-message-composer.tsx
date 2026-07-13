@@ -13,11 +13,11 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Megaphone } from 'lucide-react';
+import { Megaphone, Plus } from 'lucide-react';
 
 type Member = { user_id: string; role: string; profiles?: { full_name?: string | null } };
 
-export function TeacherMessageComposer({ classId }: { classId: string }) {
+export function TeacherMessageComposer({ classId, variant = 'button' }: { classId: string; variant?: 'button' | 'icon' }) {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<string>('class');
   const [members, setMembers] = useState<Member[]>([]);
@@ -63,10 +63,24 @@ export function TeacherMessageComposer({ classId }: { classId: string }) {
 
   return (
     <>
-      <Button size="sm" className="w-full" onClick={() => setOpen(true)} disabled={!classId}>
-        <Megaphone className="mr-1.5 h-3.5 w-3.5" />
-        Send message
-      </Button>
+      {variant === 'icon' ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => setOpen(true)}
+          disabled={!classId}
+          aria-label="Send a quick message"
+          title="Send a quick message"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button size="sm" className="w-full" onClick={() => setOpen(true)} disabled={!classId}>
+          <Megaphone className="mr-1.5 h-3.5 w-3.5" />
+          Send message
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

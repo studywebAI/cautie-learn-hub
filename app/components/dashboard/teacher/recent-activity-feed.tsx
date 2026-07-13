@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageSquare, FileText, UserCheck, Info, ChevronRight } from 'lucide-react';
+import { MessageSquare, FileText, UserCheck, Info, ChevronRight, Reply, Send } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 type FeedItem = {
   id: string;
@@ -42,10 +43,46 @@ function itemHref(item: FeedItem): string {
   return '/';
 }
 
+function replyTarget(item: FeedItem): { classId: string; studentId: string } | null {
+  const d = item.data || {};
+  const classId = d.class_id;
+  const studentId = d.from_user_id || d.student_id;
+  if (item.category !== 'messages' || !classId || !studentId) return null;
+  return { classId, studentId };
+}
+
 export function RecentActivityFeed() {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+  const { toast } = useToast();
+
+  const sendReply = async (item: FeedItem) => {
+    const target = replyTarget(item);
+    if (!target || !replyText.trim()) return;
+    setSending(true);
+    try {
+      const response = await fetch('/api/notifications/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ classId: target.classId, studentId: target.studentId, message: replyText.trim() }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to send reply');
+      }
+      toast({ title: 'Reply sent' });
+      setReplyingId(null);
+      setReplyText('');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setSending(false);
+    }
+  };
 
   const load = useCallback(async (f: Filter) => {
     setLoading(true);
@@ -124,33 +161,67 @@ export function RecentActivityFeed() {
         </p>
       ) : (
         <div className="space-y-0.5 max-h-[280px] overflow-y-auto pr-1">
-          {items.map(item => (
-            <Link
-              prefetch={false}
-              key={item.id}
-              href={itemHref(item)}
-              className="flex items-start gap-3 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--interactive-hover))] transition-colors group"
-            >
-              <div className="mt-0.5">
-                <FeedIcon category={item.category} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium truncate">{item.message || item.title}</p>
-                {item.message && item.title && item.message !== item.title && (
-                  <p className="text-[10px] text-muted-foreground truncate">{item.title}</p>
+          {items.map(item => {
+            const target = replyTarget(item);
+            const isReplying = replyingId === item.id;
+            return (
+              <div key={item.id} className="rounded-lg hover:bg-[hsl(var(--interactive-hover))] transition-colors group">
+                <div className="flex items-start gap-3 px-2.5 py-2">
+                  <Link prefetch={false} href={itemHref(item)} className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="mt-0.5">
+                      <FeedIcon category={item.category} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium truncate">{item.message || item.title}</p>
+                      {item.message && item.title && item.message !== item.title && (
+                        <p className="text-[10px] text-muted-foreground truncate">{item.title}</p>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                      {relativeTime(item.created_at)}
+                    </span>
+                    {!item.read && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-brand)] shrink-0" />
+                    )}
+                    {target && (
+                      <button
+                        onClick={() => { setReplyingId(isReplying ? null : item.id); setReplyText(''); }}
+                        className="h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Reply"
+                        title="Reply"
+                      >
+                        <Reply className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+                {isReplying && target && (
+                  <div className="flex items-center gap-1.5 px-2.5 pb-2">
+                    <input
+                      autoFocus
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') void sendReply(item); }}
+                      placeholder="Quick reply..."
+                      maxLength={500}
+                      className="flex-1 text-xs bg-transparent border border-border rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                    <button
+                      onClick={() => void sendReply(item)}
+                      disabled={sending || !replyText.trim()}
+                      className="h-7 w-7 flex items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+                      aria-label="Send reply"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                  {relativeTime(item.created_at)}
-                </span>
-                {!item.read && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-brand)] shrink-0" />
-                )}
-                <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

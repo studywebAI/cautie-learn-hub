@@ -1,7 +1,7 @@
 // Notification utilities for the unified notification system
 
 export interface NotificationData {
-  type: 'announcement' | 'submission_graded' | 'assignment_due' | 'assignment_created' | 'class_invitation' | 'ai_content_generated' | 'ai_grading_completed' | 'comment_added' | 'deadline_reminder' | 'class_message' | 'scheduled_study_item_due' | 'error';
+  type: 'announcement' | 'submission_graded' | 'assignment_due' | 'assignment_created' | 'class_invitation' | 'ai_content_generated' | 'ai_grading_completed' | 'comment_added' | 'deadline_reminder' | 'deadline_overdue' | 'class_message' | 'scheduled_study_item_due' | 'error';
   title: string;
   message?: string;
   data?: Record<string, any>;

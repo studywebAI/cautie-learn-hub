@@ -82,13 +82,23 @@
 
 ---
 
-## Status ronde 1: gebouwd vs. nog te doen
+## Status ronde 1 + 2: dashboard afgerond
 
-**Gebouwd:** B1.1/1.2/1.4, B2.5 (nu op echte data, was hardcoded fake tekst), B2.7 + B7.21 (uitklapbare stat-rij met grafiek), B3.9/10 (agenda-widget met week-strip), B9.26 (widgets aan/uit). De oude nep-"Announcements"-kaart (hardcoded "No recent announcements") is verwijderd — vervangen door het echte send-message-systeem.
+**Gebouwd:**
+- B1.1/1.2/1.4 — begroeting, gecureerde stat-rij, actieve-klas-indicator.
+- B2.5 — "To Grade" op echte data (`/api/dashboard/teacher/pending-grades`), was hardcoded fake tekst.
+- B2.7 + B7.21 — uitklapbare stat-rij met grafiek (`/api/dashboard/teacher/grade-averages`).
+- B3.9/10 — agenda-widget met week-strip, deep-link naar agenda-item.
+- B9.26 — widgets aan/uit, per rol apart opgeslagen.
+- `A2.10` — deadline-notificaties: nieuwe `DeadlineReminderChecker` (zelfde client-poll-patroon als de bestaande `ScheduledReminderChecker`), vuurt één "morgen"-melding en één "te laat"-melding per item via `/api/deadlines/check`, gededupliceerd tegen al verstuurde notificaties.
+- `B5.15` — snel-antwoord inline op bericht-items in recent-activity (alleen zichtbaar als het item een herleidbare afzender+klas heeft).
+- `B5.16` — "+"-snelknop in de header naast de melding-bel, opent hetzelfde compose-scherm.
+- `B9.27` — vastgepinde Quick Access-shortcuts, aan/uit te zetten in het personalisatie-menu.
+- Oude nep-"Announcements"-kaart (hardcoded "No recent announcements") verwijderd — vervangen door het echte send-message-systeem.
 
-**Nog te bouwen, bewust uitgesteld i.v.m. scope van dit ene bericht:**
-- `A2.10` — deadline-notificaties (morgen + te laat) — heeft een cron/scheduled-check nodig, nog te onderzoeken hoe dat hier werkt.
-- `B4.12` — Attendance-link exact aan "klas nu in het rooster" koppelen (nu nog gewoon de handmatig actieve klas).
-- `B5.15` — snel-antwoord op berichten in recent-activity.
-- `B5.16` — losse "+"-snelknop voor messaging.
-- `B9.27` — rol-specifieke vastgepinde shortcuts (alleen widgets aan/uit is gebouwd, pinning nog niet).
+**Bewust niet gebouwd (te riskant/onzeker qua databron, geen quick win):**
+- `B4.12` — Attendance-link exact aan "klas nu in het rooster" koppelen. De school-schedule-endpoint filtert op "zichtbaar voor studenten" en is niet betrouwbaar voor docent-gebruik zonder eerst het rooster-datamodel voor docenten uit te zoeken. Blijft voorlopig gewoon gekoppeld aan de handmatig actieve klas.
+
+**Nog open, nooit besproken (niet gebouwd, wacht op beslissing):**
+- `B4.14` — Klassenbetrokkenheid-score
+- `B6.18/19/20` — Snel-toegang nieuwe opdracht, klas-wisselaar met live-stats, interactieve-les-snelstart
