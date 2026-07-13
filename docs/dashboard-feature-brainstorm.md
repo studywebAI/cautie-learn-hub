@@ -20,6 +20,20 @@ Het dashboard is geen los canvas met widgets — het is een **doorverwijs- en in
 
 ---
 
+## Openstaand — wat je nog moet checken/goed- of afkeuren
+
+**Student-kant (sectie A) — al gebouwd, op 3 losse punten na die nog geen beslissing hebben:**
+- `A2.10` — "Gemiste deadline"-waarschuwing
+- `A3.13` — Vak met laagste gemiddelde highlighten
+- `A6.20` — Wekelijkse samenvatting (stond op `[?]` twijfel, nog geen definitief oordeel)
+
+**Docent-kant (sectie B) — nog volledig open, hier start je nu bij B1:**
+Alle 27 punten in B1 t/m B9 hieronder, nul beslissingen tot nu toe.
+
+Zelfde format als bij A: reageer per punt (of per sub-sectie) met `[x]`/`[~]`/`[!]`, ik verwerk het meteen in de file en bouw wat akkoord is.
+
+---
+
 ## A. Student Dashboard — RONDE 1 BESLIST EN GEBOUWD
 
 Alle `[x]`/`[~]`-punten hierboven zijn geïmplementeerd: nieuwe stat-rij, week-strookje samengevoegd in Today's plan (deep-link naar agenda-item), grades-kaart met wissel recently-graded/to-grade (incl. nieuw `/api/student/grades/pending` endpoint), voorwaardelijke "oefen nu"-suggestie (alleen bij material-gekoppelde items), docent→klas/leerling-melding via de notificatie-inbox (nieuw `/api/notifications/send-message` endpoint + compose-dialoog + dashboard-kaart), en widget-personalisatie (aan/uit + compact-modus, in het schuifjes-menu naast de meldingenbel).
