@@ -2,6 +2,7 @@
 import { useContext, Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CalendarCheck, ChevronRight } from "lucide-react";
 import { AppContext, AppContextType } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -273,7 +274,7 @@ function TeacherSummaryDashboard() {
             <TeacherStatRow classIds={teacherClassIds} classesCount={teacherClasses.length} />
 
             {teacherClasses.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-10 text-center">
+              <div className="rounded-xl border border-dashed border-border p-10 text-center surface-panel">
                 <p className="text-muted-foreground mb-4">You have not created any classes yet.</p>
                 <Button asChild size="sm"><Link href="/classes">Create your first class</Link></Button>
               </div>
@@ -292,17 +293,19 @@ function TeacherSummaryDashboard() {
 
                 <TeacherToGradeCard classIds={teacherClassIds} />
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Manage Attendance</CardTitle>
-                    <CardDescription>Track student attendance</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button asChild className="w-full" variant="outline">
-                      <Link href="/agenda">View Attendance</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
+                <Link
+                  href="/agenda"
+                  className="group flex items-center gap-3 rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)] shrink-0">
+                    <CalendarCheck className="h-4 w-4" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">Manage Attendance</p>
+                    <p className="text-xs text-muted-foreground">Track student attendance</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </Link>
               </div>
             )}
         </div>

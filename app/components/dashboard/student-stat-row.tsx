@@ -40,33 +40,41 @@ export function StudentStatRow({ subjectsCount }: { subjectsCount: number }) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div className="rounded-xl surface-panel border border-border p-3.5">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground">Subjects</span>
-          <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Subjects</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/5 text-foreground/70">
+            <BookOpen className="h-3.5 w-3.5" />
+          </span>
         </div>
-        <div className="text-2xl">{subjectsCount}</div>
+        <div className="text-2xl tabular-nums">{subjectsCount}</div>
       </div>
 
       <Link
         href="/grades"
-        className="rounded-xl surface-panel border border-border p-3.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+        className="rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
       >
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground">Average grade</span>
-          <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Average grade</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
+            <GraduationCap className="h-3.5 w-3.5" />
+          </span>
         </div>
         <div className={`text-2xl tabular-nums ${loading ? 'text-muted-foreground' : gradeColor(avg)}`}>
           {loading ? '—' : avg !== null ? avg.toFixed(1) : '—'}
         </div>
       </Link>
 
-      <div className="col-span-2 sm:col-span-1 rounded-xl surface-panel border border-border p-3.5">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground">Notifications</span>
-          <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="col-span-2 sm:col-span-1 rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="flex items-center justify-between mb-2.5">
+          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Notifications</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+            <Bell className="h-3.5 w-3.5" />
+          </span>
         </div>
-        <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-primary-foreground text-xs tabular-nums">
+        <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs tabular-nums ${
+          unreadCount > 0 ? 'bg-[var(--accent-brand)] text-white' : 'bg-foreground/5 text-muted-foreground'
+        }`}>
           {unreadCount > 99 ? '99+' : unreadCount}
         </span>
       </div>

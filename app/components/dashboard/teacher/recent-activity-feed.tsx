@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { MessageSquare, FileText, UserCheck, Info, ChevronRight, Reply, Send } from 'lucide-react';
+import { MessageSquare, FileText, UserCheck, Info, ChevronRight, Reply, Send, Activity } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type FeedItem = {
@@ -114,12 +114,15 @@ export function RecentActivityFeed() {
   ];
 
   return (
-    <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
+    <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Recent activity</span>
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/5 text-foreground/70 shrink-0">
+            <Activity className="h-3.5 w-3.5" />
+          </span>
+          <span className="text-sm">Recent activity</span>
           <span className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             <span className="text-[10px] text-muted-foreground">Live</span>
           </span>
         </div>

@@ -53,54 +53,66 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl surface-panel border border-border p-3.5">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">Classes</span>
-            <School className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="group rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Classes</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/5 text-foreground/70">
+              <School className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <div className="text-2xl">{classesCount}</div>
+          <div className="text-2xl tabular-nums">{classesCount}</div>
         </div>
 
         <Link
           href="/teacher-grades"
-          className="rounded-xl surface-panel border border-border p-3.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+          className="group rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">To grade</span>
-            <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">To grade</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+              <ClipboardList className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <div className="text-2xl">{loading ? '—' : pendingCount}</div>
+          <div className={`text-2xl tabular-nums ${!loading && pendingCount > 0 ? 'text-amber-600' : ''}`}>
+            {loading ? '—' : pendingCount}
+          </div>
         </Link>
 
         <button
           onClick={() => setExpanded(v => !v)}
-          className="text-left rounded-xl surface-panel border border-border p-3.5 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+          className="group text-left rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">Average grade</span>
-            <div className="flex items-center gap-1">
-              <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Average grade</span>
+            <span className="flex items-center gap-1">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
+                <GraduationCap className="h-3.5 w-3.5" />
+              </span>
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
-            </div>
+            </span>
           </div>
           <div className="text-2xl tabular-nums">
             {loading ? '—' : overallAverage !== null ? overallAverage.toFixed(1) : '—'}
           </div>
         </button>
 
-        <div className="rounded-xl surface-panel border border-border p-3.5">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs text-muted-foreground">Notifications</span>
-            <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Notifications</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+              <Bell className="h-3.5 w-3.5" />
+            </span>
           </div>
-          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-primary-foreground text-xs tabular-nums">
+          <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs tabular-nums ${
+            unreadCount > 0 ? 'bg-[var(--accent-brand)] text-white' : 'bg-foreground/5 text-muted-foreground'
+          }`}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         </div>
       </div>
 
       {expanded && (
-        <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
+        <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">Grade trend</p>
             <select

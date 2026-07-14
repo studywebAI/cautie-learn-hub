@@ -35,13 +35,18 @@ export function TeacherToGradeCard({ classIds }: { classIds: string[] }) {
   }, [classIds.join(',')]);
 
   return (
-    <div className="rounded-xl surface-panel border border-border p-4 space-y-3 h-full">
+    <div className="rounded-xl surface-panel border border-border p-4 space-y-3 h-full shadow-sm">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm">To Grade</p>
-          <p className="text-xs text-muted-foreground">Draft grade sets waiting to be finished</p>
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 shrink-0">
+            <ClipboardList className="h-3.5 w-3.5" />
+          </span>
+          <div>
+            <p className="text-sm">To Grade</p>
+            <p className="text-xs text-muted-foreground">Draft grade sets waiting to be finished</p>
+          </div>
         </div>
-        <Link href="/teacher-grades" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1">
+        <Link href="/teacher-grades" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1 shrink-0">
           All grades <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
@@ -59,7 +64,7 @@ export function TeacherToGradeCard({ classIds }: { classIds: string[] }) {
               href={`/teacher-grades/${g.id}`}
               className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
             >
-              <ClipboardList className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <ClipboardList className="h-3.5 w-3.5 shrink-0 text-amber-600/70" />
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-medium truncate">{g.title}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{g.class_name}</p>

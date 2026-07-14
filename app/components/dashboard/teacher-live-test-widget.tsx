@@ -100,7 +100,7 @@ export function TeacherLiveTestWidget({ classIds }: { classIds: string[] }) {
   return (
     <div className="space-y-2">
       {liveTests.map(test => (
-        <div key={test.assignmentId} className="rounded-xl surface-panel border border-border p-4 space-y-3">
+        <div key={test.assignmentId} className="rounded-xl surface-panel border border-destructive/30 p-4 space-y-3 shadow-sm">
           <button onClick={() => toggleExpand(test)} className="w-full flex items-center justify-between gap-3 text-left">
             <div className="flex items-center gap-2 min-w-0">
               <span className="relative flex h-2 w-2 shrink-0">

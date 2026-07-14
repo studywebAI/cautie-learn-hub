@@ -49,7 +49,7 @@ export function TeacherAgendaWidget({ assignments, classes }: Props) {
   if (!hasItems) return null;
 
   return (
-    <div className="rounded-xl surface-panel border border-border p-4 space-y-3">
+    <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">Upcoming deadlines you&apos;ve set</p>
         <Link href="/agenda" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1">
