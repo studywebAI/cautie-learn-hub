@@ -66,6 +66,48 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ---
 
+## G. Het volledige toets-systeem (grote, cross-cutting feature — raakt Subjects, Agenda, Dashboard, Grades)
+
+Dit is expliciet omschreven door de gebruiker als één samenhangende levenscyclus. Elke fase hieronder heeft een `[ ]`-status, zelfde proces als de rest van dit doc.
+
+**Al bestaande bouwstenen om op voort te bouwen (bevestigd in de codebase):**
+- Anti-cheat bestaat al deels: `AssignmentSettingsOverlay` heeft `requireFullscreen`, `detectTabSwitch`, `restrictIpOrDevice`, `perQuestionTimeLimitSeconds`; `StudentAssignmentView.tsx` heeft al werkende `visibilitychange`/`fullscreenchange`-listeners die events loggen via `sendAssignmentEvent(...)`.
+- AI-nakijken bestaat al als schakelaar: `ai_grading_enabled`-vlag op een assignment, gekoppeld aan `/api/ai/grade-submission` en `/api/grading/ai` — nog niet vanuit de UI aangestuurd voor zover bekeken.
+- Klas-toetreding via link+code bestaat al als patroon (`app/(main)/classes/join/[code]/page.tsx`, `join_code`/`teacher_join_code`-velden, RPC-lookup) — zelfde mechanisme kan hergebruikt worden voor toets-delen.
+
+### G1. Aanmaken en zichtbaarheid
+19. `[ ]` Een toets die een docent aanmaakt staat onder het chapter in een **aparte "Toetsen"-lijst die alleen docenten zien** — leerlingen zien deze titel/structuur nooit in hun eigen systeem, puur voor examenveiligheid (niet als lock-icoon op een overigens zichtbare rij, zoals nu, maar volledig afwezig uit de leerling-view totdat ingepland).
+
+### G2. Plannen
+20. `[ ]` Docent plant de toets in (nu, of voor later) — koppelt aan Agenda, sluit aan bij de bestaande "add-to-agenda"-optie in de assignment-wizard.
+
+### G3. Delen tussen docenten
+21. `[ ]` Toets delen via link + code (hergebruik `join_code`-patroon). Andere docent gebruikt de link/code om de toets te **importeren** — wordt daarmee hun eigen kopie, die zij op hun beurt weer kunnen delen en zelf inplannen, los van het origineel.
+
+### G4. Live tijdens de toets
+22. `[ ]` Dashboard-widget voor docenten met live voortgang per leerling: goed/fout-telling, of "–" als iets nog niet nagekeken/gemaakt is (open vragen worden niet automatisch nagekeken tenzij AI-nakijken aanstaat).
+23. `[ ]` Live status per leerling: wie zit er nu in de toets, wie is eruit gegaan.
+24. `[ ]` Extra beveiliging: als een leerling een heel antwoord in ~0.1 seconde plakt (plak-detectie, bovenop de al bestaande tab-switch/fullscreen-detectie) → waarschuwing voor de docent.
+25. `[ ]` Docent kan de toets live afsluiten — per leerling, of voor iedereen tegelijk — plus "meer handige opties" (nog niet gespecificeerd door gebruiker, blijft open).
+
+### G5. Nakijken (fase 1 — correct/incorrect, geen cijfer)
+26. `[ ]` Na afloop gaat de toets naar "to grade" (Grades-tab, mogelijk ook zichtbaar op dashboard). Nakijken = bepalen wat goed/fout is, nog **geen cijfer**.
+27. `[ ]` Docent kiest: automatisch laten nakijken door Cautie AI, of handmatig.
+28. `[ ]` Docent bepaalt zelf wanneer de nagekeken antwoorden zichtbaar worden voor leerlingen (geen automatische directe release).
+
+### G6. Cijfers geven (fase 2 — losstaand van fase 1)
+29. `[ ]` Docent maakt een grade set aan (geeft het een naam), en vult cijfers in — handmatig, of automatisch. **Bewuste scheiding tussen fase 1 en 2:** Cautie levert de objectieve score (bv. "4 goed, 11 fout"), maar de docent bepaalt zelf hoe dat naar een cijfer vertaalt — want cijfersystemen verschillen internationaal (VS: A–F, Duitsland: 1–8, Nederland: 1–10, etc.). Cautie kan dus nooit zelf "het cijfer" bepalen, alleen de ruwe score.
+
+---
+
+## Openstaande vragen (zie chat voor de gestelde vragen en antwoorden)
+- Toets-import (G3): volledig losstaande kopie, of blijft die gekoppeld aan het origineel?
+- Live-monitoring (G4): verschijnt dit automatisch op het dashboard zodra een toets van jou live is, of is dit een aparte "live toets"-pagina die je zelf opent?
+
+---
+
 ## Kernvraag om mee te beginnen
 
 Punt 13 blijft het fundament — zonder assignments die ook gewoon tekst/foto/video-content kunnen zijn (i.p.v. alleen vraag-sets), hebben punt 1 (chatbox) en 14 (one-click flashcards/quiz) niks om op te draaien. Concreet zou dit betekenen: het `text`-blocktype uitbreiden/gebruiken als volwaardig "leerstof"-blok, foto/video-blocktypes toevoegen, en de assignment-wizard een optie geven "dit is content, geen toets" (of gewoon geen vragen toevoegen = automatisch een contentblok). Wil je dat ik hier prioriteit aan geef?
+
+Daarnaast is sectie G (het toets-systeem) een groot apart traject — waarschijnlijk te groot om in dezelfde ronde als punt 13 te bouwen. Voorstel: eerst punt 13 (leerstof-blokken) afronden, dan sectie G als eigen vervolgtraject, gefaseerd zoals G1 → G2 → G3 → G4 → G5 → G6. Ben je het daarmee eens, of wil je dat ik het anders volgordt?
