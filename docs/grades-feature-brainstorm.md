@@ -81,4 +81,8 @@ Punten waar ik zelf een pragmatische keuze in heb gemaakt (niet expliciet bevest
 
 **Update:** punt 7 (foutgekeurd-meldknop) is alsnog gebouwd. Leerling kan op de resultatenpagina (na vrijgave van antwoorden) per vraag "Meld fout" klikken met een notitie; landt als `grading_dispute`-event. Docent ziet open meldingen als een geel paneel bovenaan de becijfer-pagina, met per melding "heropen voor nakijken" (zet het antwoord terug in de nakijken-flashcard-queue) of "afwijzen".
 
-**Sectie G is nu volledig gebouwd**, op de bewust uitgestelde punten 12 (per-grade-set template override UI), 13 (gewicht-per-categorie) en 16 (visuele restyle) na.
+**Update:** punt 12 en 13 zijn ook gebouwd.
+- **12**: een cijfer-template kan nu als standaard voor de klas gemarkeerd worden (checkbox bij aanmaken) en wordt dan automatisch voorgeselecteerd bij het becijferen van een nieuwe toets; per-grade-set override werkte al via de bestaande picker (je kunt altijd handmatig een andere template kiezen/toepassen voor één specifieke cijferlijst).
+- **13**: docenten kunnen nu een gewicht per categorie instellen (Toetsen/Huiswerk/Quizzes/...) via een paneel op de Metrics-pagina (per klas). Het eindcijfer wordt daarmee gewogen berekend en getoond op de cijferpagina van de leerling naast het simpele gemiddelde. Zonder ingestelde gewichten valt het terug op het bestaande simpele gewogen gemiddelde (per grade-set-`weight`).
+
+**Sectie G is hiermee volledig gebouwd.** Alleen punt 16 (visuele restyle van de teacher-grades pagina's, los van de nieuwe functionaliteit) staat nog open — de nieuwe pagina's zijn wel al gebouwd met de bestaande designtokens/componenten (surface-panel, class-panel-lg, Card/Button) dus ze passen al redelijk in de stijl, maar hebben geen eigen polish-ronde gehad zoals andere tabs.
