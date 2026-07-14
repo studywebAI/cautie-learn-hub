@@ -77,5 +77,8 @@ Punten waar ik zelf een pragmatische keuze in heb gemaakt (niet expliciet bevest
 - **13**: gewicht-per-categorie is niet gebouwd — alleen de bestaande simpele `weight` per grade set.
 - **15**: handmatig een grade set aanmaken (los van een toets) blijft gewoon werken naast de nieuwe flow.
 - **16**: alleen functionaliteit gebouwd, geen visuele hertekening van de teacher-grades pagina's — dat kan later los.
-- **7** (foutgekeurd-meldknop) staat nog niet gebouwd — nog steeds open.
 - AI-parsing van geüploade bestanden werkt nu alleen voor tekstbestanden (.txt/.csv/.md, uitgelezen als platte tekst) — geen OCR/PDF-parsing.
+
+**Update:** punt 7 (foutgekeurd-meldknop) is alsnog gebouwd. Leerling kan op de resultatenpagina (na vrijgave van antwoorden) per vraag "Meld fout" klikken met een notitie; landt als `grading_dispute`-event. Docent ziet open meldingen als een geel paneel bovenaan de becijfer-pagina, met per melding "heropen voor nakijken" (zet het antwoord terug in de nakijken-flashcard-queue) of "afwijzen".
+
+**Sectie G is nu volledig gebouwd**, op de bewust uitgestelde punten 12 (per-grade-set template override UI), 13 (gewicht-per-categorie) en 16 (visuele restyle) na.
