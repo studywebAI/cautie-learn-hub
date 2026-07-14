@@ -76,6 +76,9 @@ export async function GET(
         .eq('id', user.id)
         .maybeSingle();
       const isTeacher = profile?.subscription_type === 'teacher';
+      if (!isTeacher && (fallbackAssignment as any).is_visible === false) {
+        return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+      }
       const fallbackSettings = normalizeAssignmentSettings((fallbackAssignment as any).settings || {});
       if (!isTeacher && fallbackSettings.access.accessCode) {
         fallbackSettings.access.accessCode = '__required__';
@@ -147,6 +150,13 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle();
     const isTeacher = profile?.subscription_type === 'teacher';
+
+    // Hidden/unpublished assignments (esp. tests before they're scheduled)
+    // must not be fetchable by non-teachers even via a direct/guessed URL.
+    if (!isTeacher && assignment?.is_visible === false) {
+      return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+    }
+
     if (!isTeacher && normalizedSettings.access.accessCode) {
       normalizedSettings.access.accessCode = '__required__';
     }

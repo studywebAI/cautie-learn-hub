@@ -76,7 +76,7 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 - Klas-toetreding via link+code bestaat al als patroon (`app/(main)/classes/join/[code]/page.tsx`, `join_code`/`teacher_join_code`-velden, RPC-lookup) — zelfde mechanisme kan hergebruikt worden voor toets-delen.
 
 ### G1. Aanmaken en zichtbaarheid
-19. `[ ]` Een toets die een docent aanmaakt staat onder het chapter in een **aparte "Toetsen"-lijst die alleen docenten zien** — leerlingen zien deze titel/structuur nooit in hun eigen systeem, puur voor examenveiligheid (niet als lock-icoon op een overigens zichtbare rij, zoals nu, maar volledig afwezig uit de leerling-view totdat ingepland).
+19. `[x]` **Gebouwd.** Bij het onderzoeken hiervan bleek een echt beveiligingsgat: de assignments/blocks-API's stuurden altijd **alle** data (incl. verborgen toetsen en hun vragen) naar de client, en verborgen het alleen client-side — via devtools/network-tab was dus alsnog alles zichtbaar. Gefixt op 3 plekken (paragraaf-assignmentlijst, los assignment ophalen, blocks ophalen): server-side filtering op `is_visible`, nooit meer client-side alleen. Nieuwe toetsen krijgen nu standaard `is_visible: false` bij aanmaken (homework/content blijven direct zichtbaar) — docent moet expliciet publiceren. **Pragmatische scope-keuze:** geen losse "Toetsen"-sectie in de UI gebouwd — de bestaande All/Homework/Test-filterknoppen op de paragraafpagina geven docenten al een gefilterd toetsen-overzicht, dat vond ik voldoende voor "eigen lijst" zonder een hele nieuwe UI-sectie te bouwen. Zeg het als je wél een echt aparte sectie wil.
 
 ### G2. Plannen
 20. `[ ]` Docent plant de toets in (nu, of voor later) — koppelt aan Agenda, sluit aan bij de bestaande "add-to-agenda"-optie in de assignment-wizard.

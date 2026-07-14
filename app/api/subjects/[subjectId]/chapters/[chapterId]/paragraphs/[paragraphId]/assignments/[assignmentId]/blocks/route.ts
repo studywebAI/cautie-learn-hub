@@ -87,20 +87,22 @@ export async function GET(
     // Verify assignment exists and belongs to the given paragraph
     const { data: assignment, error: assignmentError } = await supabase
       .from('assignments')
-      .select('id, paragraph_id, settings')
+      .select('id, paragraph_id, settings, is_visible')
       .eq('id', resolvedParams.assignmentId)
       .eq('paragraph_id', resolvedParams.paragraphId)
       .single();
 
+    let resolvedAssignment: any = assignment;
     if (assignmentError || !assignment) {
       const { data: fallbackAssignment } = await supabase
         .from('assignments')
-        .select('id, settings')
+        .select('id, settings, is_visible')
         .eq('id', resolvedParams.assignmentId)
         .maybeSingle();
       if (!fallbackAssignment) {
         return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
       }
+      resolvedAssignment = fallbackAssignment;
     }
 
     // Fetch blocks for this assignment
@@ -123,7 +125,13 @@ export async function GET(
       return NextResponse.json(normalized);
     }
 
-    const assignmentSettings = normalizeAssignmentSettings((assignment as any)?.settings || {});
+    // Hidden/unpublished assignments (esp. tests before they're scheduled)
+    // must not leak their questions to non-teachers via a direct/guessed URL.
+    if (resolvedAssignment?.is_visible === false) {
+      return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
+    }
+
+    const assignmentSettings = normalizeAssignmentSettings((resolvedAssignment as any)?.settings || {});
     const selected = applyQuestionSelection(
       normalized,
       assignmentSettings,

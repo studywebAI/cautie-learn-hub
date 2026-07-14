@@ -41,7 +41,25 @@ export async function GET(
       return NextResponse.json([])
     }
 
-    const safeAssignments = assignments || [];
+    // Role is global (profiles.subscription_type), not per-class — matches the
+    // rest of the app's permission model. Non-teachers must never receive
+    // hidden/unpublished assignments (esp. tests) in the payload, since
+    // client-side filtering alone leaks titles/structure via the network tab.
+    let isTeacher = false;
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_type')
+        .eq('id', user.id)
+        .maybeSingle();
+      isTeacher = profile?.subscription_type === 'teacher';
+    }
+
+    const visibleAssignments = isTeacher
+      ? (assignments || [])
+      : (assignments || []).filter((a) => a.is_visible !== false);
+
+    const safeAssignments = visibleAssignments;
     subjectsLog('paragraph-assignments', requestId, 'assignments.query.ok', {
       assignmentCount: safeAssignments.length,
     });
@@ -197,6 +215,10 @@ export async function POST(
         title: normalizedTitle,
         answers_enabled: answers_enabled ?? false,
         type: normalizedType,
+        // Tests are hidden from students by default until the teacher
+        // explicitly schedules/publishes them (exam security) — homework
+        // and content stay visible immediately, matching prior behavior.
+        is_visible: normalizedType !== 'small_test' && normalizedType !== 'big_test',
         class_id: classId,
         settings: normalizedSettings,
         scheduled_start_at: normalizedSettings.time.startAt,
