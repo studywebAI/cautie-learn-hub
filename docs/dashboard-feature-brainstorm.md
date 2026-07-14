@@ -81,7 +81,7 @@
 ## Notities voor andere tabs (verzameld tijdens dashboard-werk, blijft in dit doc zodat alles op één plek staat)
 
 ### Subjects
-- `[ ]` Snel-toegang "nieuwe opdracht/toets aanmaken" als prominente actie (verplaatst vanaf dashboard B6.18) — hoort inhoudelijk bij Subjects, niet bij het dashboard.
+- `[ ]` Snel-toegang "nieuwe opdracht/toets aanmaken" als prominente actie (verplaatst vanaf dashboard B6.18) — hoort inhoudelijk bij Subjects, niet bij het dashboard. **Opgepakt in [`docs/subjects-feature-brainstorm.md`](./subjects-feature-brainstorm.md) als punt S0/F18.**
 
 ### Sidebar
 - `[ ]` Klas-wisselaar (in de sidebar/teacher-dropdown) heeft een visuele update nodig — los van het "live-stats in dropdown"-idee dat is afgekeurd (B6.19), de component zelf is aan vernieuwing toe qua uiterlijk.

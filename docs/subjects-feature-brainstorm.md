@@ -1,0 +1,71 @@
+# Subjects — Feature Brainstorm
+
+**Proces:** per punt `[x]` bouwen, `[~]` bouwen met aanpassing (aanpassing noteren), `[!]` niet doen. Reageer per punt of per sub-sectie, ik verwerk het en bouw wat akkoord is.
+
+**Herkomst-tags:** `[Competitor: naam]` / `[Forum/review]` / `[Eigen idee]` / `[Gemiste feature]`.
+
+**Meegenomen vanuit dashboard-brainstorm:**
+- `S0` `[ ]` Snel-toegang "nieuwe opdracht/toets aanmaken" als prominente actie (verplaatst vanaf dashboard B6.18) — hoort hier thuis, niet op het dashboard.
+
+---
+
+## Huidige situatie (feitelijk, geen mening)
+
+Content-hiërarchie: **Subject → Chapter → Paragraph → Assignment → Block** (vraag/content-eenheid binnen een assignment).
+
+- **`/subjects`**: grid van subject-cards. Studenten zien alles, docenten kunnen aanmaken (titel, beschrijving, cover: keyword-gematchte icon óf eigen upload).
+- **Subject-pagina**: platte lijst van alle chapters, elk met paragrafen inline + voortgangsbalk. Docent: "+ Add Chapter"/"+ Add Paragraph"-dialoog, puur titel-invoer, geen AI.
+- **Chapter-pagina**: minimaal — titel, prev/next-navigatie, paragraaf-lijst met voltooiings-%. Geen content-viewer, geen aanmaak-acties hier.
+- **Paragraaf-pagina**: lijst van assignments (a, b, c…) met voortgang/lock-status. Docent maakt assignment via 3-staps-wizard (Homework/Test → preset of "Create Your Own" met blok-mix-preview → instellingen: deadline/timer/pogingen/anti-cheat/agenda). Geen paragraaf-content (tekst/materiaal) zichtbaar of bewerkbaar hier.
+- **Assignment-pagina**: container van geordende Blocks (open vraag, meerkeuze, invullen, matching, ordering, tekst). Docent: block-editor zonder AI-hook. Student: invulweergave.
+- **Subject-card**: icon-badge, titel, klasnaam, "Resume [paragraaf]"-pill, max 3 paragraaf-voortgangsbalken. `cover_image_url` bestaat als prop maar wordt nergens gerenderd — dode code.
+
+**Bevestigd: nergens in de Subjects-boom bestaat al AI-generatie of een "beschrijf wat je wil"-chatinvoer.** Alle aanmaak is puur formulier/wizard met tekstvelden. Dit is dus een echt gat, geen kwestie van "verbeteren wat er al is."
+
+---
+
+## A. De "beschrijf wat je wil"-chatbox + sleepbare bouw-omgeving (jouw voorbeeld)
+
+Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-paneel, "Create a table"/"Create a project brief"-suggestiekaarten, resultaat direct in het document invoegen) en Notion's blok-systeem (elk blok verplaatsbaar via sleep-handle, template-galerij, `/`-commando's, template-knoppen die een vast blok-structuur droppen).
+
+1. `[ ]` Chatinvoer om een chapter/paragraaf/subject-structuur te genereren: "Maak een hoofdstuk over de Franse Revolutie met 4 paragrafen" → voorstel verschijnt, docent keurt goed/past aan voor het echt aangemaakt wordt. `[Competitor: Coda/Superhuman Docs insert-paneel]` `[Gemiste feature]`
+2. `[ ]` Sleepbare content-blokken binnen een paragraaf/assignment (tekst, afbeelding, video, vraag-blok) — herordenen via drag-handle, zelfde interactiepatroon als Notion. `[Competitor: Notion]` `[Forum/review — LMS-course-builders noemen drag-and-drop-herordenen als kernfeature in 2026]`
+3. `[ ]` Template-galerij voor hele paragrafen/assignments: een kant-en-klare structuur (bv. "5 meerkeuzevragen + 1 open vraag") in één klik toevoegen, i.p.v. steeds los een preset kiezen in de wizard. `[Competitor: Notion template-knoppen, Canvas Modules]`
+4. `[ ]` "Instellingen"-paneel voor het samenstellen van een paragraaf/chapter: stapelbare, inklapbare secties per onderdeel (vergelijkbaar met Framer's property-inspector-patroon, al eerder goedgekeurd als referentie voor instellingenpagina's in dit project). `[Competitor: Framer settings-paneel — al genoemd in het visuele reference-doc]`
+5. `[ ]` AI-gegenereerde content ALS startpunt, nooit als eindresultaat zonder review: bv. "genereer een paragraaf-samenvatting op basis van geüpload materiaal" die de docent nog moet goedkeuren/bewerken — sluit aan bij het bestaande principe elders in de app (AI stelt voor, mens beslist). `[Eigen idee]` `[Gemiste feature]`
+
+---
+
+## B. Subject-lijst pagina (`/subjects`)
+
+6. `[ ]` `cover_image_url` daadwerkelijk renderen op de subject-card — bestaat al als data, wordt nu gewoon niet getoond. `[Gemiste feature]` (bugfix, geen brainstorm-punt eigenlijk)
+7. `[ ]` Filter/sorteer subjects (bv. op voortgang, laatst actief, klas) — nu gewoon een vaste grid-volgorde. `[Eigen idee]`
+8. `[ ]` Archiveren van een subject (voor afgeronde vakken/schooljaren) i.p.v. dat de lijst blijft groeien. `[Forum/review — Quizlet folders/nested organisatie expliciet gevraagd]`
+9. `[ ]` Subjects groeperen in mappen/categorieën (bv. per schooljaar of vakkengroep) — Quizlet-gebruikers vroegen expliciet om geneste mappen. `[Competitor: Quizlet folders]` `[Forum/review]`
+
+## C. Subject-detailpagina (chapter-overzicht)
+
+10. `[ ]` Materialen/bestanden-sectie op subject- of chapter-niveau (nu bestaat er geen upload/bekijk-UI hier — Material is een losse, ongerelateerde pagina in de app). `[Competitor: Google Classroom "Materials"]` `[Gemiste feature]`
+11. `[ ]` Chapters slepen om te herordenen i.p.v. vaste volgorde. `[Competitor: Canvas Modules, LMS course builders algemeen]`
+12. `[ ]` Per-chapter voortgangsindicator zichtbaar op subject-niveau zelf (nu alleen per paragraaf) — sneller overzicht zonder te hoeven inklikken. `[Eigen idee]`
+
+## D. Chapter- en paragraaf-pagina
+
+13. `[ ]` Content-viewer op chapter/paragraaf-niveau: tekst/uitleg/materiaal die bij het onderwerp hoort, los van de assignments — nu is er letterlijk geen plek voor "hier is de stof", alleen voor "hier zijn de vragen erover". `[Gemiste feature]` — grote, fundamentele lacune.
+14. `[ ]` "Genereer flashcards/quiz van dit hoofdstuk" met één klik, gebaseerd op de content-viewer (punt 13) — sluit aan bij hoe concurrenten dit standaard aanbieden. `[Competitor: RemNote, Quizlet AI-generator, StudyFetch, Knowt — allemaal one-click generatie uit materiaal]` `[Forum/review]`
+15. `[ ]` Prerequisites/vergrendeling: paragraaf X pas beschikbaar na afronden paragraaf Y — bestaat al deels als "lock"-icoon per assignment, maar niet als paragraaf/chapter-niveau concept. `[Competitor: Canvas Modules prerequisites]`
+
+## E. Assignment/Block-editor
+
+16. `[ ]` AI-assistentie in de block-editor zelf: bv. "genereer 3 meerkeuzevragen over dit onderwerp" direct vanuit de editor i.p.v. alleen via de externe preset-wizard. `[Eigen idee]` `[Gemiste feature]`
+17. `[ ]` Hergebruik van een blok-set tussen assignments (kopiëren/dupliceren i.p.v. steeds opnieuw opbouwen). `[Eigen idee]`
+
+## F. Aanmaak-snelkoppeling (S0, meegenomen vanuit dashboard)
+
+18. `[ ]` Prominente "nieuwe opdracht/toets aanmaken"-actie op de Subjects-pagina i.p.v. drie niveaus diep (Subject → Chapter → Paragraph → "+ Assignment"). `[Eigen idee]` (oorspronkelijk dashboard B6.18)
+
+---
+
+## Kernvraag om mee te beginnen
+
+Punt 13 (content-viewer op chapter/paragraaf-niveau) is waarschijnlijk het fundamenteelste gat — zonder een plek voor de daadwerkelijke leerstof hangt de rest (AI-generatie uit content, flashcards/quiz-generatie, chatbox-gestuurde structuur) een beetje in de lucht. Wil je dat ik daar prioriteit aan geef, of zie je dat anders?
