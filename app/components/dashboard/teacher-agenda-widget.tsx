@@ -25,9 +25,8 @@ function dayLabel(d: Date): string {
 }
 
 // "Next up" — the teacher's own agenda items (tests/homework they've
-// scheduled), not the school timetable/rooster. Always renders: real items
-// when there are any, otherwise 3 placeholder blocks instead of vanishing —
-// keeps the dashboard from feeling empty on a fresh/quiet class.
+// scheduled), not the school timetable/rooster. Self-hides when there's
+// nothing upcoming, same as the live-test widget.
 export function TeacherAgendaWidget({ assignments, classes }: Props) {
   const items = useMemo<NextItem[]>(() => {
     const today = startOfDay(new Date());
@@ -51,6 +50,8 @@ export function TeacherAgendaWidget({ assignments, classes }: Props) {
     return upcoming.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime()).slice(0, 4);
   }, [assignments, classes]);
 
+  if (items.length === 0) return null;
+
   return (
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
@@ -60,41 +61,27 @@ export function TeacherAgendaWidget({ assignments, classes }: Props) {
         </Link>
       </div>
 
-      {items.length === 0 ? (
-        <div className="space-y-1.5" aria-hidden="true">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="flex items-center gap-3 rounded-lg px-2.5 py-2">
-              <div className="h-3.5 w-3.5 rounded-full bg-muted animate-pulse shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <div className="h-2.5 w-2/5 rounded bg-muted animate-pulse" />
-                <div className="h-2 w-1/4 rounded bg-muted animate-pulse" />
-              </div>
+      <div className="space-y-1">
+        {items.map(item => (
+          <Link
+            key={item.id}
+            prefetch={false}
+            href={`/agenda?itemId=${item.id}`}
+            className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+          >
+            {item.isTest ? (
+              <FlaskConical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            ) : (
+              <ClipboardList className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium truncate">{item.title}</p>
+              <p className="text-[10px] text-muted-foreground truncate">{item.className}</p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {items.map(item => (
-            <Link
-              key={item.id}
-              prefetch={false}
-              href={`/agenda?itemId=${item.id}`}
-              className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
-            >
-              {item.isTest ? (
-                <FlaskConical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              ) : (
-                <ClipboardList className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-medium truncate">{item.title}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{item.className}</p>
-              </div>
-              <span className="text-[10px] text-muted-foreground shrink-0">{dayLabel(item.dueDate)}</span>
-            </Link>
-          ))}
-        </div>
-      )}
+            <span className="text-[10px] text-muted-foreground shrink-0">{dayLabel(item.dueDate)}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

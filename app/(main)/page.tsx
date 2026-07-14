@@ -256,7 +256,7 @@ function TeacherSummaryDashboard() {
                 <Button asChild size="sm" className="mt-1"><Link href="/classes">Create your first class</Link></Button>
               </div>
             ) : (
-              <div className={`flex flex-col ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+              <div className={`grid grid-cols-1 md:grid-cols-2 ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
                 {teacherDashboardPrefs.widgets.liveTest && (
                   <TeacherLiveTestWidget classIds={teacherClassIds} />
                 )}
