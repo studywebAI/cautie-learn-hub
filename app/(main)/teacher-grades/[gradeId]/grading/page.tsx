@@ -23,7 +23,7 @@ import { calculateGradeStats, getGradeDistribution } from '@/lib/grade-calculati
 import { exportGradesToHTML, exportGradesToPDF, exportGradesToCSV, downloadGradesAsCSV } from '@/lib/grade-export';
 import BulkImportDialog from '@/components/grades/bulk-import-dialog';
 import { GradingTemplatePicker } from '@/components/grades/grading-template-picker';
-import { Send, MessageSquareText } from 'lucide-react';
+import { Send, MessageSquareText, Flag, RotateCcw as ReopenIcon, X as DismissIcon } from 'lucide-react';
 
 type Student = {
   id: string;
@@ -62,6 +62,8 @@ export default function GradingInterfacePage() {
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [applyingTemplate, setApplyingTemplate] = useState(false);
   const [releasing, setReleasing] = useState<'answers' | 'grade' | null>(null);
+  const [disputes, setDisputes] = useState<Array<{ event_id: string; student_name: string; question: string; note: string }>>([]);
+  const [resolvingDispute, setResolvingDispute] = useState<string | null>(null);
 
   // Load grade set and students
   useEffect(() => {
@@ -125,6 +127,7 @@ export default function GradingInterfacePage() {
             }
             setRawScores(map);
           }
+          await loadDisputes(foundClassId, foundGrade.id);
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -135,6 +138,29 @@ export default function GradingInterfacePage() {
 
     loadData();
   }, [gradeId, context?.classes]);
+
+  const loadDisputes = async (cid: string, gsId: string) => {
+    const res = await fetch(`/api/classes/${cid}/grades/${gsId}/disputes`);
+    if (res.ok) {
+      const data = await res.json();
+      setDisputes(data.disputes || []);
+    }
+  };
+
+  const resolveDispute = async (eventId: string, action: 'reopen' | 'dismiss') => {
+    if (!classId || !gradeSet?.id || resolvingDispute) return;
+    setResolvingDispute(eventId);
+    try {
+      await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/disputes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: eventId, action }),
+      });
+      await loadDisputes(classId, gradeSet.id);
+    } finally {
+      setResolvingDispute(null);
+    }
+  };
 
   const reloadStudentGrades = async () => {
     if (!classId || !gradeSet?.id) return;
@@ -311,8 +337,8 @@ export default function GradingInterfacePage() {
           letterGrade: getGradeColor(grades[s.id] || undefined).letterGrade,
           color: getGradeColor(grades[s.id] || undefined).color,
         })),
-        stats,
-        distribution,
+        stats: stats ?? undefined,
+        distribution: distribution ?? undefined,
       }
     );
 
@@ -436,6 +462,34 @@ export default function GradingInterfacePage() {
           )}
         </div>
       </div>
+
+      {/* Gemelde nakijk-issues */}
+      {disputes.length > 0 && (
+        <Card className="p-3 surface-panel border border-amber-300 space-y-2">
+          <p className="text-xs flex items-center gap-1.5 text-amber-800">
+            <Flag className="h-3.5 w-3.5" />
+            {isDutch ? `${disputes.length} melding(en) van leerlingen` : `${disputes.length} student report(s)`}
+          </p>
+          <div className="space-y-1.5">
+            {disputes.map(d => (
+              <div key={d.event_id} className="text-xs bg-amber-50 dark:bg-amber-950/20 rounded-md p-2 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium">{d.student_name} — {d.question}</p>
+                  <p className="text-muted-foreground">{d.note}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="outline" className="h-7 px-2" disabled={resolvingDispute === d.event_id} onClick={() => resolveDispute(d.event_id, 'reopen')} title={isDutch ? 'Heropen voor nakijken' : 'Reopen for review'}>
+                    <ReopenIcon className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2" disabled={resolvingDispute === d.event_id} onClick={() => resolveDispute(d.event_id, 'dismiss')} title={isDutch ? 'Afwijzen' : 'Dismiss'}>
+                    <DismissIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Cijfer-template + vrijgeven (alleen voor toets-gekoppelde cijferlijsten) */}
       {gradeSet.assignment_id && classId && (

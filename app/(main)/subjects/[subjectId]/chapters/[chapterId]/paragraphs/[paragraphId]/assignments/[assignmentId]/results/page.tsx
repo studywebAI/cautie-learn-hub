@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { ChevronLeft, CheckCircle2, XCircle, HelpCircle, Flag } from 'lucide-react';
 
 type ResultQuestion = {
   block_id: string;
@@ -28,6 +29,32 @@ export default function AssignmentResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ assignment_title: string; grade_released: boolean; grade: any; questions: ResultQuestion[] } | null>(null);
+  const [flagOpenFor, setFlagOpenFor] = useState<string | null>(null);
+  const [flagNote, setFlagNote] = useState('');
+  const [flagSent, setFlagSent] = useState<Set<string>>(new Set());
+  const [flagSending, setFlagSending] = useState(false);
+
+  const submitFlag = async (blockId: string) => {
+    if (!flagNote.trim() || flagSending) return;
+    setFlagSending(true);
+    try {
+      const res = await fetch(
+        `/api/subjects/${params.subjectId}/chapters/${params.chapterId}/paragraphs/${params.paragraphId}/assignments/${params.assignmentId}/results/dispute`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ block_id: blockId, note: flagNote.trim() }),
+        }
+      );
+      if (res.ok) {
+        setFlagSent(prev => new Set(prev).add(blockId));
+        setFlagOpenFor(null);
+        setFlagNote('');
+      }
+    } finally {
+      setFlagSending(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -105,6 +132,38 @@ export default function AssignmentResultsPage() {
                     <p className="text-xs text-muted-foreground">
                       {q.score ?? 0} / {q.max_points} {isDutch ? 'punten' : 'points'}
                     </p>
+
+                    {flagSent.has(q.block_id) ? (
+                      <p className="text-xs text-muted-foreground italic">
+                        {isDutch ? 'Gemeld bij de docent.' : 'Reported to your teacher.'}
+                      </p>
+                    ) : flagOpenFor === q.block_id ? (
+                      <div className="space-y-1.5 pt-1">
+                        <Textarea
+                          value={flagNote}
+                          onChange={(e) => setFlagNote(e.target.value)}
+                          placeholder={isDutch ? 'Wat klopt er niet aan deze beoordeling?' : "What's wrong with this result?"}
+                          rows={2}
+                          className="text-xs"
+                        />
+                        <div className="flex gap-1.5">
+                          <Button size="sm" disabled={!flagNote.trim() || flagSending} onClick={() => submitFlag(q.block_id)}>
+                            {isDutch ? 'Versturen' : 'Send'}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setFlagOpenFor(null); setFlagNote(''); }}>
+                            {isDutch ? 'Annuleren' : 'Cancel'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setFlagOpenFor(q.block_id); setFlagNote(''); }}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground pt-0.5"
+                      >
+                        <Flag className="h-3 w-3" />
+                        {isDutch ? 'Meld fout' : 'Report issue'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </Card>
