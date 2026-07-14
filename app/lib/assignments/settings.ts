@@ -51,6 +51,11 @@ export interface AssignmentSettings {
     // section D point 13): pure lesson material (text/photo/video) rather than a graded homework/test.
     isContent: boolean;
   };
+  // G3 (docs/subjects-feature-brainstorm.md): share-with-another-teacher code. The imported copy
+  // always strips this back to null — importing does not itself re-share the copy.
+  sharing: {
+    code: string | null;
+  };
   advanced: {
     questionPoolSize: number | null;
     adaptiveEnabled: boolean;
@@ -161,6 +166,9 @@ export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettings = {
     instructionText: '',
     isContent: false,
   },
+  sharing: {
+    code: null,
+  },
   advanced: {
     questionPoolSize: null,
     adaptiveEnabled: false,
@@ -247,6 +255,7 @@ export function normalizeAssignmentSettings(input: unknown): AssignmentSettings 
   merged.antiCheat.perQuestionTimeLimitSeconds = numberOrNull(merged.antiCheat.perQuestionTimeLimitSeconds);
   merged.advanced.questionPoolSize = numberOrNull(merged.advanced.questionPoolSize);
   merged.access.allowedClassIds = Array.isArray(merged.access.allowedClassIds) ? merged.access.allowedClassIds.filter(Boolean) : [];
+  merged.sharing.code = typeof merged.sharing.code === 'string' && merged.sharing.code.trim() ? merged.sharing.code.trim() : null;
   return merged;
 }
 

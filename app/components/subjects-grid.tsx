@@ -19,6 +19,8 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 import { SubjectCard } from './subject-card';
 
 type SubjectsGridProps = {
@@ -52,6 +54,88 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Import-test-by-code state (G3, docs/subjects-feature-brainstorm.md)
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importSubjectId, setImportSubjectId] = useState('');
+  const [importChapterId, setImportChapterId] = useState('');
+  const [importParagraphId, setImportParagraphId] = useState('');
+  const [importChapters, setImportChapters] = useState<Array<{ id: string; title: string }>>([]);
+  const [importParagraphs, setImportParagraphs] = useState<Array<{ id: string; title: string }>>([]);
+  const [isLoadingImportChapters, setIsLoadingImportChapters] = useState(false);
+  const [isLoadingImportParagraphs, setIsLoadingImportParagraphs] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  useEffect(() => {
+    if (!importSubjectId) {
+      setImportChapters([]);
+      setImportChapterId('');
+      return;
+    }
+    setIsLoadingImportChapters(true);
+    setImportChapterId('');
+    setImportParagraphId('');
+    fetch(`/api/subjects/${importSubjectId}/chapters`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setImportChapters(Array.isArray(data) ? data : []))
+      .catch(() => setImportChapters([]))
+      .finally(() => setIsLoadingImportChapters(false));
+  }, [importSubjectId]);
+
+  useEffect(() => {
+    if (!importSubjectId || !importChapterId) {
+      setImportParagraphs([]);
+      setImportParagraphId('');
+      return;
+    }
+    setIsLoadingImportParagraphs(true);
+    setImportParagraphId('');
+    fetch(`/api/subjects/${importSubjectId}/chapters/${importChapterId}/paragraphs`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setImportParagraphs(Array.isArray(data) ? data : []))
+      .catch(() => setImportParagraphs([]))
+      .finally(() => setIsLoadingImportParagraphs(false));
+  }, [importSubjectId, importChapterId]);
+
+  const resetImportState = () => {
+    setImportCode('');
+    setImportSubjectId('');
+    setImportChapterId('');
+    setImportParagraphId('');
+    setImportChapters([]);
+    setImportParagraphs([]);
+  };
+
+  const handleImportTest = async () => {
+    if (!importCode.trim() || !importParagraphId) return;
+    setIsImporting(true);
+    try {
+      const response = await fetch('/api/tests/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: importCode.trim(), targetParagraphId: importParagraphId }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to import test');
+      }
+      toast({ title: 'Test imported', description: 'A new independent copy was added.' });
+      setIsImportOpen(false);
+      const subjectIdForNav = data.subjectId || importSubjectId;
+      const chapterIdForNav = data.chapterId || importChapterId;
+      const paragraphIdForNav = data.paragraphId || importParagraphId;
+      resetImportState();
+      if (subjectIdForNav && chapterIdForNav && paragraphIdForNav) {
+        router.push(`/subjects/${subjectIdForNav}/chapters/${chapterIdForNav}/paragraphs/${paragraphIdForNav}`);
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setIsImporting(false);
+    }
+  };
 
   useEffect(() => {
     let hydrated = false;
@@ -249,7 +333,10 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     <>
       <div className="space-y-6 text-[13px] text-foreground">
         {isTeacher && (
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsImportOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
+              Import Test
+            </Button>
             <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl">
               + Create Subject
             </Button>
@@ -365,6 +452,86 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             </Button>
             <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-xl">
               {isCreating ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Test Dialog (G3, docs/subjects-feature-brainstorm.md) */}
+      <Dialog open={isImportOpen} onOpenChange={(open) => { setIsImportOpen(open); if (!open) resetImportState(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import a shared test</DialogTitle>
+            <DialogDescription>
+              Enter the share code from another teacher to add a fully independent copy of their test.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="import-code">Share code</Label>
+              <Input
+                id="import-code"
+                placeholder="e.g. AB3D9FZ"
+                value={importCode}
+                onChange={(e) => setImportCode(e.target.value.toUpperCase())}
+                className="font-mono tracking-wider"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Select value={importSubjectId} onValueChange={setImportSubjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>{subject.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Chapter</Label>
+              <Select value={importChapterId} onValueChange={setImportChapterId} disabled={!importSubjectId || isLoadingImportChapters}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingImportChapters ? 'Loading...' : 'Choose a chapter'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {importChapters.map((chapter) => (
+                    <SelectItem key={chapter.id} value={chapter.id}>{chapter.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Paragraph</Label>
+              <Select value={importParagraphId} onValueChange={setImportParagraphId} disabled={!importChapterId || isLoadingImportParagraphs}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingImportParagraphs ? 'Loading...' : 'Choose a paragraph'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {importParagraphs.map((paragraph) => (
+                    <SelectItem key={paragraph.id} value={paragraph.id}>{paragraph.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImportOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImportTest}
+              disabled={isImporting || !importCode.trim() || !importParagraphId}
+              className="rounded-xl"
+            >
+              {isImporting ? 'Importing...' : 'Import'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
-import { Settings, EyeOff, Lock } from 'lucide-react';
+import { Settings, EyeOff, Lock, Share2, Copy, Check } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType, withContentDefaults } from '@/lib/assignments/presets';
@@ -81,6 +81,63 @@ function previewQuestionHint(type: string, isDutch: boolean): string {
   return isDutch ? 'Instructieblok' : 'Instruction block';
 }
 
+function ShareTestPanel({
+  code,
+  isLoading,
+  labels,
+}: {
+  code: string | null;
+  isLoading: boolean;
+  labels: { title: string; hint: string; codeLabel: string; linkLabel: string; copy: string; copied: string };
+}) {
+  const [copiedField, setCopiedField] = useState<'code' | 'link' | null>(null);
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const link = code ? `${origin}/tests/import/${code}` : '';
+
+  const copy = async (value: string, field: 'code' | 'link') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField((prev) => (prev === field ? null : prev)), 1500);
+    } catch {
+      // clipboard API unavailable — silently ignore, user can still select the text
+    }
+  };
+
+  return (
+    <div className="w-72 p-3 space-y-3">
+      <div>
+        <p className="text-sm font-medium">{labels.title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{labels.hint}</p>
+      </div>
+      {isLoading && !code ? (
+        <div className="h-8 surface-interactive rounded animate-pulse" />
+      ) : code ? (
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[10px] uppercase text-muted-foreground">{labels.codeLabel}</Label>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Input value={code} readOnly className="h-8 text-sm font-mono tracking-wider" />
+              <Button type="button" size="sm" variant="outline" className="h-8 w-8 p-0 shrink-0" onClick={() => copy(code, 'code')}>
+                {copiedField === 'code' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px] uppercase text-muted-foreground">{labels.linkLabel}</Label>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Input value={link} readOnly className="h-8 text-xs" />
+              <Button type="button" size="sm" variant="outline" className="h-8 w-8 p-0 shrink-0" onClick={() => copy(link, 'link')}>
+                {copiedField === 'link' ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ParagraphDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -111,6 +168,9 @@ export default function ParagraphDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
   const [bulkSettingsOpen, setBulkSettingsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState<string | null>(null);
+  const [shareCodes, setShareCodes] = useState<Record<string, string>>({});
+  const [isSharing, setIsSharing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCreatingAssignment, setIsCreatingAssignment] = useState(false);
   const [resolvedChapterId, setResolvedChapterId] = useState(chapterId);
@@ -188,6 +248,14 @@ export default function ParagraphDetailPage() {
     failedUpdate: isDutch ? 'Instellingen bijwerken mislukt' : 'Failed to update settings',
     failedBulkUpdate: isDutch ? 'Bijwerken mislukt' : 'Failed to update',
     failedCreateAssignment: isDutch ? 'Opdracht maken mislukt' : 'Failed to create assignment',
+    shareTest: isDutch ? 'Delen' : 'Share',
+    shareTestTitle: isDutch ? 'Toets delen' : 'Share test',
+    shareTestHint: isDutch ? 'Een andere docent kan deze code gebruiken om een eigen, losstaande kopie te importeren.' : 'Another teacher can use this code to import their own, independent copy.',
+    shareCode: isDutch ? 'Code' : 'Code',
+    shareLink: isDutch ? 'Link' : 'Link',
+    copy: isDutch ? 'Kopiëren' : 'Copy',
+    copied: isDutch ? 'Gekopieerd' : 'Copied',
+    failedShare: isDutch ? 'Delen mislukt' : 'Failed to share',
   };
   const effectiveChapterId = resolvedChapterId || chapterId;
 
@@ -260,6 +328,24 @@ export default function ParagraphDetailPage() {
       toast({ title: t.error, description: t.failedUpdate, variant: 'destructive' });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleShareAssignment = async (assignmentId: string) => {
+    if (shareCodes[assignmentId]) return;
+    setIsSharing(true);
+    try {
+      const response = await fetch(
+        `/api/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/share`,
+        { method: 'POST' }
+      );
+      if (!response.ok) throw new Error('Failed to share');
+      const data = await response.json();
+      setShareCodes((prev) => ({ ...prev, [assignmentId]: data.code }));
+    } catch (error) {
+      toast({ title: t.error, description: t.failedShare, variant: 'destructive' });
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -700,6 +786,39 @@ export default function ParagraphDetailPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Share test with another teacher (tests only, teachers only) */}
+                  {isTeacher && !assignment.is_pending && isTest && (
+                    <Popover
+                      open={shareOpen === assignment.id}
+                      onOpenChange={(open) => {
+                        setShareOpen(open ? assignment.id : null);
+                        if (open && !shareCodes[assignment.id]) {
+                          void handleShareAssignment(assignment.id);
+                        }
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title={t.shareTest}>
+                          <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="p-0 w-auto">
+                        <ShareTestPanel
+                          code={shareCodes[assignment.id] || null}
+                          isLoading={isSharing}
+                          labels={{
+                            title: t.shareTestTitle,
+                            hint: t.shareTestHint,
+                            codeLabel: t.shareCode,
+                            linkLabel: t.shareLink,
+                            copy: t.copy,
+                            copied: t.copied,
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
 
                   {/* Per-assignment settings (teachers only) */}
                   {isTeacher && !assignment.is_pending && (
