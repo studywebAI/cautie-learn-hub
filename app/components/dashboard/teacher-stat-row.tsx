@@ -30,7 +30,7 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
     const ids = classIds.join(',');
     const controller = new AbortController();
     Promise.all([
-      fetch(`/api/dashboard/teacher/pending-grades?classIds=${ids}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { totalCount: 0 }).catch(() => ({ totalCount: 0 })),
+      fetch(`/api/dashboard/teacher/to-grade?classIds=${ids}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { totalCount: 0 }).catch(() => ({ totalCount: 0 })),
       fetch('/api/notifications/mark-read', { signal: controller.signal }).then(r => r.ok ? r.json() : { count: 0 }).catch(() => ({ count: 0 })),
       fetch(`/api/dashboard/teacher/grade-averages?classIds=${ids}`, { signal: controller.signal }).then(r => r.ok ? r.json() : { classes: [], overallAverage: null }).catch(() => ({ classes: [], overallAverage: null })),
     ]).then(([pending, notif, averages]) => {
@@ -53,10 +53,10 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="group rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="group rounded-xl border border-border bg-gradient-to-br from-foreground/[0.04] to-transparent p-4 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Classes</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/5 text-foreground/70">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10 text-foreground/70">
               <School className="h-3.5 w-3.5" />
             </span>
           </div>
@@ -65,11 +65,11 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
 
         <Link
           href="/teacher-grades"
-          className="group rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
+          className="group rounded-xl border border-border bg-gradient-to-br from-amber-500/[0.07] to-transparent p-4 shadow-sm transition-all hover:shadow-md hover:border-amber-500/30"
         >
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">To grade</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
               <ClipboardList className="h-3.5 w-3.5" />
             </span>
           </div>
@@ -80,12 +80,12 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
 
         <button
           onClick={() => setExpanded(v => !v)}
-          className="group text-left rounded-xl surface-panel border border-border p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
+          className="group text-left rounded-xl border border-border bg-gradient-to-br from-[var(--accent-brand)]/[0.07] to-transparent p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
         >
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Average grade</span>
             <span className="flex items-center gap-1">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-brand)]/15 text-[var(--accent-brand)]">
                 <GraduationCap className="h-3.5 w-3.5" />
               </span>
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
@@ -96,15 +96,15 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
           </div>
         </button>
 
-        <div className="rounded-xl surface-panel border border-border p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="rounded-xl border border-border bg-gradient-to-br from-blue-500/[0.07] to-transparent p-4 shadow-sm transition-shadow hover:shadow-md">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Notifications</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
               <Bell className="h-3.5 w-3.5" />
             </span>
           </div>
           <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs tabular-nums ${
-            unreadCount > 0 ? 'bg-[var(--accent-brand)] text-white' : 'bg-foreground/5 text-muted-foreground'
+            unreadCount > 0 ? 'bg-[var(--accent-brand)] text-white' : 'bg-foreground/10 text-muted-foreground'
           }`}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>

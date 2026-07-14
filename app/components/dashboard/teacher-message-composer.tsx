@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -10,7 +10,7 @@ import { Plus } from 'lucide-react';
 
 type Member = { user_id: string; role: string; profiles?: { full_name?: string | null } };
 
-export function TeacherMessageComposer({ classId }: { classId: string }) {
+export function TeacherMessageComposer({ classId, trigger }: { classId: string; trigger?: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<string>('class');
   const [members, setMembers] = useState<Member[]>([]);
@@ -57,16 +57,18 @@ export function TeacherMessageComposer({ classId }: { classId: string }) {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          disabled={!classId}
-          aria-label="Send a quick message"
-          title="Send a quick message"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        {trigger ?? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            disabled={!classId}
+            aria-label="Send a quick message"
+            title="Send a quick message"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-3">
         <div>
