@@ -82,10 +82,10 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 20. `[ ]` Docent plant de toets in (nu, of voor later) — koppelt aan Agenda, sluit aan bij de bestaande "add-to-agenda"-optie in de assignment-wizard.
 
 ### G3. Delen tussen docenten
-21. `[ ]` Toets delen via link + code (hergebruik `join_code`-patroon). Andere docent gebruikt de link/code om de toets te **importeren** — wordt daarmee hun eigen kopie, die zij op hun beurt weer kunnen delen en zelf inplannen, los van het origineel.
+21. `[x]` Toets delen via link + code (hergebruik `join_code`-patroon). Andere docent gebruikt de link/code om de toets te **importeren** — wordt daarmee hun eigen kopie, die zij op hun beurt weer kunnen delen en zelf inplannen, los van het origineel. **Beslist: volledig losstaande kopie bij import, geen synchronisatie met het origineel.**
 
 ### G4. Live tijdens de toets
-22. `[ ]` Dashboard-widget voor docenten met live voortgang per leerling: goed/fout-telling, of "–" als iets nog niet nagekeken/gemaakt is (open vragen worden niet automatisch nagekeken tenzij AI-nakijken aanstaat).
+22. `[x]` Dashboard-widget voor docenten met live voortgang per leerling: goed/fout-telling, of "–" als iets nog niet nagekeken/gemaakt is (open vragen worden niet automatisch nagekeken tenzij AI-nakijken aanstaat). **Beslist: verschijnt automatisch op het dashboard zodra een toets van jou live is, sluit aan bij het "doorverwijspunt"-principe.**
 23. `[ ]` Live status per leerling: wie zit er nu in de toets, wie is eruit gegaan.
 24. `[ ]` Extra beveiliging: als een leerling een heel antwoord in ~0.1 seconde plakt (plak-detectie, bovenop de al bestaande tab-switch/fullscreen-detectie) → waarschuwing voor de docent.
 25. `[ ]` Docent kan de toets live afsluiten — per leerling, of voor iedereen tegelijk — plus "meer handige opties" (nog niet gespecificeerd door gebruiker, blijft open).
@@ -100,9 +100,14 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 
 ---
 
-## Openstaande vragen (zie chat voor de gestelde vragen en antwoorden)
-- Toets-import (G3): volledig losstaande kopie, of blijft die gekoppeld aan het origineel?
-- Live-monitoring (G4): verschijnt dit automatisch op het dashboard zodra een toets van jou live is, of is dit een aparte "live toets"-pagina die je zelf opent?
+## Beslist plan van aanpak
+
+**Fase 1 — nu:** punt 13 (leerstof-blokken in assignments: `text`-blocktype volwaardig maken, foto/video-blocktype toevoegen, wizard-optie "dit is content, geen toets").
+
+**Fase 2 — apart vervolgtraject, sectie G gefaseerd:**
+G1 (aanmaken/zichtbaarheid) → G2 (plannen, hergebruikt bestaande agenda-koppeling) → G3 (delen via link/code, losstaande kopie) → G4 (live-monitoring, automatisch op dashboard) → G5 (nakijken fase 1: goed/fout) → G6 (cijfers fase 2, losstaand vanwege internationale cijfersystemen).
+
+Sectie G is fors — waarschijnlijk meerdere sessies, elke G-subsectie is op zichzelf al een flinke brok werk (G4 met name: live status vereist polling-infrastructuur zoals al gebruikt bij notificaties/reminders elders in de app, geen websockets aanwezig in de codebase).
 
 ---
 
