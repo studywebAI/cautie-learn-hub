@@ -445,6 +445,9 @@ export default function ParagraphDetailPage() {
           const agendaTitle = `${kindLabel}: ${title}`;
           const dueAt = scheduledEndAt;
           const startsAt = isTest ? scheduledStartAt : null;
+          // Tests default to hidden (same exam-security rule as the assignment
+          // itself) and auto-reveal exactly when the test opens, instead of
+          // leaking the title/date on students' agendas ahead of publication.
           const agendaRes = await fetch(`/api/classes/${newAssignment.class_id}/agenda`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -454,7 +457,8 @@ export default function ParagraphDetailPage() {
               item_type: isTest ? 'quiz' : 'assignment',
               starts_at: startsAt,
               due_at: dueAt,
-              visible: true,
+              visible: !isTest,
+              publish_at: isTest ? startsAt : null,
               links: [
                 {
                   link_type: 'assignment',
