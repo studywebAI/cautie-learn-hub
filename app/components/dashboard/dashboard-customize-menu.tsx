@@ -11,35 +11,25 @@ import {
 } from '@/components/ui/popover';
 import { SlidersHorizontal } from 'lucide-react';
 
-export type WidgetKey =
-  | 'deadlines' | 'studyToday' | 'scheduled' | 'analytics' | 'subjects'
-  | 'agenda' | 'quickAccess';
+export type WidgetKey = 'studyToday' | 'scheduled' | 'subjects' | 'agenda';
 
 export type DashboardPrefs = {
   density: 'comfortable' | 'compact';
   widgets: Record<WidgetKey, boolean>;
-  pinnedShortcuts: Record<string, boolean>;
 };
 
-const ALL_WIDGET_KEYS: WidgetKey[] = [
-  'deadlines', 'studyToday', 'scheduled', 'analytics', 'subjects',
-  'agenda', 'quickAccess',
-];
+const ALL_WIDGET_KEYS: WidgetKey[] = ['studyToday', 'scheduled', 'subjects', 'agenda'];
 
 export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
   density: 'comfortable',
   widgets: Object.fromEntries(ALL_WIDGET_KEYS.map(k => [k, true])) as Record<WidgetKey, boolean>,
-  pinnedShortcuts: {},
 };
 
 const WIDGET_LABELS: Record<WidgetKey, string> = {
-  deadlines: 'Upcoming deadlines',
   studyToday: 'Study today',
   scheduled: 'Scheduled study',
-  analytics: 'Analytics',
   subjects: 'My subjects',
   agenda: 'Agenda widget',
-  quickAccess: 'Quick access',
 };
 
 const storageKey = (role: 'student' | 'teacher') => `studyweb-dashboard-prefs-${role}`;
@@ -53,7 +43,6 @@ export function loadDashboardPrefs(role: 'student' | 'teacher' = 'student'): Das
     return {
       density: parsed?.density === 'compact' ? 'compact' : 'comfortable',
       widgets: { ...DEFAULT_DASHBOARD_PREFS.widgets, ...(parsed?.widgets || {}) },
-      pinnedShortcuts: { ...(parsed?.pinnedShortcuts || {}) },
     };
   } catch {
     return DEFAULT_DASHBOARD_PREFS;
@@ -63,12 +52,10 @@ export function loadDashboardPrefs(role: 'student' | 'teacher' = 'student'): Das
 export function DashboardCustomizeMenu({
   role = 'student',
   widgetKeys,
-  shortcutOptions,
   onChange,
 }: {
   role?: 'student' | 'teacher';
   widgetKeys: WidgetKey[];
-  shortcutOptions?: { key: string; label: string }[];
   onChange: (prefs: DashboardPrefs) => void;
 }) {
   const [prefs, setPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
@@ -101,36 +88,20 @@ export function DashboardCustomizeMenu({
             onCheckedChange={(checked) => update({ ...prefs, density: checked ? 'compact' : 'comfortable' })}
           />
         </div>
-        <div className="h-px bg-border" />
-        <div className="space-y-2.5">
-          {widgetKeys.map((key) => (
-            <div key={key} className="flex items-center justify-between">
-              <Label htmlFor={`widget-${key}`} className="text-sm font-normal">{WIDGET_LABELS[key]}</Label>
-              <Switch
-                id={`widget-${key}`}
-                checked={prefs.widgets[key]}
-                onCheckedChange={(checked) => update({ ...prefs, widgets: { ...prefs.widgets, [key]: checked } })}
-              />
-            </div>
-          ))}
-        </div>
-        {shortcutOptions && shortcutOptions.length > 0 && (
+        {widgetKeys.length > 0 && (
           <>
             <div className="h-px bg-border" />
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">Pinned shortcuts</p>
-              <div className="space-y-2.5">
-                {shortcutOptions.map((opt) => (
-                  <div key={opt.key} className="flex items-center justify-between">
-                    <Label htmlFor={`shortcut-${opt.key}`} className="text-sm font-normal">{opt.label}</Label>
-                    <Switch
-                      id={`shortcut-${opt.key}`}
-                      checked={prefs.pinnedShortcuts[opt.key] !== false}
-                      onCheckedChange={(checked) => update({ ...prefs, pinnedShortcuts: { ...prefs.pinnedShortcuts, [opt.key]: checked } })}
-                    />
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-2.5">
+              {widgetKeys.map((key) => (
+                <div key={key} className="flex items-center justify-between">
+                  <Label htmlFor={`widget-${key}`} className="text-sm font-normal">{WIDGET_LABELS[key]}</Label>
+                  <Switch
+                    id={`widget-${key}`}
+                    checked={prefs.widgets[key]}
+                    onCheckedChange={(checked) => update({ ...prefs, widgets: { ...prefs.widgets, [key]: checked } })}
+                  />
+                </div>
+              ))}
             </div>
           </>
         )}

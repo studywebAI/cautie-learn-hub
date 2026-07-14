@@ -1,26 +1,19 @@
 'use client';
-import { UpcomingDeadlines } from "@/components/dashboard/upcoming-deadlines";
-import { useContext, lazy, Suspense, useEffect, useState } from "react";
+import { useContext, Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AppContext, AppContextType, ClassInfo } from "@/contexts/app-context";
+import { AppContext, AppContextType } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Users, ChevronRight, ClipboardList, BarChart2, Calendar, MessageSquare, UserCheck } from "lucide-react";
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { ScheduledStudyItems } from "@/components/dashboard/scheduled-study-items";
-import { LearningPulse } from "@/components/dashboard/learning-pulse";
-import { UpcomingExamsStudysets } from "@/components/dashboard/upcoming-exams-studysets";
-import { WeakSpotsPanel } from "@/components/dashboard/weak-spots-panel";
 import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
 import { RecentActivityFeed } from "@/components/dashboard/teacher/recent-activity-feed";
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
-import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
 import { StudentStatRow } from "@/components/dashboard/student-stat-row";
 import { TeacherMessageCard } from "@/components/dashboard/teacher-message-card";
 import { TeacherMessageComposer } from "@/components/dashboard/teacher-message-composer";
@@ -55,17 +48,7 @@ function RecentActivityFeedSection() {
   );
 }
 
-const AnalyticsDashboard = lazy(() => import("@/components/dashboard/analytics-dashboard").then(module => ({ default: module.AnalyticsDashboard })));
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
-
-const QUICK_ACCESS_SHORTCUTS = [
-  { key: 'overview', hrefSuffix: (classId: string) => `/class/${classId}?tab=group`, icon: Users, label: 'Class overview' },
-  { key: 'grades', hrefSuffix: (classId: string) => `/class/${classId}?tab=grades`, icon: ClipboardList, label: 'Grades' },
-  { key: 'attendance', hrefSuffix: (classId: string) => `/class/${classId}?tab=group`, icon: UserCheck, label: 'Attendance' },
-  { key: 'analytics', hrefSuffix: (classId: string) => `/class/${classId}?tab=analytics`, icon: BarChart2, label: 'Analytics' },
-  { key: 'agenda', hrefSuffix: (classId: string) => `/agenda?classId=${classId}`, icon: Calendar, label: 'Agenda' },
-  { key: 'chat', hrefSuffix: (classId: string) => `/class/${classId}?tab=share`, icon: MessageSquare, label: 'Chat' },
-];
 
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -93,10 +76,9 @@ function getDayLabel(): string {
 }
 
 function StudentDashboard() {
-  const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects, role } = useContext(AppContext) as AppContextType;
+  const { isLoading, session, assignments, classes, personalTasks, subjects: dashboardSubjects } = useContext(AppContext) as AppContextType;
   const [schoolSlots, setSchoolSlots] = useState<any[]>([]);
   const [displayName, setDisplayName] = useState<string>('');
-  const [deadlineFilter, setDeadlineFilter] = useState<string>('All');
   const [dashboardPrefs, setDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
 
   useEffect(() => {
@@ -189,7 +171,7 @@ function StudentDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <DashboardCustomizeMenu role="student" widgetKeys={['deadlines', 'studyToday', 'scheduled', 'analytics', 'subjects']} onChange={setDashboardPrefs} />
+          <DashboardCustomizeMenu role="student" widgetKeys={['studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
           <NotificationPopover />
         </div>
       </div>
@@ -197,56 +179,26 @@ function StudentDashboard() {
       {/* Stat row */}
       <StudentStatRow subjectsCount={subjects.length} />
 
-      {/* Sidebar + Main layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-        {/* Sidebar */}
-        <DashboardSidebar userRole={role} />
-
-        {/* Main content */}
-        <div className={`flex flex-col ${dashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
-          <TeacherMessageCard />
-          <TodayPlanCard
-            assignments={assignments}
-            personalTasks={personalTasks}
-            classes={classes}
-            schoolSlots={schoolSlots}
-          />
-          <GradesMiniCard />
-          {dashboardPrefs.widgets.deadlines && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
-                <CardDescription className="mt-2">
-                  <DashboardFilters
-                    filters={['All', 'Homework', 'Tests']}
-                    active={deadlineFilter}
-                    onFilterChange={setDeadlineFilter}
-                  />
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-                  <UpcomingDeadlines />
-                </Suspense>
-              </CardContent>
-            </Card>
-          )}
-          {dashboardPrefs.widgets.studyToday && <TodaysStudysetTasks />}
-          {dashboardPrefs.widgets.scheduled && <ScheduledStudyItems />}
-          {dashboardPrefs.widgets.analytics && (
-            <Suspense fallback={<Card><CardHeader><Skeleton className="h-8 w-1/2" /><Skeleton className="h-4 w-1/3" /></CardHeader><CardContent><Skeleton className="h-40 w-full" /></CardContent></Card>}>
-              <AnalyticsDashboard />
-            </Suspense>
-          )}
-          {dashboardPrefs.widgets.subjects && <MySubjects subjects={subjects} />}
-        </div>
+      {/* Main content — single column, no duplicate nested sidebar */}
+      <div className={`flex flex-col ${dashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+        <TeacherMessageCard />
+        <TodayPlanCard
+          assignments={assignments}
+          personalTasks={personalTasks}
+          classes={classes}
+          schoolSlots={schoolSlots}
+        />
+        <GradesMiniCard />
+        {dashboardPrefs.widgets.studyToday && <TodaysStudysetTasks />}
+        {dashboardPrefs.widgets.scheduled && <ScheduledStudyItems />}
+        {dashboardPrefs.widgets.subjects && <MySubjects subjects={subjects} />}
       </div>
     </div>
   );
 }
 
 function TeacherSummaryDashboard() {
-    const { classes, assignments, isLoading, session, refetchClasses, refetchAssignments, role } = useContext(AppContext) as AppContextType;
+    const { classes, assignments, isLoading, session, refetchClasses, refetchAssignments } = useContext(AppContext) as AppContextType;
     const [displayName, setDisplayName] = useState<string>('');
     const [teacherDashboardPrefs, setTeacherDashboardPrefs] = useState<DashboardPrefs>(DEFAULT_DASHBOARD_PREFS);
 
@@ -306,11 +258,10 @@ function TeacherSummaryDashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
-                <TeacherMessageComposer classId={resolvedClassId} variant="icon" />
+                <TeacherMessageComposer classId={resolvedClassId} />
                 <DashboardCustomizeMenu
                   role="teacher"
-                  widgetKeys={['agenda', 'quickAccess']}
-                  shortcutOptions={QUICK_ACCESS_SHORTCUTS.map(s => ({ key: s.key, label: s.label }))}
+                  widgetKeys={['agenda']}
                   onChange={setTeacherDashboardPrefs}
                 />
                 <NotificationPopover />
@@ -326,63 +277,27 @@ function TeacherSummaryDashboard() {
                 <Button asChild size="sm"><Link href="/classes">Create your first class</Link></Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-                {/* Sidebar */}
-                <DashboardSidebar userRole={role} />
+              <div className={`flex flex-col ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+                {teacherDashboardPrefs.widgets.agenda && (
+                  <TeacherAgendaWidget assignments={assignments} classes={teacherClasses} />
+                )}
 
-                {/* Main content */}
-                <div className={`flex flex-col ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
-                  {teacherDashboardPrefs.widgets.agenda && (
-                    <TeacherAgendaWidget assignments={assignments} classes={teacherClasses} />
-                  )}
+                {/* Recent activity */}
+                <RecentActivityFeedSection />
 
-                  {/* Recent activity */}
-                  <RecentActivityFeedSection />
+                <TeacherToGradeCard classIds={teacherClassIds} />
 
-                  {/* Quick links to active class */}
-                  {teacherDashboardPrefs.widgets.quickAccess && resolvedClassId && (
-                    <div className="rounded-xl surface-panel border border-border p-4">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">Quick access</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {QUICK_ACCESS_SHORTCUTS
-                          .filter(s => teacherDashboardPrefs.pinnedShortcuts[s.key] !== false)
-                          .map(({ key, hrefSuffix, icon: Icon, label }) => (
-                            <Link key={key} href={`${hrefSuffix(resolvedClassId)}`} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors">
-                              <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate">{label}</span>
-                            </Link>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <TeacherToGradeCard classIds={teacherClassIds} />
-
-                  {/* Post Announcement + Manage Attendance grid */}
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Send message</CardTitle>
-                        <CardDescription>To the whole class or one student</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <TeacherMessageComposer classId={resolvedClassId} />
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Manage Attendance</CardTitle>
-                        <CardDescription>Track student attendance</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Button asChild className="w-full" variant="outline">
-                          <Link href="/agenda">View Attendance</Link>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Manage Attendance</CardTitle>
+                    <CardDescription>Track student attendance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href="/agenda">View Attendance</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
         </div>

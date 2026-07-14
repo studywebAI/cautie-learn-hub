@@ -3,21 +3,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Megaphone, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 type Member = { user_id: string; role: string; profiles?: { full_name?: string | null } };
 
-export function TeacherMessageComposer({ classId, variant = 'button' }: { classId: string; variant?: 'button' | 'icon' }) {
+export function TeacherMessageComposer({ classId }: { classId: string }) {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<string>('class');
   const [members, setMembers] = useState<Member[]>([]);
@@ -62,67 +55,56 @@ export function TeacherMessageComposer({ classId, variant = 'button' }: { classI
   };
 
   return (
-    <>
-      {variant === 'icon' ? (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           className="h-9 w-9"
-          onClick={() => setOpen(true)}
           disabled={!classId}
           aria-label="Send a quick message"
           title="Send a quick message"
         >
           <Plus className="h-4 w-4" />
         </Button>
-      ) : (
-        <Button size="sm" className="w-full" onClick={() => setOpen(true)} disabled={!classId}>
-          <Megaphone className="mr-1.5 h-3.5 w-3.5" />
-          Send message
-        </Button>
-      )}
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-3">
+        <div>
+          <p className="text-sm font-medium">Send message</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            A one-way message — not a chat. Shows up in the recipient&apos;s notifications and on their dashboard.
+          </p>
+        </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Send message</DialogTitle>
-            <DialogDescription>
-              A one-way message — not a chat. It shows up in the recipient&apos;s notifications and on their dashboard.
-            </DialogDescription>
-          </DialogHeader>
+        <Select value={target} onValueChange={setTarget}>
+          <SelectTrigger>
+            <SelectValue placeholder="Who should receive this?" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="class">Whole class</SelectItem>
+            {members.map(m => (
+              <SelectItem key={m.user_id} value={m.user_id}>
+                {m.profiles?.full_name || 'Student'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          <div className="space-y-4 py-2">
-            <Select value={target} onValueChange={setTarget}>
-              <SelectTrigger>
-                <SelectValue placeholder="Who should receive this?" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="class">Whole class</SelectItem>
-                {members.map(m => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.profiles?.full_name || 'Student'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Textarea
+          placeholder="e.g. Room for Chemistry is now 109"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
+          maxLength={500}
+        />
 
-            <Textarea
-              placeholder="e.g. Room for Chemistry is now 109"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSend} disabled={sending || !message.trim()}>
-              {sending ? 'Sending...' : 'Send'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={handleSend} disabled={sending || !message.trim()}>
+            {sending ? 'Sending...' : 'Send'}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
