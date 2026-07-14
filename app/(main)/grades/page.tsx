@@ -15,7 +15,7 @@ type Grade = {
   grade_numeric: number | null;
   grade_value: string | null;
   published_at: string | null;
-  class_id?: string;
+  class_id?: string | null;
   category?: string;
   weight?: number;
 };
@@ -132,10 +132,11 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
 }
 
 export default function GradesPage() {
-  const { classes } = useContext(AppContext) as AppContextType;
+  const { classes, session } = useContext(AppContext) as AppContextType;
   const [grades, setGrades] = useState<Grade[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterClass, setFilterClass] = useState<string>('all');
+  const [finalGrades, setFinalGrades] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (typeof window !== 'undefined' && BOT_UA_PATTERN.test(window.navigator.userAgent || '')) {
@@ -155,6 +156,28 @@ export default function GradesPage() {
     () => [...new Set(grades.map(g => g.class_name).filter(Boolean))],
     [grades]
   );
+
+  useEffect(() => {
+    const userId = session?.user?.id;
+    if (!userId || grades.length === 0) return;
+    const byName = new Map<string, string>();
+    for (const g of grades) {
+      if (g.class_id && g.class_name && !byName.has(g.class_name)) byName.set(g.class_name, g.class_id);
+    }
+    (async () => {
+      const entries = await Promise.all(
+        [...byName.entries()].map(async ([className, classId]) => {
+          try {
+            const res = await fetch(`/api/classes/${classId}/students/${userId}/final-grade`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data.final_grade !== null ? [className, data.final_grade] as const : null;
+          } catch { return null; }
+        })
+      );
+      setFinalGrades(Object.fromEntries(entries.filter(Boolean) as [string, number][]));
+    })();
+  }, [grades, session?.user?.id]);
 
   const filtered = useMemo(
     () => filterClass === 'all' ? grades : grades.filter(g => g.class_name === filterClass),
@@ -241,11 +264,18 @@ export default function GradesPage() {
                 <div key={className} className="rounded-xl surface-panel border border-border overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <p className="text-sm">{className}</p>
-                    {classAvg !== null && (
-                      <span className={`text-sm ${gradeColor(classAvg)}`}>
-                        avg {classAvg.toFixed(1)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                      {finalGrades[className] !== undefined && (
+                        <span className={`text-sm ${gradeColor(finalGrades[className])}`} title="Eindcijfer">
+                          eindcijfer {finalGrades[className].toFixed(1)}
+                        </span>
+                      )}
+                      {classAvg !== null && (
+                        <span className={`text-sm ${gradeColor(classAvg)}`}>
+                          avg {classAvg.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="divide-y divide-border">
                     {classGrades.map((g, idx) => {

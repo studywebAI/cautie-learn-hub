@@ -13,7 +13,7 @@ import {
 import { Wand2, Sparkles, Plus, Trash2 } from 'lucide-react';
 
 type Bin = { min: number; max: number; label: string; numeric: number | null };
-type Preset = { id: string; name: string; config: { templateType?: string; system?: string; bins?: Bin[] } };
+type Preset = { id: string; name: string; is_default?: boolean; config: { templateType?: string; system?: string; bins?: Bin[] } };
 
 const QUICK_PRESETS: Array<{ key: string; name: string; bins: Bin[] }> = [
   {
@@ -69,6 +69,7 @@ export function GradingTemplatePicker({
   const [pasteText, setPasteText] = useState('');
   const [parsing, setParsing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [makeDefault, setMakeDefault] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { void loadPresets(); }, [classId]);
@@ -77,22 +78,28 @@ export function GradingTemplatePicker({
     const res = await fetch(`/api/classes/${classId}/grading-presets`);
     if (!res.ok) return;
     const data = await res.json();
-    setPresets((data.presets || []).filter((p: any) => p.config?.templateType === 'scale_template'));
+    const scaleTemplates: Preset[] = (data.presets || []).filter((p: any) => p.config?.templateType === 'scale_template');
+    setPresets(scaleTemplates);
+    if (!selectedPresetId) {
+      const defaultPreset = scaleTemplates.find(p => p.is_default);
+      if (defaultPreset) onSelect(defaultPreset.id);
+    }
   };
 
-  const saveTemplate = async (name: string, system: string, bins: Bin[]) => {
+  const saveTemplate = async (name: string, system: string, bins: Bin[], isDefault?: boolean) => {
     setSaving(true);
     try {
       const res = await fetch(`/api/classes/${classId}/grading-presets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, kind: 'freeform', config: { templateType: 'scale_template', system, bins } }),
+        body: JSON.stringify({ name, kind: 'freeform', config: { templateType: 'scale_template', system, bins }, is_default: !!isDefault }),
       });
       if (res.ok) {
         const data = await res.json();
         await loadPresets();
         onSelect(data.preset.id);
         setOpen(false);
+        setMakeDefault(false);
       }
     } finally {
       setSaving(false);
@@ -148,11 +155,16 @@ export function GradingTemplatePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-96 space-y-4 max-h-[70vh] overflow-y-auto">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-3.5 w-3.5" />
+            {isDutch ? 'Maak dit de standaard-template voor deze klas' : 'Make this the default template for this class'}
+          </label>
+
           <div>
             <p className="text-xs text-muted-foreground mb-1.5">{isDutch ? 'Kant-en-klaar' : 'Ready-made'}</p>
             <div className="flex flex-wrap gap-1.5">
               {QUICK_PRESETS.map(q => (
-                <Button key={q.key} size="sm" variant="outline" disabled={saving} onClick={() => saveTemplate(q.name, q.key, q.bins)}>
+                <Button key={q.key} size="sm" variant="outline" disabled={saving} onClick={() => saveTemplate(q.name, q.key, q.bins, makeDefault)}>
                   {q.name}
                 </Button>
               ))}
@@ -212,7 +224,7 @@ export function GradingTemplatePicker({
 
           <div className="flex items-center gap-2 border-t border-border pt-3">
             <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder={isDutch ? 'Naam voor deze template' : 'Name for this template'} className="h-8 text-xs" />
-            <Button size="sm" disabled={saving || !customName.trim() || customBins.length === 0} onClick={() => saveTemplate(customName.trim(), 'custom', customBins)}>
+            <Button size="sm" disabled={saving || !customName.trim() || customBins.length === 0} onClick={() => saveTemplate(customName.trim(), 'custom', customBins, makeDefault)}>
               {isDutch ? 'Opslaan' : 'Save'}
             </Button>
           </div>

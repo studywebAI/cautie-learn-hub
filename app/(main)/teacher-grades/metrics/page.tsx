@@ -16,6 +16,7 @@ import {
 import GradeMetrics from '@/components/grades/grade-metrics';
 import Loader from '@/components/ui/loader';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { CategoryWeightsPanel } from '@/components/grades/category-weights-panel';
 
 type Class = {
   id: string;
@@ -120,6 +121,8 @@ export default function MetricsPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {selectedClassId && <CategoryWeightsPanel classId={selectedClassId} isDutch={isDutch} />}
 
       {/* Grade set selection */}
       {selectedClassId && (
