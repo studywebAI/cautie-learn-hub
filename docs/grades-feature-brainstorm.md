@@ -64,3 +64,18 @@ Dit document is de vervolgstap op `docs/subjects-feature-brainstorm.md` sectie G
 
 ## Openstaande vragen samengevat
 De kernbeslissingen (H, top van I) staan vast. Wat ik van jou nodig heb voordat ik ga bouwen: punten 5-9 (precieze flow nakijken/cijfer), 11-13 (vorm van de templates), en vooral **14** (migratie ja/nee — en zo ja, akkoord om die op de live database te zetten).
+
+## Status: gebouwd (2026-07-14)
+Punt 14 is uitgevoerd (migratie `20260714_link_grade_sets_to_assignments.sql`, live gezet). Op basis daarvan is de hele flow gebouwd in één keer:
+- Auto-aangemaakte `grade_sets`-rij bij een ingeleverde/afgesloten toets.
+- **Nog nakijken** / **Nog becijferen** als twee lijsten onder Grades, met een flashcard-splitscreen nakijk-tool (goed/fout + notitie, plus "automatisch nakijken" met AI).
+- Cijfer-templates (NL/VS/DE kant-en-klaar, handmatige bins, of AI-parsing van geplakte tekst/bestand) via de bestaande `class_grading_presets`-tabel — geen nieuwe kolom/kind nodig, gemarkeerd via `config.templateType`.
+- Twee losse vrijgeef-knoppen (antwoorden / cijfer) + een leerling-resultatenpagina die gate't op `answers_released_at`.
+
+Punten waar ik zelf een pragmatische keuze in heb gemaakt (niet expliciet bevestigd, makkelijk aan te passen):
+- **12**: template geldt nu per klas (kies 'm bij het becijferen); per-grade-set override kán al via de bestaande `grading_preset_id`-kolom maar heeft nog geen eigen UI.
+- **13**: gewicht-per-categorie is niet gebouwd — alleen de bestaande simpele `weight` per grade set.
+- **15**: handmatig een grade set aanmaken (los van een toets) blijft gewoon werken naast de nieuwe flow.
+- **16**: alleen functionaliteit gebouwd, geen visuele hertekening van de teacher-grades pagina's — dat kan later los.
+- **7** (foutgekeurd-meldknop) staat nog niet gebouwd — nog steeds open.
+- AI-parsing van geüploade bestanden werkt nu alleen voor tekstbestanden (.txt/.csv/.md, uitgelezen als platte tekst) — geen OCR/PDF-parsing.
