@@ -12,6 +12,7 @@ import {
   normalizeBlockSettings,
 } from '@/lib/assignments/settings'
 import { getOrCreateAttempt, isAttemptExpired, markAttemptSubmitted } from '@/lib/assignments/attempts'
+import { ensureGradeSetForAssignment } from '@/lib/grades/grade-sets'
 
 export const dynamic = 'force-dynamic'
 
@@ -213,6 +214,7 @@ export async function POST(
     }
 
     await markAttemptSubmitted(supabase, (attempt as any).id, totalScore, totalMax);
+    await ensureGradeSetForAssignment(supabase, resolvedParams.assignmentId);
 
     const { data: allAttempts } = await supabase
       .from('assignment_attempts')

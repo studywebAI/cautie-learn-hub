@@ -116,6 +116,20 @@ export async function GET(
       withAnswers: answersByAssignment.size,
     });
 
+    // Results-released flag (docs/grades-feature-brainstorm.md H point 4/9) —
+    // lets students know their nakijkresultaten are viewable.
+    let resultsReleasedByAssignment = new Map<string, boolean>();
+    if (assignmentIds.length > 0) {
+      const { data: gradeSetRows } = await supabase
+        .from('grade_sets')
+        .select('assignment_id, answers_released_at')
+        .in('assignment_id', assignmentIds);
+      resultsReleasedByAssignment = (gradeSetRows || []).reduce((acc: Map<string, boolean>, row: any) => {
+        if (row.assignment_id) acc.set(row.assignment_id, !!row.answers_released_at);
+        return acc;
+      }, new Map<string, boolean>());
+    }
+
     const transformedAssignments = safeAssignments.map((assignment) => {
       const totalBlocks = blocksByAssignment.get(assignment.id) || 0;
       const answerStats = answersByAssignment.get(assignment.id) || { total: 0, correct: 0 };
@@ -128,6 +142,7 @@ export async function GET(
         block_count: totalBlocks,
         progress_percent,
         correct_percent,
+        results_released: resultsReleasedByAssignment.get(assignment.id) || false,
       };
     });
 

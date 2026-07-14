@@ -43,6 +43,7 @@ type Assignment = {
   progress_percent?: number;
   correct_percent?: number;
   is_pending?: boolean;
+  results_released?: boolean;
 };
 
 type Paragraph = {
@@ -786,6 +787,16 @@ export default function ParagraphDetailPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Nakijkresultaten link (tests only, students only, once released) */}
+                  {!isTeacher && isTest && assignment.results_released && (
+                    <Link prefetch={false}
+                      href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}/results`}
+                      className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
+                    >
+                      {isDutch ? 'Resultaten' : 'Results'}
+                    </Link>
+                  )}
 
                   {/* Share test with another teacher (tests only, teachers only) */}
                   {isTeacher && !assignment.is_pending && isTest && (

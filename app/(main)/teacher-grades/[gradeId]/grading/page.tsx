@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   ChevronLeft,
   Save,
@@ -21,6 +22,8 @@ import { getGradeColor } from '@/lib/grade-coloring';
 import { calculateGradeStats, getGradeDistribution } from '@/lib/grade-calculations';
 import { exportGradesToHTML, exportGradesToPDF, exportGradesToCSV, downloadGradesAsCSV } from '@/lib/grade-export';
 import BulkImportDialog from '@/components/grades/bulk-import-dialog';
+import { GradingTemplatePicker } from '@/components/grades/grading-template-picker';
+import { Send, MessageSquareText } from 'lucide-react';
 
 type Student = {
   id: string;
@@ -54,6 +57,11 @@ export default function GradingInterfacePage() {
   const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
   const [previousGrades, setPreviousGrades] = useState<Record<string, PreviousGrade[]>>({});
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [gradeValues, setGradeValues] = useState<Record<string, string | null>>({});
+  const [rawScores, setRawScores] = useState<Record<string, { score: number; maxScore: number }>>({});
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
+  const [releasing, setReleasing] = useState<'answers' | 'grade' | null>(null);
 
   // Load grade set and students
   useEffect(() => {
@@ -95,12 +103,28 @@ export default function GradingInterfacePage() {
           // Initialize grades and weights from grade set
           const gradeMap: Record<string, number | null> = {};
           const weightMap: Record<string, number | null> = {};
+          const valueMap: Record<string, string | null> = {};
           (foundGrade.student_grades || []).forEach((sg: any) => {
             gradeMap[sg.student_id] = sg.grade_numeric || null;
             weightMap[sg.student_id] = sg.weight || null;
+            valueMap[sg.student_id] = sg.grade_value || null;
           });
           setGradeState(gradeMap);
           setWeights(weightMap);
+          setGradeValues(valueMap);
+          setSelectedPresetId(foundGrade.grading_preset_id || null);
+        }
+
+        if (foundGrade.assignment_id) {
+          const scoresRes = await fetch(`/api/classes/${foundClassId}/grades/${foundGrade.id}/scores`);
+          if (scoresRes.ok) {
+            const scoresData = await scoresRes.json();
+            const map: Record<string, { score: number; maxScore: number }> = {};
+            for (const row of scoresData.scores || []) {
+              map[row.student_id] = { score: row.score, maxScore: row.max_score };
+            }
+            setRawScores(map);
+          }
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -111,6 +135,61 @@ export default function GradingInterfacePage() {
 
     loadData();
   }, [gradeId, context?.classes]);
+
+  const reloadStudentGrades = async () => {
+    if (!classId || !gradeSet?.id) return;
+    const res = await fetch(`/api/classes/${classId}/grades/${gradeSet.id}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const gs = data.grade_set;
+    const gradeMap: Record<string, number | null> = {};
+    const valueMap: Record<string, string | null> = {};
+    (gs?.student_grades || []).forEach((sg: any) => {
+      gradeMap[sg.student_id] = sg.grade_numeric ?? null;
+      valueMap[sg.student_id] = sg.grade_value ?? null;
+    });
+    setGradeState(gradeMap);
+    setGradeValues(valueMap);
+    setGradeSet((prev: any) => ({ ...prev, ...gs }));
+  };
+
+  const applyTemplate = async () => {
+    if (!classId || !gradeSet?.id || !selectedPresetId || applyingTemplate) return;
+    setApplyingTemplate(true);
+    try {
+      await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/apply-template`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preset_id: selectedPresetId }),
+      });
+      await reloadStudentGrades();
+    } finally {
+      setApplyingTemplate(false);
+    }
+  };
+
+  const releaseResults = async (type: 'answers' | 'grade') => {
+    if (!classId || !gradeSet?.id || releasing) return;
+    setReleasing(type);
+    try {
+      const res = await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/release`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGradeSet((prev: any) => ({ ...prev, ...data.grade_set }));
+      }
+    } finally {
+      setReleasing(null);
+    }
+  };
+
+  const handleExpandStudent = (studentId: string) => {
+    setExpandedStudent(prev => (prev === studentId ? null : studentId));
+    void loadPreviousGrades(studentId);
+  };
 
   // Load previous grades when student is expanded
   const loadPreviousGrades = async (studentId: string) => {
@@ -358,6 +437,47 @@ export default function GradingInterfacePage() {
         </div>
       </div>
 
+      {/* Cijfer-template + vrijgeven (alleen voor toets-gekoppelde cijferlijsten) */}
+      {gradeSet.assignment_id && classId && (
+        <Card className="p-3 surface-panel border border-border space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">{isDutch ? 'Cijfer-template:' : 'Grading template:'}</span>
+            <GradingTemplatePicker
+              classId={classId}
+              isDutch={isDutch}
+              selectedPresetId={selectedPresetId}
+              onSelect={setSelectedPresetId}
+              onApply={applyTemplate}
+              applying={applyingTemplate}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2 border-t border-border pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={releasing !== null || !!gradeSet.answers_released_at}
+              onClick={() => releaseResults('answers')}
+            >
+              <MessageSquareText className="h-4 w-4 mr-1.5" />
+              {gradeSet.answers_released_at
+                ? (isDutch ? 'Antwoorden vrijgegeven' : 'Answers released')
+                : (isDutch ? 'Antwoorden vrijgeven' : 'Release answers')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={releasing !== null || !!gradeSet.grade_released_at}
+              onClick={() => releaseResults('grade')}
+            >
+              <Send className="h-4 w-4 mr-1.5" />
+              {gradeSet.grade_released_at
+                ? (isDutch ? 'Cijfer vrijgegeven' : 'Grade released')
+                : (isDutch ? 'Cijfer vrijgeven' : 'Release grade')}
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Sort buttons and undo/redo */}
       {isEditMode && (
         <div className="flex gap-2">
@@ -450,6 +570,11 @@ export default function GradingInterfacePage() {
                       </>
                     )}
                     <span className="text-sm font-medium">{student.full_name}</span>
+                    {rawScores[student.id] && (
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                        ({rawScores[student.id].score}/{rawScores[student.id].maxScore})
+                      </span>
+                    )}
                   </button>
 
                   {/* Previous grades summary */}
@@ -489,6 +614,9 @@ export default function GradingInterfacePage() {
                       }}
                       className="w-16 text-center h-9 text-sm border-2 bg-white dark:bg-[hsl(var(--surface-1))] disabled:opacity-60 disabled:cursor-not-allowed"
                     />
+                    {currentGrade === null && gradeValues[student.id] && (
+                      <span className="text-xs text-muted-foreground ml-1.5">{gradeValues[student.id]}</span>
+                    )}
                   </div>
 
                   {/* Weight input */}

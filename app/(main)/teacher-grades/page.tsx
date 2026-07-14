@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useContext } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Plus, CheckSquare } from 'lucide-react';
+import { Plus, CheckSquare, ClipboardCheck, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
@@ -153,7 +153,21 @@ export default function TeacherGradesLanding() {
       </div>
 
       {/* Action cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Link href="/teacher-grades/review?mode=nakijken">
+          <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
+            <ClipboardCheck className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm">{isDutch ? 'Nog Nakijken' : 'To Review'}</p>
+            <p className="text-xs text-muted-foreground">{isDutch ? 'Goed/fout per vraag' : 'Correct/incorrect per question'}</p>
+          </div>
+        </Link>
+        <Link href="/teacher-grades/review?mode=becijferen">
+          <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm">{isDutch ? 'Nog Becijferen' : 'To Grade'}</p>
+            <p className="text-xs text-muted-foreground">{isDutch ? 'Score omzetten naar cijfer' : 'Turn score into a grade'}</p>
+          </div>
+        </Link>
         <Link href="/teacher-grades/new">
           <div className="class-panel-lg flex flex-col items-center justify-center text-center gap-1.5 cursor-pointer hover:bg-[hsl(var(--interactive-hover))] transition-colors min-h-[80px]">
             <Plus className="h-4 w-4 text-muted-foreground" />

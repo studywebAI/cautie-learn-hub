@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import { getClassPermission } from '@/lib/auth/class-permissions'
 import { markAttemptSubmitted } from '@/lib/assignments/attempts'
 import { computeStudentAnswerStats } from '@/lib/assignments/live-status'
+import { ensureGradeSetForAssignment } from '@/lib/grades/grade-sets'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,6 +75,10 @@ export async function POST(
     for (const attempt of targetAttempts) {
       const stats = await computeStudentAnswerStats(supabase, resolvedParams.assignmentId, (attempt as any).student_id)
       await markAttemptSubmitted(supabase, (attempt as any).id, stats.score, stats.maxScore, 'auto_submitted')
+    }
+
+    if (targetAttempts.length > 0) {
+      await ensureGradeSetForAssignment(supabase, resolvedParams.assignmentId)
     }
 
     return NextResponse.json({ success: true, closedCount: targetAttempts.length })

@@ -58,6 +58,11 @@ export async function POST(
 
     const body = await req.json()
     const { name, kind, config, is_default } = body
+    // NB: 'scale_template' (country grading-scale templates, see
+    // docs/grades-feature-brainstorm.md section I) is NOT a real `kind` value —
+    // the DB CHECK constraint only allows freeform/numeric_range/letter_scale.
+    // We reuse 'freeform' and mark it via config.templateType instead, to
+    // avoid a migration for this.
     const allowedKinds = new Set(['freeform', 'numeric_range', 'letter_scale'])
 
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -110,6 +115,11 @@ export async function PATCH(
 
     const body = await req.json()
     const { preset_id, name, kind, config, is_default } = body
+    // NB: 'scale_template' (country grading-scale templates, see
+    // docs/grades-feature-brainstorm.md section I) is NOT a real `kind` value —
+    // the DB CHECK constraint only allows freeform/numeric_range/letter_scale.
+    // We reuse 'freeform' and mark it via config.templateType instead, to
+    // avoid a migration for this.
     const allowedKinds = new Set(['freeform', 'numeric_range', 'letter_scale'])
 
     if (!preset_id || typeof preset_id !== 'string') {
