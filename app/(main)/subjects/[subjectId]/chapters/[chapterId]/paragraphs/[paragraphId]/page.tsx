@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { Settings, EyeOff, Lock } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
-import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType } from '@/lib/assignments/presets';
+import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType, withContentDefaults } from '@/lib/assignments/presets';
 
 type Assignment = {
   id: string;
@@ -136,8 +136,10 @@ export default function ParagraphDetailPage() {
     assignmentTypeDescription: isDutch ? 'Kies eerst het doel. Wij zetten slimme standaardinstellingen klaar.' : 'Choose the goal first. We apply smart defaults.',
     homework: isDutch ? 'Huiswerk' : 'Homework',
     test: isDutch ? 'Toets' : 'Test',
+    content: isDutch ? 'Leerstof' : 'Content',
     homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
     testCaption: isDutch ? 'Getimed, gecontroleerd, beoordelingsmodus' : 'Timed, controlled, assessment mode',
+    contentCaption: isDutch ? 'Tekst, foto\'s, video — geen vragen, geen cijfer' : 'Text, photos, video — no questions, no grade',
     starterTitle: isDutch ? 'Kies een Starter' : 'Choose a Starter',
     starterDescription: isDutch ? 'Begin met een bewezen opzet of start helemaal zelf.' : 'Start with a proven layout or build your own.',
     createYourOwn: isDutch ? 'Zelf Opbouwen' : 'Create Your Own',
@@ -160,6 +162,9 @@ export default function ParagraphDetailPage() {
     addToAgenda: isDutch ? 'Toevoegen Aan Agenda' : 'Add to Agenda',
     createHomework: isDutch ? 'Huiswerk maken' : 'Create homework',
     createTest: isDutch ? 'Toets maken' : 'Create test',
+    createContent: isDutch ? 'Leerstof maken' : 'Create content',
+    contentSettingsTitle: isDutch ? 'Leerstof-instellingen' : 'Content settings',
+    contentSettingsHint: isDutch ? 'Geen deadline, timer of anti-cheat nodig — dit is leesmateriaal, geen toets.' : 'No deadline, timer, or anti-cheat needed — this is reading material, not a test.',
     allAssignments: isDutch ? 'Alles' : 'All',
     onlyHomework: isDutch ? 'Huiswerk' : 'Homework',
     onlyTests: isDutch ? 'Toetsen' : 'Tests',
@@ -293,33 +298,40 @@ export default function ParagraphDetailPage() {
     const scheduledStartAt = createKind === 'test' ? toIsoOrNull(testStartsAtLocal) : null;
     const scheduledEndAt = createKind === 'test'
       ? toIsoOrNull(testEndsAtLocal)
-      : toIsoOrNull(homeworkDueAtLocal);
+      : (createKind === 'homework' ? toIsoOrNull(homeworkDueAtLocal) : null);
     const effectiveSettingsBase = normalizeAssignmentSettings(DEFAULT_ASSIGNMENT_SETTINGS);
-    const withPresetSettings = selectedPreset ? selectedPreset.applyDefaults(effectiveSettingsBase) : effectiveSettingsBase;
-    const effectiveSettings = normalizeAssignmentSettings({
-      ...withPresetSettings,
-      time: {
-        ...withPresetSettings.time,
-        startAt: scheduledStartAt,
-        endAt: scheduledEndAt,
-        durationMinutes: createKind === 'test' ? timerMinutes : null,
-        showTimer: createKind === 'test',
-      },
-      attempts: {
-        ...withPresetSettings.attempts,
-        maxAttempts: createKind === 'test' ? attemptLimit : (withPresetSettings.attempts.maxAttempts || 3),
-      },
-      access: {
-        ...withPresetSettings.access,
-        shuffleQuestions: createKind === 'test' ? randomizeQuestions : withPresetSettings.access.shuffleQuestions,
-        shuffleAnswers: createKind === 'test' ? randomizeAnswers : withPresetSettings.access.shuffleAnswers,
-      },
-      antiCheat: {
-        ...withPresetSettings.antiCheat,
-        requireFullscreen: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.requireFullscreen,
-        detectTabSwitch: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.detectTabSwitch,
-      },
-    });
+    const withPresetSettings = createKind === 'content'
+      ? withContentDefaults(effectiveSettingsBase)
+      : (selectedPreset ? selectedPreset.applyDefaults(effectiveSettingsBase) : effectiveSettingsBase);
+    const effectiveSettings = createKind === 'content'
+      ? normalizeAssignmentSettings({
+          ...withPresetSettings,
+          time: { ...withPresetSettings.time, startAt: null, endAt: null },
+        })
+      : normalizeAssignmentSettings({
+          ...withPresetSettings,
+          time: {
+            ...withPresetSettings.time,
+            startAt: scheduledStartAt,
+            endAt: scheduledEndAt,
+            durationMinutes: createKind === 'test' ? timerMinutes : null,
+            showTimer: createKind === 'test',
+          },
+          attempts: {
+            ...withPresetSettings.attempts,
+            maxAttempts: createKind === 'test' ? attemptLimit : (withPresetSettings.attempts.maxAttempts || 3),
+          },
+          access: {
+            ...withPresetSettings.access,
+            shuffleQuestions: createKind === 'test' ? randomizeQuestions : withPresetSettings.access.shuffleQuestions,
+            shuffleAnswers: createKind === 'test' ? randomizeAnswers : withPresetSettings.access.shuffleAnswers,
+          },
+          antiCheat: {
+            ...withPresetSettings.antiCheat,
+            requireFullscreen: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.requireFullscreen,
+            detectTabSwitch: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.detectTabSwitch,
+          },
+        });
     const nextIndex = assignments.length > 0
       ? Math.max(...assignments.map((assignment) => assignment.assignment_index || 0)) + 1
       : 0;
@@ -429,8 +441,9 @@ export default function ParagraphDetailPage() {
 
         if (addToAgenda && newAssignment?.class_id) {
           const isTest = createKind === 'test';
-          const agendaTitle = isTest ? `${t.test}: ${title}` : `${t.homework}: ${title}`;
-          const dueAt = isTest ? scheduledEndAt : scheduledEndAt;
+          const kindLabel = isTest ? t.test : (createKind === 'content' ? t.content : t.homework);
+          const agendaTitle = `${kindLabel}: ${title}`;
+          const dueAt = scheduledEndAt;
           const startsAt = isTest ? scheduledStartAt : null;
           const agendaRes = await fetch(`/api/classes/${newAssignment.class_id}/agenda`, {
             method: 'POST',
@@ -619,6 +632,7 @@ export default function ParagraphDetailPage() {
             const correctPct = assignment.correct_percent ?? 0;
             const incorrectPct = roundedProgress > 0 ? roundedProgress - correctPct : 0;
             const isTest = assignment.type === 'small_test' || assignment.type === 'big_test';
+            const isContent = !isTest && assignment.settings?.delivery?.isContent === true;
 
             return (
               <div
@@ -645,8 +659,8 @@ export default function ParagraphDetailPage() {
                     {assignment.title}
                   </Link>
                 )}
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${isTest ? 'bg-amber-100 text-amber-900' : 'bg-emerald-100 text-emerald-900'}`}>
-                  {isTest ? t.test : t.homework}
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${isTest ? 'bg-amber-100 text-amber-900' : isContent ? 'bg-sky-100 text-sky-900' : 'bg-emerald-100 text-emerald-900'}`}>
+                  {isTest ? t.test : isContent ? t.content : t.homework}
                 </span>
 
                 {/* Status indicators */}
@@ -757,7 +771,7 @@ export default function ParagraphDetailPage() {
               <div className="space-y-3">
                 <p className="text-sm font-medium">{t.assignmentTypeTitle}</p>
                 <p className="text-xs text-muted-foreground">{t.assignmentTypeDescription}</p>
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-3">
                   <button
                     type="button"
                     className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
@@ -773,6 +787,14 @@ export default function ParagraphDetailPage() {
                   >
                     <p className="text-sm font-medium">{t.test}</p>
                     <p className="text-xs text-muted-foreground">{t.testCaption}</p>
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-xl border p-4 text-left transition ${createKind === 'content' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
+                    onClick={() => setCreateKind('content')}
+                  >
+                    <p className="text-sm font-medium">{t.content}</p>
+                    <p className="text-xs text-muted-foreground">{t.contentCaption}</p>
                   </button>
                 </div>
               </div>
@@ -851,7 +873,16 @@ export default function ParagraphDetailPage() {
                   />
                 </div>
 
-                {createKind === 'homework' ? (
+                {createKind === 'content' ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">{t.contentSettingsTitle}</p>
+                    <p className="text-xs text-muted-foreground">{t.contentSettingsHint}</p>
+                    <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
+                      <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
+                      {t.addToAgenda}
+                    </label>
+                  </div>
+                ) : createKind === 'homework' ? (
                   <div className="space-y-3">
                     <p className="text-sm font-medium">{t.homeworkSettingsTitle}</p>
                     <div>
@@ -946,17 +977,29 @@ export default function ParagraphDetailPage() {
                 resetCreateWizard();
                 return;
               }
+              // Content-mode skips the preset/block-mix step (step 2), so step 3 goes straight back to step 1.
+              if (createStep === 3 && createKind === 'content') {
+                setCreateStep(1);
+                return;
+              }
               setCreateStep((prev) => (prev === 1 ? 1 : (prev - 1) as 1 | 2 | 3));
             }}>
               {createStep === 1 ? t.cancel : t.back}
             </Button>
             {createStep < 3 ? (
-              <Button onClick={() => setCreateStep((prev) => (prev === 3 ? 3 : (prev + 1) as 1 | 2 | 3))}>
+              <Button onClick={() => {
+                // Content assignments aren't a "mix" of question types, so there's nothing to preset-pick.
+                if (createStep === 1 && createKind === 'content') {
+                  setCreateStep(3);
+                  return;
+                }
+                setCreateStep((prev) => (prev === 3 ? 3 : (prev + 1) as 1 | 2 | 3));
+              }}>
                 {t.continueBtn}
               </Button>
             ) : (
               <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment}>
-                {isCreatingAssignment ? t.creating : (createKind === 'test' ? t.createTest : t.createHomework)}
+                {isCreatingAssignment ? t.creating : (createKind === 'test' ? t.createTest : createKind === 'content' ? t.createContent : t.createHomework)}
               </Button>
             )}
           </DialogFooter>

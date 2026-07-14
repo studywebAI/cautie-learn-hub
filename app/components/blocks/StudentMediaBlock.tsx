@@ -13,17 +13,21 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
 }) => {
   const renderContent = () => {
     switch (block.type) {
-      case 'image':
-        const imageContent = block.data as ImageBlockContent;
+      case 'image': {
+        const imageContent = block.data as ImageBlockContent & { alt?: string };
+        if (!imageContent?.url) {
+          return <div className="text-sm text-muted-foreground">No image uploaded yet.</div>;
+        }
+        const transform = imageContent.transform;
         return (
           <div className="space-y-2">
             <img
               src={imageContent.url}
-              alt={imageContent.caption || ''}
+              alt={imageContent.alt || imageContent.caption || ''}
               className="max-w-full h-auto rounded-lg"
-              style={{
-                transform: `translate(${imageContent.transform.x}px, ${imageContent.transform.y}px) scale(${imageContent.transform.scale}) rotate(${imageContent.transform.rotation}deg)`,
-              }}
+              style={transform ? {
+                transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale}) rotate(${transform.rotation}deg)`,
+              } : undefined}
             />
             {imageContent.caption && (
               <p className="text-sm text-muted-foreground text-center">
@@ -32,28 +36,47 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
             )}
           </div>
         );
+      }
 
-      case 'video':
-        const videoContent = block.data as VideoBlockContent;
-        if (videoContent.provider === 'youtube') {
-          const videoId = videoContent.url.split('v=')[1]?.split('&')[0];
+      case 'video': {
+        const videoContent = block.data as VideoBlockContent & { caption?: string };
+        if (!videoContent?.url) {
+          return <div className="text-sm text-muted-foreground">No video uploaded yet.</div>;
+        }
+        const isYoutube = videoContent.provider === 'youtube'
+          || /(?:youtube\.com\/watch\?v=|youtu\.be\/)/.test(videoContent.url);
+        if (isYoutube) {
+          const videoId = videoContent.url.includes('youtu.be/')
+            ? videoContent.url.split('youtu.be/')[1]?.split('?')[0]
+            : videoContent.url.split('v=')[1]?.split('&')[0];
           return (
             <div className="space-y-2">
               <div className="aspect-video">
                 <iframe
-                  src={`https://www.youtube.com/embed/${videoId}?start=${videoContent.start_seconds}`}
+                  src={`https://www.youtube.com/embed/${videoId}?start=${videoContent.start_seconds || 0}`}
                   className="w-full h-full rounded-lg"
                   allowFullScreen
                 />
               </div>
+              {videoContent.caption && (
+                <p className="text-sm text-muted-foreground text-center">
+                  {videoContent.caption}
+                </p>
+              )}
             </div>
           );
         }
         return (
-          <div className="text-sm text-muted-foreground">
-            Video content: {videoContent.url}
+          <div className="space-y-2">
+            <video src={videoContent.url} controls className="w-full rounded-lg" />
+            {videoContent.caption && (
+              <p className="text-sm text-muted-foreground text-center">
+                {videoContent.caption}
+              </p>
+            )}
           </div>
         );
+      }
 
       case 'media_embed':
         const embedContent = block.data as MediaEmbedContent;

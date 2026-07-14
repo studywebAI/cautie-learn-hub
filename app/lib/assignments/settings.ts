@@ -47,6 +47,9 @@ export interface AssignmentSettings {
     autosave: boolean;
     allowResume: boolean;
     instructionText: string;
+    // True for "content" assignments created via the wizard's Content option (docs/subjects-feature-brainstorm.md
+    // section D point 13): pure lesson material (text/photo/video) rather than a graded homework/test.
+    isContent: boolean;
   };
   advanced: {
     questionPoolSize: number | null;
@@ -156,6 +159,7 @@ export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettings = {
     autosave: true,
     allowResume: true,
     instructionText: '',
+    isContent: false,
   },
   advanced: {
     questionPoolSize: null,

@@ -27,7 +27,10 @@ import {
   SlidersHorizontal,
   Eye,
   Users,
-  Pencil
+  Pencil,
+  Image as ImageIcon,
+  Video,
+  Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -193,6 +196,20 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
       embed_url: '',
       description: ''
     }
+  },
+  {
+    id: 'image',
+    type: 'image',
+    icon: <ImageIcon className="h-4 w-4" />,
+    label: 'Image',
+    defaultData: { url: '', caption: '', alt: '' }
+  },
+  {
+    id: 'video',
+    type: 'video',
+    icon: <Video className="h-4 w-4" />,
+    label: 'Video',
+    defaultData: { url: '', caption: '' }
   }
 ];
 
@@ -323,6 +340,8 @@ export function AssignmentEditor({
   ]);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('default');
   
+  const [uploadingBlockId, setUploadingBlockId] = useState<string | null>(null);
+
   const paperRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -1136,6 +1155,34 @@ export function AssignmentEditor({
     input.click();
   };
 
+  const handleMediaUpload = (block: AssignmentBlock, mediaType: 'image' | 'video') => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = mediaType === 'image' ? 'image/jpeg,image/png,image/gif,image/webp' : 'video/mp4,video/webm,video/ogg';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setUploadingBlockId(block.id);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', mediaType);
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (!res.ok || !result.url) {
+          throw new Error(result.error || 'Upload failed');
+        }
+        updateBlock(block.id, { ...block.data, url: result.url });
+      } catch (error: any) {
+        toast({ title: 'Upload failed', description: error?.message || 'Please try again.', variant: 'destructive' });
+      } finally {
+        setUploadingBlockId(null);
+      }
+    };
+    input.click();
+  };
+
   const renderBlockContent = (block: AssignmentBlock) => {
     const canEditBlock = showTeacherControls && selectedBlock === block.id;
     const renderReadOnlyActions = () => {
@@ -1563,6 +1610,119 @@ export function AssignmentEditor({
             autoFocus={canEditBlock && selectedBlock === block.id}
           />
         );
+
+      case 'image': {
+        const isUploading = uploadingBlockId === block.id;
+        return (
+          <div className="space-y-2">
+            {block.data.url ? (
+              <div className="space-y-2">
+                <img
+                  src={block.data.url}
+                  alt={block.data.alt || ''}
+                  className="max-w-full max-h-64 rounded-md border border-border object-contain"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {canEditBlock && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'image'); }}
+                    className="h-6 text-xs text-muted-foreground"
+                    disabled={isUploading}
+                  >
+                    <Upload className="h-3 w-3 mr-1" /> Replace image
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'image'); }}
+                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                disabled={!canEditBlock || isUploading}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><ImageIcon className="h-4 w-4 mr-2" /> Click to upload image</>
+                )}
+              </Button>
+            )}
+            <Input
+              value={block.data.caption || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, caption: e.target.value })}
+              placeholder="Caption (optional)..."
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
+            <Input
+              value={block.data.alt || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, alt: e.target.value })}
+              placeholder="Alt text (for accessibility)..."
+              className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-xs text-muted-foreground"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
+          </div>
+        );
+      }
+
+      case 'video': {
+        const isUploading = uploadingBlockId === block.id;
+        return (
+          <div className="space-y-2">
+            {block.data.url ? (
+              <div className="space-y-2">
+                <video
+                  src={block.data.url}
+                  controls
+                  className="max-w-full max-h-64 rounded-md border border-border"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {canEditBlock && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'video'); }}
+                    className="h-6 text-xs text-muted-foreground"
+                    disabled={isUploading}
+                  >
+                    <Upload className="h-3 w-3 mr-1" /> Replace video
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'video'); }}
+                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                disabled={!canEditBlock || isUploading}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><Video className="h-4 w-4 mr-2" /> Click to upload video</>
+                )}
+              </Button>
+            )}
+            <Input
+              value={block.data.caption || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, caption: e.target.value })}
+              placeholder="Caption (optional)..."
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
+          </div>
+        );
+      }
 
       default:
         return <div className="text-sm text-muted-foreground">{block.type}</div>;

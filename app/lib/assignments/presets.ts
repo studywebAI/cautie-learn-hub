@@ -1,6 +1,6 @@
 import type { AssignmentSettings, AssignmentType } from '@/lib/assignments/settings';
 
-export type AssignmentCreateKind = 'homework' | 'test';
+export type AssignmentCreateKind = 'homework' | 'test' | 'content';
 
 export type AssignmentPreset = {
   id: string;
@@ -98,6 +98,42 @@ function withTestDefaults(
   };
 }
 
+export function withContentDefaults(settings: AssignmentSettings): AssignmentSettings {
+  return {
+    ...settings,
+    time: {
+      ...settings.time,
+      durationMinutes: null,
+      timerMode: 'deadline',
+      showTimer: false,
+    },
+    attempts: {
+      ...settings.attempts,
+      maxAttempts: null,
+      scoreMode: 'best',
+    },
+    antiCheat: {
+      ...settings.antiCheat,
+      requireFullscreen: false,
+      detectTabSwitch: false,
+    },
+    access: {
+      ...settings.access,
+      shuffleQuestions: false,
+      shuffleAnswers: false,
+    },
+    grading: {
+      ...settings.grading,
+      autoGrade: false,
+      manualReviewOpenQuestions: false,
+    },
+    delivery: {
+      ...settings.delivery,
+      isContent: true,
+    },
+  };
+}
+
 export const ASSIGNMENT_PRESETS: AssignmentPreset[] = [
   {
     id: 'hw-concept-check',
@@ -155,7 +191,13 @@ export const ASSIGNMENT_PRESETS: AssignmentPreset[] = [
 ];
 
 export function toAssignmentType(kind: AssignmentCreateKind): AssignmentType {
-  return kind === 'test' ? 'small_test' : 'homework';
+  // Note: the `assignments.type` DB column only allows 'homework' | 'small_test' | 'big_test'
+  // (see supabase/migrations/20250215_add_type_to_assignments.sql). Content-mode assignments are
+  // stored as 'homework' at the DB level and distinguished via settings.delivery.isContent, rather
+  // than widening the DB check constraint for what is otherwise homework-shaped (no due-date
+  // requirement, no timer/anti-cheat).
+  if (kind === 'test') return 'small_test';
+  return 'homework';
 }
 
 export function getPresetById(presetId: string | null | undefined): AssignmentPreset | null {
