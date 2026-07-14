@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { addDays, format, isToday, parseISO, startOfDay } from 'date-fns';
-import { ChevronRight, FlaskConical } from 'lucide-react';
+import { format, isToday, isTomorrow, parseISO, startOfDay } from 'date-fns';
+import { ChevronRight, FlaskConical, ClipboardList } from 'lucide-react';
 import type { ClassAssignment, ClassInfo } from '@/contexts/app-context';
 
 type Props = {
@@ -11,78 +11,90 @@ type Props = {
   classes: ClassInfo[];
 };
 
-type DayEntry = { id: string; title: string; className: string; isTest: boolean };
-type Day = { date: Date; label: string; items: DayEntry[] };
+type NextItem = { id: string; title: string; className: string; isTest: boolean; dueDate: Date };
 
 function isTest(a: ClassAssignment) {
   const t = (a.type || '').toLowerCase();
   return t === 'small_test' || t === 'big_test' || t === 'test' || t === 'quiz' || t === 'exam';
 }
 
+function dayLabel(d: Date): string {
+  if (isToday(d)) return 'Today';
+  if (isTomorrow(d)) return 'Tomorrow';
+  return format(d, 'EEE d MMM');
+}
+
+// "Next up" — the teacher's own agenda items (tests/homework they've
+// scheduled), not the school timetable/rooster. Always renders: real items
+// when there are any, otherwise 3 placeholder blocks instead of vanishing —
+// keeps the dashboard from feeling empty on a fresh/quiet class.
 export function TeacherAgendaWidget({ assignments, classes }: Props) {
-  const days = useMemo<Day[]>(() => {
-    const start = startOfDay(new Date());
-    const result: Day[] = Array.from({ length: 7 }, (_, i) => {
-      const date = addDays(start, i);
-      return { date, label: format(date, i === 0 ? "'Today'" : 'EEE d'), items: [] };
-    });
+  const items = useMemo<NextItem[]>(() => {
+    const today = startOfDay(new Date());
+    const upcoming: NextItem[] = [];
 
     for (const a of Array.isArray(assignments) ? assignments : []) {
       if (!a.due_date) continue;
       let due: Date;
       try { due = startOfDay(parseISO(a.due_date)); } catch { continue; }
-      const dayIndex = result.findIndex(d => d.date.getTime() === due.getTime());
-      if (dayIndex === -1) continue;
+      if (due.getTime() < today.getTime()) continue;
       const cls = classes.find(c => c.id === a.class_id);
-      result[dayIndex].items.push({
+      upcoming.push({
         id: a.id,
         title: a.title,
         className: cls?.name || 'Class',
         isTest: isTest(a),
+        dueDate: due,
       });
     }
 
-    return result;
+    return upcoming.sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime()).slice(0, 4);
   }, [assignments, classes]);
-
-  const hasItems = days.some(d => d.items.length > 0);
-  if (!hasItems) return null;
 
   return (
     <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Upcoming deadlines you&apos;ve set</p>
+        <p className="text-sm">Next up</p>
         <Link href="/agenda" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1">
           Open agenda <ChevronRight className="h-3 w-3" />
         </Link>
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
-        {days.map(day => (
-          <div key={day.date.toISOString()} className="min-w-0">
-            <p className="text-[9px] text-muted-foreground truncate mb-1">{day.label}</p>
-            <div className="space-y-0.5">
-              {day.items.slice(0, 2).map(item => (
-                <Link
-                  prefetch={false}
-                  key={item.id}
-                  href={`/agenda?itemId=${item.id}`}
-                  title={`${item.title} — ${item.className}`}
-                  className={`flex items-center gap-0.5 truncate rounded px-1 py-0.5 text-[9px] leading-tight hover:bg-[hsl(var(--interactive-hover))] transition-colors ${
-                    item.isTest ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {item.isTest && <FlaskConical className="h-2.5 w-2.5 shrink-0" />}
-                  <span className="truncate">{item.title}</span>
-                </Link>
-              ))}
-              {day.items.length > 2 && (
-                <p className="text-[9px] text-muted-foreground px-1">+{day.items.length - 2}</p>
-              )}
+      {items.length === 0 ? (
+        <div className="space-y-1.5" aria-hidden="true">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 rounded-lg px-2.5 py-2">
+              <div className="h-3.5 w-3.5 rounded-full bg-muted animate-pulse shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-2.5 w-2/5 rounded bg-muted animate-pulse" />
+                <div className="h-2 w-1/4 rounded bg-muted animate-pulse" />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {items.map(item => (
+            <Link
+              key={item.id}
+              prefetch={false}
+              href={`/agenda?itemId=${item.id}`}
+              className="flex items-center gap-3 rounded-lg px-2.5 py-2 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+            >
+              {item.isTest ? (
+                <FlaskConical className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              ) : (
+                <ClipboardList className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-medium truncate">{item.title}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{item.className}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground shrink-0">{dayLabel(item.dueDate)}</span>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from "react";
 import { School } from "lucide-react";
 import { AppContext, AppContextType } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { MySubjects } from "@/components/dashboard/my-subjects";
@@ -21,7 +20,6 @@ import { TeacherStatRow } from "@/components/dashboard/teacher-stat-row";
 import { TeacherAgendaWidget } from "@/components/dashboard/teacher-agenda-widget";
 import { TeacherToGradeCard } from "@/components/dashboard/teacher-to-grade-card";
 import { TeacherLiveTestWidget } from "@/components/dashboard/teacher-live-test-widget";
-import { TeacherClassesList } from "@/components/dashboard/teacher-classes-list";
 
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
@@ -268,21 +266,6 @@ function TeacherSummaryDashboard() {
                 )}
 
                 <TeacherToGradeCard classIds={teacherClassIds} />
-
-                {/* Always-present, real content: the teacher's actual classes */}
-                <TeacherClassesList classes={teacherClasses} activeClassId={resolvedClassId} />
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Manage Attendance</CardTitle>
-                    <CardDescription>Track student attendance</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button asChild className="w-full" variant="outline">
-                      <Link href="/agenda">View Attendance</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
               </div>
             )}
         </div>
