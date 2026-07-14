@@ -85,10 +85,10 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 21. `[x]` **Gebouwd.** Share-knop bij een toets (alleen zichtbaar bij test-type assignments) genereert een code + link, docent B plakt die code op de Subjects-pagina + kiest doelparagraaf → volledig losstaande kopie (nieuwe assignment + gekopieerde blocks, geen sync). Code zit in de bestaande `settings`-JSONB i.p.v. een nieuwe kolom — geen migratie nodig, zelfde truc als G1. Kopie krijgt automatisch `is_visible: false` (zelfde G1-regel) en lege scheduling, dus de importerende docent plant zelf opnieuw in.
 
 ### G4. Live tijdens de toets
-22. `[x]` Dashboard-widget voor docenten met live voortgang per leerling: goed/fout-telling, of "–" als iets nog niet nagekeken/gemaakt is (open vragen worden niet automatisch nagekeken tenzij AI-nakijken aanstaat). **Beslist: verschijnt automatisch op het dashboard zodra een toets van jou live is, sluit aan bij het "doorverwijspunt"-principe.**
-23. `[ ]` Live status per leerling: wie zit er nu in de toets, wie is eruit gegaan.
-24. `[ ]` Extra beveiliging: als een leerling een heel antwoord in ~0.1 seconde plakt (plak-detectie, bovenop de al bestaande tab-switch/fullscreen-detectie) → waarschuwing voor de docent.
-25. `[ ]` Docent kan de toets live afsluiten — per leerling, of voor iedereen tegelijk — plus "meer handige opties" (nog niet gespecificeerd door gebruiker, blijft open).
+22. `[x]` **Gebouwd.** Zelf-verbergend dashboard-widget (verschijnt alleen als er echt een toets live is), pollt elke 30s zoals de bestaande reminder-checkers. Klapt uit naar per-leerling goed/fout/nog-niet-nagekeken-tellingen.
+23. `[x]` **Gebouwd, met een eerlijke kanttekening.** Geen websockets/heartbeat in deze codebase, dus "wie is eruit gegaan" is een proxy: een attempt met status `in_progress` waarvan het laatste event >2 minuten geleden is, wordt gemarkeerd als `possiblyLeft`. Geen harde garantie, wel een bruikbare hint voor de docent.
+24. `[x]` **Gebouwd.** Plak-detectie op open vragen: een plak-actie van >30 tekens vuurt een `suspicious_paste`-event (hergebruikt de al bestaande vrije-vorm event-log, geen schema-wijziging). Exacte "binnen 0.1 seconde"-timing is client-side niet betrouwbaar te meten, dus de heuristiek is "grote plak-actie" i.p.v. millisecondes.
+25. `[x]` **Gebouwd — alleen de twee genoemde acties.** Per-leerling afsluiten en alles-afsluiten, beide scoren de huidige antwoorden en zetten de attempt op `auto_submitted` (geen nieuwe status mogelijk door de DB-constraint, dus hergebruikt de bestaande auto-submit-waarde). "Meer handige opties" bleef ongespecificeerd, dus niet zelf verzonnen — laat het weten als je iets specifieks wil toevoegen.
 
 ### G5. Nakijken (fase 1 — correct/incorrect, geen cijfer)
 26. `[ ]` Na afloop gaat de toets naar "to grade" (Grades-tab, mogelijk ook zichtbaar op dashboard). Nakijken = bepalen wat goed/fout is, nog **geen cijfer**.
