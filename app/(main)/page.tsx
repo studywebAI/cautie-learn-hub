@@ -21,6 +21,7 @@ import { DashboardCustomizeMenu, loadDashboardPrefs, DEFAULT_DASHBOARD_PREFS, ty
 import { TeacherStatRow } from "@/components/dashboard/teacher-stat-row";
 import { TeacherAgendaWidget } from "@/components/dashboard/teacher-agenda-widget";
 import { TeacherToGradeCard } from "@/components/dashboard/teacher-to-grade-card";
+import { TeacherLiveTestWidget } from "@/components/dashboard/teacher-live-test-widget";
 
 // Thin wrapper so we can reference it inside TeacherSummaryDashboard
 function RecentActivityFeedSection() {
@@ -261,7 +262,7 @@ function TeacherSummaryDashboard() {
                 <TeacherMessageComposer classId={resolvedClassId} />
                 <DashboardCustomizeMenu
                   role="teacher"
-                  widgetKeys={['agenda']}
+                  widgetKeys={['agenda', 'liveTest']}
                   onChange={setTeacherDashboardPrefs}
                 />
                 <NotificationPopover />
@@ -278,6 +279,10 @@ function TeacherSummaryDashboard() {
               </div>
             ) : (
               <div className={`flex flex-col ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
+                {teacherDashboardPrefs.widgets.liveTest && (
+                  <TeacherLiveTestWidget classIds={teacherClassIds} />
+                )}
+
                 {teacherDashboardPrefs.widgets.agenda && (
                   <TeacherAgendaWidget assignments={assignments} classes={teacherClasses} />
                 )}

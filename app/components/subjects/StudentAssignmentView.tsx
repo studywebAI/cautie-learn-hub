@@ -580,6 +580,12 @@ export function StudentAssignmentView({
                   onSubmit={(answerData: any) => handleAnswerChange(block.id, answerData)}
                   gradingResult={studentAnswers[block.id]?.gradingResult}
                   isSubmitted={!!studentAnswers[block.id]}
+                  onSuspiciousPaste={({ blockId, charCount }) => {
+                    void sendAssignmentEvent('suspicious_paste', {
+                      block_id: blockId,
+                      char_count: charCount,
+                    });
+                  }}
                 />
               </CardContent>
             </Card>

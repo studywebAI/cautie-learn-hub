@@ -25,6 +25,7 @@ interface StudentBlockRendererProps {
   onSubmit: (answerData: any) => Promise<{ ok: boolean; error?: string }>;
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
+  onSuspiciousPaste?: (info: { blockId: string; charCount: number }) => void;
 }
 
 export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
@@ -32,6 +33,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
   onSubmit,
   gradingResult,
   isSubmitted,
+  onSuspiciousPaste,
 }) => {
   const settings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
   const renderBlock = () => {
@@ -40,6 +42,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       onSubmit,
       gradingResult,
       isSubmitted,
+      onSuspiciousPaste,
     };
 
     switch (block.type) {

@@ -108,9 +108,14 @@ export async function getOrCreateAttempt(
   return created;
 }
 
-export async function markAttemptSubmitted(supabase: any, attemptId: string, score: number, maxScore: number) {
+export async function markAttemptSubmitted(
+  supabase: any,
+  attemptId: string,
+  score: number,
+  maxScore: number,
+  status: 'submitted' | 'auto_submitted' = 'submitted',
+) {
   const nowIso = new Date().toISOString();
-  const status = 'submitted';
   const { data, error } = await supabase
     .from('assignment_attempts')
     .update({

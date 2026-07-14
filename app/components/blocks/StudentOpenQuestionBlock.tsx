@@ -16,11 +16,16 @@ interface GradingResult {
   graded_at?: string;
 }
 
+// A paste this large relative to what's already typed is treated as "suspicious"
+// (pasting a whole answer in) and reported to the teacher-facing live monitor.
+const SUSPICIOUS_PASTE_CHAR_THRESHOLD = 30;
+
 interface StudentOpenQuestionBlockProps {
   block: BaseBlock & { data: OpenQuestionContent };
   onSubmit: (answerData: any) => Promise<{ ok: boolean; error?: string }>;
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
+  onSuspiciousPaste?: (info: { blockId: string; charCount: number }) => void;
 }
 
 export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> = ({
@@ -28,6 +33,7 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
   onSubmit,
   gradingResult,
   isSubmitted = false,
+  onSuspiciousPaste,
 }) => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +90,9 @@ export const StudentOpenQuestionBlock: React.FC<StudentOpenQuestionBlockProps> =
             const pasted = e.clipboardData?.getData('text') || '';
             setPasteCount((prev) => prev + 1);
             setPasteChars((prev) => prev + pasted.length);
+            if (pasted.length > SUSPICIOUS_PASTE_CHAR_THRESHOLD) {
+              onSuspiciousPaste?.({ blockId: block.id, charCount: pasted.length });
+            }
           }}
           disabled={isSubmitted || isSubmitting}
           rows={6}
