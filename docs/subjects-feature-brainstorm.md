@@ -91,12 +91,14 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 25. `[x]` **Gebouwd — alleen de twee genoemde acties.** Per-leerling afsluiten en alles-afsluiten, beide scoren de huidige antwoorden en zetten de attempt op `auto_submitted` (geen nieuwe status mogelijk door de DB-constraint, dus hergebruikt de bestaande auto-submit-waarde). "Meer handige opties" bleef ongespecificeerd, dus niet zelf verzonnen — laat het weten als je iets specifieks wil toevoegen.
 
 ### G5. Nakijken (fase 1 — correct/incorrect, geen cijfer)
-26. `[ ]` Na afloop gaat de toets naar "to grade" (Grades-tab, mogelijk ook zichtbaar op dashboard). Nakijken = bepalen wat goed/fout is, nog **geen cijfer**.
-27. `[ ]` Docent kiest: automatisch laten nakijken door Cautie AI, of handmatig.
-28. `[ ]` Docent bepaalt zelf wanneer de nagekeken antwoorden zichtbaar worden voor leerlingen (geen automatische directe release).
+26. `[x]` **Beslist.** Meerkeuze automatisch. Open vragen: docent zelf óf Cautie AI. Resultaat = score (bv. "4 goed, 2 fout"), nog geen cijfer. **"To Grade" leeft in Grades zelf** (niet een apart dashboard-concept — de dashboard-kaart die er al is blijft gewoon linken naar Grades). Grades heeft hiervoor een **grote refactor nodig** — zie `docs/grades-feature-brainstorm.md`, dit is te groot om binnen de Subjects-scope te bouwen.
+27. `[x]` **Beslist.** Automatisch-nakijken-met-AI wordt aangeklikt **vanuit Grades**, niet vanuit Subjects/het live-toets-paneel.
+28. `[x]` **Beslist.** Antwoorden-vrijgeven en cijfer-vrijgeven zijn **twee gescheiden acties** — nakijk-resultaten tonen (welke vraag goed/fout) kan los van het cijfer zelf vrijgeven.
 
 ### G6. Cijfers geven (fase 2 — losstaand van fase 1)
-29. `[ ]` Docent maakt een grade set aan (geeft het een naam), en vult cijfers in — handmatig, of automatisch. **Bewuste scheiding tussen fase 1 en 2:** Cautie levert de objectieve score (bv. "4 goed, 11 fout"), maar de docent bepaalt zelf hoe dat naar een cijfer vertaalt — want cijfersystemen verschillen internationaal (VS: A–F, Duitsland: 1–8, Nederland: 1–10, etc.). Cautie kan dus nooit zelf "het cijfer" bepalen, alleen de ruwe score.
+29. `[x]` **Beslist, met uitbreiding.** Docent bepaalt zelf hoe de ruwe score naar een cijfer vertaalt. **Nieuw:** we bieden **cijfer-templates** aan (gebaseerd op land/systeem — NL 1-10, VS A-F, Duitsland 1-6, etc., of een eigen uitleg van hun scoresysteem) — als een docent zo'n template kiest, kan het cijfer daarna automatisch berekend worden volgens die template/formule i.p.v. steeds handmatig. Cautie bepaalt dus nog steeds nooit zelf "het" cijfer zonder een door de docent gekozen/ingestelde regel.
+
+**→ Sectie G is hiermee inhoudelijk klaar wat betreft beslissingen. De uitvoering van G5/G6 valt samen met een grotere Grades-tab-herziening — zie het nieuwe `docs/grades-feature-brainstorm.md`.**
 
 ---
 
