@@ -1,8 +1,9 @@
 'use client';
 import { useContext, useEffect, useState } from "react";
-import { CalendarCheck, ChevronRight, School, MessageSquarePlus } from "lucide-react";
+import { School } from "lucide-react";
 import { AppContext, AppContextType } from "@/contexts/app-context";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Link from "next/link";
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { MySubjects } from "@/components/dashboard/my-subjects";
@@ -20,6 +21,7 @@ import { TeacherStatRow } from "@/components/dashboard/teacher-stat-row";
 import { TeacherAgendaWidget } from "@/components/dashboard/teacher-agenda-widget";
 import { TeacherToGradeCard } from "@/components/dashboard/teacher-to-grade-card";
 import { TeacherLiveTestWidget } from "@/components/dashboard/teacher-live-test-widget";
+import { TeacherClassesList } from "@/components/dashboard/teacher-classes-list";
 
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
@@ -231,6 +233,7 @@ function TeacherSummaryDashboard() {
                 </p>
               </div>
               <div className="flex items-center gap-1">
+                <TeacherMessageComposer classId={resolvedClassId} />
                 <DashboardCustomizeMenu
                   role="teacher"
                   widgetKeys={['agenda', 'liveTest']}
@@ -245,7 +248,7 @@ function TeacherSummaryDashboard() {
 
             {teacherClasses.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-12 text-center surface-panel flex flex-col items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--accent-brand)]/10 text-[var(--accent-brand)]">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground/5 text-muted-foreground">
                   <School className="h-5 w-5" />
                 </span>
                 <div>
@@ -266,41 +269,20 @@ function TeacherSummaryDashboard() {
 
                 <TeacherToGradeCard classIds={teacherClassIds} />
 
-                {/* Primary actions — the two things a teacher actually reaches for daily */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <TeacherMessageComposer
-                    classId={resolvedClassId}
-                    trigger={
-                      <button
-                        disabled={!resolvedClassId}
-                        className="group flex items-start gap-3 rounded-xl border border-border bg-gradient-to-br from-blue-500/[0.06] to-transparent p-4 text-left shadow-sm transition-all hover:shadow-md hover:border-blue-500/30 disabled:opacity-50 disabled:pointer-events-none"
-                      >
-                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600 shrink-0">
-                          <MessageSquarePlus className="h-4 w-4" />
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm">Message your class</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Send a quick note to everyone or one student</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5 mt-1" />
-                      </button>
-                    }
-                  />
+                {/* Always-present, real content: the teacher's actual classes */}
+                <TeacherClassesList classes={teacherClasses} activeClassId={resolvedClassId} />
 
-                  <Link
-                    href="/agenda"
-                    className="group flex items-start gap-3 rounded-xl border border-border bg-gradient-to-br from-[var(--accent-brand)]/[0.06] to-transparent p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
-                  >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-brand)]/15 text-[var(--accent-brand)] shrink-0">
-                      <CalendarCheck className="h-4 w-4" />
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">Manage attendance</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Mark today, or review the week</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5 mt-1" />
-                  </Link>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Manage Attendance</CardTitle>
+                    <CardDescription>Track student attendance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href="/agenda">View Attendance</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             )}
         </div>

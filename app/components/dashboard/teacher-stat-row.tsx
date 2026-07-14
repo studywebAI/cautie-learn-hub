@@ -53,41 +53,35 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="group rounded-xl border border-border bg-gradient-to-br from-foreground/[0.04] to-transparent p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="rounded-xl surface-panel border border-border p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Classes</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/10 text-foreground/70">
-              <School className="h-3.5 w-3.5" />
-            </span>
+            <School className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
           <div className="text-2xl tabular-nums">{classesCount}</div>
         </div>
 
         <Link
           href="/teacher-grades"
-          className="group rounded-xl border border-border bg-gradient-to-br from-amber-500/[0.07] to-transparent p-4 shadow-sm transition-all hover:shadow-md hover:border-amber-500/30"
+          className="rounded-xl surface-panel border border-border p-4 shadow-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors"
         >
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">To grade</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
-              <ClipboardList className="h-3.5 w-3.5" />
-            </span>
+            <ClipboardList className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <div className={`text-2xl tabular-nums ${!loading && pendingCount > 0 ? 'text-amber-600' : ''}`}>
+          <div className="text-2xl tabular-nums">
             {loading ? '—' : pendingCount}
           </div>
         </Link>
 
         <button
           onClick={() => setExpanded(v => !v)}
-          className="group text-left rounded-xl border border-border bg-gradient-to-br from-[var(--accent-brand)]/[0.07] to-transparent p-4 shadow-sm transition-all hover:shadow-md hover:border-[var(--accent-brand)]/30"
+          className="text-left rounded-xl surface-panel border border-border p-4 shadow-sm hover:bg-[hsl(var(--interactive-hover))] transition-colors"
         >
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Average grade</span>
             <span className="flex items-center gap-1">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--accent-brand)]/15 text-[var(--accent-brand)]">
-                <GraduationCap className="h-3.5 w-3.5" />
-              </span>
+              <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
               <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </span>
           </div>
@@ -96,16 +90,12 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
           </div>
         </button>
 
-        <div className="rounded-xl border border-border bg-gradient-to-br from-blue-500/[0.07] to-transparent p-4 shadow-sm transition-shadow hover:shadow-md">
+        <div className="rounded-xl surface-panel border border-border p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Notifications</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600">
-              <Bell className="h-3.5 w-3.5" />
-            </span>
+            <Bell className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <span className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-xs tabular-nums ${
-            unreadCount > 0 ? 'bg-[var(--accent-brand)] text-white' : 'bg-foreground/10 text-muted-foreground'
-          }`}>
+          <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-primary-foreground text-xs tabular-nums">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         </div>

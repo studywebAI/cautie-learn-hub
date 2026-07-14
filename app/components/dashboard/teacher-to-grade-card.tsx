@@ -41,18 +41,13 @@ export function TeacherToGradeCard({ classIds }: { classIds: string[] }) {
   if (loading || totalCount === 0) return null;
 
   return (
-    <div className="rounded-xl border border-amber-500/25 bg-gradient-to-br from-amber-500/[0.06] to-transparent p-4 space-y-3 shadow-sm">
+    <div className="rounded-xl surface-panel border border-border p-4 space-y-3 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 shrink-0">
-            <ClipboardCheck className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="text-sm">Ready to grade</p>
-            <p className="text-xs text-muted-foreground">
-              {totalCount} test{totalCount !== 1 ? 's' : ''} reviewed, waiting on a final grade
-            </p>
-          </div>
+        <div>
+          <p className="text-sm">Ready to grade</p>
+          <p className="text-xs text-muted-foreground">
+            {totalCount} test{totalCount !== 1 ? 's' : ''} reviewed, waiting on a final grade
+          </p>
         </div>
         <Link href="/teacher-grades/review?mode=becijferen" className="text-xs text-foreground hover:opacity-70 flex items-center gap-1 shrink-0">
           View all <ChevronRight className="h-3 w-3" />
@@ -65,8 +60,9 @@ export function TeacherToGradeCard({ classIds }: { classIds: string[] }) {
             key={g.id}
             prefetch={false}
             href={`/teacher-grades/${g.id}/grading`}
-            className="group flex items-center gap-2.5 rounded-lg bg-background/40 px-3 py-2 hover:bg-background/70 transition-colors"
+            className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
           >
+            <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-medium truncate">{g.title}</p>
               <p className="text-[10px] text-muted-foreground truncate">{g.class_name}</p>
