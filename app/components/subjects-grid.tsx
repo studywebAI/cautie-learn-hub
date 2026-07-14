@@ -3,6 +3,7 @@
 import React, { useState, useContext, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -313,7 +314,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {[...Array(6)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-0">
@@ -344,15 +345,24 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         )}
 
         {subjects.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border surface-panel p-12 text-center flex flex-col items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground/5 text-muted-foreground">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm">No subjects yet</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {isTeacher ? 'Create one to start adding chapters, tests and materials.' : "Your teacher hasn't added any subjects yet."}
+              </p>
+            </div>
             {isTeacher && (
-              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl">
+              <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl mt-1">
                 Create First Subject
               </Button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {subjects.map((subject) => (
               <SubjectCard key={subject.id} subject={subject} />
             ))}

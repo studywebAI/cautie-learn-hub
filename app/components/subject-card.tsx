@@ -320,7 +320,7 @@ export function SubjectCard({ subject }: SubjectCardProps) {
 
   return (
     <Card
-      className="h-full cursor-pointer overflow-hidden rounded-2xl border-none surface-panel transition-all duration-200 hover:surface-panel hover:shadow-sm"
+      className="h-full cursor-pointer overflow-hidden rounded-2xl border border-border surface-panel shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20"
       role="button"
       tabIndex={0}
       onClick={() => router.push(subjectHref)}
