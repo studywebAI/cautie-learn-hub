@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
-import { Settings, EyeOff, Lock, Share2, Copy, Check } from 'lucide-react';
+import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType, withContentDefaults } from '@/lib/assignments/presets';
@@ -178,6 +178,8 @@ export default function ParagraphDetailPage() {
   const [resolvedChapterId, setResolvedChapterId] = useState(chapterId);
   const [subjectPath, setSubjectPath] = useState<BreadcrumbSubject | null>(null);
   const [chapterPath, setChapterPath] = useState<BreadcrumbChapter | null>(null);
+  const [generateMenuOpen, setGenerateMenuOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
@@ -598,6 +600,40 @@ export default function ParagraphDetailPage() {
     }
   };
 
+  // One-click "generate flashcards/quiz from this chapter's leerstof"
+  // (docs/subjects-feature-brainstorm.md section D point 14) — reuses the
+  // existing standalone Flashcards/Quiz tools via their sourceText query-param
+  // handoff, same pattern as app/(main)/material/page.tsx.
+  const handleGenerateFromParagraph = async (kind: 'flashcards' | 'quiz') => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    setGenerateMenuOpen(false);
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/text-content`);
+      if (!res.ok) throw new Error('Failed to load paragraph content');
+      const data = await res.json();
+      const sourceText = String(data?.sourceText || '').trim();
+      if (!sourceText) {
+        toast({
+          variant: 'destructive',
+          title: isDutch ? 'Geen leerstof gevonden' : 'No content found',
+          description: isDutch ? 'Voeg eerst tekstblokken toe aan deze paragraaf.' : 'Add text blocks to this paragraph first.',
+        });
+        return;
+      }
+      const encoded = encodeURIComponent(sourceText.slice(0, 4000));
+      if (kind === 'flashcards') {
+        router.push(`/tools/flashcards?sourceText=${encoded}`);
+      } else {
+        router.push(`/tools/quiz?sourceText=${encoded}&autostart=1`);
+      }
+    } catch {
+      toast({ variant: 'destructive', title: isDutch ? 'Mislukt' : 'Failed' });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const resetCreateWizard = () => {
     setCreateStep(1);
     setCreateKind('homework');
@@ -690,6 +726,34 @@ export default function ParagraphDetailPage() {
                 {t.onlyTests}
               </Button>
             </div>
+            {/* One-click flashcards/quiz generation from this paragraph's leerstof */}
+            {isTeacher && assignments.length > 0 && (
+              <Popover open={generateMenuOpen} onOpenChange={setGenerateMenuOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={isGenerating}>
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="text-xs">{isDutch ? 'Genereren' : 'Generate'}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-56 p-1.5">
+                  <button
+                    onClick={() => handleGenerateFromParagraph('flashcards')}
+                    className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
+                  >
+                    <Layers className="h-4 w-4 text-muted-foreground" />
+                    {isDutch ? 'Flashcards van dit hoofdstuk' : 'Flashcards from this chapter'}
+                  </button>
+                  <button
+                    onClick={() => handleGenerateFromParagraph('quiz')}
+                    className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
+                  >
+                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                    {isDutch ? 'Quiz van dit hoofdstuk' : 'Quiz from this chapter'}
+                  </button>
+                </PopoverContent>
+              </Popover>
+            )}
+
             {/* Bulk settings for all assignments */}
             {isTeacher && assignments.length > 0 && (
               <Popover open={bulkSettingsOpen} onOpenChange={setBulkSettingsOpen}>
