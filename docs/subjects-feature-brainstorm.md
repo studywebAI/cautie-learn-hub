@@ -43,14 +43,14 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 ## B. Subject-lijst pagina (`/subjects`)
 
 6. `[x]` **Gebouwd.** `cover_image_url` wordt nu getoond i.p.v. het keyword-icoon zodra een subject een eigen cover heeft; de nooit-aangeroepen `IconCover`-component (dode code) is verwijderd. `[Gemiste feature]` (bugfix, geen brainstorm-punt eigenlijk)
-7. `[ ]` Filter/sorteer subjects (bv. op voortgang, laatst actief, klas) — nu gewoon een vaste grid-volgorde. `[Eigen idee]`
+7. `[x]` **Gebouwd, met kanttekening.** Filter op klas + sorteer op naam/laatst actief op de subjects-lijst. "Laatst actief" heeft alleen data via de student-route (`/api/subjects`) — de klas-gescopede docent-route (`/api/classes/[classId]/subjects`) berekent `paragraphContext` niet, dus voor docenten werkt die sortering nu stil niet (naam-sortering en klas-filter werken overal). Voortgang als sorteeroptie liet ik weg — bleek server-side niet eens berekend te worden voor de lijst-route (alleen per-subject detail endpoints). `[Eigen idee]`
 8. `[ ]` Archiveren van een subject (voor afgeronde vakken/schooljaren) i.p.v. dat de lijst blijft groeien. `[Forum/review — Quizlet folders/nested organisatie expliciet gevraagd]`
 9. `[ ]` Subjects groeperen in mappen/categorieën (bv. per schooljaar of vakkengroep) — Quizlet-gebruikers vroegen expliciet om geneste mappen. `[Competitor: Quizlet folders]` `[Forum/review]`
 
 ## C. Subject-detailpagina (chapter-overzicht)
 
 10. `[x]` **Gebouwd, andere vorm dan origineel voorgesteld.** Geen aparte materialen-sectie, maar een nieuw "file"-blocktype in de assignment-editor (upload + downloadknop, zelfde patroon als image/video) én bestand-bijlagen op agenda-items ("Attach file"-knop). **Migratie nodig** (`20260716_add_file_block_type.sql`) — nog niet gedraaid. `[Competitor: Google Classroom "Materials"]` `[Gemiste feature]`
-11. `[ ]` Chapters slepen om te herordenen i.p.v. vaste volgorde. `[Competitor: Canvas Modules, LMS course builders algemeen]`
+11. `[x]` **Gebouwd.** Grip-handle per hoofdstuk (alleen docent), native drag-and-drop, optimistisch met terugdraaien bij een mislukte save. `[Competitor: Canvas Modules, LMS course builders algemeen]`
 12. `[x]` **Gebouwd.** Klein voortgangsbalkje onder het hoofdstuknummer op de subject-pagina, gemiddelde van alle paragraaf-voortgangen in dat hoofdstuk. `[Eigen idee]`
 
 ## D. Chapter- en paragraaf-pagina
@@ -62,7 +62,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 ## E. Assignment/Block-editor
 
 16. `[ ]` AI-assistentie in de block-editor zelf: bv. "genereer 3 meerkeuzevragen over dit onderwerp" direct vanuit de editor i.p.v. alleen via de externe preset-wizard. `[Eigen idee]` `[Gemiste feature]`
-17. `[ ]` Hergebruik van een blok-set tussen assignments (kopiëren/dupliceren i.p.v. steeds opnieuw opbouwen). `[Eigen idee]`
+17. `[x]` **Gebouwd.** "Kopieer blokken van..."-paneel in de editor, hoofdstuk/paragraaf/opdracht-kiezer binnen hetzelfde subject, kopieert (nieuwe ids, geen link) alle blocks van de bronopdracht erbij. `[Eigen idee]`
 
 ## F. Aanmaak-snelkoppeling (S0, meegenomen vanuit dashboard)
 
