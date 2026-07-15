@@ -264,6 +264,22 @@ export default function ParagraphDetailPage() {
   // Auto-track study session for students
   useSessionTracking(paragraphId, !isTeacher);
 
+  // Auto-open the create wizard when arriving via the Subjects-page "new
+  // assignment/test" shortcut (S0, docs/subjects-feature-brainstorm.md
+  // section F point 18) — reads plain window.location instead of
+  // useSearchParams() to avoid requiring a Suspense boundary here.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('create') === '1') {
+      setCreateStep(1);
+      setCreateKind(urlParams.get('kind') === 'test' ? 'test' : 'homework');
+      setSelectedPresetId(null);
+      setIsCreateAssignmentOpen(true);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
   // Get adjacent paragraphs
   const currentIndex = allParagraphs.findIndex(p => p.id === paragraphId);
   const prevParagraph = currentIndex > 0 ? allParagraphs[currentIndex - 1] : null;

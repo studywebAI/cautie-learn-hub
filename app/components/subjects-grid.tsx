@@ -69,6 +69,67 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [isLoadingImportParagraphs, setIsLoadingImportParagraphs] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
+  // Quick-create shortcut (S0, docs/subjects-feature-brainstorm.md section F
+  // point 18) — jump straight to "new assignment/test" without drilling
+  // three levels deep first.
+  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
+  const [quickCreateKind, setQuickCreateKind] = useState<'homework' | 'test'>('homework');
+  const [quickCreateSubjectId, setQuickCreateSubjectId] = useState('');
+  const [quickCreateChapterId, setQuickCreateChapterId] = useState('');
+  const [quickCreateParagraphId, setQuickCreateParagraphId] = useState('');
+  const [quickCreateChapters, setQuickCreateChapters] = useState<Array<{ id: string; title: string }>>([]);
+  const [quickCreateParagraphs, setQuickCreateParagraphs] = useState<Array<{ id: string; title: string }>>([]);
+  const [isLoadingQuickCreateChapters, setIsLoadingQuickCreateChapters] = useState(false);
+  const [isLoadingQuickCreateParagraphs, setIsLoadingQuickCreateParagraphs] = useState(false);
+
+  useEffect(() => {
+    if (!quickCreateSubjectId) {
+      setQuickCreateChapters([]);
+      setQuickCreateChapterId('');
+      return;
+    }
+    setIsLoadingQuickCreateChapters(true);
+    setQuickCreateChapterId('');
+    setQuickCreateParagraphId('');
+    fetch(`/api/subjects/${quickCreateSubjectId}/chapters`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setQuickCreateChapters(Array.isArray(data) ? data : []))
+      .catch(() => setQuickCreateChapters([]))
+      .finally(() => setIsLoadingQuickCreateChapters(false));
+  }, [quickCreateSubjectId]);
+
+  useEffect(() => {
+    if (!quickCreateSubjectId || !quickCreateChapterId) {
+      setQuickCreateParagraphs([]);
+      setQuickCreateParagraphId('');
+      return;
+    }
+    setIsLoadingQuickCreateParagraphs(true);
+    setQuickCreateParagraphId('');
+    fetch(`/api/subjects/${quickCreateSubjectId}/chapters/${quickCreateChapterId}/paragraphs`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setQuickCreateParagraphs(Array.isArray(data) ? data : []))
+      .catch(() => setQuickCreateParagraphs([]))
+      .finally(() => setIsLoadingQuickCreateParagraphs(false));
+  }, [quickCreateSubjectId, quickCreateChapterId]);
+
+  const resetQuickCreateState = () => {
+    setQuickCreateKind('homework');
+    setQuickCreateSubjectId('');
+    setQuickCreateChapterId('');
+    setQuickCreateParagraphId('');
+    setQuickCreateChapters([]);
+    setQuickCreateParagraphs([]);
+  };
+
+  const handleQuickCreateGo = () => {
+    if (!quickCreateParagraphId) return;
+    setIsQuickCreateOpen(false);
+    const kindParam = quickCreateKind === 'test' ? '&kind=test' : '';
+    router.push(`/subjects/${quickCreateSubjectId}/chapters/${quickCreateChapterId}/paragraphs/${quickCreateParagraphId}?create=1${kindParam}`);
+    resetQuickCreateState();
+  };
+
   useEffect(() => {
     if (!importSubjectId) {
       setImportChapters([]);
@@ -335,10 +396,13 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       <div className="space-y-6 text-[13px] text-foreground">
         {isTeacher && (
           <div className="flex justify-end gap-2">
+            <Button onClick={() => setIsQuickCreateOpen(true)} size="sm" className="h-9 rounded-xl">
+              + New assignment/test
+            </Button>
             <Button onClick={() => setIsImportOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
               Import Test
             </Button>
-            <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl">
+            <Button onClick={() => setIsCreateOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
               + Create Subject
             </Button>
           </div>
@@ -542,6 +606,95 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
               className="rounded-xl"
             >
               {isImporting ? 'Importing...' : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick-create shortcut (S0, docs/subjects-feature-brainstorm.md section F) */}
+      <Dialog open={isQuickCreateOpen} onOpenChange={(open) => { setIsQuickCreateOpen(open); if (!open) resetQuickCreateState(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New assignment or test</DialogTitle>
+            <DialogDescription>
+              Pick where it goes — you'll land straight in the create wizard.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>What are you creating?</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={quickCreateKind === 'homework' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setQuickCreateKind('homework')}
+                >
+                  Homework
+                </Button>
+                <Button
+                  type="button"
+                  variant={quickCreateKind === 'test' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setQuickCreateKind('test')}
+                >
+                  Test
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subject</Label>
+              <Select value={quickCreateSubjectId} onValueChange={setQuickCreateSubjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subjects.map((subject) => (
+                    <SelectItem key={subject.id} value={subject.id}>{subject.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Chapter</Label>
+              <Select value={quickCreateChapterId} onValueChange={setQuickCreateChapterId} disabled={!quickCreateSubjectId || isLoadingQuickCreateChapters}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingQuickCreateChapters ? 'Loading...' : 'Choose a chapter'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {quickCreateChapters.map((chapter: any) => (
+                    <SelectItem key={chapter.id} value={chapter.id}>
+                      {chapter.title}{chapter.is_tests_chapter ? ' (Toetsen)' : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Paragraph</Label>
+              <Select value={quickCreateParagraphId} onValueChange={setQuickCreateParagraphId} disabled={!quickCreateChapterId || isLoadingQuickCreateParagraphs}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isLoadingQuickCreateParagraphs ? 'Loading...' : 'Choose a paragraph'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {quickCreateParagraphs.map((paragraph) => (
+                    <SelectItem key={paragraph.id} value={paragraph.id}>{paragraph.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsQuickCreateOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button onClick={handleQuickCreateGo} disabled={!quickCreateParagraphId} className="rounded-xl">
+              Continue
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -298,17 +298,6 @@ function getSubjectIcon(title: string, description?: string | null) {
   return fallbackIcons[hash % fallbackIcons.length];
 }
 
-function IconCover({ title, description }: { title: string; description?: string | null }) {
-  const IconComponent = getSubjectIcon(title, description);
-
-  return (
-    <div className="w-full h-full bg-primary/10 flex items-center justify-center relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,hsl(var(--primary)/0.2),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--primary)/0.14),transparent_50%)]" />
-      <IconComponent className="w-20 h-20 text-primary relative z-10" strokeWidth={1.5} />
-    </div>
-  );
-}
-
 export function SubjectCard({ subject }: SubjectCardProps) {
   const router = useRouter();
   const paragraphs = subject.paragraphContext?.paragraphs || [];
@@ -333,9 +322,16 @@ export function SubjectCard({ subject }: SubjectCardProps) {
     >
       <CardContent className="p-0 flex flex-col h-full">
         <div className="px-4 pt-4 pb-3">
-          <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg surface-interactive text-foreground">
-            <Icon className="h-4 w-4" strokeWidth={1.8} />
-          </div>
+          {subject.cover_image_url ? (
+            <div className="mb-2 h-8 w-8 overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={subject.cover_image_url} alt="" className="h-full w-full object-cover" />
+            </div>
+          ) : (
+            <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg surface-interactive text-foreground">
+              <Icon className="h-4 w-4" strokeWidth={1.8} />
+            </div>
+          )}
           <h3 className="truncate text-[13px] font-medium text-foreground">{subject.title}</h3>
           {className && (
             <p className="mt-0.5 truncate text-[12px] text-sidebar-foreground">{className}</p>
