@@ -61,7 +61,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ## E. Assignment/Block-editor
 
-16. `[ ]` AI-assistentie in de block-editor zelf: bv. "genereer 3 meerkeuzevragen over dit onderwerp" direct vanuit de editor i.p.v. alleen via de externe preset-wizard. `[Eigen idee]` `[Gemiste feature]`
+16. `[x]` **Gebouwd — zelfde feature als A1.** Het chatbox-invoegcommando in de editor dekt dit al: "genereer 3 meerkeuzevragen over dit onderwerp" werkt daar al direct, geen aparte bouw nodig. `[Eigen idee]` `[Gemiste feature]`
 17. `[x]` **Gebouwd.** "Kopieer blokken van..."-paneel in de editor, hoofdstuk/paragraaf/opdracht-kiezer binnen hetzelfde subject, kopieert (nieuwe ids, geen link) alle blocks van de bronopdracht erbij. `[Eigen idee]`
 
 ## F. Aanmaak-snelkoppeling (S0, meegenomen vanuit dashboard)
