@@ -1,8 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { MoreVertical, ArchiveRestore, FolderInput } from 'lucide-react';
 import {
   // Science - Biology
   Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather, 
@@ -78,7 +82,13 @@ type SubjectCardProps = {
     cover_image_url?: string;
     classes?: { id: string; name: string }[];
     paragraphContext?: ParagraphContext;
+    archived_at?: string | null;
+    folder_id?: string | null;
   };
+  isTeacher?: boolean;
+  folders?: { id: string; name: string }[];
+  onSubjectUpdated?: (subjectId: string, patch: { archived_at?: string | null; folder_id?: string | null }) => void;
+  onCreateFolder?: (name: string) => Promise<string | null>;
 };
 
 // Comprehensive keyword-to-icon component mapping
@@ -298,18 +308,72 @@ function getSubjectIcon(title: string, description?: string | null) {
   return fallbackIcons[hash % fallbackIcons.length];
 }
 
-export function SubjectCard({ subject }: SubjectCardProps) {
+export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onCreateFolder }: SubjectCardProps) {
   const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [isBusy, setIsBusy] = useState(false);
   const paragraphs = subject.paragraphContext?.paragraphs || [];
   const lastParagraphId = subject.paragraphContext?.lastParagraphId;
   const className = subject.classes?.[0]?.name;
   const Icon = getSubjectIcon(subject.title, subject.description);
+
+  const toggleArchive = async () => {
+    if (isBusy) return;
+    setIsBusy(true);
+    try {
+      const nextArchived = !subject.archived_at;
+      const res = await fetch(`/api/subjects/${subject.id}/archive`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: nextArchived }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onSubjectUpdated?.(subject.id, { archived_at: data.subject?.archived_at ?? null });
+        setMenuOpen(false);
+      }
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const setFolder = async (folderId: string | null) => {
+    if (isBusy) return;
+    setIsBusy(true);
+    try {
+      const res = await fetch(`/api/subjects/${subject.id}/folder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId }),
+      });
+      if (res.ok) {
+        onSubjectUpdated?.(subject.id, { folder_id: folderId });
+        setMenuOpen(false);
+      }
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleCreateFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name || !onCreateFolder || isBusy) return;
+    setIsBusy(true);
+    try {
+      const folderId = await onCreateFolder(name);
+      if (folderId) await setFolder(folderId);
+      setNewFolderName('');
+    } finally {
+      setIsBusy(false);
+    }
+  };
   const subjectHref = `/subjects/${subject.id}`;
   const lastWorkedParagraph = (lastParagraphId && paragraphs.find((paragraph) => paragraph.id === lastParagraphId)) || paragraphs[0] || null;
 
   return (
     <Card
-      className="h-full cursor-pointer overflow-hidden rounded-2xl border border-border surface-panel shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20"
+      className="relative h-full cursor-pointer overflow-hidden rounded-2xl border border-border surface-panel shadow-sm transition-all duration-200 hover:shadow-md hover:border-foreground/20"
       role="button"
       tabIndex={0}
       onClick={() => router.push(subjectHref)}
@@ -320,6 +384,69 @@ export function SubjectCard({ subject }: SubjectCardProps) {
         }
       }}
     >
+      {isTeacher && (
+        <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground backdrop-blur-sm"
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-1.5 space-y-1">
+              <button
+                onClick={toggleArchive}
+                disabled={isBusy}
+                className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
+              >
+                {subject.archived_at ? <ArchiveRestore className="h-4 w-4 text-muted-foreground" /> : <Archive className="h-4 w-4 text-muted-foreground" />}
+                {subject.archived_at ? 'Unarchive' : 'Archive'}
+              </button>
+              <div className="border-t border-border my-1" />
+              <p className="px-2.5 pt-1 pb-0.5 text-[10px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <FolderInput className="h-3 w-3" /> Move to folder
+              </p>
+              <button
+                onClick={() => setFolder(null)}
+                disabled={isBusy}
+                className={`w-full rounded-md px-2.5 py-1.5 text-sm text-left hover:surface-interactive ${!subject.folder_id ? 'font-medium' : ''}`}
+              >
+                No folder
+              </button>
+              {(folders || []).map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setFolder(f.id)}
+                  disabled={isBusy}
+                  className={`w-full rounded-md px-2.5 py-1.5 text-sm text-left hover:surface-interactive ${subject.folder_id === f.id ? 'font-medium' : ''}`}
+                >
+                  {f.name}
+                </button>
+              ))}
+              {onCreateFolder && (
+                <div className="flex items-center gap-1 pt-1">
+                  <Input
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="New folder..."
+                    className="h-7 text-xs"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={handleCreateFolder}
+                    disabled={!newFolderName.trim() || isBusy}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:surface-interactive text-muted-foreground"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
       <CardContent className="p-0 flex flex-col h-full">
         <div className="px-4 pt-4 pb-3">
           {subject.cover_image_url ? (

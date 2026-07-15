@@ -174,12 +174,19 @@ export async function POST(
   { params }: { params: Promise<{ subjectId: string; chapterId: string }> }
 ) {
   try {
+    // Clone before validateBody consumes the original's body stream.
+    const rawBodyRequest = request.clone();
+
     // Validate request body
     const validation = await validateBody(request, createParagraphSchema);
     if ('error' in validation) {
       return validation.error;
     }
     const { title } = validation.data;
+    const rawBody = await rawBodyRequest.json().catch(() => ({}));
+    const prerequisiteParagraphId = typeof rawBody?.prerequisite_paragraph_id === 'string' && rawBody.prerequisite_paragraph_id
+      ? rawBody.prerequisite_paragraph_id
+      : null;
 
     const cookieStore = await cookies()
     const supabase = await createClient(cookieStore)
@@ -205,7 +212,8 @@ export async function POST(
       .insert({
         chapter_id: resolvedParams.chapterId,
         paragraph_number: nextNumber,
-        title: title?.trim()
+        title: title?.trim(),
+        prerequisite_paragraph_id: prerequisiteParagraphId,
       })
       .select()
       .single();

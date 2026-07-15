@@ -50,6 +50,9 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'default' | 'name' | 'recent'>('default');
   const [filterClassId, setFilterClassId] = useState<string>('all');
+  const [filterFolderId, setFilterFolderId] = useState<string>('all');
+  const [showArchived, setShowArchived] = useState(false);
+  const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
   const [newSubjectDescription, setNewSubjectDescription] = useState('');
@@ -162,6 +165,34 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       .catch(() => setImportParagraphs([]))
       .finally(() => setIsLoadingImportParagraphs(false));
   }, [importSubjectId, importChapterId]);
+
+  useEffect(() => {
+    if (!isTeacher) return;
+    fetch('/api/subject-folders')
+      .then((res) => (res.ok ? res.json() : { folders: [] }))
+      .then((data) => setFolders(Array.isArray(data.folders) ? data.folders : []))
+      .catch(() => setFolders([]));
+  }, [isTeacher]);
+
+  const handleSubjectUpdated = (subjectId: string, patch: { archived_at?: string | null; folder_id?: string | null }) => {
+    setSubjects((prev) => prev.map((s) => (s.id === subjectId ? { ...s, ...patch } : s)));
+  };
+
+  const handleCreateFolder = async (name: string): Promise<string | null> => {
+    try {
+      const res = await fetch('/api/subject-folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      setFolders((prev) => [...prev, data.folder]);
+      return data.folder?.id || null;
+    } catch {
+      return null;
+    }
+  };
 
   const resetImportState = () => {
     setImportCode('');
@@ -404,9 +435,14 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   }, [subjects]);
 
   const visibleSubjects = useMemo(() => {
-    let list = subjects;
+    let list = subjects.filter((subject: any) => showArchived || !subject.archived_at);
     if (filterClassId !== 'all') {
       list = list.filter((subject: any) => (subject.classes || []).some((c: any) => c.id === filterClassId));
+    }
+    if (filterFolderId !== 'all') {
+      list = filterFolderId === 'none'
+        ? list.filter((subject: any) => !subject.folder_id)
+        : list.filter((subject: any) => subject.folder_id === filterFolderId);
     }
     if (sortBy === 'name') {
       list = [...list].sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
@@ -418,13 +454,26 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       });
     }
     return list;
-  }, [subjects, sortBy, filterClassId]);
+  }, [subjects, sortBy, filterClassId, filterFolderId, showArchived]);
 
   return (
     <>
       <div className="space-y-6 text-[13px] text-foreground">
         {subjects.length > 1 && (
           <div className="flex items-center gap-2 justify-end flex-wrap">
+            {isTeacher && folders.length > 0 && (
+              <select
+                value={filterFolderId}
+                onChange={(e) => setFilterFolderId(e.target.value)}
+                className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
+              >
+                <option value="all">All folders</option>
+                <option value="none">No folder</option>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>{f.name}</option>
+                ))}
+              </select>
+            )}
             {classFilterOptions.length > 1 && (
               <select
                 value={filterClassId}
@@ -446,6 +495,12 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
               <option value="name">Name (A-Z)</option>
               <option value="recent">Recently active</option>
             </select>
+            {isTeacher && (
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
+                <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-3.5 w-3.5" />
+                Show archived
+              </label>
+            )}
           </div>
         )}
         {isTeacher && (
@@ -482,7 +537,14 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visibleSubjects.map((subject) => (
-              <SubjectCard key={subject.id} subject={subject} />
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                isTeacher={isTeacher}
+                folders={folders}
+                onSubjectUpdated={handleSubjectUpdated}
+                onCreateFolder={handleCreateFolder}
+              />
             ))}
           </div>
         )}

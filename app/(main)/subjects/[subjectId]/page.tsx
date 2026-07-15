@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Lock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,8 @@ type Paragraph = {
   progress_percent: number;
   answers_enabled?: boolean;
   is_pending?: boolean;
+  prerequisite_paragraph_id?: string | null;
+  locked?: boolean;
 };
 
 type Chapter = {
@@ -67,14 +69,16 @@ export default function SubjectDetailPage() {
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
   const [dragOverChapterId, setDragOverChapterId] = useState<string | null>(null);
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
+  const [newParagraphPrerequisiteId, setNewParagraphPrerequisiteId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
-  const { role } = useContext(AppContext) as AppContextType;
+  const { role, language } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
+  const isDutch = language === 'nl';
 
   const loadSubjectOverview = async () => {
     const response = await fetch(`/api/subjects/${subjectId}/overview`, { cache: 'no-store' });
@@ -249,7 +253,9 @@ export default function SubjectDetailPage() {
           : chapter
       )
     );
+    const resolvedPrerequisiteId = newParagraphPrerequisiteId || null;
     setNewParagraphTitle('');
+    setNewParagraphPrerequisiteId('');
     setSelectedChapterId(null);
     setIsCreateParagraphOpen(false);
 
@@ -257,7 +263,7 @@ export default function SubjectDetailPage() {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/${requestChapterId}/paragraphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: resolvedTitle }),
+        body: JSON.stringify({ title: resolvedTitle, prerequisite_paragraph_id: resolvedPrerequisiteId }),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -506,6 +512,23 @@ export default function SubjectDetailPage() {
                     {visibleParagraphs.map((paragraph) => {
                       const roundedProgress = Math.ceil(paragraph.progress_percent || 0);
 
+                      if (paragraph.locked) {
+                        const prereq = allParagraphs.find((p) => p.id === paragraph.prerequisite_paragraph_id);
+                        return (
+                          <div
+                            key={paragraph.id}
+                            className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-dashed border-border/60 px-4 py-3 opacity-60 cursor-not-allowed"
+                            title={prereq ? `${isDutch ? 'Rond eerst af' : 'Finish first'}: ${prereq.title}` : undefined}
+                          >
+                            <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="w-11 text-xs text-muted-foreground tabular-nums">
+                              {chapter.chapter_number}.{paragraph.paragraph_number}
+                            </span>
+                            <span className="flex-1 truncate text-sm text-muted-foreground">{paragraph.title}</span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <Link prefetch={false}
                           key={paragraph.id}
@@ -630,6 +653,27 @@ export default function SubjectDetailPage() {
               onChange={(e) => setNewParagraphTitle(e.target.value)}
               className="mt-2"
             />
+            <div>
+              <Label htmlFor="paragraph-prerequisite">{isDutch ? 'Vereist eerst (optioneel)' : 'Requires first (optional)'}</Label>
+              <select
+                id="paragraph-prerequisite"
+                value={newParagraphPrerequisiteId}
+                onChange={(e) => setNewParagraphPrerequisiteId(e.target.value)}
+                className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">{isDutch ? 'Geen' : 'None'}</option>
+                {chapters.flatMap((chapter) =>
+                  (chapter.paragraphs || []).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {chapter.chapter_number}.{p.paragraph_number} {p.title}
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {isDutch ? 'Leerlingen zien deze paragraaf pas na 100% voortgang op de gekozen paragraaf.' : 'Students only see this paragraph once the chosen one is 100% complete.'}
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateParagraphOpen(false)}>Cancel</Button>

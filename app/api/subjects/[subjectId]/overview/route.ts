@@ -118,6 +118,7 @@ export async function GET(
             title,
             paragraph_number,
             chapter_id,
+            prerequisite_paragraph_id,
             progress_snapshots(
               student_id,
               completion_percent
@@ -156,21 +157,35 @@ export async function GET(
       paragraphCount: paragraphRows.length || 0,
     });
 
+    // First pass: resolve each paragraph's own progress + prerequisite id.
+    const progressById: Record<string, number> = {};
+    const prerequisiteById: Record<string, string | null> = {};
+    for (const row of (paragraphRows || [])) {
+      const progressRows = Array.isArray(row.progress_snapshots) ? row.progress_snapshots : [];
+      const ownProgress = isTeacher ? null : progressRows.find((progress: any) => progress.student_id === user.id);
+      progressById[row.id] = ownProgress?.completion_percent ?? 0;
+      prerequisiteById[row.id] = row.prerequisite_paragraph_id || null;
+    }
+
+    // Second pass: a paragraph is locked for students if its prerequisite
+    // (docs/subjects-feature-brainstorm.md D15) isn't fully completed yet.
+    // Soft gate only — the UI hides the link, this isn't a hard access
+    // boundary against a motivated URL-guesser.
     const paragraphsByChapter = (paragraphRows || []).reduce((acc: Record<string, any[]>, row: any) => {
       const chapterId = row.chapter_id as string;
       if (!chapterId) return acc;
       if (!acc[chapterId]) acc[chapterId] = [];
-      const progressRows = Array.isArray(row.progress_snapshots) ? row.progress_snapshots : [];
-      const ownProgress = isTeacher
-        ? null
-        : progressRows.find((progress: any) => progress.student_id === user.id);
+      const prerequisiteId = row.prerequisite_paragraph_id || null;
+      const locked = !isTeacher && !!prerequisiteId && (progressById[prerequisiteId] ?? 0) < 100;
       acc[chapterId].push({
         id: row.id,
         title: row.title,
         paragraph_number: row.paragraph_number,
         assignment_count: 0,
         answers_enabled: false,
-        progress_percent: ownProgress?.completion_percent ?? 0,
+        progress_percent: progressById[row.id] ?? 0,
+        prerequisite_paragraph_id: prerequisiteId,
+        locked,
       });
       return acc;
     }, {});
