@@ -388,6 +388,9 @@ export default function SubjectDetailPage() {
             const visibleParagraphs = isFullyExpanded ? allParagraphs : allParagraphs.slice(0, maxVisible);
             const hasMore = allParagraphs.length > maxVisible && !isFullyExpanded;
             const remainingCount = allParagraphs.length - maxVisible;
+            const chapterProgress = allParagraphs.length > 0
+              ? Math.round(allParagraphs.reduce((sum, p) => sum + (p.progress_percent || 0), 0) / allParagraphs.length)
+              : 0;
 
             return (
               <div key={chapter.id} className="overflow-hidden rounded-2xl border border-transparent bg-sidebar-accent/12">
@@ -396,8 +399,13 @@ export default function SubjectDetailPage() {
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
                     className="relative w-32 shrink-0 bg-sidebar-accent/30 transition-colors hover:bg-sidebar-accent/40"
                   >
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl text-muted-foreground/60">
-                      {chapter.chapter_number}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-2xl text-muted-foreground/60">
+                      <span>{chapter.chapter_number}</span>
+                      {allParagraphs.length > 0 && (
+                        <div className="h-1 w-12 overflow-hidden rounded-full bg-sidebar-accent/50">
+                          <div className="h-full rounded-full bg-foreground/60" style={{ width: `${chapterProgress}%` }} />
+                        </div>
+                      )}
                     </div>
                   </Link>
                     <div className="flex flex-1 items-start justify-between gap-3 p-4">

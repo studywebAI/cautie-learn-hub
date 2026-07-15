@@ -42,7 +42,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ## B. Subject-lijst pagina (`/subjects`)
 
-6. `[ ]` `cover_image_url` daadwerkelijk renderen op de subject-card — bestaat al als data, wordt nu gewoon niet getoond. `[Gemiste feature]` (bugfix, geen brainstorm-punt eigenlijk)
+6. `[x]` **Gebouwd.** `cover_image_url` wordt nu getoond i.p.v. het keyword-icoon zodra een subject een eigen cover heeft; de nooit-aangeroepen `IconCover`-component (dode code) is verwijderd. `[Gemiste feature]` (bugfix, geen brainstorm-punt eigenlijk)
 7. `[ ]` Filter/sorteer subjects (bv. op voortgang, laatst actief, klas) — nu gewoon een vaste grid-volgorde. `[Eigen idee]`
 8. `[ ]` Archiveren van een subject (voor afgeronde vakken/schooljaren) i.p.v. dat de lijst blijft groeien. `[Forum/review — Quizlet folders/nested organisatie expliciet gevraagd]`
 9. `[ ]` Subjects groeperen in mappen/categorieën (bv. per schooljaar of vakkengroep) — Quizlet-gebruikers vroegen expliciet om geneste mappen. `[Competitor: Quizlet folders]` `[Forum/review]`
@@ -51,12 +51,12 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 10. `[ ]` Materialen/bestanden-sectie op subject- of chapter-niveau (nu bestaat er geen upload/bekijk-UI hier — Material is een losse, ongerelateerde pagina in de app). `[Competitor: Google Classroom "Materials"]` `[Gemiste feature]`
 11. `[ ]` Chapters slepen om te herordenen i.p.v. vaste volgorde. `[Competitor: Canvas Modules, LMS course builders algemeen]`
-12. `[ ]` Per-chapter voortgangsindicator zichtbaar op subject-niveau zelf (nu alleen per paragraaf) — sneller overzicht zonder te hoeven inklikken. `[Eigen idee]`
+12. `[x]` **Gebouwd.** Klein voortgangsbalkje onder het hoofdstuknummer op de subject-pagina, gemiddelde van alle paragraaf-voortgangen in dat hoofdstuk. `[Eigen idee]`
 
 ## D. Chapter- en paragraaf-pagina
 
 13. `[~]` **Verduidelijkt door gebruiker — geen aparte content-viewer-pagina.** In plaats daarvan: het bestaande assignment/block-systeem breder gebruiken dan alleen toetsen. Een "assignment" binnen een paragraaf kan een contentblok zijn (tekst + foto's + video, via het al bestaande `text`-blocktype — foto/video-blocktype moet er nog bij) i.p.v. per se een set vragen. Zo staat in één paragraaf gewoon een lijst van assignments naast elkaar: de ene is de leerstof zelf, de andere een toets erover — **alles in hetzelfde tabblad**, geen gesplitste "leerstof hier, oefenen daar"-navigatie. Sluit aan bij het kernprincipe: Subjects = leerstof + oefensommen + toetsen in 1 plek. `[Gemiste feature]` — nog steeds de fundamentele lacune, alleen de oplossingsvorm is anders dan ik eerst voorstelde.
-14. `[ ]` "Genereer flashcards/quiz van dit hoofdstuk" met één klik, gebaseerd op de tekst/media-assignments in die paragraaf (punt 13) — sluit aan bij hoe concurrenten dit standaard aanbieden. `[Competitor: RemNote, Quizlet AI-generator, StudyFetch, Knowt — allemaal one-click generatie uit materiaal]` `[Forum/review]`
+14. `[x]` **Gebouwd.** "Genereren"-menu op de paragraafpagina (flashcards/quiz), verzamelt alle tekstblok-content in die paragraaf en stuurt door naar de bestaande Flashcards/Quiz-tools via hun `sourceText`-query-param (zelfde patroon als de Material-pagina al gebruikte). `[Competitor: RemNote, Quizlet AI-generator, StudyFetch, Knowt — allemaal one-click generatie uit materiaal]` `[Forum/review]`
 15. `[ ]` Prerequisites/vergrendeling: paragraaf X pas beschikbaar na afronden paragraaf Y — bestaat al deels als "lock"-icoon per assignment, maar niet als paragraaf/chapter-niveau concept. `[Competitor: Canvas Modules prerequisites]`
 
 ## E. Assignment/Block-editor
@@ -66,7 +66,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ## F. Aanmaak-snelkoppeling (S0, meegenomen vanuit dashboard)
 
-18. `[ ]` Prominente "nieuwe opdracht/toets aanmaken"-actie op de Subjects-pagina i.p.v. drie niveaus diep (Subject → Chapter → Paragraph → "+ Assignment"). `[Eigen idee]` (oorspronkelijk dashboard B6.18)
+18. `[x]` **Gebouwd.** "+ New assignment/test"-knop op de Subjects-lijst opent een subject/chapter/paragraph-kiezer en zet de docent direct in de aanmaak-wizard op die plek. `[Eigen idee]` (oorspronkelijk dashboard B6.18)
 
 ---
 
