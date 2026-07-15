@@ -38,12 +38,13 @@ async function getSubjectParagraphContext(supabase: any, subjectIds: string[], u
     .order('started_at', { ascending: false })
 
   // Get the latest activity per subject
-  const latestPerSubject: Record<string, { chapter_id: string; paragraph_id: string }> = {}
+  const latestPerSubject: Record<string, { chapter_id: string; paragraph_id: string; started_at: string }> = {}
   for (const act of (activities || [])) {
     if (!latestPerSubject[act.subject_id] && act.paragraph_id) {
       latestPerSubject[act.subject_id] = {
         chapter_id: act.chapter_id,
-        paragraph_id: act.paragraph_id
+        paragraph_id: act.paragraph_id,
+        started_at: act.started_at,
       }
     }
   }
@@ -126,7 +127,8 @@ async function getSubjectParagraphContext(supabase: any, subjectIds: string[], u
 
     result[subjectId] = {
       paragraphs: selectedParagraphs,
-      lastParagraphId: lastActivity?.paragraph_id || null
+      lastParagraphId: lastActivity?.paragraph_id || null,
+      lastActiveAt: lastActivity?.started_at || null
     }
   }
 

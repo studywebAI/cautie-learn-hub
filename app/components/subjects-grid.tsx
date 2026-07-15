@@ -48,6 +48,8 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
 
   const [subjects, setSubjects] = useState<any[]>(seededSubjects);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'default' | 'name' | 'recent'>('default');
+  const [filterClassId, setFilterClassId] = useState<string>('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newSubjectTitle, setNewSubjectTitle] = useState('');
   const [newSubjectDescription, setNewSubjectDescription] = useState('');
@@ -391,9 +393,61 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     );
   }
 
+  const classFilterOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const subject of subjects) {
+      for (const cls of (subject.classes || [])) {
+        if (cls?.id && cls?.name) map.set(cls.id, cls.name);
+      }
+    }
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [subjects]);
+
+  const visibleSubjects = useMemo(() => {
+    let list = subjects;
+    if (filterClassId !== 'all') {
+      list = list.filter((subject: any) => (subject.classes || []).some((c: any) => c.id === filterClassId));
+    }
+    if (sortBy === 'name') {
+      list = [...list].sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
+    } else if (sortBy === 'recent') {
+      list = [...list].sort((a: any, b: any) => {
+        const aTime = a.paragraphContext?.lastActiveAt ? new Date(a.paragraphContext.lastActiveAt).getTime() : 0;
+        const bTime = b.paragraphContext?.lastActiveAt ? new Date(b.paragraphContext.lastActiveAt).getTime() : 0;
+        return bTime - aTime;
+      });
+    }
+    return list;
+  }, [subjects, sortBy, filterClassId]);
+
   return (
     <>
       <div className="space-y-6 text-[13px] text-foreground">
+        {subjects.length > 1 && (
+          <div className="flex items-center gap-2 justify-end flex-wrap">
+            {classFilterOptions.length > 1 && (
+              <select
+                value={filterClassId}
+                onChange={(e) => setFilterClassId(e.target.value)}
+                className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
+              >
+                <option value="all">All classes</option>
+                {classFilterOptions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            )}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
+            >
+              <option value="default">Default order</option>
+              <option value="name">Name (A-Z)</option>
+              <option value="recent">Recently active</option>
+            </select>
+          </div>
+        )}
         {isTeacher && (
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsQuickCreateOpen(true)} size="sm" className="h-9 rounded-xl">
@@ -427,7 +481,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {subjects.map((subject) => (
+            {visibleSubjects.map((subject) => (
               <SubjectCard key={subject.id} subject={subject} />
             ))}
           </div>
