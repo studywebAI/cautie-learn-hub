@@ -218,6 +218,13 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     icon: <Video className="h-4 w-4" />,
     label: 'Video',
     defaultData: { url: '', caption: '' }
+  },
+  {
+    id: 'file',
+    type: 'file',
+    icon: <FileText className="h-4 w-4" />,
+    label: 'File',
+    defaultData: { url: '', filename: '', caption: '' }
   }
 ];
 
@@ -1266,10 +1273,16 @@ export function AssignmentEditor({
     input.click();
   };
 
-  const handleMediaUpload = (block: AssignmentBlock, mediaType: 'image' | 'video') => {
+  const MEDIA_ACCEPT: Record<'image' | 'video' | 'file', string> = {
+    image: 'image/jpeg,image/png,image/gif,image/webp',
+    video: 'video/mp4,video/webm,video/ogg',
+    file: '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip',
+  };
+
+  const handleMediaUpload = (block: AssignmentBlock, mediaType: 'image' | 'video' | 'file') => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = mediaType === 'image' ? 'image/jpeg,image/png,image/gif,image/webp' : 'video/mp4,video/webm,video/ogg';
+    input.accept = MEDIA_ACCEPT[mediaType];
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -1284,7 +1297,7 @@ export function AssignmentEditor({
         if (!res.ok || !result.url) {
           throw new Error(result.error || 'Upload failed');
         }
-        updateBlock(block.id, { ...block.data, url: result.url });
+        updateBlock(block.id, { ...block.data, url: result.url, ...(mediaType === 'file' ? { filename: file.name } : {}) });
       } catch (error: any) {
         toast({ title: 'Upload failed', description: error?.message || 'Please try again.', variant: 'destructive' });
       } finally {
@@ -1819,6 +1832,56 @@ export function AssignmentEditor({
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
                 ) : (
                   <><Video className="h-4 w-4 mr-2" /> Click to upload video</>
+                )}
+              </Button>
+            )}
+            <Input
+              value={block.data.caption || ''}
+              onChange={(e) => updateBlock(block.id, { ...block.data, caption: e.target.value })}
+              placeholder="Caption (optional)..."
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
+          </div>
+        );
+      }
+
+      case 'file': {
+        const isUploading = uploadingBlockId === block.id;
+        return (
+          <div className="space-y-2">
+            {block.data.url ? (
+              <div className="flex items-center gap-2 rounded-md border border-border p-2.5" onClick={(e) => e.stopPropagation()}>
+                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <a href={block.data.url} download={block.data.filename || true} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 truncate text-sm hover:underline">
+                  {block.data.filename || 'Download file'}
+                </a>
+                {canEditBlock && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'file'); }}
+                    className="h-6 text-xs text-muted-foreground shrink-0"
+                    disabled={isUploading}
+                  >
+                    <Upload className="h-3 w-3 mr-1" /> Replace
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'file'); }}
+                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                disabled={!canEditBlock || isUploading}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><FileText className="h-4 w-4 mr-2" /> Click to upload file</>
                 )}
               </Button>
             )}

@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Link as LinkIcon, Search, X } from 'lucide-react';
+import { CalendarIcon, Link as LinkIcon, Search, X, Paperclip } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -100,6 +100,7 @@ export function TeacherDeadlineDialog({
   const [loadingSources, setLoadingSources] = useState(false);
   const [hierarchyOpen, setHierarchyOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAttachingFile, setIsAttachingFile] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -239,6 +240,36 @@ export function TeacherDeadlineDialog({
 
   const removeLink = (index: number) => {
     setLinks((prev) => prev.filter((_, idx) => idx !== index).map((link, idx) => ({ ...link, position: idx })));
+  };
+
+  const handleAttachFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      setIsAttachingFile(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'file');
+        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+        const result = await res.json();
+        if (!res.ok || !result.url) throw new Error(result.error || 'Upload failed');
+        setLinks((prev) => [...prev, {
+          link_type: 'attachment',
+          label: file.name,
+          metadata_json: { url: result.url, filename: file.name },
+          position: prev.length,
+        }]);
+      } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Upload failed', description: error?.message || 'Please try again.' });
+      } finally {
+        setIsAttachingFile(false);
+      }
+    };
+    input.click();
   };
 
   const handleCreate = async () => {
@@ -556,6 +587,10 @@ export function TeacherDeadlineDialog({
                 <Button type="button" variant="secondary" size="sm" onClick={() => setSourcesOpen((open) => !open)}>
                   <LinkIcon className="h-4 w-4 mr-2" />
                   {sourcesOpen ? 'Close recents' : 'Add from recents'}
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={handleAttachFile} disabled={isAttachingFile}>
+                  <Paperclip className="h-4 w-4 mr-2" />
+                  {isAttachingFile ? 'Uploading...' : 'Attach file'}
                 </Button>
               </div>
             </div>

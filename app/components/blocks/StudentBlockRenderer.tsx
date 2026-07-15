@@ -64,6 +64,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       case 'image':
       case 'video':
       case 'media_embed':
+      case 'file':
         return <StudentMediaBlock {...commonProps} />;
       case 'divider':
         return <StudentDividerBlock {...commonProps} />;

@@ -380,7 +380,11 @@ export function AssignmentDetailsPanel({
                   className="min-w-0 flex-1 text-left"
                   onClick={() => {
                     if (!link.href || link.href === '#') return;
-                    router.push(link.href);
+                    if (link.href.startsWith('http')) {
+                      window.open(link.href, '_blank', 'noopener,noreferrer');
+                    } else {
+                      router.push(link.href);
+                    }
                   }}
                 >
                   <p className="truncate text-sm">{link.label}</p>

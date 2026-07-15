@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { FileText, Download } from 'lucide-react';
 import { BaseBlock, ImageBlockContent, VideoBlockContent, MediaEmbedContent } from './types';
 
 interface StudentMediaBlockProps {
@@ -96,6 +97,31 @@ export const StudentMediaBlock: React.FC<StudentMediaBlockProps> = ({
             )}
           </div>
         );
+
+      case 'file': {
+        const fileContent = block.data as { url?: string; filename?: string; caption?: string };
+        if (!fileContent?.url) {
+          return <div className="text-sm text-muted-foreground">No file uploaded yet.</div>;
+        }
+        return (
+          <div className="space-y-2">
+            <a
+              href={fileContent.url}
+              download={fileContent.filename || true}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2.5 rounded-lg border border-border p-3 hover:bg-[hsl(var(--interactive-hover))] transition-colors"
+            >
+              <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <span className="flex-1 min-w-0 truncate text-sm">{fileContent.filename || 'Download file'}</span>
+              <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </a>
+            {fileContent.caption && (
+              <p className="text-sm text-muted-foreground text-center">{fileContent.caption}</p>
+            )}
+          </div>
+        );
+      }
 
       default:
         return (

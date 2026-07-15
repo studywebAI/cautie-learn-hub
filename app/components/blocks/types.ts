@@ -5,6 +5,7 @@ export type BlockType =
   | 'code'
   | 'image'
   | 'video'
+  | 'file'
   | 'multiple_choice'
   | 'open_question'
   | 'fill_in_blank'

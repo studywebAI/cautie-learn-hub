@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const type = formData.get('type') as string // 'image' or 'video'
+    const type = formData.get('type') as string // 'image' | 'video' | 'file'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -25,8 +25,21 @@ export async function POST(request: Request) {
     // Validate file type
     const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
     const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+    // Generic downloadable materials (worksheets, slides, docs) — the "file" block
+    // type / agenda attachments (docs/subjects-feature-brainstorm.md section C10).
+    const allowedFileTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'application/zip',
+    ]
 
-    const allowedTypes = type === 'video' ? allowedVideoTypes : allowedImageTypes
+    const allowedTypes = type === 'video' ? allowedVideoTypes : type === 'file' ? allowedFileTypes : allowedImageTypes
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
