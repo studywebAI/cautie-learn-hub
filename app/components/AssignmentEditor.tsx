@@ -279,6 +279,8 @@ export function AssignmentEditor({
 
   const [blocks, setBlocks] = useState<AssignmentBlock[]>(normalizedInitialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
+  const [aiCommand, setAiCommand] = useState('');
+  const [aiCommandLoading, setAiCommandLoading] = useState(false);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -649,6 +651,80 @@ export function AssignmentEditor({
       return newBlocks;
     });
     setSelectedBlock(null);
+  };
+
+  // Appends a single block as a new full-width row at the end — used by the
+  // AI insert-command, which doesn't need the drag-target row/column
+  // resolution that manual palette drops require.
+  const addBlockFromCommand = (type: string, data: any) => {
+    const newBlock: AssignmentBlock = {
+      id: generateId(),
+      type,
+      position: blocks.length,
+      width: 'full',
+      rowId: generateRowId(),
+      data,
+      settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
+    };
+    setBlocks(prev => {
+      const newBlocks = [...prev, newBlock];
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+    setSelectedBlock(newBlock.id);
+  };
+
+  const buildBlocksContextSummary = () => {
+    return blocks.slice(0, 12).map((b, i) => {
+      const snippet = b.data?.question || b.data?.content || b.data?.prompt || b.data?.caption || '';
+      return `${i + 1}. [${b.type}] ${String(snippet).slice(0, 80)}`;
+    }).join('\n') || '(nog geen blokken)';
+  };
+
+  const handleAiCommandSubmit = async () => {
+    const command = aiCommand.trim();
+    if (!command || aiCommandLoading) return;
+    setAiCommandLoading(true);
+    try {
+      const res = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/ai-command`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command, contextSummary: buildBlocksContextSummary() }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || 'AI command failed');
+      }
+      const { block } = await res.json();
+      const blockType = block?.blockType;
+      let data: any;
+      if (blockType === 'multiple_choice') {
+        const options = Array.isArray(block.options) && block.options.length > 0
+          ? block.options.map((o: any, i: number) => ({ id: String.fromCharCode(97 + i), text: o.text || '', correct: !!o.correct }))
+          : getTemplateDefaults('multiple_choice').options;
+        data = { question: block.question || '', options, multiple_correct: options.filter((o: any) => o.correct).length > 1, shuffle: true };
+      } else if (blockType === 'open_question') {
+        data = { question: block.question || '', correct_answer: block.correct_answer || '', ai_grading: true, grading_criteria: block.grading_criteria || '', max_score: 5 };
+      } else if (blockType === 'fill_in_blank') {
+        data = { text: block.fill_text || '', answers: block.fill_answers || [], case_sensitive: false };
+      } else if (blockType === 'image') {
+        data = { url: '', caption: block.caption || '', alt: '' };
+      } else if (blockType === 'video') {
+        data = { url: '', caption: block.caption || '' };
+      } else {
+        data = { header: block?.header || '', content: block?.content || '', style: 'normal' };
+      }
+      addBlockFromCommand(blockType || 'text', data);
+      setAiCommand('');
+      toast({ title: isDutch ? 'Blok ingevoegd' : 'Block inserted' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: isDutch ? 'Mislukt' : 'Failed', description: error.message });
+    } finally {
+      setAiCommandLoading(false);
+    }
   };
 
   const addBlock = (template: BlockTemplate, rowIndex: number, column?: 'left' | 'right') => {
@@ -2059,6 +2135,39 @@ export function AssignmentEditor({
         {showTeacherControls && (
           <aside className="w-[320px] border-l border-border bg-background p-3 overflow-y-auto">
             <div className="space-y-3">
+              <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
+                <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  {isDutch ? 'Zeg wat je wilt toevoegen' : 'Say what to add'}
+                </div>
+                <Textarea
+                  value={aiCommand}
+                  onChange={(e) => setAiCommand(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      void handleAiCommandSubmit();
+                    }
+                  }}
+                  placeholder={isDutch ? 'bv. "maak een multiple choice blok over fotosynthese"' : 'e.g. "make a multiple choice block about photosynthesis"'}
+                  rows={2}
+                  disabled={aiCommandLoading}
+                  className="text-xs resize-none"
+                  maxLength={500}
+                />
+                <Button
+                  size="sm"
+                  className="h-7 w-full text-xs"
+                  disabled={!aiCommand.trim() || aiCommandLoading}
+                  onClick={() => void handleAiCommandSubmit()}
+                >
+                  {aiCommandLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>{isDutch ? 'Invoegen' : 'Insert'}</>
+                  )}
+                </Button>
+              </div>
               <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
                 <div className="space-y-1.5">

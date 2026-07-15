@@ -156,10 +156,23 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title } = await request.json();
+    const { title, is_tests_chapter } = await request.json();
     const normalizedTitle = typeof title === 'string' ? title.trim() : '';
     if (!normalizedTitle) {
       return NextResponse.json({ error: 'Chapter title is required' }, { status: 400 });
+    }
+    const wantsTestsChapter = is_tests_chapter === true;
+
+    if (wantsTestsChapter) {
+      const { data: existingTestsChapter } = await (supabase as any)
+        .from('chapters')
+        .select('id')
+        .eq('subject_id', resolvedParams.subjectId)
+        .eq('is_tests_chapter', true)
+        .maybeSingle();
+      if (existingTestsChapter) {
+        return NextResponse.json({ error: 'This subject already has a tests chapter' }, { status: 409 });
+      }
     }
 
     // Get max chapter number
@@ -179,7 +192,8 @@ export async function POST(
         chapter_number: nextNumber,
         title: normalizedTitle,
         ai_summary: null,
-        summary_overridden: false
+        summary_overridden: false,
+        is_tests_chapter: wantsTestsChapter,
       })
       .select()
       .single();

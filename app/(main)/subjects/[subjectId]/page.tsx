@@ -35,6 +35,7 @@ type Chapter = {
   chapter_number: number;
   paragraphs?: Paragraph[];
   is_pending?: boolean;
+  is_tests_chapter?: boolean;
 };
 
 type Subject = {
@@ -157,6 +158,28 @@ export default function SubjectDetailPage() {
     } catch (error) {
       setChapters((prev) => prev.filter((chapter) => chapter.id !== tempId));
       toast({ title: 'Error', description: 'Failed to create chapter', variant: 'destructive' });
+    } finally {
+      setIsCreatingChapter(false);
+    }
+  };
+
+  const handleCreateTestsChapter = async () => {
+    if (isCreatingChapter) return;
+    setIsCreatingChapter(true);
+    try {
+      const response = await fetch(`/api/subjects/${subjectId}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Toetsen', is_tests_chapter: true }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'Failed to create tests chapter');
+      }
+      const newChapter = await response.json();
+      setChapters((prev) => [...prev, { ...newChapter, paragraphs: [] }]);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to create tests chapter', variant: 'destructive' });
     } finally {
       setIsCreatingChapter(false);
     }
@@ -329,6 +352,17 @@ export default function SubjectDetailPage() {
               <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
                 + Add Chapter
               </Button>
+              {!chapters.some((c) => c.is_tests_chapter) && (
+                <Button
+                  onClick={handleCreateTestsChapter}
+                  disabled={isCreatingChapter}
+                  size="sm"
+                  variant="outline"
+                  className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
+                >
+                  + Toetsen-hoofdstuk
+                </Button>
+              )}
             </>
           )
         }
@@ -372,6 +406,9 @@ export default function SubjectDetailPage() {
                         className="text-sm text-[hsl(var(--sidebar-active-foreground))] hover:underline"
                       >
                         {chapter.title}
+                        {chapter.is_tests_chapter && (
+                          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 align-middle">Toetsen</span>
+                        )}
                         {chapter.is_pending ? (
                           <span className="ml-2 text-xs text-muted-foreground">(creating...)</span>
                         ) : null}
