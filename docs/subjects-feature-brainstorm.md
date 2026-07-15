@@ -44,8 +44,8 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 6. `[x]` **Gebouwd.** `cover_image_url` wordt nu getoond i.p.v. het keyword-icoon zodra een subject een eigen cover heeft; de nooit-aangeroepen `IconCover`-component (dode code) is verwijderd. `[Gemiste feature]` (bugfix, geen brainstorm-punt eigenlijk)
 7. `[x]` **Gebouwd, met kanttekening.** Filter op klas + sorteer op naam/laatst actief op de subjects-lijst. "Laatst actief" heeft alleen data via de student-route (`/api/subjects`) — de klas-gescopede docent-route (`/api/classes/[classId]/subjects`) berekent `paragraphContext` niet, dus voor docenten werkt die sortering nu stil niet (naam-sortering en klas-filter werken overal). Voortgang als sorteeroptie liet ik weg — bleek server-side niet eens berekend te worden voor de lijst-route (alleen per-subject detail endpoints). `[Eigen idee]`
-8. `[ ]` Archiveren van een subject (voor afgeronde vakken/schooljaren) i.p.v. dat de lijst blijft groeien. `[Forum/review — Quizlet folders/nested organisatie expliciet gevraagd]`
-9. `[ ]` Subjects groeperen in mappen/categorieën (bv. per schooljaar of vakkengroep) — Quizlet-gebruikers vroegen expliciet om geneste mappen. `[Competitor: Quizlet folders]` `[Forum/review]`
+8. `[x]` **Gebouwd.** "..."-menu op de subject-card → archiveren/dearchiveren; gearchiveerd staat standaard verborgen op de lijst, met een "Show archived"-toggle. `[Forum/review — Quizlet folders/nested organisatie expliciet gevraagd]`
+9. `[x]` **Gebouwd.** Zelfde menu → verplaats naar map (nieuwe map direct aanmaken kan ook inline); map-filter op de subjects-lijst. Mappen zijn per-docent persoonlijk (geen gedeelde/geneste mappen). `[Competitor: Quizlet folders]` `[Forum/review]`
 
 ## C. Subject-detailpagina (chapter-overzicht)
 
@@ -57,7 +57,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 13. `[~]` **Verduidelijkt door gebruiker — geen aparte content-viewer-pagina.** In plaats daarvan: het bestaande assignment/block-systeem breder gebruiken dan alleen toetsen. Een "assignment" binnen een paragraaf kan een contentblok zijn (tekst + foto's + video, via het al bestaande `text`-blocktype — foto/video-blocktype moet er nog bij) i.p.v. per se een set vragen. Zo staat in één paragraaf gewoon een lijst van assignments naast elkaar: de ene is de leerstof zelf, de andere een toets erover — **alles in hetzelfde tabblad**, geen gesplitste "leerstof hier, oefenen daar"-navigatie. Sluit aan bij het kernprincipe: Subjects = leerstof + oefensommen + toetsen in 1 plek. `[Gemiste feature]` — nog steeds de fundamentele lacune, alleen de oplossingsvorm is anders dan ik eerst voorstelde.
 14. `[x]` **Gebouwd.** "Genereren"-menu op de paragraafpagina (flashcards/quiz), verzamelt alle tekstblok-content in die paragraaf en stuurt door naar de bestaande Flashcards/Quiz-tools via hun `sourceText`-query-param (zelfde patroon als de Material-pagina al gebruikte). `[Competitor: RemNote, Quizlet AI-generator, StudyFetch, Knowt — allemaal one-click generatie uit materiaal]` `[Forum/review]`
-15. `[ ]` Prerequisites/vergrendeling: paragraaf X pas beschikbaar na afronden paragraaf Y — bestaat al deels als "lock"-icoon per assignment, maar niet als paragraaf/chapter-niveau concept. `[Competitor: Canvas Modules prerequisites]`
+15. `[x]` **Gebouwd, zachte gate.** Optioneel "vereist eerst"-veld bij het aanmaken van een paragraaf. Vergrendelde paragrafen (prerequisite <100%) tonen een niet-klikbare rij met slotje i.p.v. een link, server-side berekend. Bewust géén harde toegangsblokkade (geen 403 als iemand de URL raadt) — puur UI-gate, zelfde niveau als het bestaande assignment-lock-icoon. `[Competitor: Canvas Modules prerequisites]`
 
 ## E. Assignment/Block-editor
 
