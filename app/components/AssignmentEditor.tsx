@@ -30,7 +30,8 @@ import {
   Pencil,
   Image as ImageIcon,
   Video,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -296,6 +297,15 @@ export function AssignmentEditor({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [aiCommand, setAiCommand] = useState('');
   const [aiCommandLoading, setAiCommandLoading] = useState(false);
+  const [copyFromOpen, setCopyFromOpen] = useState(false);
+  const [copyChapters, setCopyChapters] = useState<Array<{ id: string; title: string }>>([]);
+  const [copyParagraphs, setCopyParagraphs] = useState<Array<{ id: string; title: string }>>([]);
+  const [copyAssignments, setCopyAssignments] = useState<Array<{ id: string; title: string }>>([]);
+  const [copyChapterId, setCopyChapterId] = useState('');
+  const [copyParagraphId, setCopyParagraphId] = useState('');
+  const [copyAssignmentId, setCopyAssignmentId] = useState('');
+  const [isLoadingCopyOptions, setIsLoadingCopyOptions] = useState(false);
+  const [isCopyingBlocks, setIsCopyingBlocks] = useState(false);
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -714,6 +724,72 @@ export function AssignmentEditor({
       return combined;
     });
     toast({ title: isDutch ? 'Template toegevoegd' : 'Template added', description: `${newBlocks.length} ${isDutch ? 'blokken toegevoegd' : 'blocks added'}` });
+  };
+
+  // Reuse a block-set from another assignment (docs/subjects-feature-brainstorm.md
+  // section E point 17) — copy, not link: a fresh set of block ids, no shared state.
+  useEffect(() => {
+    if (!copyFromOpen) return;
+    setIsLoadingCopyOptions(true);
+    fetch(`/api/subjects/${subjectId}/chapters`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCopyChapters(Array.isArray(data) ? data : []))
+      .catch(() => setCopyChapters([]))
+      .finally(() => setIsLoadingCopyOptions(false));
+  }, [copyFromOpen, subjectId]);
+
+  useEffect(() => {
+    if (!copyChapterId) { setCopyParagraphs([]); setCopyParagraphId(''); return; }
+    setCopyParagraphId('');
+    setCopyAssignmentId('');
+    fetch(`/api/subjects/${subjectId}/chapters/${copyChapterId}/paragraphs`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCopyParagraphs(Array.isArray(data) ? data : []))
+      .catch(() => setCopyParagraphs([]));
+  }, [copyChapterId, subjectId]);
+
+  useEffect(() => {
+    if (!copyChapterId || !copyParagraphId) { setCopyAssignments([]); setCopyAssignmentId(''); return; }
+    setCopyAssignmentId('');
+    fetch(`/api/subjects/${subjectId}/chapters/${copyChapterId}/paragraphs/${copyParagraphId}/assignments`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCopyAssignments(Array.isArray(data) ? data.filter((a: any) => a.id !== assignmentId) : []))
+      .catch(() => setCopyAssignments([]));
+  }, [copyChapterId, copyParagraphId, subjectId, assignmentId]);
+
+  const handleCopyBlocks = async () => {
+    if (!copyChapterId || !copyParagraphId || !copyAssignmentId || isCopyingBlocks) return;
+    setIsCopyingBlocks(true);
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/chapters/${copyChapterId}/paragraphs/${copyParagraphId}/assignments/${copyAssignmentId}/blocks`);
+      if (!res.ok) throw new Error('Failed to load blocks');
+      const sourceBlocks = await res.json();
+      const list = Array.isArray(sourceBlocks) ? sourceBlocks : [];
+      if (list.length === 0) {
+        toast({ title: isDutch ? 'Geen blokken gevonden' : 'No blocks found' });
+        return;
+      }
+      const newBlocks: AssignmentBlock[] = list.map((b: any, i: number) => ({
+        id: generateId(),
+        type: b.type,
+        position: blocks.length + i,
+        width: 'full',
+        rowId: generateRowId(),
+        data: { ...(b.data || {}) },
+        settings: normalizeBlockSettings(b.settings || b.data?.settings || {}),
+      }));
+      setBlocks(prev => {
+        const combined = [...prev, ...newBlocks];
+        saveToHistory(combined);
+        return combined;
+      });
+      toast({ title: isDutch ? 'Blokken gekopieerd' : 'Blocks copied', description: `${newBlocks.length} ${isDutch ? 'blokken toegevoegd' : 'blocks added'}` });
+      setCopyFromOpen(false);
+    } catch {
+      toast({ variant: 'destructive', title: isDutch ? 'Mislukt' : 'Failed' });
+    } finally {
+      setIsCopyingBlocks(false);
+    }
   };
 
   const buildBlocksContextSummary = () => {
@@ -2283,6 +2359,48 @@ export function AssignmentEditor({
                   );
                 })}
               </div>
+              <Popover open={copyFromOpen} onOpenChange={setCopyFromOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
+                    <Copy className="h-3.5 w-3.5" />
+                    {isDutch ? 'Kopieer blokken van...' : 'Copy blocks from...'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 space-y-2.5">
+                  <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Kopieer van een andere opdracht' : 'Copy from another assignment'}</p>
+                  <select
+                    value={copyChapterId}
+                    onChange={(e) => setCopyChapterId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={isLoadingCopyOptions}
+                  >
+                    <option value="">{isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...'}</option>
+                    {copyChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                  <select
+                    value={copyParagraphId}
+                    onChange={(e) => setCopyParagraphId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!copyChapterId}
+                  >
+                    <option value="">{isDutch ? 'Kies paragraaf...' : 'Choose paragraph...'}</option>
+                    {copyParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <select
+                    value={copyAssignmentId}
+                    onChange={(e) => setCopyAssignmentId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!copyParagraphId}
+                  >
+                    <option value="">{isDutch ? 'Kies opdracht...' : 'Choose assignment...'}</option>
+                    {copyAssignments.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
+                  </select>
+                  <Button size="sm" className="h-7 w-full text-xs" disabled={!copyAssignmentId || isCopyingBlocks} onClick={handleCopyBlocks}>
+                    {isCopyingBlocks ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isDutch ? 'Kopiëren' : 'Copy')}
+                  </Button>
+                </PopoverContent>
+              </Popover>
+
               <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
                 <div className="space-y-1.5">
