@@ -4,6 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -304,37 +305,34 @@ export default function SubjectDetailPage() {
         </Link>
       )}
 
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h1 className="page-title">{subject.name}</h1>
-          {subject.description && (
-            <p className="text-sm text-muted-foreground mt-1">{subject.description}</p>
-          )}
-        </div>
-        {isTeacher && (
-          <div className="flex items-center gap-2">
-            {chapters.length > 0 && (
-              <Button
-                onClick={() => {
-                  setLockSelectedChapter(false);
-                  setSelectedChapterId(chapters[0]?.id || null);
-                  setNewParagraphTitle('');
-                  setIsCreateParagraphOpen(true);
-                }}
-                size="sm"
-                variant="outline"
-                className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
-              >
-                + Add Paragraph
+      <PageHeader
+        title={subject.name}
+        subtitle={subject.description || undefined}
+        actions={
+          isTeacher && (
+            <>
+              {chapters.length > 0 && (
+                <Button
+                  onClick={() => {
+                    setLockSelectedChapter(false);
+                    setSelectedChapterId(chapters[0]?.id || null);
+                    setNewParagraphTitle('');
+                    setIsCreateParagraphOpen(true);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
+                >
+                  + Add Paragraph
+                </Button>
+              )}
+              <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
+                + Add Chapter
               </Button>
-            )}
-            <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
-              + Add Chapter
-            </Button>
-          </div>
-        )}
-      </div>
+            </>
+          )
+        }
+      />
 
       {/* Flat chapter + paragraph list */}
       {chapters.length === 0 ? (

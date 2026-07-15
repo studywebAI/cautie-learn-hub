@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Check } from 'lucide-react';
@@ -91,7 +92,7 @@ export default function UpgradePage() {
   if (success) {
     return (
       <div className="page-content flex flex-col gap-5">
-        <h1 className="page-title">Upgrade</h1>
+        <PageHeader title="Upgrade" />
         <div className="flex items-center">
           <Button variant="outline" asChild>
             <Link prefetch={false} href="/settings">
@@ -119,7 +120,7 @@ export default function UpgradePage() {
 
   return (
     <div className="page-content flex flex-col gap-5">
-      <h1 className="page-title">Upgrade</h1>
+      <PageHeader title="Upgrade" />
       <div className="flex items-center">
         <Button variant="outline" asChild>
           <Link prefetch={false} href="/settings">

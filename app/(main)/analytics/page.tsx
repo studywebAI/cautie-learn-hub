@@ -10,16 +10,12 @@ import { PageSection } from '@/components/layout/page-section';
 import { AppContext } from '@/contexts/app-context';
 import { StudentQuizAnalytics } from '@/components/analytics/student-quiz-analytics';
 import { TeacherQuizAnalytics } from '@/components/analytics/teacher-quiz-analytics';
+import { PageHeader } from '@/components/page-header';
 
 function TeacherAnalytics() {
   return (
     <PageSection>
-      <div className="mb-6">
-        <h1 className="page-title">Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Track your classes' performance and identify areas for improvement.
-        </p>
-      </div>
+      <PageHeader title="Analytics" subtitle="Track your classes' performance and identify areas for improvement." />
 
       {/* Teacher Quiz Analytics Section */}
       <div className="mb-8">
@@ -41,12 +37,7 @@ export default function AnalyticsOverviewPage() {
 function StudentAnalytics() {
   return (
     <PageSection>
-      <div className="mb-6">
-        <h1 className="page-title">Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Track your performance and progress across quizzes and topics.
-        </p>
-      </div>
+      <PageHeader title="Analytics" subtitle="Track your performance and progress across quizzes and topics." />
 
       {/* Quiz Analytics Section */}
       <div className="mb-8">

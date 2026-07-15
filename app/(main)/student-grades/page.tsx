@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 
 type Grade = {
   id: string;
@@ -177,16 +178,17 @@ export default function StudentGradesPage() {
 
   return (
     <div className="page-content max-w-3xl mx-auto space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="page-title">My Grades</h1>
-        <p className="page-subtitle mt-0.5">
-          {grades.length} published grade{grades.length !== 1 ? 's' : ''}
-          {overallAvg !== null && (
-            <> · overall average <span className={gradeColor(overallAvg)}>{overallAvg.toFixed(1)}</span></>
-          )}
-        </p>
-      </div>
+      <PageHeader
+        title="My Grades"
+        subtitle={
+          <>
+            {grades.length} published grade{grades.length !== 1 ? 's' : ''}
+            {overallAvg !== null && (
+              <> · overall average <span className={gradeColor(overallAvg)}>{overallAvg.toFixed(1)}</span></>
+            )}
+          </>
+        }
+      />
 
       {grades.length === 0 ? (
         <div className="rounded-lg border border-dashed p-10 text-center">

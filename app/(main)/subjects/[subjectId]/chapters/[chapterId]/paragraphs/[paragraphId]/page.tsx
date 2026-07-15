@@ -3,6 +3,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSessionTracking } from '@/lib/hooks/useSessionTracking';
@@ -641,65 +642,64 @@ export default function ParagraphDetailPage() {
 
   return (
     <div className="page-content">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <div className="mb-1 text-xs text-muted-foreground">
-            {[
-              subjectPath?.title || 'Subject',
-              chapterPath?.title || 'Chapter',
-              paragraph?.title || 'Paragraph',
-              'Assignments',
-            ].join(' / ')}
-          </div>
-          <Link prefetch={false}
-            href={`/subjects/${subjectId}`}
-            className="text-xs text-muted-foreground hover:text-foreground mb-1 block"
-          >
-            {t.backToChapters}
-          </Link>
-          <h1 className="page-title">
-            {paragraph.paragraph_number}. {paragraph.title}
-          </h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="hidden items-center gap-1 rounded-md border border-border p-1 md:flex">
-            <span className="px-1 text-[10px] text-muted-foreground">{t.filterByType}</span>
-            <Button type="button" size="sm" variant={assignmentTypeFilter === 'all' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('all')}>
-              {t.allAssignments}
-            </Button>
-            <Button type="button" size="sm" variant={assignmentTypeFilter === 'homework' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('homework')}>
-              {t.onlyHomework}
-            </Button>
-            <Button type="button" size="sm" variant={assignmentTypeFilter === 'test' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('test')}>
-              {t.onlyTests}
-            </Button>
-          </div>
-          {/* Bulk settings for all assignments */}
-          {isTeacher && assignments.length > 0 && (
-            <Popover open={bulkSettingsOpen} onOpenChange={setBulkSettingsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5">
-                  <Settings className="h-3.5 w-3.5" />
-                  <span className="text-xs">{t.allSettings}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 w-auto">
-                <AssignmentSettingsOverlay
-                  settings={bulkSettings}
-                  onSettingsChange={(settings) => handleBulkUpdate({ settings })}
-                  isLoading={isUpdating}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-          {isTeacher && (
-            <Button onClick={() => { resetCreateWizard(); setIsCreateAssignmentOpen(true); }} size="sm" className="h-8">
-              {t.addAssignment}
-            </Button>
-          )}
-        </div>
+      {/* Breadcrumb */}
+      <div className="mb-1 text-xs text-muted-foreground">
+        {[
+          subjectPath?.title || 'Subject',
+          chapterPath?.title || 'Chapter',
+          paragraph?.title || 'Paragraph',
+          'Assignments',
+        ].join(' / ')}
       </div>
+      <Link prefetch={false}
+        href={`/subjects/${subjectId}`}
+        className="text-xs text-muted-foreground hover:text-foreground mb-3 block"
+      >
+        {t.backToChapters}
+      </Link>
+
+      <PageHeader
+        title={`${paragraph.paragraph_number}. ${paragraph.title}`}
+        actions={
+          <>
+            <div className="hidden items-center gap-1 rounded-md border border-border p-1 md:flex">
+              <span className="px-1 text-[10px] text-muted-foreground">{t.filterByType}</span>
+              <Button type="button" size="sm" variant={assignmentTypeFilter === 'all' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('all')}>
+                {t.allAssignments}
+              </Button>
+              <Button type="button" size="sm" variant={assignmentTypeFilter === 'homework' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('homework')}>
+                {t.onlyHomework}
+              </Button>
+              <Button type="button" size="sm" variant={assignmentTypeFilter === 'test' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('test')}>
+                {t.onlyTests}
+              </Button>
+            </div>
+            {/* Bulk settings for all assignments */}
+            {isTeacher && assignments.length > 0 && (
+              <Popover open={bulkSettingsOpen} onOpenChange={setBulkSettingsOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                    <Settings className="h-3.5 w-3.5" />
+                    <span className="text-xs">{t.allSettings}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="p-0 w-auto">
+                  <AssignmentSettingsOverlay
+                    settings={bulkSettings}
+                    onSettingsChange={(settings) => handleBulkUpdate({ settings })}
+                    isLoading={isUpdating}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+            {isTeacher && (
+              <Button onClick={() => { resetCreateWizard(); setIsCreateAssignmentOpen(true); }} size="sm" className="h-8">
+                {t.addAssignment}
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Assignments list */}
       {filteredAssignments.length === 0 ? (

@@ -1,6 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { PageHeader } from '@/components/page-header';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppContext, AppContextType, ClassInfo } from '@/contexts/app-context';
@@ -286,7 +287,7 @@ export default function ClassDetailsPage() {
     }
     return (
       <div className="page-content">
-        <h1 className="page-title">Class not found</h1>
+        <PageHeader title="Class not found" />
         <p className="text-muted-foreground">The class you are looking for does not exist or you do not have permission to view it.</p>
       </div>
     );

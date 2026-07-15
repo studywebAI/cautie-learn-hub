@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, CheckCircle2, XCircle, HelpCircle, Flag } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
 
 type ResultQuestion = {
   block_id: string;
@@ -102,10 +103,7 @@ export default function AssignmentResultsPage() {
 
       {!loading && data && (
         <>
-          <div>
-            <h1 className="page-title">{data.assignment_title}</h1>
-            <p className="page-subtitle mt-0.5">{isDutch ? 'Nakijkresultaten' : 'Results'}</p>
-          </div>
+          <PageHeader title={data.assignment_title} subtitle={isDutch ? 'Nakijkresultaten' : 'Results'} />
 
           {data.grade_released && data.grade && (
             <Card className="p-4 surface-panel border border-border flex items-center justify-between">

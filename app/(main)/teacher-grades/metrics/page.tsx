@@ -17,6 +17,7 @@ import GradeMetrics from '@/components/grades/grade-metrics';
 import Loader from '@/components/ui/loader';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { CategoryWeightsPanel } from '@/components/grades/category-weights-panel';
+import { PageHeader } from '@/components/page-header';
 
 type Class = {
   id: string;
@@ -97,10 +98,10 @@ export default function MetricsPage() {
             {isDutch ? 'Terug' : 'Back'}
           </button>
         </Link>
-        <h1 className="page-title">{isDutch ? 'Cijfer Metrics' : 'Grade Metrics'}</h1>
-        <p className="page-subtitle mt-0.5">
-          {isDutch ? 'Vergelijk en analyseer cijferlijsten' : 'Compare and analyze grade sets'}
-        </p>
+        <PageHeader
+          title={isDutch ? 'Cijfer Metrics' : 'Grade Metrics'}
+          subtitle={isDutch ? 'Vergelijk en analyseer cijferlijsten' : 'Compare and analyze grade sets'}
+        />
       </div>
 
       {/* Class selection */}

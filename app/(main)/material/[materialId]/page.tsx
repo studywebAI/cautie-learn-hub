@@ -12,6 +12,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, ArrowLeft, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import type { BaseBlock } from '@/components/blocks/types';
@@ -227,33 +228,35 @@ function MaterialPageContent() {
 
   return (
     <div className="page-content">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" asChild className="-ml-4">
-          <Link href={material ? `/class/${material.class_id}` : '/other/materials'}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {material ? 'Back to Class' : 'Back to Materials'}
-          </Link>
-        </Button>
-        {material && userRole === 'teacher' && (material?.type === 'BLOCK' || blocks.length > 0) && (
-          <Button
-            variant="outline"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            <Edit className="mr-2 h-4 w-4" />
-            {isEditing ? 'View Mode' : 'Edit Mode'}
-          </Button>
-        )}
-      </div>
+      <Button variant="ghost" asChild className="-ml-4">
+        <Link href={material ? `/class/${material.class_id}` : '/other/materials'}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {material ? 'Back to Class' : 'Back to Materials'}
+        </Link>
+      </Button>
 
-      <div className="flex flex-col gap-2">
-        <Badge variant="outline">{material ? material.type : artifact?.artifact_type?.toUpperCase()}</Badge>
-        <h1 className="page-title">{material ? material.title : artifact?.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          {material
-            ? `Created on ${format(new Date(material.created_at), 'MMMM d, yyyy')}`
-            : `Updated on ${format(new Date(artifact!.updated_at), 'MMMM d, yyyy')}`}
-        </p>
-      </div>
+      <PageHeader
+        title={material ? material.title : artifact?.title}
+        subtitle={
+          <>
+            <Badge variant="outline" className="mr-2 align-middle">{material ? material.type : artifact?.artifact_type?.toUpperCase()}</Badge>
+            {material
+              ? `Created on ${format(new Date(material.created_at), 'MMMM d, yyyy')}`
+              : `Updated on ${format(new Date(artifact!.updated_at), 'MMMM d, yyyy')}`}
+          </>
+        }
+        actions={
+          material && userRole === 'teacher' && (material?.type === 'BLOCK' || blocks.length > 0) && (
+            <Button
+              variant="outline"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              {isEditing ? 'View Mode' : 'Edit Mode'}
+            </Button>
+          )
+        }
+      />
 
       {material && (
         <div className="flex flex-wrap gap-2">

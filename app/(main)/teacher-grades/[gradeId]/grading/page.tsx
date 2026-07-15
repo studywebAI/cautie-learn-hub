@@ -6,6 +6,7 @@ import { AppContext, AppContextType } from '@/contexts/app-context';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 import {
   ChevronLeft,
   Save,
@@ -414,54 +415,54 @@ export default function GradingInterfacePage() {
         {isDutch ? 'Terug' : 'Back'}
       </button>
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex-1">
-          <h1 className="page-title">{gradeSet.title}</h1>
-          <p className="text-xs text-muted-foreground mt-1">
+      <PageHeader
+        title={gradeSet.title}
+        subtitle={
+          <>
             {isDutch ? 'Klas' : 'Class'}: {gradeSet.class_name}
             {gradeSet.subject?.title && ` • ${gradeSet.subject.title}`}
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportHTML}
-            title={isDutch ? 'Exporteren als HTML' : 'Export as HTML'}
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-
-          {isEditMode && (
+          </>
+        }
+        actions={
+          <>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsImportDialogOpen(true)}
-              title={isDutch ? 'Bulk importeren' : 'Bulk import'}
+              onClick={handleExportHTML}
+              title={isDutch ? 'Exporteren als HTML' : 'Export as HTML'}
             >
-              <Upload className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </Button>
-          )}
 
-          <Button
-            variant={isEditMode ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setIsEditMode(!isEditMode)}
-          >
-            <Edit2 className="h-4 w-4 mr-2" />
-            {isEditMode ? isDutch ? 'Gereed' : 'Done' : isDutch ? 'Bewerk' : 'Edit'}
-          </Button>
+            {isEditMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsImportDialogOpen(true)}
+                title={isDutch ? 'Bulk importeren' : 'Bulk import'}
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            )}
 
-          {isEditMode && (
-            <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? isDutch ? 'Opslaan...' : 'Saving...' : isDutch ? 'Opslaan' : 'Save'}
+            <Button
+              variant={isEditMode ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIsEditMode(!isEditMode)}
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              {isEditMode ? isDutch ? 'Gereed' : 'Done' : isDutch ? 'Bewerk' : 'Edit'}
             </Button>
-          )}
-        </div>
-      </div>
+
+            {isEditMode && (
+              <Button onClick={handleSave} disabled={saving || gradedCount === 0}>
+                <Save className="h-4 w-4 mr-2" />
+                {saving ? isDutch ? 'Opslaan...' : 'Saving...' : isDutch ? 'Opslaan' : 'Save'}
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Gemelde nakijk-issues */}
       {disputes.length > 0 && (

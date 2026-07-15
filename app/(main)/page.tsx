@@ -20,6 +20,7 @@ import { TeacherStatRow } from "@/components/dashboard/teacher-stat-row";
 import { TeacherAgendaWidget } from "@/components/dashboard/teacher-agenda-widget";
 import { TeacherToGradeCard } from "@/components/dashboard/teacher-to-grade-card";
 import { TeacherLiveTestWidget } from "@/components/dashboard/teacher-live-test-widget";
+import { PageHeader } from "@/components/page-header";
 
 const BOT_UA_PATTERN = /(HeadlessChrome|vercel-screenshot|vercel-favicon|bot|crawler|spider)/i;
 
@@ -132,22 +133,23 @@ function StudentDashboard() {
 
   return (
     <div className="page-content flex flex-col gap-5">
-      {/* Greeting header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="page-title">Welcome back, {welcomeName}</h1>
-          <p className="page-subtitle mt-0.5">
+      <PageHeader
+        title={`Welcome back, ${welcomeName}`}
+        subtitle={
+          <>
             {getDayLabel()}
             {todayTaskCount > 0 && (
               <> · <span className="text-[var(--accent-brand)]">{todayTaskCount} {todayTaskCount === 1 ? 'task' : 'tasks'} due today</span></>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <DashboardCustomizeMenu role="student" widgetKeys={['studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
-          <NotificationPopover />
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <DashboardCustomizeMenu role="student" widgetKeys={['studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
+            <NotificationPopover />
+          </>
+        }
+      />
 
       {/* Stat row */}
       <StudentStatRow subjectsCount={subjects.length} />
@@ -221,25 +223,26 @@ function TeacherSummaryDashboard() {
 
     return (
         <div className="page-content flex flex-col gap-5">
-            {/* Greeting */}
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h1 className="page-title">{getGreeting()}, {welcomeName}</h1>
-                <p className="page-subtitle mt-0.5">
+            <PageHeader
+              title={`${getGreeting()}, ${welcomeName}`}
+              subtitle={
+                <>
                   {getDayLabel()}
                   {resolvedClass && <> · Active class: <span className="text-foreground">{resolvedClass.name}</span></>}
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                <TeacherMessageComposer classId={resolvedClassId} />
-                <DashboardCustomizeMenu
-                  role="teacher"
-                  widgetKeys={['agenda', 'liveTest']}
-                  onChange={setTeacherDashboardPrefs}
-                />
-                <NotificationPopover />
-              </div>
-            </div>
+                </>
+              }
+              actions={
+                <>
+                  <TeacherMessageComposer classId={resolvedClassId} />
+                  <DashboardCustomizeMenu
+                    role="teacher"
+                    widgetKeys={['agenda', 'liveTest']}
+                    onChange={setTeacherDashboardPrefs}
+                  />
+                  <NotificationPopover />
+                </>
+              }
+            />
 
             {/* Stat row */}
             <TeacherStatRow classIds={teacherClassIds} classesCount={teacherClasses.length} />

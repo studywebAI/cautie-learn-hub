@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ChevronLeft, CheckCircle2, XCircle, Sparkles } from 'lucide-react';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { PageHeader } from '@/components/page-header';
 
 type NextAnswer = {
   answer_id: string;
@@ -116,18 +117,16 @@ export default function ReviewFlashcardPage() {
         {isDutch ? 'Terug' : 'Back'}
       </button>
 
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="page-title">{title || (isDutch ? 'Nakijken' : 'Review')}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {remaining > 0 ? `${remaining} ${isDutch ? 'nog te beoordelen' : 'left to review'}` : (isDutch ? 'Klaar' : 'Done')}
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={runAutoGrade} disabled={autoGrading || loading || !current}>
-          <Sparkles className="h-4 w-4 mr-1.5" />
-          {autoGrading ? (isDutch ? 'Bezig...' : 'Working...') : (isDutch ? 'Automatisch nakijken' : 'Auto-grade')}
-        </Button>
-      </div>
+      <PageHeader
+        title={title || (isDutch ? 'Nakijken' : 'Review')}
+        subtitle={remaining > 0 ? `${remaining} ${isDutch ? 'nog te beoordelen' : 'left to review'}` : (isDutch ? 'Klaar' : 'Done')}
+        actions={
+          <Button variant="outline" size="sm" onClick={runAutoGrade} disabled={autoGrading || loading || !current}>
+            <Sparkles className="h-4 w-4 mr-1.5" />
+            {autoGrading ? (isDutch ? 'Bezig...' : 'Working...') : (isDutch ? 'Automatisch nakijken' : 'Auto-grade')}
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="flex justify-center py-16">

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ChevronLeft, ClipboardCheck, GraduationCap } from 'lucide-react';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { PageHeader } from '@/components/page-header';
 
 type QueueItem = {
   id: string;
@@ -62,9 +63,7 @@ function ReviewQueueContent() {
         {isDutch ? 'Terug' : 'Back'}
       </Link>
 
-      <div>
-        <h1 className="page-title">{isDutch ? 'Beoordelen' : 'Review'}</h1>
-      </div>
+      <PageHeader title={isDutch ? 'Beoordelen' : 'Review'} />
 
       <div className="flex gap-2">
         <Button

@@ -8,6 +8,17 @@ import { usePathname } from "next/navigation";
 import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
 import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled-reminder-checker";
 import { DeadlineReminderChecker } from "@/components/scheduled-items/deadline-reminder-checker";
+import { PageHeaderProvider, usePageHeaderSlot } from "@/contexts/page-header-context";
+
+function TopBar() {
+    const { content } = usePageHeaderSlot();
+    if (!content) return null;
+    return (
+        <div className="shrink-0 border-b border-border bg-background px-[var(--page-inline-padding)] py-3 flex items-center">
+            {content}
+        </div>
+    );
+}
 
 const AppSidebar = dynamic(
     () => import("@/components/sidebar").then((m) => m.AppSidebar),
@@ -56,23 +67,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
                 <AppSidebar />
             </Suspense>
-            <SidebarInset className="h-dvh bg-background relative text-[hsl(var(--sidebar-active-foreground))] transition-all duration-300 ease-in-out">
-                <div
-                  className={`${
-                    isClassPage ? "h-full overflow-hidden" : "h-full overflow-auto"
-                  } app-main-shell transition-all duration-300 ease-in-out ${
-                    isClassPage
-                      ? "app-main-shell--class"
-                      : isToolPage
-                        ? "app-main-shell--tool"
-                        : "app-main-shell--page"
-                  }`}
-                >
-                    <AppErrorBoundary key={pathname || 'main'}>
-                        {children}
-                    </AppErrorBoundary>
-                </div>
-            </SidebarInset>
+            <PageHeaderProvider>
+                <SidebarInset className="h-dvh bg-background relative text-[hsl(var(--sidebar-active-foreground))] transition-all duration-300 ease-in-out">
+                    <TopBar />
+                    <div
+                      className={`${
+                        isClassPage ? "flex-1 min-h-0 overflow-hidden" : "flex-1 min-h-0 overflow-auto"
+                      } app-main-shell transition-all duration-300 ease-in-out ${
+                        isClassPage
+                          ? "app-main-shell--class"
+                          : isToolPage
+                            ? "app-main-shell--tool"
+                            : "app-main-shell--page"
+                      }`}
+                    >
+                        <AppErrorBoundary key={pathname || 'main'}>
+                            {children}
+                        </AppErrorBoundary>
+                    </div>
+                </SidebarInset>
+            </PageHeaderProvider>
         </SidebarProvider>
     );
 }

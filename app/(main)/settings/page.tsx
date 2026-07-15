@@ -8,6 +8,7 @@ import { NotificationPreferences } from '@/components/notifications/notification
 import { TwoFASetup } from '@/components/settings/2fa-setup';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -374,8 +375,8 @@ export default function SettingsPage() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             {ui.back}
           </Button>
-          <h1 className="page-title">{ui.settings}</h1>
         </div>
+        <PageHeader title={ui.settings} />
 
         <div className="rounded-xl surface-panel p-1">
           <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">

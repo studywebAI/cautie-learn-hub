@@ -8,6 +8,7 @@ import { ChevronLeft, Check } from 'lucide-react';
 import StepOneNameInfo from './step-1-select-class';
 import StepTwoClassAndSubject from './step-2-configure-settings';
 import StepThreeGrading from './step-3-grading-interface';
+import { PageHeader } from '@/components/page-header';
 
 type GradeSetData = {
   title: string;
@@ -117,7 +118,7 @@ export default function NewGradesWizard() {
         ))}
       </div>
 
-      <h1 className="page-title">{stepLabels[step]}</h1>
+      <PageHeader title={stepLabels[step]} />
 
       {/* Step content */}
       <div className="class-panel-lg">

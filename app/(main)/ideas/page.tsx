@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check, AlertCircle, Lightbulb } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 import { useIdeas } from '@/contexts/IdeasContext'
 
 interface Idea {
@@ -143,10 +144,7 @@ export default function IdeasPage() {
 
   return (
     <div className="page-content space-y-6">
-      <div className="space-y-1">
-        <h1 className="page-title">Ideas & feature requests</h1>
-        <p className="text-muted-foreground">Vote on features you'd like to see, or submit your own idea</p>
-      </div>
+      <PageHeader title="Ideas & feature requests" subtitle="Vote on features you'd like to see, or submit your own idea" />
 
       {error && (
         <div className="flex gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">

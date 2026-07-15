@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { SubjectsGrid } from '@/components/subjects-grid';
 import { TodaysAgenda } from '@/components/dashboard/todays-agenda';
+import { PageHeader } from '@/components/page-header';
 
 export default function SubjectsPage() {
   return (
@@ -54,7 +55,7 @@ function SubjectsPageContent() {
   if (isTeacher && !teacherClassId) {
     return (
       <div className="page-content flex flex-col gap-5">
-        <h1 className="page-title">Subjects</h1>
+        <PageHeader title="Subjects" />
         <div className="rounded-xl border border-border surface-panel p-8 text-[13px] text-muted-foreground">
           No Active Class Selected. Select or create a class first.
         </div>
@@ -77,7 +78,7 @@ function SubjectsPageContent() {
 
     return (
       <div className="page-content flex flex-col gap-5">
-        <h1 className="page-title">Subjects</h1>
+        <PageHeader title="Subjects" />
         <TodaysAgenda
           assignments={teacherAssignments}
           personalTasks={teacherTasks}
@@ -90,7 +91,7 @@ function SubjectsPageContent() {
 
   return (
     <div className="page-content flex flex-col gap-5">
-      <h1 className="page-title">Subjects</h1>
+      <PageHeader title="Subjects" />
       <SubjectsGrid isTeacher={isTeacher} classId={isTeacher ? teacherClassId : undefined} />
     </div>
   );

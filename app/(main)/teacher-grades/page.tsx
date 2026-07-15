@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Loader from '@/components/ui/loader';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { PageHeader } from '@/components/page-header';
 
 type GradeSet = {
   id: string;
@@ -139,18 +140,18 @@ export default function TeacherGradesLanding() {
 
   return (
     <div className="page-content">
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">{isDutch ? 'Cijfers' : 'Grades'}</h1>
-          <p className="page-subtitle">{isDutch ? 'Welkom terug' : 'Welcome back'}</p>
-        </div>
-        <Link href="/teacher-grades/new">
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            {isDutch ? 'Nieuwe cijfers' : 'New grade'}
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title={isDutch ? 'Cijfers' : 'Grades'}
+        subtitle={isDutch ? 'Welkom terug' : 'Welcome back'}
+        actions={
+          <Link href="/teacher-grades/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              {isDutch ? 'Nieuwe cijfers' : 'New grade'}
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Action cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

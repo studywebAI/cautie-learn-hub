@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, Edit, Trash2, Download, Upload } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
+import { PageHeader } from '@/components/page-header';
 
 type GradeSet = {
   id: string;
@@ -158,23 +159,25 @@ export default function GradeDetailPage() {
           {isDutch ? 'Terug' : 'Back'}
         </button>
 
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="page-title">{gradeSet.title}</h1>
-            <p className="page-subtitle mt-0.5">
+        <PageHeader
+          title={gradeSet.title}
+          subtitle={
+            <>
               {gradeSet.class_name}
               {gradeSet.subject?.title && ` • ${gradeSet.subject.title}`}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" className="text-destructive">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+            </>
+          }
+          actions={
+            <>
+              <Button variant="outline" size="sm">
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          }
+        />
       </div>
 
       {/* Metadata */}

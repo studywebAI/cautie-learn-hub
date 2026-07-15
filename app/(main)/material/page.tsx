@@ -3,6 +3,7 @@
 import { useState, useContext, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { UploadCloud, FileText, ImageIcon, BrainCircuit, BookCopy } from 'lucide-react';
@@ -115,7 +116,7 @@ function MaterialPageContent() {
 
   return (
     <div className="page-content flex flex-col gap-5">
-      <h1 className="page-title">{materialDict.importTitle || 'Material'}</h1>
+      <PageHeader title={materialDict.importTitle || 'Material'} />
       <Card>
         <CardHeader>
           <CardTitle>{materialDict.importTitle}</CardTitle>

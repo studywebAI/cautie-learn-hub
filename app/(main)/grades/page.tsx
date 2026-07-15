@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useContext } from 'react';
 import { AppContext, AppContextType } from '@/contexts/app-context';
+import { PageHeader } from '@/components/page-header';
 
 type Grade = {
   id: string;
@@ -211,18 +212,17 @@ export default function GradesPage() {
 
   return (
     <div className="page-content max-w-3xl mx-auto space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="page-title">My grades</h1>
-          <p className="page-subtitle mt-0.5">
+      <PageHeader
+        title="My grades"
+        subtitle={
+          <>
             {grades.length} published grade{grades.length !== 1 ? 's' : ''}
             {overallAvg !== null && (
               <> · overall average <span className={gradeColor(overallAvg)}>{overallAvg.toFixed(1)}</span></>
             )}
-          </p>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {grades.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">

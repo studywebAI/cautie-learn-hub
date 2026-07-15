@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
 
 type MaterialKind = 'text' | 'file' | 'image' | 'onedrive';
 
@@ -63,10 +64,7 @@ export default function OtherMaterialsPage() {
 
   return (
     <div className="page-content">
-        <div className="mb-4">
-          <h1 className="page-title">Materials</h1>
-          <p className="text-sm text-muted-foreground">Auto-saved files, images, OneDrive docs, and text sources.</p>
-        </div>
+        <PageHeader title="Materials" subtitle="Auto-saved files, images, OneDrive docs, and text sources." />
 
         <section className="rounded-2xl border border-border surface-panel p-3">
           <div className="relative mb-3">

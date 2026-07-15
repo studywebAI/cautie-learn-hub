@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/page-header';
 
 type SharedData =
   | {
@@ -68,12 +69,14 @@ export default function SharedViewPage() {
 
   return (
     <div className="page-content w-full max-w-5xl space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <h1 className="page-title">{data.title}</h1>
-        <Button type="button" variant="outline" size="sm" onClick={() => void copyCurrentUrl()}>
-          Copy view link
-        </Button>
-      </div>
+      <PageHeader
+        title={data.title}
+        actions={
+          <Button type="button" variant="outline" size="sm" onClick={() => void copyCurrentUrl()}>
+            Copy view link
+          </Button>
+        }
+      />
       <div className="rounded-lg border surface-panel p-3">
         <p className="text-xs text-muted-foreground">View-only shared content</p>
         {data.kind === 'tool_run' ? (

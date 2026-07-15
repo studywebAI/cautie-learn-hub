@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ContactForm, ContactFormData } from '@/components/support/contact-form';
+import { PageHeader } from '@/components/page-header';
 import { getErrorMessage, ALL_ERROR_CODES } from '@/lib/error-codes';
 
 export default function SupportPage() {
@@ -43,21 +44,20 @@ export default function SupportPage() {
 
   return (
     <div className="page-content space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-title">{t.title}</h1>
-          <p className="text-muted-foreground">{t.subtitle}</p>
-        </div>
-        <select
-          value={locale}
-          onChange={(e) => setLocale(e.target.value as 'en' | 'nl')}
-          className="px-3 py-2 border border-border rounded-lg bg-background text-sm"
-        >
-          <option value="en">English</option>
-          <option value="nl">Nederlands</option>
-        </select>
-      </div>
+      <PageHeader
+        title={t.title}
+        subtitle={t.subtitle}
+        actions={
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as 'en' | 'nl')}
+            className="px-3 py-2 border border-border rounded-lg bg-background text-sm"
+          >
+            <option value="en">English</option>
+            <option value="nl">Nederlands</option>
+          </select>
+        }
+      />
 
       {/* Contact Support Button */}
       <div className="flex gap-2">

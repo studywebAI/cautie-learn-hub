@@ -4,6 +4,7 @@ import { useContext } from 'react'
 import { AppContext } from '@/contexts/app-context'
 import { TeacherQuizAnalytics } from '@/components/analytics/teacher-quiz-analytics'
 import { PageSection } from '@/components/layout/page-section'
+import { PageHeader } from '@/components/page-header'
 
 export default function TeacherAnalyticsPage() {
   const appContext = useContext(AppContext) as any
@@ -21,12 +22,7 @@ export default function TeacherAnalyticsPage() {
 
   return (
     <PageSection>
-      <div className="mb-6">
-        <h1 className="page-title">Class Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Analyze your classes' quiz performance and identify areas for improvement.
-        </p>
-      </div>
+      <PageHeader title="Class Analytics" subtitle="Analyze your classes' quiz performance and identify areas for improvement." />
 
       <TeacherQuizAnalytics />
     </PageSection>

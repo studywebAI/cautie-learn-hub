@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { RotateCcw } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
 
 type IdeaItem = {
   id: string
@@ -127,10 +128,7 @@ export default function IdeasBoardPage() {
   return (
     <div className="page-content">
       <div className="space-y-3">
-      <div className="rounded-md surface-panel p-4">
-        <h1 className="page-title">Ideas Board</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Submit ideas and vote on the top 3 poll options.</p>
-      </div>
+      <PageHeader title="Ideas Board" subtitle="Submit ideas and vote on the top 3 poll options." />
 
       <div className="rounded-md surface-panel p-4">
         <h2 className="mb-2 text-sm">Send in idea</h2>
