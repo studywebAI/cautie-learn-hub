@@ -49,7 +49,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ## C. Subject-detailpagina (chapter-overzicht)
 
-10. `[ ]` Materialen/bestanden-sectie op subject- of chapter-niveau (nu bestaat er geen upload/bekijk-UI hier — Material is een losse, ongerelateerde pagina in de app). `[Competitor: Google Classroom "Materials"]` `[Gemiste feature]`
+10. `[x]` **Gebouwd, andere vorm dan origineel voorgesteld.** Geen aparte materialen-sectie, maar een nieuw "file"-blocktype in de assignment-editor (upload + downloadknop, zelfde patroon als image/video) én bestand-bijlagen op agenda-items ("Attach file"-knop). **Migratie nodig** (`20260716_add_file_block_type.sql`) — nog niet gedraaid. `[Competitor: Google Classroom "Materials"]` `[Gemiste feature]`
 11. `[ ]` Chapters slepen om te herordenen i.p.v. vaste volgorde. `[Competitor: Canvas Modules, LMS course builders algemeen]`
 12. `[x]` **Gebouwd.** Klein voortgangsbalkje onder het hoofdstuknummer op de subject-pagina, gemiddelde van alle paragraaf-voortgangen in dat hoofdstuk. `[Eigen idee]`
 
