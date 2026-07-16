@@ -24,6 +24,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+function initialsFor(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '?';
+  return trimmed.charAt(0).toUpperCase();
+}
+
+function AvatarBadge({ label, isPremium }: { label: string; isPremium: boolean }) {
+  return (
+    <div
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium ${
+        isPremium ? 'bg-foreground text-background' : 'bg-sidebar-accent text-sidebar-foreground'
+      }`}
+    >
+      {initialsFor(label)}
+    </div>
+  );
+}
+
 function normalizeDisplayName(value: unknown): string {
   if (typeof value !== 'string') return '';
   const normalized = value.trim();
@@ -112,8 +130,9 @@ export function SidebarProfile() {
           </Link>
         </Button>
 
-        {/* Guest username - no avatar */}
+        {/* Guest username */}
         <div className="flex items-center gap-2 w-full rounded-lg bg-sidebar-accent/42 px-2.5 py-1.5 text-left">
+          <AvatarBadge label={resolvedDisplayName || 'Guest'} isPremium={false} />
           <div className="flex-1 min-w-0">
               <p className="text-sm truncate">{resolvedDisplayName || 'Guest'}</p>
               <p className="text-[11px] text-sidebar-foreground/70 leading-tight">Free</p>
@@ -189,22 +208,24 @@ export function SidebarProfile() {
   return (
     <div className="px-2 py-1.5 space-y-2">
       {/* Upgrade button for logged in users */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full h-9 justify-start rounded-lg border-border bg-transparent text-xs text-sidebar-foreground hover:bg-sidebar-accent/50"
-        asChild
-      >
-        <Link href="/upgrade">
-          <ArrowUpRight className="h-3 w-3 mr-1.5" />
-          Upgrade
-        </Link>
-      </Button>
+      {!isPremium && (
+        <Button
+          size="sm"
+          className="w-full h-9 justify-center rounded-lg bg-foreground text-background text-xs font-medium hover:bg-foreground/90"
+          asChild
+        >
+          <Link href="/upgrade">
+            <ArrowUpRight className="h-3.5 w-3.5 mr-1.5" />
+            Upgrade
+          </Link>
+        </Button>
+      )}
 
       {/* Username dropdown - ChatGPT style */}
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button className="flex w-full items-center gap-2 rounded-lg border-0 bg-sidebar-accent/42 px-2.5 py-1.5 text-left outline-none transition-colors group hover:bg-sidebar-accent/62 focus-visible:ring-1 focus-visible:ring-sidebar-ring/40">
+            <AvatarBadge label={profileName} isPremium={isPremium} />
             <div className="flex-1 min-w-0">
               <p className="truncate text-sm">{profileName}</p>
               <p className="text-[11px] text-sidebar-foreground/70 leading-tight">{tierLabel}</p>

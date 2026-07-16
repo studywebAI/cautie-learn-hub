@@ -501,17 +501,18 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <div className="mb-1.5 flex items-center gap-1.5">
+      <div className="rounded-xl border border-sidebar-border/70 bg-sidebar-accent/25 p-1.5">
+      <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
         <button
           type="button"
-          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'all' ? 'bg-sidebar-accent/70 text-sidebar-foreground' : 'bg-sidebar-accent/30 text-sidebar-foreground/80'}`}
+          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'all' ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
           onClick={() => setActiveTab('all')}
         >
           All
         </button>
         <button
           type="button"
-          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'studysets' ? 'bg-sidebar-accent/70 text-sidebar-foreground' : 'bg-sidebar-accent/30 text-sidebar-foreground/80'}`}
+          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'studysets' ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
           onClick={() => setActiveTab('studysets')}
         >
           Studysets
@@ -624,6 +625,7 @@ export function RecentsSidebar() {
           )}
         </button>
       )}
+      </div>
       <Dialog
         open={isShareToUserOpen}
         onOpenChange={(open) => {
