@@ -111,7 +111,31 @@ export function TopbarAccountMenu() {
   };
 
   return (
-    <div className="flex items-center gap-1.5 shrink-0">
+    <div className="flex items-center gap-1 shrink-0">
+      <button
+        type="button"
+        title={isDutch ? 'Instellingen' : 'Settings'}
+        onClick={() => router.push('/settings')}
+        className="hidden sm:inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <Settings className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title={isDutch ? 'Help & FAQ' : 'Help & FAQ'}
+        onClick={() => router.push('/settings?tab=help')}
+        className="hidden sm:inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <HelpCircle className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title={isDutch ? 'Ideeënbord' : 'Ideas Board'}
+        onClick={() => router.push('/ideas-board')}
+        className="hidden sm:inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground mr-1"
+      >
+        <Lightbulb className="h-4 w-4" />
+      </button>
       {!isPremium && (
         <button
           type="button"

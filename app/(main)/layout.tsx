@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
 import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
@@ -17,11 +18,26 @@ import { GlobalCommandPalette } from "@/components/global-command-palette";
 // not just when a page has set a title, so the collapse toggle and account
 // menu stay reachable everywhere (mirrors the reference UI: those controls
 // live in the header, not pinned to the bottom of the nav rail).
+function CollapseToggle() {
+    const { state, toggleSidebar } = useSidebar();
+    const isCollapsed = state === 'collapsed';
+    return (
+        <button
+            type="button"
+            onClick={toggleSidebar}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+            {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+        </button>
+    );
+}
+
 function TopBar() {
     const { content } = usePageHeaderSlot();
     return (
         <div className="shrink-0 border-b border-border bg-background px-[var(--page-inline-padding)] py-2.5 flex items-center gap-3">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            <CollapseToggle />
             <div className="flex-1 min-w-0">{content}</div>
             <TopbarAccountMenu />
         </div>
