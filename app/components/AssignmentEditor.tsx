@@ -309,6 +309,8 @@ export function AssignmentEditor({
     infoAttempts: isDutch ? 'pogingen' : 'attempts',
     infoAvgScore: isDutch ? 'gem. score' : 'avg score',
     infoDifficulty: isDutch ? 'moeilijkheid' : 'difficulty',
+    infoStudents: isDutch ? 'Scores per leerling' : 'Scores per student',
+    infoNoSubmissions: isDutch ? 'Nog geen inzendingen' : 'No submissions yet',
   };
   const getTemplateDefaults = (type: string) => {
     const template = BLOCK_TEMPLATES.find((item) => item.type === type);
@@ -386,6 +388,7 @@ export function AssignmentEditor({
     total_questions: number;
     total_answers: number;
     question_metrics: Array<{ block_id: string; type: string; attempts: number; average_score: number; correct_count: number; wrong_count: number; error_rate_percent: number; difficulty_percent: number }>;
+    student_scores: Array<{ student_id: string; name: string; total_answered: number; total_questions: number; correct_count: number; score_percent: number; last_submitted_at: string | null }>;
   } | null>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
@@ -2991,6 +2994,21 @@ export function AssignmentEditor({
                       <div className="text-[11px] text-muted-foreground">{t.infoAnswers}</div>
                       <div className="text-lg font-semibold">{infoData.total_answers}</div>
                     </div>
+                  </div>
+                  <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
+                    <div className="text-[11px] font-medium text-muted-foreground mb-1">{t.infoStudents}</div>
+                    {infoData.student_scores.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">{t.infoNoSubmissions}</p>
+                    ) : (
+                      infoData.student_scores.map((s) => (
+                        <div key={s.student_id} className="flex items-center justify-between gap-2 text-xs border-b border-border/60 pb-2 last:border-0 last:pb-0">
+                          <span className="truncate">{s.name}</span>
+                          <span className="text-right shrink-0 text-muted-foreground">
+                            {s.correct_count}/{s.total_answered} · {s.score_percent.toFixed(0)}%
+                          </span>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
                     {infoData.question_metrics.map((m, i) => (

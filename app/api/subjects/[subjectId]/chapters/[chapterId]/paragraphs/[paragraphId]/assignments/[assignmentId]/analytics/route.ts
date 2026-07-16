@@ -82,12 +82,57 @@ export async function GET(
       }
     })
 
+    // Per-student rollup ("scores van mensen" — docs/subjects-feature-
+    // brainstorm.md section H Information tab): aggregate the same answers
+    // by student_id instead of by block_id.
+    const answersByStudent = new Map<string, any[]>()
+    ;(answers || []).forEach((a: any) => {
+      if (!a.student_id) return
+      const arr = answersByStudent.get(a.student_id) || []
+      arr.push(a)
+      answersByStudent.set(a.student_id, arr)
+    })
+
+    const studentIds = Array.from(answersByStudent.keys())
+    let namesById = new Map<string, string>()
+    if (studentIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', studentIds)
+      ;(profiles || []).forEach((p: any) => {
+        namesById.set(p.id, p.full_name || p.email || 'Student')
+      })
+    }
+
+    const studentScores = studentIds.map((studentId) => {
+      const studentAnswers = answersByStudent.get(studentId) || []
+      const correctCount = studentAnswers.filter((x: any) => x.is_correct === true).length
+      const totalAnswered = studentAnswers.length
+      const scorePercent = totalAnswered > 0 ? (correctCount / totalAnswered) * 100 : 0
+      const lastSubmittedAt = studentAnswers.reduce((latest: string | null, x: any) => {
+        if (!x.submitted_at) return latest
+        if (!latest || new Date(x.submitted_at) > new Date(latest)) return x.submitted_at
+        return latest
+      }, null as string | null)
+      return {
+        student_id: studentId,
+        name: namesById.get(studentId) || 'Student',
+        total_answered: totalAnswered,
+        total_questions: (blocks || []).length,
+        correct_count: correctCount,
+        score_percent: Number(scorePercent.toFixed(2)),
+        last_submitted_at: lastSubmittedAt,
+      }
+    }).sort((a, b) => a.name.localeCompare(b.name))
+
     return NextResponse.json({
       assignment_id: resolvedParams.assignmentId,
       title: (assignment as any).title,
       total_questions: (blocks || []).length,
       total_answers: (answers || []).length,
       question_metrics: questionMetrics,
+      student_scores: studentScores,
     })
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
