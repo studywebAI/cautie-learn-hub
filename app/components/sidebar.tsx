@@ -1,6 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -49,15 +48,12 @@ type DropdownClassItem = { id: string; name: string; status?: string | null };
 type DropdownSubjectItem = { id: string; title: string; classIds: string[] };
 
 
-const SidebarProfile = dynamic(
-  () => import('./sidebar-profile').then((m) => m.SidebarProfile),
-  { ssr: false }
-);
-
-const RecentsSidebar = dynamic(
-  () => import('./recents-sidebar').then((m) => m.RecentsSidebar),
-  { ssr: false }
-);
+// Statically imported (not next/dynamic) — AppSidebar itself is only ever
+// rendered client-side (mounted-gated in app/(main)/layout.tsx), so these
+// don't need their own ssr:false, and avoiding it means they can't go stale
+// as a separate runtime-fetched chunk independent of the rest of the app.
+import { SidebarProfile } from './sidebar-profile';
+import { RecentsSidebar } from './recents-sidebar';
 
 type SidebarNavItem = { href: string; label: string; icon: React.ComponentType<any>; animated?: boolean };
 

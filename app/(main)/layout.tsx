@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
@@ -10,6 +9,8 @@ import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled
 import { DeadlineReminderChecker } from "@/components/scheduled-items/deadline-reminder-checker";
 import { PageHeaderProvider, usePageHeaderSlot } from "@/contexts/page-header-context";
 import { TopbarAccountMenu } from "@/components/topbar-account-menu";
+import { AppSidebar } from "@/components/sidebar";
+import { GlobalCommandPalette } from "@/components/global-command-palette";
 
 // Persistent topbar: sidebar-collapse toggle + whatever the current page set
 // via <PageHeader> on the left, account menu on the right — always visible,
@@ -27,20 +28,21 @@ function TopBar() {
     );
 }
 
-const AppSidebar = dynamic(
-    () => import("@/components/sidebar").then((m) => m.AppSidebar),
-    { ssr: false }
-);
-
-const GlobalCommandPalette = dynamic(
-    () => import("@/components/global-command-palette").then((m) => m.GlobalCommandPalette),
-    { ssr: false }
-);
-
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const deviceTier = useDeviceTier();
     const pathname = usePathname();
     const [routePulseVisible, setRoutePulseVisible] = useState(false);
+    // AppSidebar/GlobalCommandPalette used to be next/dynamic(..., {ssr:false}),
+    // which code-splits them into a SEPARATE chunk fetched at runtime — a
+    // chunk that can go stale independently of the rest of the app (this is
+    // what caused sidebar clicks to silently stop working: the browser kept
+    // running an old cached copy of that one chunk while everything else
+    // updated normally). Importing them statically bundles them with the
+    // rest of this file instead, so they can never go stale on their own;
+    // the mounted-gate below reproduces the same "client-only" render
+    // behavior ssr:false gave us, without the separate fetch.
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
     const isClassPage = pathname?.startsWith('/class/');
     const isToolPage = pathname?.startsWith('/tools/');
@@ -65,15 +67,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             defaultOpen={isPhone ? false : sidebarDefaultOpen}
             style={{ "--sidebar-width": isTablet ? "15rem" : "16.5rem" } as React.CSSProperties}
         >
-            <GlobalCommandPalette />
+            {mounted && <GlobalCommandPalette />}
             <ScheduledReminderChecker />
             <DeadlineReminderChecker />
             {routePulseVisible && (
                 <div className="pointer-events-none fixed inset-x-0 top-0 z-[210] h-[2px] bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
             )}
-            <Suspense fallback={null}>
-                <AppSidebar />
-            </Suspense>
+            {mounted && <AppSidebar />}
             <PageHeaderProvider>
                 <SidebarInset className="h-dvh bg-background relative text-[hsl(var(--sidebar-active-foreground))] transition-all duration-300 ease-in-out">
                     <TopBar />
