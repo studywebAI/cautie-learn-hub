@@ -93,7 +93,32 @@ export async function GET(
       answersByStudent.set(a.student_id, arr)
     })
 
-    const studentIds = Array.from(answersByStudent.keys())
+    // Time spent: no dedicated duration tracking exists, so this is a proxy —
+    // span between a student's earliest and latest activity (assignment_events
+    // rows, which include 'assignment_open', plus student_answers submissions),
+    // same heuristic class already used for G4's "possiblyLeft" detection.
+    const { data: events } = await supabase
+      .from('assignment_events')
+      .select('student_id, created_at')
+      .eq('assignment_id', resolvedParams.assignmentId)
+
+    const activityByStudent = new Map<string, { min: number; max: number }>()
+    const trackActivity = (studentId: string | null | undefined, iso: string | null | undefined) => {
+      if (!studentId || !iso) return
+      const t = new Date(iso).getTime()
+      if (!Number.isFinite(t)) return
+      const existing = activityByStudent.get(studentId)
+      if (!existing) {
+        activityByStudent.set(studentId, { min: t, max: t })
+      } else {
+        existing.min = Math.min(existing.min, t)
+        existing.max = Math.max(existing.max, t)
+      }
+    }
+    ;(events || []).forEach((e: any) => trackActivity(e.student_id, e.created_at))
+    ;(answers || []).forEach((a: any) => trackActivity(a.student_id, a.submitted_at))
+
+    const studentIds = Array.from(new Set([...answersByStudent.keys(), ...activityByStudent.keys()]))
     let namesById = new Map<string, string>()
     if (studentIds.length > 0) {
       const { data: profiles } = await supabase
@@ -115,6 +140,8 @@ export async function GET(
         if (!latest || new Date(x.submitted_at) > new Date(latest)) return x.submitted_at
         return latest
       }, null as string | null)
+      const activity = activityByStudent.get(studentId)
+      const timeSpentMinutes = activity ? Math.max(0, Math.round((activity.max - activity.min) / 60000)) : null
       return {
         student_id: studentId,
         name: namesById.get(studentId) || 'Student',
@@ -123,6 +150,7 @@ export async function GET(
         correct_count: correctCount,
         score_percent: Number(scorePercent.toFixed(2)),
         last_submitted_at: lastSubmittedAt,
+        time_spent_minutes: timeSpentMinutes,
       }
     }).sort((a, b) => a.name.localeCompare(b.name))
 

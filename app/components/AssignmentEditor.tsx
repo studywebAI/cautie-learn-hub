@@ -311,6 +311,8 @@ export function AssignmentEditor({
     infoDifficulty: isDutch ? 'moeilijkheid' : 'difficulty',
     infoStudents: isDutch ? 'Scores per leerling' : 'Scores per student',
     infoNoSubmissions: isDutch ? 'Nog geen inzendingen' : 'No submissions yet',
+    infoTimeSpent: isDutch ? 'tijd besteed (schatting)' : 'time spent (estimate)',
+    infoMinutes: isDutch ? 'min' : 'min',
   };
   const getTemplateDefaults = (type: string) => {
     const template = BLOCK_TEMPLATES.find((item) => item.type === type);
@@ -388,7 +390,7 @@ export function AssignmentEditor({
     total_questions: number;
     total_answers: number;
     question_metrics: Array<{ block_id: string; type: string; attempts: number; average_score: number; correct_count: number; wrong_count: number; error_rate_percent: number; difficulty_percent: number }>;
-    student_scores: Array<{ student_id: string; name: string; total_answered: number; total_questions: number; correct_count: number; score_percent: number; last_submitted_at: string | null }>;
+    student_scores: Array<{ student_id: string; name: string; total_answered: number; total_questions: number; correct_count: number; score_percent: number; last_submitted_at: string | null; time_spent_minutes: number | null }>;
   } | null>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
@@ -3005,6 +3007,9 @@ export function AssignmentEditor({
                           <span className="truncate">{s.name}</span>
                           <span className="text-right shrink-0 text-muted-foreground">
                             {s.correct_count}/{s.total_answered} · {s.score_percent.toFixed(0)}%
+                            {typeof s.time_spent_minutes === 'number' && (
+                              <> · {s.time_spent_minutes} {t.infoMinutes} {t.infoTimeSpent}</>
+                            )}
                           </span>
                         </div>
                       ))
