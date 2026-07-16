@@ -17,6 +17,16 @@ export function PageHeader({
 }) {
   const { setContent } = usePageHeaderSlot();
 
+  // NOTE: this previously ran with no dependency array (re-running, and
+  // calling setContent, on every render). setContent updates state on
+  // PageHeaderProvider, whose context value object changes identity on every
+  // state update, which re-renders every consumer including this component
+  // itself — re-triggering the effect. That's an infinite render loop
+  // (React error #185, "Maximum update depth exceeded"): mostly silent
+  // (just wasted re-renders that degrade responsiveness over time) until
+  // something else nudges a render at the wrong moment, at which point it
+  // hard-crashes. Depending only on this component's own inputs (never on
+  // anything from context) breaks the cycle at the source.
   useEffect(() => {
     setContent(
       <div className="flex items-center justify-between gap-3 w-full min-w-0">
@@ -28,7 +38,7 @@ export function PageHeader({
       </div>
     );
     return () => setContent(null);
-  });
+  }, [title, subtitle, actions, setContent]);
 
   return null;
 }

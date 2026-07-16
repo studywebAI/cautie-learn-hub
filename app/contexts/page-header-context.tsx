@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 
 type PageHeaderContextType = {
   content: ReactNode;
@@ -14,8 +14,9 @@ const PageHeaderContext = createContext<PageHeaderContextType | null>(null);
 // title stays put while page content scrolls underneath it.
 export function PageHeaderProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState<ReactNode>(null);
+  const value = useMemo(() => ({ content, setContent }), [content]);
   return (
-    <PageHeaderContext.Provider value={{ content, setContent }}>
+    <PageHeaderContext.Provider value={value}>
       {children}
     </PageHeaderContext.Provider>
   );
