@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 
-const SW_CLEANUP_KEY = 'runtime.sw.cleanup.v1';
 const CHUNK_RELOAD_KEY = 'runtime.chunk.reload.once.v1';
 
 function isChunkScriptElement(target: EventTarget | null): target is HTMLScriptElement {
@@ -12,9 +11,15 @@ function isChunkScriptElement(target: EventTarget | null): target is HTMLScriptE
 
 export function ChunkRecovery() {
   useEffect(() => {
+    // PWA/service-worker generation is disabled in next.config.ts, but a
+    // browser that visited while it WAS enabled can keep an old service
+    // worker registered indefinitely — it silently intercepts the fetches
+    // behind Next.js client-side navigation, so sidebar/nav links stop
+    // responding to a plain click (no console error) while a real full
+    // navigation (typed URL, "open in new tab") still works. Runs on every
+    // load, not just once, since a stale SW can resurface after any deploy.
     const cleanupStaleServiceWorkers = async () => {
       if (typeof window === 'undefined') return;
-      if (window.localStorage.getItem(SW_CLEANUP_KEY) === 'done') return;
 
       try {
         if ('serviceWorker' in navigator) {
@@ -34,8 +39,6 @@ export function ChunkRecovery() {
       } catch {
         // Keep runtime resilient.
       }
-
-      window.localStorage.setItem(SW_CLEANUP_KEY, 'done');
     };
 
     const recover = () => {
