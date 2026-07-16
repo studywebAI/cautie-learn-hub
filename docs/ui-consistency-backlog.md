@@ -18,46 +18,51 @@ critical bug (below) is resolved, unless told otherwise.
 - [ ] Chapter page inside a subject: default cover icons for chapters 1/2/3/4
       etc. instead of a blank gray box — reuse whatever "clear icon" pattern
       exists elsewhere.
-- [ ] Remove the standalone "+ Toetsen-hoofdstuk" button — a Toetsen chapter
-      should just always exist by default instead of being manually added.
+- [x] Remove the standalone "+ Toetsen-hoofdstuk" button — a Toetsen chapter
+      now always exists by default (auto-created on subject creation, and
+      self-healed in for existing subjects on next chapter-list fetch).
 - [ ] Chapter drag-reorder: drop the explicit reorder icon/drag handle: just
       press-and-hold ~3s on a chapter row to enter reorder mode instead.
 
 ## Sidebar
-- [ ] Active sidebar item background + all sidebar text colors: go a bit
-      *darker* (not the blue/gray tint that still shows up sometimes — track
-      down and remove remaining instances of that old tint).
-- [ ] Replace the round avatar-with-crown-icon at top of sidebar with a
+- [x] Active sidebar item background + all sidebar text colors: darkened;
+      removed a stray blue hue (220) on dark-theme sidebar-foreground that
+      didn't match the light theme's neutral gray.
+- [x] Replace the round avatar-with-crown-icon at top of sidebar with a
       rectangular bar showing the account name instead of a circle.
-- [ ] Notifications and "send message" icons must always stay visible in the
-      sidebar (don't let them get cut in any future cleanup).
+- [x] Notifications icon (bell) moved from dashboard-only into the persistent
+      topbar so it's always visible everywhere, not just on "/". "Send
+      message" stays page-scoped (teacher dashboard) since it needs a
+      classId — no single global class context to hang it on.
 - [ ] Make "Dashboard customization" actually do something — currently only
       toggles widgets that aren't really used anymore.
 
 ## Settings page
-- [ ] Move "Requires first" (paragraph prerequisite) out of default paragraph
-      creation — make it a setting on the assignment itself (or a specific
-      per-paragraph setting), not a default option shown when creating a new
-      paragraph.
-- [ ] Help & FAQ should be its own dedicated page/tab, not a section inside
-      Settings.
-- [ ] Remove "General" section from Settings UI *and* its backend entirely —
-      unused, and apparently leaking whatever's used for STT (speech-to-text)
-      config. Needs investigation before deleting anything backend-side.
+- [x] Move "Requires first" (paragraph prerequisite) out of default paragraph
+      creation — now set afterward via a settings icon on each paragraph row
+      (teacher only), backed by a new PATCH /paragraphs/[paragraphId].
+- [x] Help & FAQ is now its own dedicated page at /help.
+- [x] "General" section removed from Settings UI. Investigated first: STT
+      strategy is real, consumed by /api/tools/transcribe — not dead code or
+      a leak — so instead of deleting the backend, region/schooling moved
+      into Personalization and AI/STT controls moved into Account under an
+      "Advanced" subsection.
 - [ ] (Noted for later, not now) Classes will eventually be removed from the
       product entirely — revisit Settings/other areas after that lands.
 
 ## i18n
 - [ ] Stop hardcoding Dutch (or English) anywhere going forward — everything
       built from now on must read the language from Settings and render in
-      that language, not be hardcoded.
+      that language, not be hardcoded. (Ongoing discipline, not a one-time
+      fix — new code added this session follows the isDutch/tr() pattern.)
 
 ## Assignment editor (Workspace tab)
-- [ ] AI chatbox should have access to the current assignment's content, and
-      to previous paragraphs'/chapters' content *only when explicitly asked*
-      (not by default).
-- [ ] Remove the template gallery entirely — "ze doen niks" (they don't do
-      anything / aren't useful).
+- [x] AI chatbox already only saw the current assignment's own content by
+      default. Added an explicit, off-by-default "Also use previous
+      paragraphs/chapters" checkbox for the opt-in case.
+- [x] Removed the template gallery ("Add template" preset-block picker) from
+      the Workspace tab. The separate at-creation preset picker in
+      create/edit-assignment-dialog is a different flow and untouched.
 - [ ] Reorganize Workspace layout: automation-related stuff toward the
       bottom, blocks list centered/main area, with a thin divider line
       between block rows instead of plain white with no border.
