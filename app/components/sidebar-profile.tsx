@@ -186,7 +186,7 @@ export function SidebarProfile() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
+            <DropdownMenuItem onClick={() => router.push('/help')}>
               <HelpCircle className="h-4 w-4 mr-2" />
               Help & FAQ
             </DropdownMenuItem>
@@ -247,7 +247,7 @@ export function SidebarProfile() {
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
+          <DropdownMenuItem onClick={() => router.push('/help')}>
             <HelpCircle className="h-4 w-4 mr-2" />
             Help & FAQ
           </DropdownMenuItem>

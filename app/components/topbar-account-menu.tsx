@@ -118,7 +118,7 @@ export function TopbarAccountMenu() {
       <button
         type="button"
         title={isDutch ? 'Help & FAQ' : 'Help & FAQ'}
-        onClick={() => router.push('/settings?tab=help')}
+        onClick={() => router.push('/help')}
         className="hidden sm:inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
       >
         <HelpCircle className="h-4 w-4" />
@@ -164,7 +164,7 @@ export function TopbarAccountMenu() {
             <Settings className="h-4 w-4 mr-2" />
             {isDutch ? 'Instellingen' : 'Settings'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push('/settings?tab=help')}>
+          <DropdownMenuItem onClick={() => router.push('/help')}>
             <HelpCircle className="h-4 w-4 mr-2" />
             {isDutch ? 'Help & FAQ' : 'Help & FAQ'}
           </DropdownMenuItem>
