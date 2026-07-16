@@ -50,8 +50,8 @@
     --type-body: 14px;
     --type-section: 17px;
     --type-page: 22px;
-    --font-ui-previous: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --font-ui: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui-previous: "Satoshi", "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-ui: "Satoshi", "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-ui-legacy: var(--font-ui-previous);
     /* Role 3 (accent): fixed across every theme — do not redefine per theme. */
     --accent-brand: #919e9b;
@@ -264,7 +264,7 @@
     font-size: var(--type-body);
     line-height: 1.5;
     letter-spacing: -0.003em;
-    font-weight: 400;
+    font-weight: 500;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -273,7 +273,7 @@
     font-family: var(--font-ui);
     font-size: var(--type-body);
     line-height: 1.5;
-    font-weight: 400;
+    font-weight: 500;
   }
   h1 {
     font-size: var(--type-page);
