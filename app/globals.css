@@ -54,7 +54,7 @@
     --font-ui: "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-ui-legacy: var(--font-ui-previous);
     /* Role 3 (accent): fixed across every theme — do not redefine per theme. */
-    --accent-brand: #1E7A4B;
+    --accent-brand: #919e9b;
     /* Role 1/2 invert between themes: role 1 = background/surfaces, role 2 = foreground/ink. */
     --background: 0 0% 100%;
     --foreground: 220 9% 9%;
@@ -76,29 +76,29 @@
     --success-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 149 60% 30%;
+    --ring: 166 6% 59%;
     --radius: 0.75rem;
     --surface-1: 0 0% 100%;
-    --surface-2: 210 17% 98%;
-    --surface-3: 210 17% 96%;
+    --surface-2: 0 0% 89%;
+    --surface-3: 0 0% 89%;
     --interactive-hover: 210 17% 96%;
     --interactive-active: 210 17% 93%;
-    --focus-ring: 149 60% 30%;
+    --focus-ring: 166 6% 59%;
     --chart-1: 60 4% 22%;
     --chart-2: 160.9 69% 36.7%;
     --chart-3: 36 86.2% 54.5%;
     --chart-4: 0.4 72.4% 58.8%;
     --chart-5: 209.8 74.6% 37.1%;
 
-    --sidebar-background: 60 2% 84%;
+    --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 38%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent: 0 0% 89%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-active-foreground: 0 0% 9%;
     --sidebar-border: 0 0% 89%;
-    --sidebar-ring: 149 60% 30%;
+    --sidebar-ring: 166 6% 59%;
 
     --bg-page: #ffffff;
     --bg-surface: #ffffff;
@@ -121,14 +121,14 @@
   }
 
   .dark {
-    --background: 220 9% 9%;
+    --background: 240 3% 6%;
     --foreground: 0 0% 96%;
-    --card: 220 9% 11%;
+    --card: 0 0% 18%;
     --card-foreground: 0 0% 96%;
-    --popover: 220 9% 11%;
+    --popover: 0 0% 18%;
     --popover-foreground: 0 0% 96%;
     --primary: 0 0% 96%;
-    --primary-foreground: 220 9% 9%;
+    --primary-foreground: 240 3% 6%;
     --secondary: 220 8% 16%;
     --secondary-foreground: 0 0% 96%;
     --muted: 220 8% 16%;
@@ -141,32 +141,32 @@
     --success-foreground: 0 0% 100%;
     --border: 220 8% 18%;
     --input: 220 8% 20%;
-    --ring: 149 55% 42%;
+    --ring: 166 6% 59%;
     --chart-1: 0 0% 78%;
     --chart-2: 0 0% 62%;
     --chart-3: 0 0% 48%;
     --chart-4: 0 0% 36%;
     --chart-5: 0 0% 24%;
 
-    --surface-1: 220 9% 9%;
-    --surface-2: 220 8% 13%;
-    --surface-3: 220 8% 16%;
+    --surface-1: 240 3% 6%;
+    --surface-2: 0 0% 18%;
+    --surface-3: 0 0% 18%;
     --interactive-hover: 220 8% 16%;
     --interactive-active: 220 8% 19%;
-    --focus-ring: 149 55% 42%;
-    --sidebar-background: 220 9% 7%;
+    --focus-ring: 166 6% 59%;
+    --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 220 6% 65%;
     --sidebar-primary: 0 0% 96%;
-    --sidebar-primary-foreground: 220 9% 9%;
-    --sidebar-accent: 220 8% 15%;
+    --sidebar-primary-foreground: 240 3% 6%;
+    --sidebar-accent: 0 0% 18%;
     --sidebar-accent-foreground: 0 0% 96%;
     --sidebar-active-foreground: 0 0% 96%;
-    --sidebar-border: 220 8% 17%;
-    --sidebar-ring: 149 55% 42%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 166 6% 59%;
 
-    --bg-page: #17181a;
-    --bg-surface: #1c1d20;
-    --bg-primary: #1c1d20;
+    --bg-page: #0f0f10;
+    --bg-surface: #2e2e2e;
+    --bg-primary: #0f0f10;
     --text-primary: #f5f5f6;
     --text-secondary: #c4c6ca;
     --text-tertiary: #8b8d92;
