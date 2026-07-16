@@ -501,7 +501,7 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <div className="rounded-xl border border-border bg-background p-1.5">
+      <div className="rounded-xl border border-border/50 bg-background/80 shadow-sm backdrop-blur-sm p-1.5">
       <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
         <button
           type="button"

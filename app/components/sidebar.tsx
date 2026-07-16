@@ -884,7 +884,7 @@ export function AppSidebar() {
             openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border/70 surface-panel px-2.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border-0 bg-sidebar-accent/45 px-2.5 text-left text-[13px] font-medium text-sidebar-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-sidebar-accent/65 disabled:opacity-60"
         >
           <span className="truncate">
             {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
