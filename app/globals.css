@@ -46,8 +46,8 @@
 @layer base {
   :root {
     --type-micro: 12px;
-    --type-small: 13px;
-    --type-body: 14px;
+    --type-small: 13.5px;
+    --type-body: 15px;
     --type-section: 17px;
     --type-page: 22px;
     --font-ui-previous: "Satoshi", "Plus Jakarta Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
