@@ -2,20 +2,27 @@
 
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { useDeviceTier } from "@/hooks/use-device-tier";
 import { usePathname } from "next/navigation";
 import { AppErrorBoundary } from "@/components/ui/app-error-boundary";
 import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled-reminder-checker";
 import { DeadlineReminderChecker } from "@/components/scheduled-items/deadline-reminder-checker";
 import { PageHeaderProvider, usePageHeaderSlot } from "@/contexts/page-header-context";
+import { TopbarAccountMenu } from "@/components/topbar-account-menu";
 
+// Persistent topbar: sidebar-collapse toggle + whatever the current page set
+// via <PageHeader> on the left, account menu on the right — always visible,
+// not just when a page has set a title, so the collapse toggle and account
+// menu stay reachable everywhere (mirrors the reference UI: those controls
+// live in the header, not pinned to the bottom of the nav rail).
 function TopBar() {
     const { content } = usePageHeaderSlot();
-    if (!content) return null;
     return (
-        <div className="shrink-0 border-b border-border bg-background px-[var(--page-inline-padding)] py-3 flex items-center">
-            {content}
+        <div className="shrink-0 border-b border-border bg-background px-[var(--page-inline-padding)] py-2.5 flex items-center gap-3">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            <div className="flex-1 min-w-0">{content}</div>
+            <TopbarAccountMenu />
         </div>
     );
 }

@@ -20,8 +20,6 @@ import {
   ChevronDown,
   Check,
   FolderOpen,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TimelineIcon } from '@/components/icons/custom-icons';
@@ -71,7 +69,7 @@ export function AppSidebar() {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
-  const { setOpenMobile, openMobile, state: sidebarState, toggleSidebar } = useSidebar();
+  const { setOpenMobile, openMobile, state: sidebarState } = useSidebar();
   const [dropdown, setDropdown] = useState<DropdownState>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didWarmTeacherResourcesRef = useRef(false);
@@ -1350,31 +1348,6 @@ export function AppSidebar() {
           <RecentsSidebar />
         </div>
       </SidebarContent>
-
-      <SidebarFooter className="px-2 pt-1 pb-2 flex flex-col gap-2">
-        {/* Collapse / expand toggle — 21st.dev pill style */}
-        <button
-          onClick={toggleSidebar}
-          title={sidebarState === 'collapsed' ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn(
-            "flex h-8 w-full items-center gap-2 rounded-lg px-2.5",
-            "text-sidebar-foreground/40 hover:text-sidebar-foreground",
-            "transition-all duration-150",
-            "hover:bg-[hsl(var(--sidebar-accent)/0.6)]",
-            // Collapsed rail: shrink to icon-only centered button
-            "group-data-[collapsible=icon]:self-center group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:rounded-xl",
-          )}
-        >
-          {sidebarState === 'collapsed'
-            ? <PanelLeftOpen className="h-4 w-4 shrink-0" />
-            : <PanelLeftClose className="h-4 w-4 shrink-0" />
-          }
-          <span className="text-[12px] font-medium transition-[opacity] duration-150 group-data-[collapsible=icon]:hidden">
-            Collapse
-          </span>
-        </button>
-        <SidebarProfile />
-      </SidebarFooter>
       {renderFloatingDropdown()}
     </Sidebar>
   );
