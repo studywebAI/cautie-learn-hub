@@ -113,7 +113,6 @@ export function AppSidebar() {
   const [createClassOpen, setCreateClassOpen] = useState(false);
   const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
   const [joinClassOpen, setJoinClassOpen] = useState(false);
-  const [classPickerOpen, setClassPickerOpen] = useState(false);
   const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
   const [classDescription, setClassDescription] = useState('');
@@ -358,7 +357,9 @@ export function AppSidebar() {
       setNewClassMenuOpen(false);
       setCreateClassOpen(false);
       setJoinClassOpen(false);
-      setClassPickerOpen(true);
+      if (classDropdownTriggerRef.current) {
+        openDropdownFor('classes', classDropdownTriggerRef.current);
+      }
     };
 
     window.addEventListener('cautie:open-class-dropdown', openClassDropdown);
@@ -866,78 +867,26 @@ export function AppSidebar() {
     return (
       <>
       <div className="mb-1.5 px-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="mb-1 h-9 w-full justify-start rounded-md border border-border/70 surface-panel px-2.5 text-[12px] font-normal text-sidebar-foreground hover:surface-interactive"
-          onClick={(event) => {
-            openDropdownFor('classes', event.currentTarget);
-            setNewClassMenuOpen(false);
-            setJoinClassOpen(false);
-            setCreateClassOpen(true);
-          }}
-        >
-          + {isDutch ? 'Nieuwe klas' : 'New class'}
-        </Button>
         <button
           ref={classDropdownTriggerRef}
           type="button"
+          data-nav-dropdown-trigger="true"
           onClick={(event) => {
             event.preventDefault();
             setNewClassMenuOpen(false);
             setCreateClassOpen(false);
             setJoinClassOpen(false);
-            setClassPickerOpen(true);
+            openDropdownFor('classes', event.currentTarget);
           }}
           disabled={classDropdownItems.length === 0}
-          className="h-9 w-full rounded-md border border-border/70 surface-panel px-2.5 text-left text-[12px] text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border/70 surface-panel px-2.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
         >
-          <span className="flex items-center justify-between gap-2">
-              <span className="truncate">
-              {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
-            </span>
-            <ChevronDown className="h-4 w-4 text-sidebar-foreground/70" />
+          <span className="truncate">
+            {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
           </span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
         </button>
       </div>
-      {classPickerOpen && (
-        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-border surface-panel shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h3 className="text-xl leading-tight">{t.selectDifferentClass}</h3>
-              <Button variant="ghost" className="h-8 px-3" onClick={() => setClassPickerOpen(false)}>
-                {t.close}
-              </Button>
-            </div>
-            <div className="max-h-[65vh] overflow-auto px-3 py-3">
-              {classDropdownItems.length === 0 ? (
-                <p className="px-3 py-2 text-sm text-muted-foreground">{isDutch ? 'Geen klassen' : 'No classes'}</p>
-              ) : (
-                classDropdownItems.map((classItem) => (
-                  <button
-                    key={classItem.id}
-                    type="button"
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
-                      classItem.id === effectiveTeacherClassId ? 'surface-chip' : 'hover:surface-interactive'
-                    )}
-                    onClick={() => {
-                      persistTeacherClassId(classItem.id);
-                      const nextRoute = resolveTeacherClassRoute(classItem.id);
-                      setClassPickerOpen(false);
-                      setOpenMobile(false);
-                      router.replace(nextRoute);
-                    }}
-                  >
-                    <span className="truncate">{classItem.label}</span>
-                    {classItem.id === effectiveTeacherClassId ? <Check className="h-4 w-4 text-foreground/80" /> : null}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       {(createClassOpen || joinClassOpen) && (
         <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
           <div className="w-full max-w-3xl rounded-3xl border border-border surface-panel shadow-2xl">
