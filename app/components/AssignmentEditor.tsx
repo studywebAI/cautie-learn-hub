@@ -44,14 +44,6 @@ import {
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
-import { ASSIGNMENT_PRESETS } from '@/lib/assignments/presets';
-
-const PRESET_LABELS: Record<string, { nl: string; en: string }> = {
-  conceptCheck: { nl: 'Begripscheck', en: 'Concept check' },
-  practiceMix: { nl: 'Oefen-mix', en: 'Practice mix' },
-  quiz20: { nl: 'Quiz 20 min', en: 'Quiz 20 min' },
-  chapter45: { nl: 'Hoofdstuktoets 45 min', en: 'Chapter test 45 min' },
-};
 
 interface BlockTemplate {
   id: string;
@@ -341,6 +333,7 @@ export function AssignmentEditor({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [aiCommand, setAiCommand] = useState('');
   const [aiCommandLoading, setAiCommandLoading] = useState(false);
+  const [aiIncludeSiblingContext, setAiIncludeSiblingContext] = useState(false);
   const [copyFromOpen, setCopyFromOpen] = useState(false);
   const [copyChapters, setCopyChapters] = useState<Array<{ id: string; title: string }>>([]);
   const [copyParagraphs, setCopyParagraphs] = useState<Array<{ id: string; title: string }>>([]);
@@ -815,33 +808,6 @@ export function AssignmentEditor({
     setSelectedBlock(newBlock.id);
   };
 
-  // Template gallery (docs/subjects-feature-brainstorm.md section A point 3):
-  // one-click add a whole preset block-mix into an existing assignment,
-  // instead of only being able to pick a preset at creation time.
-  const addBlocksFromPreset = (preset: typeof ASSIGNMENT_PRESETS[number]) => {
-    const newBlocks: AssignmentBlock[] = [];
-    let position = blocks.length;
-    for (const entry of preset.blockMix) {
-      for (let i = 0; i < entry.count; i++) {
-        newBlocks.push({
-          id: generateId(),
-          type: entry.type,
-          position: position++,
-          width: 'full',
-          rowId: generateRowId(),
-          data: { ...getTemplateDefaults(entry.type) },
-          settings: normalizeBlockSettings(DEFAULT_BLOCK_SETTINGS),
-        });
-      }
-    }
-    setBlocks(prev => {
-      const combined = [...prev, ...newBlocks];
-      saveToHistory(combined);
-      return combined;
-    });
-    toast({ title: isDutch ? 'Template toegevoegd' : 'Template added', description: `${newBlocks.length} ${isDutch ? 'blokken toegevoegd' : 'blocks added'}` });
-  };
-
   // Reuse a block-set from another assignment (docs/subjects-feature-brainstorm.md
   // section E point 17) — copy, not link: a fresh set of block ids, no shared state.
   useEffect(() => {
@@ -1021,7 +987,11 @@ export function AssignmentEditor({
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ command, contextSummary: buildBlocksContextSummary() }),
+          body: JSON.stringify({
+            command,
+            contextSummary: buildBlocksContextSummary(),
+            includeSiblingContext: aiIncludeSiblingContext,
+          }),
         }
       );
       if (!res.ok) {
@@ -2567,6 +2537,15 @@ export function AssignmentEditor({
                   className="text-xs resize-none"
                   maxLength={500}
                 />
+                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={aiIncludeSiblingContext}
+                    onChange={(e) => setAiIncludeSiblingContext(e.target.checked)}
+                    className="h-3 w-3"
+                  />
+                  {isDutch ? 'Ook vorige paragrafen/hoofdstukken gebruiken' : 'Also use previous paragraphs/chapters'}
+                </label>
                 <Button
                   size="sm"
                   className="h-7 w-full text-xs"
@@ -2579,23 +2558,6 @@ export function AssignmentEditor({
                     <>{isDutch ? 'Invoegen' : 'Insert'}</>
                   )}
                 </Button>
-              </div>
-              <div className="rounded-xl border border-border surface-panel p-3 space-y-1.5">
-                <div className="text-[11px] font-medium text-muted-foreground mb-1">{isDutch ? 'Template toevoegen' : 'Add template'}</div>
-                {ASSIGNMENT_PRESETS.map((preset) => {
-                  const label = PRESET_LABELS[preset.key]?.[isDutch ? 'nl' : 'en'] || preset.key;
-                  const summary = preset.blockMix.map((m) => `${m.count}x ${m.type.replace('_', ' ')}`).join(', ');
-                  return (
-                    <button
-                      key={preset.id}
-                      onClick={() => addBlocksFromPreset(preset)}
-                      className="w-full text-left rounded-lg px-2.5 py-2 hover:surface-interactive border border-transparent hover:border-border"
-                    >
-                      <div className="text-xs font-medium">{label}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">{summary}</div>
-                    </button>
-                  );
-                })}
               </div>
               <Popover open={copyFromOpen} onOpenChange={setCopyFromOpen}>
                 <PopoverTrigger asChild>

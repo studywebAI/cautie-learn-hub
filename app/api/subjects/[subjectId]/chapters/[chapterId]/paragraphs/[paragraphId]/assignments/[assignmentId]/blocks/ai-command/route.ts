@@ -40,9 +40,53 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}))
     const command = String(body?.command || '').trim()
-    const contextSummary = String(body?.contextSummary || '').slice(0, 4000)
+    let contextSummary = String(body?.contextSummary || '').slice(0, 4000)
     if (!command) return NextResponse.json({ error: 'command is required' }, { status: 400 })
     if (command.length > 500) return NextResponse.json({ error: 'command too long' }, { status: 400 })
+
+    // Prior paragraphs/chapters are only pulled in when the teacher explicitly
+    // opts in — by default the AI only sees this assignment's own content.
+    if (body?.includeSiblingContext === true) {
+      const { data: currentParagraph } = await (supabase as any)
+        .from('paragraphs')
+        .select('paragraph_number, chapter_id')
+        .eq('id', resolvedParams.paragraphId)
+        .maybeSingle()
+
+      if (currentParagraph) {
+        const { data: siblingParagraphs } = await (supabase as any)
+          .from('paragraphs')
+          .select('title, paragraph_number')
+          .eq('chapter_id', currentParagraph.chapter_id)
+          .lt('paragraph_number', currentParagraph.paragraph_number)
+          .order('paragraph_number', { ascending: true })
+          .limit(5)
+
+        const { data: currentChapter } = await (supabase as any)
+          .from('chapters')
+          .select('title, chapter_number')
+          .eq('id', currentParagraph.chapter_id)
+          .maybeSingle()
+
+        const { data: priorChapters } = currentChapter
+          ? await (supabase as any)
+              .from('chapters')
+              .select('title, chapter_number')
+              .eq('subject_id', resolvedParams.subjectId)
+              .lt('chapter_number', currentChapter.chapter_number)
+              .order('chapter_number', { ascending: true })
+              .limit(5)
+          : { data: [] }
+
+        const siblingLines: string[] = []
+        if (currentChapter) siblingLines.push(`Current chapter: ${currentChapter.title}`)
+        if (priorChapters?.length) siblingLines.push(`Prior chapters: ${priorChapters.map((c: any) => c.title).join(', ')}`)
+        if (siblingParagraphs?.length) siblingLines.push(`Prior paragraphs in this chapter: ${siblingParagraphs.map((p: any) => p.title).join(', ')}`)
+        if (siblingLines.length) {
+          contextSummary = `${siblingLines.join('\n')}\n\n${contextSummary}`.slice(0, 4000)
+        }
+      }
+    }
 
     const result = await insertBlockCommand(command, contextSummary, 'Dutch')
     return NextResponse.json({ block: result })
