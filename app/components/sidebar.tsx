@@ -1071,56 +1071,58 @@ export function AppSidebar() {
                     </button>
                   </AnimateIcon>
                 ) : (
-                  <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                        isMenuItemActive(item.href)
-                          ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                          : "text-sidebar-foreground hover:surface-interactive"
-                      )}
-                      title={item.label}
-                    >
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                      isMenuItemActive(item.href)
+                        ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                        : "text-sidebar-foreground hover:surface-interactive"
+                    )}
+                    title={item.label}
+                  >
+                    <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                       <item.icon className="h-4 w-4" />
-                    </Link>
-                  </AnimateIcon>
+                    </AnimateIcon>
+                  </Link>
                 )}
               </div>
             ))}
             {showSectionHeaders && visibleMainItems.length > 0 && (visibleToolsItems.length > 0 || visibleOtherItems.length > 0) && <div className="h-px bg-sidebar-border my-2" />}
             {visibleToolsItems.map((item) => (
-              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                    isMenuItemActive(item.href)
-                      ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                      : "text-sidebar-foreground hover:surface-interactive"
-                  )}
-                  title={item.label}
-                >
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                  isMenuItemActive(item.href)
+                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:surface-interactive"
+                )}
+                title={item.label}
+              >
+                <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                   <item.icon className="h-4 w-4" />
-                </Link>
-              </AnimateIcon>
+                </AnimateIcon>
+              </Link>
             ))}
             {showSectionHeaders && visibleToolsItems.length > 0 && visibleOtherItems.length > 0 && <div className="h-px bg-sidebar-border my-2" />}
             {visibleOtherItems.map((item) => (
-              <AnimateIcon key={item.href} animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
-                    isMenuItemActive(item.href)
-                      ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
-                      : "text-sidebar-foreground hover:surface-interactive"
-                  )}
-                  title={item.label}
-                >
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                  isMenuItemActive(item.href)
+                    ? "surface-chip text-sidebar-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]"
+                    : "text-sidebar-foreground hover:surface-interactive"
+                )}
+                title={item.label}
+              >
+                <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                   <item.icon className="h-4 w-4" />
-                </Link>
-              </AnimateIcon>
+                </AnimateIcon>
+              </Link>
             ))}
           </nav>
 
@@ -1161,18 +1163,18 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </AnimateIcon>
                       ) : (
-                        <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                          <SidebarMenuButton
-                            asChild
-                            isActive={isMenuItemActive(item.href)}
-                            tooltip={item.label}
-                          >
-                            <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isMenuItemActive(item.href)}
+                          tooltip={item.label}
+                        >
+                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                            <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                               <item.icon className="h-4 w-4" />
-                              <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        </AnimateIcon>
+                            </AnimateIcon>
+                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                          </Link>
+                        </SidebarMenuButton>
                       )}
                     </SidebarMenuItem>
                   ))}
@@ -1188,18 +1190,18 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleToolsItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isMenuItemActive(item.href)}
-                          tooltip={item.label}
-                        >
-                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </AnimateIcon>
+                          </AnimateIcon>
+                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -1213,18 +1215,18 @@ export function AppSidebar() {
                 <SidebarMenu>
                   {visibleOtherItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                      <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop asChild>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isMenuItemActive(item.href)}
-                          tooltip={item.label}
-                        >
-                          <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isMenuItemActive(item.href)}
+                        tooltip={item.label}
+                      >
+                        <Link href={item.href} onClick={() => setOpenMobile(false)}>
+                          <AnimateIcon animateOnHover={item.animated !== false} animateOnTap={item.animated !== false} completeOnStop>
                             <item.icon className="h-4 w-4" />
-                            <span className="text-[13px] font-medium leading-4">{item.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </AnimateIcon>
+                          </AnimateIcon>
+                          <span className="text-[13px] font-medium leading-4">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -1271,19 +1273,19 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </AnimateIcon>
                   ) : (
-                    <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isMenuItemActive(item.href)}
-                        tooltip={item.label}
-                        className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-                      >
-                        <Link href={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isMenuItemActive(item.href)}
+                      tooltip={item.label}
+                      className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+                    >
+                      <Link href={item.href}>
+                        <AnimateIcon animateOnHover={item.animated !== false} completeOnStop>
                           <item.icon className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
-                          <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </AnimateIcon>
+                        </AnimateIcon>
+                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
                   )}
                 </SidebarMenuItem>
               ))}
@@ -1298,18 +1300,18 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isMenuItemActive(item.href)}
-                      tooltip={item.label}
-                    >
-                      <Link href={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isMenuItemActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <AnimateIcon animateOnHover={item.animated !== false} completeOnStop>
                         <item.icon className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
-                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </AnimateIcon>
+                      </AnimateIcon>
+                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -1323,18 +1325,18 @@ export function AppSidebar() {
             <SidebarMenu className="group-data-[collapsible=icon]:hidden">
               {visibleOtherItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <AnimateIcon animateOnHover={item.animated !== false} completeOnStop asChild>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isMenuItemActive(item.href)}
-                      tooltip={item.label}
-                    >
-                      <Link href={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isMenuItemActive(item.href)}
+                    tooltip={item.label}
+                  >
+                    <Link href={item.href}>
+                      <AnimateIcon animateOnHover={item.animated !== false} completeOnStop>
                         <item.icon className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
-                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </AnimateIcon>
+                      </AnimateIcon>
+                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
