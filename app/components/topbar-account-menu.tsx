@@ -31,11 +31,6 @@ function normalizeDisplayName(value: unknown): string {
   return normalized;
 }
 
-function initialsFor(value: string): string {
-  const trimmed = value.trim();
-  return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
-}
-
 // Account/profile menu, moved from the bottom of the sidebar into the
 // persistent topbar's top-right corner (matches the reference UI the user
 // pointed at — profile avatar + Settings/Help/Ideas live in the header, not
@@ -151,11 +146,12 @@ export function TopbarAccountMenu() {
           <button
             type="button"
             aria-label="Account menu"
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-medium outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring/40 ${
+            className={`flex h-7 max-w-[160px] items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring/40 ${
               isPremium ? 'bg-foreground text-background' : 'bg-muted text-foreground/80 hover:bg-muted/80'
             }`}
           >
-            {isPremium ? <Crown className="h-3.5 w-3.5" /> : initialsFor(profileName)}
+            {isPremium && <Crown className="h-3.5 w-3.5 shrink-0" />}
+            <span className="truncate">{profileName}</span>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[220px]">

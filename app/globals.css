@@ -91,10 +91,10 @@
     --chart-5: 209.8 74.6% 37.1%;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 46%;
+    --sidebar-foreground: 0 0% 40%;
     --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 89%;
+    --sidebar-accent: 0 0% 85%;
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-active-foreground: 0 0% 13%;
     --sidebar-border: 0 0% 89%;
@@ -155,10 +155,10 @@
     --interactive-active: 220 8% 19%;
     --focus-ring: 166 6% 59%;
     --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 220 6% 65%;
+    --sidebar-foreground: 0 0% 62%;
     --sidebar-primary: 0 0% 96%;
     --sidebar-primary-foreground: 240 3% 6%;
-    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent: 0 0% 22%;
     --sidebar-accent-foreground: 0 0% 96%;
     --sidebar-active-foreground: 0 0% 96%;
     --sidebar-border: 0 0% 18%;

@@ -9,7 +9,6 @@ import { MySubjects } from "@/components/dashboard/my-subjects";
 import type { Subject } from '@/lib/types';
 import { TodaysStudysetTasks } from "@/components/dashboard/todays-studyset-tasks";
 import { ScheduledStudyItems } from "@/components/dashboard/scheduled-study-items";
-import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { TodayPlanCard } from "@/components/dashboard/today-plan-card";
 import { GradesMiniCard } from "@/components/dashboard/grades-mini-card";
 import { StudentStatRow } from "@/components/dashboard/student-stat-row";
@@ -146,7 +145,6 @@ function StudentDashboard() {
         actions={
           <>
             <DashboardCustomizeMenu role="student" widgetKeys={['studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
-            <NotificationPopover />
           </>
         }
       />
@@ -239,7 +237,6 @@ function TeacherSummaryDashboard() {
                     widgetKeys={['agenda', 'liveTest']}
                     onChange={setTeacherDashboardPrefs}
                   />
-                  <NotificationPopover />
                 </>
               }
             />

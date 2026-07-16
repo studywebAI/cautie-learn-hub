@@ -10,6 +10,7 @@ import { ScheduledReminderChecker } from "@/components/scheduled-items/scheduled
 import { DeadlineReminderChecker } from "@/components/scheduled-items/deadline-reminder-checker";
 import { PageHeaderProvider, usePageHeaderSlot } from "@/contexts/page-header-context";
 import { TopbarAccountMenu } from "@/components/topbar-account-menu";
+import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { AppSidebar } from "@/components/sidebar";
 import { GlobalCommandPalette } from "@/components/global-command-palette";
 
@@ -39,6 +40,7 @@ function TopBar() {
         <div className="shrink-0 border-b border-border bg-background px-[var(--page-inline-padding)] py-2.5 flex items-center gap-3">
             <CollapseToggle />
             <div className="flex-1 min-w-0">{content}</div>
+            <NotificationPopover />
             <TopbarAccountMenu />
         </div>
     );
