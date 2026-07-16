@@ -17,6 +17,7 @@ import { CalendarConnectionDialog } from '@/components/agenda/calendar-connectio
 import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
 import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
+import { PageHeader } from '@/components/page-header';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PlusCircle, SlidersHorizontal } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
@@ -700,13 +701,18 @@ function AgendaPageContent() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[55vh] items-center justify-center">
-        <CautieLoader label="Loading agenda" sublabel="Syncing timeline data" size="lg" />
-      </div>
+      <>
+        <PageHeader title="Agenda" />
+        <div className="flex min-h-[55vh] items-center justify-center">
+          <CautieLoader label="Loading agenda" sublabel="Syncing timeline data" size="lg" />
+        </div>
+      </>
     );
   }
 
   return (
+    <>
+    <PageHeader title="Agenda" />
     <PageSection className="agenda-clean h-full !space-y-0">
       <div className="flex h-full flex-col gap-6">
         <div className="rounded-2xl surface-panel p-2.5 md:p-3">
@@ -833,6 +839,7 @@ function AgendaPageContent() {
         initialProvider={selectedCalendarProvider}
       />
     </PageSection>
+    </>
   );
 }
 

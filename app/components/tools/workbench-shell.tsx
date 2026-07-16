@@ -1,12 +1,12 @@
 'use client';
 
-import { ReactNode, useContext, useMemo, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDeviceTier } from '@/hooks/use-device-tier';
 import { cn } from '@/lib/utils';
-import { AppContext, AppContextType } from '@/contexts/app-context';
+import { PageHeader } from '@/components/page-header';
 
 type WorkbenchShellProps = {
   title: string;
@@ -15,60 +15,34 @@ type WorkbenchShellProps = {
   sidebar: ReactNode;
   topAccessory?: ReactNode;
   hideSidebar?: boolean;
+  /** @deprecated title now renders in the persistent app topbar without an icon */
   breadcrumbIcon?: ReactNode;
 };
 
-export function WorkbenchShell({ title, description, children, sidebar, topAccessory, hideSidebar = false, breadcrumbIcon }: WorkbenchShellProps) {
-  const context = useContext(AppContext) as AppContextType | null;
+export function WorkbenchShell({ title, description, children, sidebar, topAccessory, hideSidebar = false }: WorkbenchShellProps) {
   const deviceTier = useDeviceTier();
   const isPhone = deviceTier === 'phone';
   const isTablet = deviceTier === 'tablet';
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const profileName = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const savedDisplayName = String(window.localStorage.getItem('studyweb-display-name') || '').trim();
-      if (savedDisplayName) return savedDisplayName;
-    }
-    const displayName = String((context?.session?.user?.user_metadata as any)?.display_name || '').trim();
-    if (displayName) return displayName;
-    const fullName = String((context?.session?.user?.user_metadata as any)?.full_name || '').trim();
-    if (fullName) return fullName;
-    const email = String(context?.session?.user?.email || '').trim();
-    return email ? email.split('@')[0] : 'User';
-  }, [context?.session?.user]);
 
   return (
     <div className="relative h-full w-full">
+      {/* Registers title/subtitle into the persistent app topbar (see
+          app/(main)/layout.tsx) instead of this component drawing its own
+          separate breadcrumb bar — tool pages used to have a second, visually
+          inconsistent header on top of the real one. */}
+      <PageHeader
+        title={title}
+        subtitle={description}
+        actions={
+          isPhone && !hideSidebar ? (
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(true)}>
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+          ) : undefined
+        }
+      />
       <div className="flex h-full w-full flex-col">
-        {/* Breadcrumb — full-width, height = collapsed sidebar width (3.5rem), rounded-b-2xl */}
-        <div className="shrink-0 w-full bg-sidebar rounded-b-2xl">
-          <div className="flex min-h-[3.5rem] items-center justify-between px-3">
-            <div className="flex items-center text-[13px] font-medium leading-none text-sidebar-foreground">
-              <button
-                type="button"
-                className="text-sidebar-foreground/55 hover:text-[var(--accent-brand)] transition-colors"
-                onClick={() => window.dispatchEvent(new Event('cautie:open-profile-menu'))}
-              >
-                {profileName}
-              </button>
-              <span className="mx-2 text-sidebar-foreground/25 select-none">/</span>
-              <span className="inline-flex items-center gap-1.5 text-sidebar-foreground">
-                {breadcrumbIcon ? (
-                  <span className="text-sidebar-foreground/60 [&>svg]:h-3.5 [&>svg]:w-3.5">{breadcrumbIcon}</span>
-                ) : null}
-                <span>{title}</span>
-              </span>
-            </div>
-            <h1 className="sr-only">{title}</h1>
-            {isPhone && !hideSidebar && (
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSidebarOpen(true)}>
-                <Settings2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-          {description && <p className="px-3 pb-2 text-[11px] text-sidebar-foreground/50">{description}</p>}
-        </div>
-
         <div className="flex min-h-0 flex-1 gap-2 px-0 py-1">
           <div className="flex min-w-0 flex-1 flex-col">
           <div className={cn('min-h-0 flex flex-1 flex-col', isPhone ? 'pl-3 pr-2 pb-1' : isTablet ? 'pl-3 pr-2 pb-1' : 'pl-3 pr-2 pb-1')}>

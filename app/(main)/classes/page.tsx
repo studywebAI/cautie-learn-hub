@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { StudentClasses } from '@/components/dashboard/student/student-classes';
 import { useToast } from '@/hooks/use-toast';
+import { PageHeader } from '@/components/page-header';
 
 function ClassesPageContent() {
   const { role, session, refetchClasses, classes } = useContext(AppContext) as AppContextType;
@@ -99,6 +100,7 @@ function ClassesPageContent() {
   if (role === 'student') {
     return (
       <div className="page-content">
+        <PageHeader title="Classes" />
         <StudentClasses />
       </div>
     );

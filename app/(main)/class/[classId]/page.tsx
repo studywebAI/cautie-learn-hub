@@ -341,6 +341,7 @@ export default function ClassDetailsPage() {
 
   return (
     <>
+      <PageHeader title={classInfo?.name || 'Class'} />
       {isTeacher && (
         <QuickGrader classId={classId} isOpen={isQuickGraderOpen} onClose={() => setIsQuickGraderOpen(false)} />
       )}
