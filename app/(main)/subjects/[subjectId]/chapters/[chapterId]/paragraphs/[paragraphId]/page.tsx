@@ -26,7 +26,6 @@ import Link from 'next/link';
 import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
-import { ASSIGNMENT_PRESETS, AssignmentCreateKind, getPresetById, toAssignmentType, withContentDefaults } from '@/lib/assignments/presets';
 
 type Assignment = {
   id: string;
@@ -62,6 +61,7 @@ type BreadcrumbChapter = {
   id: string;
   title: string;
   chapter_number?: number;
+  is_tests_chapter?: boolean;
 };
 
 // Convert index to letter (0=a, 1=b, 26=aa, etc.)
@@ -72,15 +72,6 @@ function indexToLetter(index: number): string {
   const first = Math.floor(index / 26) - 1;
   const second = index % 26;
   return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
-}
-
-function previewQuestionHint(type: string, isDutch: boolean): string {
-  if (type === 'open_question') return isDutch ? 'Open vraag met rubric' : 'Open response with rubric';
-  if (type === 'multiple_choice') return isDutch ? 'Meerkeuze vraag' : 'Multiple-choice question';
-  if (type === 'fill_in_blank') return isDutch ? 'Invulzin' : 'Fill in the blank';
-  if (type === 'matching') return isDutch ? 'Koppelbegrippen' : 'Match concepts';
-  if (type === 'ordering') return isDutch ? 'Zet stappen op volgorde' : 'Order the steps';
-  return isDutch ? 'Instructieblok' : 'Instruction block';
 }
 
 function ShareTestPanel({
@@ -154,18 +145,7 @@ export default function ParagraphDetailPage() {
   const [allParagraphs, setAllParagraphs] = useState<Paragraph[]>([]);
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
-  const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
-  const [createKind, setCreateKind] = useState<AssignmentCreateKind>('homework');
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
-  const [addToAgenda, setAddToAgenda] = useState(true);
-  const [homeworkDueAtLocal, setHomeworkDueAtLocal] = useState('');
-  const [testStartsAtLocal, setTestStartsAtLocal] = useState('');
-  const [testEndsAtLocal, setTestEndsAtLocal] = useState('');
-  const [timerMinutes, setTimerMinutes] = useState<number>(45);
-  const [attemptLimit, setAttemptLimit] = useState<number>(1);
-  const [randomizeQuestions, setRandomizeQuestions] = useState(true);
-  const [randomizeAnswers, setRandomizeAnswers] = useState(true);
-  const [integrityMode, setIntegrityMode] = useState(true);
+  const [createIsTest, setCreateIsTest] = useState(false);
   const [assignmentTypeFilter, setAssignmentTypeFilter] = useState<'all' | 'homework' | 'test'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
@@ -193,58 +173,19 @@ export default function ParagraphDetailPage() {
     createFirstAssignment: isDutch ? 'Eerste opdracht maken' : 'Create First Assignment',
     addAssignmentTitle: isDutch ? 'Opdracht Toevoegen' : 'Add Assignment',
     addAssignmentDescription: isDutch ? 'Maak een nieuwe opdracht voor deze paragraaf.' : 'Create a new assignment for this paragraph.',
-    addAssignmentDescriptionWizard: isDutch ? 'Kies eerst wat je wilt maken, daarna begeleiden we je stap voor stap.' : 'Choose what you are creating first, then we guide you step by step.',
+    addAssignmentDescriptionWizard: isDutch ? 'Geef een titel — de rest stel je zo in de editor in.' : 'Give it a title — everything else is set up in the editor.',
     title: isDutch ? 'Titel' : 'Title',
     back: isDutch ? 'Terug' : 'Back',
-    assignmentTypeTitle: isDutch ? 'Wat Maak Je?' : 'What Are You Creating?',
-    assignmentTypeDescription: isDutch ? 'Kies eerst het doel. Wij zetten slimme standaardinstellingen klaar.' : 'Choose the goal first. We apply smart defaults.',
-    homework: isDutch ? 'Huiswerk' : 'Homework',
+    homework: isDutch ? 'Opdracht' : 'Assignment',
     test: isDutch ? 'Toets' : 'Test',
     content: isDutch ? 'Leerstof' : 'Content',
-    homeworkCaption: isDutch ? 'Oefenen, reflectie, thuiswerk' : 'Practice, reflection, take-home work',
-    testCaption: isDutch ? 'Getimed, gecontroleerd, beoordelingsmodus' : 'Timed, controlled, assessment mode',
-    contentCaption: isDutch ? 'Tekst, foto\'s, video — geen vragen, geen cijfer' : 'Text, photos, video — no questions, no grade',
-    starterTitle: isDutch ? 'Kies een Starter' : 'Choose a Starter',
-    starterDescription: isDutch ? 'Begin met een bewezen opzet of start helemaal zelf.' : 'Start with a proven layout or build your own.',
-    createYourOwn: isDutch ? 'Zelf Opbouwen' : 'Create Your Own',
-    blockMix: isDutch ? 'Blokverdeling' : 'Block mix',
-    estimatedTime: isDutch ? 'Geschatte tijd' : 'Estimated time',
-    difficulty: isDutch ? 'Moeilijkheid' : 'Difficulty',
-    easy: isDutch ? 'Makkelijk' : 'Easy',
-    medium: isDutch ? 'Gemiddeld' : 'Medium',
-    hard: isDutch ? 'Moeilijk' : 'Hard',
-    homeworkSettingsTitle: isDutch ? 'Huiswerkinstellingen' : 'Homework Settings',
-    testSettingsTitle: isDutch ? 'Toetsinstellingen' : 'Test Settings',
-    dueDate: isDutch ? 'Inlevermoment' : 'Due date',
-    openTime: isDutch ? 'Starttijd' : 'Open time',
-    closeTime: isDutch ? 'Eindtijd' : 'Close time',
-    timerMinutes: isDutch ? 'Timer (minuten)' : 'Timer (minutes)',
-    attemptLimit: isDutch ? 'Max. pogingen' : 'Attempt limit',
-    randomizeQuestions: isDutch ? 'Vragen Willekeurig' : 'Randomize Questions',
-    randomizeAnswers: isDutch ? 'Antwoordopties Willekeurig' : 'Randomize Options',
-    integrityMode: isDutch ? 'Integriteitsmodus (Anti-Cheat)' : 'Integrity Mode (Anti-Cheat)',
-    addToAgenda: isDutch ? 'Toevoegen Aan Agenda' : 'Add to Agenda',
-    createHomework: isDutch ? 'Huiswerk maken' : 'Create homework',
-    createTest: isDutch ? 'Toets maken' : 'Create test',
-    createContent: isDutch ? 'Leerstof maken' : 'Create content',
-    contentSettingsTitle: isDutch ? 'Leerstof-instellingen' : 'Content settings',
-    contentSettingsHint: isDutch ? 'Geen deadline, timer of anti-cheat nodig — dit is leesmateriaal, geen toets.' : 'No deadline, timer, or anti-cheat needed — this is reading material, not a test.',
+    isTestLabel: isDutch ? 'Dit is een toets' : 'This is a test',
+    isTestHint: isDutch ? 'Schakelt timer, anti-cheat en planning in — verandert dit later ook in de editor.' : 'Turns on timer, anti-cheat, and scheduling — you can change this later in the editor too.',
+    isTestAutoHint: isDutch ? 'Automatisch aangezet omdat dit het Toetsen-hoofdstuk is.' : 'Automatically turned on because this is the Toetsen chapter.',
     allAssignments: isDutch ? 'Alles' : 'All',
-    onlyHomework: isDutch ? 'Huiswerk' : 'Homework',
+    onlyHomework: isDutch ? 'Opdrachten' : 'Assignments',
     onlyTests: isDutch ? 'Toetsen' : 'Tests',
     filterByType: isDutch ? 'Filter Op Type' : 'Filter by Type',
-    agendaCreated: isDutch ? 'Agenda-item aangemaakt' : 'Agenda item created',
-    failedAgendaCreate: isDutch ? 'Kon agenda-item niet maken' : 'Could not create agenda item',
-    continueBtn: isDutch ? 'Doorgaan' : 'Continue',
-    choosePresetFirst: isDutch ? 'Kies een preset of ga verder met zelf opbouwen.' : 'Select a preset or continue with create your own.',
-    presetConceptCheck: isDutch ? 'Conceptcheck' : 'Concept check',
-    presetConceptCheckUse: isDutch ? 'Snelle controle na de les.' : 'Quick check after a lesson.',
-    presetPracticeMix: isDutch ? 'Oefenmix' : 'Practice mix',
-    presetPracticeMixUse: isDutch ? 'Afwisselende oefening voor huiswerk.' : 'Varied reinforcement practice.',
-    presetQuiz20: isDutch ? 'Quiz (20 min)' : 'Quiz (20 min)',
-    presetQuiz20Use: isDutch ? 'Korte toets op recente leerstof.' : 'Short test on recent material.',
-    presetChapter45: isDutch ? 'Hoofdstuktoets (45 min)' : 'Chapter test (45 min)',
-    presetChapter45Use: isDutch ? 'Formele hoofdstuktoets.' : 'Formal chapter assessment.',
     cancel: isDutch ? 'Annuleren' : 'Cancel',
     creating: isDutch ? 'Aanmaken...' : 'Creating...',
     create: isDutch ? 'Maken' : 'Create',
@@ -274,9 +215,7 @@ export default function ParagraphDetailPage() {
     if (typeof window === 'undefined') return;
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('create') === '1') {
-      setCreateStep(1);
-      setCreateKind(urlParams.get('kind') === 'test' ? 'test' : 'homework');
-      setSelectedPresetId(null);
+      setCreateIsTest(urlParams.get('kind') === 'test');
       setIsCreateAssignmentOpen(true);
       window.history.replaceState(null, '', window.location.pathname);
     }
@@ -389,82 +328,20 @@ export default function ParagraphDetailPage() {
     }
   };
 
+  // Assignments are created free-form (no Homework/Test/Content wizard, docs/
+  // subjects-feature-brainstorm.md section H): just a title, straight into the
+  // editor. "Is this a test" is a togglable setting (AssignmentEditor Settings
+  // tab), pre-checked here if the paragraph lives in the Toetsen-hoofdstuk.
   const handleCreateAssignment = async () => {
     if (!newAssignmentTitle.trim()) return;
     if (isCreatingAssignment) return;
 
     const title = newAssignmentTitle.trim();
-    const selectedPreset = getPresetById(selectedPresetId);
-    const toIsoOrNull = (value: string) => {
-      if (!value) return null;
-      const d = new Date(value);
-      if (Number.isNaN(d.getTime())) return null;
-      return d.toISOString();
-    };
-    const scheduledStartAt = createKind === 'test' ? toIsoOrNull(testStartsAtLocal) : null;
-    const scheduledEndAt = createKind === 'test'
-      ? toIsoOrNull(testEndsAtLocal)
-      : (createKind === 'homework' ? toIsoOrNull(homeworkDueAtLocal) : null);
-    const effectiveSettingsBase = normalizeAssignmentSettings(DEFAULT_ASSIGNMENT_SETTINGS);
-    const withPresetSettings = createKind === 'content'
-      ? withContentDefaults(effectiveSettingsBase)
-      : (selectedPreset ? selectedPreset.applyDefaults(effectiveSettingsBase) : effectiveSettingsBase);
-    const effectiveSettings = createKind === 'content'
-      ? normalizeAssignmentSettings({
-          ...withPresetSettings,
-          time: { ...withPresetSettings.time, startAt: null, endAt: null },
-        })
-      : normalizeAssignmentSettings({
-          ...withPresetSettings,
-          time: {
-            ...withPresetSettings.time,
-            startAt: scheduledStartAt,
-            endAt: scheduledEndAt,
-            durationMinutes: createKind === 'test' ? timerMinutes : null,
-            showTimer: createKind === 'test',
-          },
-          attempts: {
-            ...withPresetSettings.attempts,
-            maxAttempts: createKind === 'test' ? attemptLimit : (withPresetSettings.attempts.maxAttempts || 3),
-          },
-          access: {
-            ...withPresetSettings.access,
-            shuffleQuestions: createKind === 'test' ? randomizeQuestions : withPresetSettings.access.shuffleQuestions,
-            shuffleAnswers: createKind === 'test' ? randomizeAnswers : withPresetSettings.access.shuffleAnswers,
-          },
-          antiCheat: {
-            ...withPresetSettings.antiCheat,
-            requireFullscreen: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.requireFullscreen,
-            detectTabSwitch: createKind === 'test' ? integrityMode : withPresetSettings.antiCheat.detectTabSwitch,
-          },
-        });
-    const nextIndex = assignments.length > 0
-      ? Math.max(...assignments.map((assignment) => assignment.assignment_index || 0)) + 1
-      : 0;
-    const tempId = `temp-assignment-${Date.now()}`;
-    const optimisticAssignment: Assignment = {
-      id: tempId,
-      title,
-      type: toAssignmentType(createKind),
-      letter_index: indexToLetter(nextIndex),
-      assignment_index: nextIndex,
-      block_count: 0,
-      answers_enabled: false,
-      is_visible: true,
-      is_locked: false,
-      answer_mode: 'view_only',
-      ai_grading_enabled: false,
-      progress_percent: 0,
-      correct_percent: 0,
-      is_pending: true,
-    };
+    const isTest = createIsTest;
+    const effectiveSettings = normalizeAssignmentSettings(DEFAULT_ASSIGNMENT_SETTINGS);
 
     setIsCreatingAssignment(true);
-    setAssignments((prev) => [...prev, optimisticAssignment]);
-    setNewAssignmentTitle('');
     setIsCreateAssignmentOpen(false);
-    setCreateStep(1);
-    setSelectedPresetId(null);
 
     try {
       const response = await fetch(
@@ -475,121 +352,23 @@ export default function ParagraphDetailPage() {
           body: JSON.stringify({
             title,
             answers_enabled: false,
-            type: toAssignmentType(createKind),
-            scheduled_start_at: scheduledStartAt,
-            scheduled_end_at: scheduledEndAt,
+            type: isTest ? 'small_test' : 'homework',
             settings: effectiveSettings,
-            preset_id: selectedPresetId,
           }),
         }
       );
 
       if (response.ok) {
         const newAssignment = await response.json();
-        if (selectedPreset && newAssignment?.id) {
-          const defaultDataByType: Record<string, any> = {
-            open_question: { question: '', correct_answer: '', ai_grading: true, grading_criteria: '', max_score: 5 },
-            multiple_choice: {
-              question: '',
-              options: [
-                { id: 'a', text: '', correct: false },
-                { id: 'b', text: '', correct: false },
-                { id: 'c', text: '', correct: true },
-                { id: 'd', text: '', correct: false },
-              ],
-              multiple_correct: false,
-              shuffle: true,
-            },
-            fill_in_blank: { text: '', answers: [''], case_sensitive: false },
-            matching: { prompt: '', pairs: [{ left: '', right: '' }, { left: '', right: '' }] },
-            ordering: { prompt: '', items: ['', '', ''], correct_order: [0, 1, 2] },
-            text: { header: '', content: '', style: 'normal' },
-          };
-          const blockInsertPayloads = selectedPreset.blockMix.flatMap((mix) =>
-            Array.from({ length: mix.count }, (_unused, i) => ({
-              type: mix.type,
-              data: defaultDataByType[mix.type] || { text: '' },
-              position: i,
-            }))
-          );
-          await Promise.all(
-            blockInsertPayloads.map((payload, idx) =>
-              fetch(
-                `/api/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${newAssignment.id}/blocks`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    ...payload,
-                    position: idx,
-                  }),
-                }
-              )
-            )
-          );
-        }
-        setAssignments((prev) =>
-          prev.map((assignment) =>
-            assignment.id === tempId
-              ? {
-                  ...assignment,
-                  ...newAssignment,
-                  is_visible: newAssignment.is_visible ?? true,
-                  is_locked: newAssignment.is_locked ?? false,
-                  answer_mode: newAssignment.answer_mode ?? ('view_only' as const),
-                  ai_grading_enabled: newAssignment.ai_grading_enabled ?? false,
-                  type: newAssignment.type ?? toAssignmentType(createKind),
-                  is_pending: false,
-                }
-              : assignment
-          )
+        setNewAssignmentTitle('');
+        router.push(
+          `/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${newAssignment.id}`
         );
-
-        if (addToAgenda && newAssignment?.class_id) {
-          const isTest = createKind === 'test';
-          const kindLabel = isTest ? t.test : (createKind === 'content' ? t.content : t.homework);
-          const agendaTitle = `${kindLabel}: ${title}`;
-          const dueAt = scheduledEndAt;
-          const startsAt = isTest ? scheduledStartAt : null;
-          // Tests default to hidden (same exam-security rule as the assignment
-          // itself) and auto-reveal exactly when the test opens, instead of
-          // leaking the title/date on students' agendas ahead of publication.
-          const agendaRes = await fetch(`/api/classes/${newAssignment.class_id}/agenda`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: agendaTitle,
-              description: selectedPreset ? `${selectedPreset.key} preset` : null,
-              item_type: isTest ? 'quiz' : 'assignment',
-              starts_at: startsAt,
-              due_at: dueAt,
-              visible: !isTest,
-              publish_at: isTest ? startsAt : null,
-              links: [
-                {
-                  link_type: 'assignment',
-                  link_ref_id: newAssignment.id,
-                  label: title,
-                  metadata_json: {
-                    assignment_type: createKind,
-                    paragraph_id: paragraphId,
-                  },
-                },
-              ],
-            }),
-          });
-          if (!agendaRes.ok) {
-            toast({ title: t.error, description: t.failedAgendaCreate, variant: 'destructive' });
-          } else {
-            toast({ title: t.agendaCreated });
-          }
-        }
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || 'Failed to create assignment');
       }
     } catch (error) {
-      setAssignments((prev) => prev.filter((assignment) => assignment.id !== tempId));
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : t.failedCreateAssignment,
@@ -634,20 +413,9 @@ export default function ParagraphDetailPage() {
     }
   };
 
-  const resetCreateWizard = () => {
-    setCreateStep(1);
-    setCreateKind('homework');
-    setSelectedPresetId(null);
-    setAddToAgenda(true);
-    setHomeworkDueAtLocal('');
-    setTestStartsAtLocal('');
-    setTestEndsAtLocal('');
-    setTimerMinutes(45);
-    setAttemptLimit(1);
-    setRandomizeQuestions(true);
-    setRandomizeAnswers(true);
-    setIntegrityMode(true);
+  const resetCreateForm = () => {
     setNewAssignmentTitle('');
+    setCreateIsTest(Boolean(chapterPath?.is_tests_chapter));
   };
 
   if (isLoading) {
@@ -676,22 +444,6 @@ export default function ParagraphDetailPage() {
     if (assignmentTypeFilter === 'test') return isTest;
     return !isTest;
   });
-  const getPresetLabel = (presetKey: string) => {
-    if (presetKey === 'conceptCheck') return t.presetConceptCheck;
-    if (presetKey === 'practiceMix') return t.presetPracticeMix;
-    if (presetKey === 'quiz20') return t.presetQuiz20;
-    if (presetKey === 'chapter45') return t.presetChapter45;
-    return presetKey;
-  };
-  const getPresetUsage = (presetKey: string) => {
-    if (presetKey === 'conceptCheck') return t.presetConceptCheckUse;
-    if (presetKey === 'practiceMix') return t.presetPracticeMixUse;
-    if (presetKey === 'quiz20') return t.presetQuiz20Use;
-    if (presetKey === 'chapter45') return t.presetChapter45Use;
-    return '';
-  };
-  const visiblePresets = ASSIGNMENT_PRESETS.filter((preset) => preset.kind === createKind);
-
   return (
     <div className="page-content">
       {/* Breadcrumb */}
@@ -773,7 +525,7 @@ export default function ParagraphDetailPage() {
               </Popover>
             )}
             {isTeacher && (
-              <Button onClick={() => { resetCreateWizard(); setIsCreateAssignmentOpen(true); }} size="sm" className="h-8">
+              <Button onClick={() => { resetCreateForm(); setIsCreateAssignmentOpen(true); }} size="sm" className="h-8">
                 {t.addAssignment}
               </Button>
             )}
@@ -786,7 +538,7 @@ export default function ParagraphDetailPage() {
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-sm mb-4">{t.noAssignmentsYet}</p>
           {isTeacher && (
-            <Button onClick={() => { resetCreateWizard(); setIsCreateAssignmentOpen(true); }} size="sm">
+            <Button onClick={() => { resetCreateForm(); setIsCreateAssignmentOpen(true); }} size="sm">
                 {t.createFirstAssignment}
             </Button>
           )}
@@ -964,258 +716,52 @@ export default function ParagraphDetailPage() {
         )}
       </div>
 
-      {/* Create Assignment Dialog */}
+      {/* Create Assignment Dialog — free-form, no type wizard (docs/subjects-feature-brainstorm.md section H) */}
       <Dialog open={isCreateAssignmentOpen} onOpenChange={(open) => {
         setIsCreateAssignmentOpen(open);
-        if (!open) resetCreateWizard();
+        if (!open) resetCreateForm();
       }}>
-        <DialogContent className="sm:max-w-5xl p-7">
+        <DialogContent className="sm:max-w-md p-7">
           <DialogHeader>
             <DialogTitle className="text-xl">{t.addAssignmentTitle}</DialogTitle>
             <DialogDescription>{t.addAssignmentDescriptionWizard}</DialogDescription>
           </DialogHeader>
-          <div className="py-2">
-            <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 1 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>1</span>
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 2 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>2</span>
-              <span className={`rounded-full px-2 py-0.5 ${createStep === 3 ? 'bg-primary text-primary-foreground' : 'surface-interactive'}`}>3</span>
+          <div className="py-2 space-y-3">
+            <div>
+              <Label htmlFor="assignment-title">{t.title}</Label>
+              <Input
+                id="assignment-title"
+                autoFocus
+                value={newAssignmentTitle}
+                onChange={(e) => setNewAssignmentTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newAssignmentTitle.trim() && !isCreatingAssignment) handleCreateAssignment();
+                }}
+                className="mt-1"
+              />
             </div>
-
-            {createStep === 1 && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium">{t.assignmentTypeTitle}</p>
-                <p className="text-xs text-muted-foreground">{t.assignmentTypeDescription}</p>
-                <div className="grid gap-3 md:grid-cols-3">
-                  <button
-                    type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'homework' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
-                    onClick={() => setCreateKind('homework')}
-                  >
-                    <p className="text-sm font-medium">{t.homework}</p>
-                    <p className="text-xs text-muted-foreground">{t.homeworkCaption}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'test' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
-                    onClick={() => setCreateKind('test')}
-                  >
-                    <p className="text-sm font-medium">{t.test}</p>
-                    <p className="text-xs text-muted-foreground">{t.testCaption}</p>
-                  </button>
-                  <button
-                    type="button"
-                    className={`rounded-xl border p-4 text-left transition ${createKind === 'content' ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
-                    onClick={() => setCreateKind('content')}
-                  >
-                    <p className="text-sm font-medium">{t.content}</p>
-                    <p className="text-xs text-muted-foreground">{t.contentCaption}</p>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {createStep === 2 && (
-              <div className="space-y-3">
-                <p className="text-sm font-medium">{t.starterTitle}</p>
-                <p className="text-xs text-muted-foreground">{t.starterDescription}</p>
-                <div className="max-h-[320px] space-y-2 overflow-auto pr-1">
-                  {visiblePresets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => setSelectedPresetId(preset.id)}
-                      className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === preset.id ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium">{getPresetLabel(preset.key)}</p>
-                          <p className="text-xs text-muted-foreground">{getPresetUsage(preset.key)}</p>
-                          <p className="mt-2 text-[11px] text-muted-foreground">{t.blockMix}</p>
-                          <div className="mt-1 flex flex-wrap gap-1.5">
-                            {preset.blockMix.map((block) => (
-                              <span key={`${preset.id}-${block.type}`} className="rounded-full border border-border px-2 py-0.5 text-[11px]">
-                                {block.type.replace(/_/g, ' ')} x{block.count}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <span className="rounded-full surface-interactive px-2 py-0.5 text-[10px]">{preset.estimatedTimeMin} min</span>
-                      </div>
-                      <div className="mt-3 rounded-lg border border-border/70 bg-background p-3">
-                        <p className="text-[10px] text-muted-foreground">
-                          {isDutch ? 'Live Layout Voorbeeld' : 'Live Layout Preview'}
-                        </p>
-                        <div className="mt-2 space-y-2">
-                          {preset.blockMix.slice(0, 3).map((block) => (
-                            <div key={`${preset.id}-preview-${block.type}`} className="rounded-md border border-border/70 surface-panel p-2">
-                              <div className="flex items-center justify-between text-[10px]">
-                                <p className="font-medium capitalize">{block.type.replace(/_/g, ' ')}</p>
-                                <span>x{block.count}</span>
-                              </div>
-                              <p className="mt-1 text-[10px] text-foreground/70">{previewQuestionHint(block.type, isDutch)}</p>
-                              <div className="mt-1.5 space-y-1">
-                                <div className="h-2 w-full rounded surface-interactive" />
-                                <div className="h-2 w-5/6 rounded surface-interactive" />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPresetId(null)}
-                    className={`w-full rounded-xl border p-3 text-left transition ${selectedPresetId === null ? 'border-primary bg-primary/8 ring-1 ring-primary/25' : 'border-border hover:surface-interactive'}`}
-                  >
-                    <p className="text-sm font-medium">{t.createYourOwn}</p>
-                    <p className="text-xs text-muted-foreground">{t.choosePresetFirst}</p>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {createStep === 3 && (
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="assignment-title">{t.title}</Label>
-                  <Input
-                    id="assignment-title"
-                    value={newAssignmentTitle}
-                    onChange={(e) => setNewAssignmentTitle(e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-
-                {createKind === 'content' ? (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">{t.contentSettingsTitle}</p>
-                    <p className="text-xs text-muted-foreground">{t.contentSettingsHint}</p>
-                    <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
-                      <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
-                      {t.addToAgenda}
-                    </label>
-                  </div>
-                ) : createKind === 'homework' ? (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">{t.homeworkSettingsTitle}</p>
-                    <div>
-                      <Label htmlFor="hw-due-at">{t.dueDate}</Label>
-                      <Input
-                        id="hw-due-at"
-                        type="datetime-local"
-                        value={homeworkDueAtLocal}
-                        onChange={(e) => setHomeworkDueAtLocal(e.target.value)}
-                        className="mt-1"
-                      />
-                    </div>
-                    <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
-                      <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
-                      {t.addToAgenda}
-                    </label>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">{t.testSettingsTitle}</p>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="test-start-at">{t.openTime}</Label>
-                        <Input
-                          id="test-start-at"
-                          type="datetime-local"
-                          value={testStartsAtLocal}
-                          onChange={(e) => setTestStartsAtLocal(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="test-end-at">{t.closeTime}</Label>
-                        <Input
-                          id="test-end-at"
-                          type="datetime-local"
-                          value={testEndsAtLocal}
-                          onChange={(e) => setTestEndsAtLocal(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="timer-minutes">{t.timerMinutes}</Label>
-                        <Input
-                          id="timer-minutes"
-                          type="number"
-                          min={1}
-                          value={timerMinutes}
-                          onChange={(e) => setTimerMinutes(Math.max(1, Number(e.target.value) || 1))}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="attempt-limit">{t.attemptLimit}</Label>
-                        <Input
-                          id="attempt-limit"
-                          type="number"
-                          min={1}
-                          value={attemptLimit}
-                          onChange={(e) => setAttemptLimit(Math.max(1, Number(e.target.value) || 1))}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
-                        <input type="checkbox" checked={randomizeQuestions} onChange={(e) => setRandomizeQuestions(e.target.checked)} />
-                        {t.randomizeQuestions}
-                      </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
-                        <input type="checkbox" checked={randomizeAnswers} onChange={(e) => setRandomizeAnswers(e.target.checked)} />
-                        {t.randomizeAnswers}
-                      </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
-                        <input type="checkbox" checked={integrityMode} onChange={(e) => setIntegrityMode(e.target.checked)} />
-                        {t.integrityMode}
-                      </label>
-                      <label className="flex items-center gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2">
-                        <input type="checkbox" checked={addToAgenda} onChange={(e) => setAddToAgenda(e.target.checked)} />
-                        {t.addToAgenda}
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <label className="flex items-start gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={createIsTest}
+                onChange={(e) => setCreateIsTest(e.target.checked)}
+              />
+              <span>
+                <span className="block">{t.isTestLabel}</span>
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  {chapterPath?.is_tests_chapter ? t.isTestAutoHint : t.isTestHint}
+                </span>
+              </span>
+            </label>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              if (createStep === 1) {
-                setIsCreateAssignmentOpen(false);
-                resetCreateWizard();
-                return;
-              }
-              // Content-mode skips the preset/block-mix step (step 2), so step 3 goes straight back to step 1.
-              if (createStep === 3 && createKind === 'content') {
-                setCreateStep(1);
-                return;
-              }
-              setCreateStep((prev) => (prev === 1 ? 1 : (prev - 1) as 1 | 2 | 3));
-            }}>
-              {createStep === 1 ? t.cancel : t.back}
+            <Button variant="outline" onClick={() => { setIsCreateAssignmentOpen(false); resetCreateForm(); }}>
+              {t.cancel}
             </Button>
-            {createStep < 3 ? (
-              <Button onClick={() => {
-                // Content assignments aren't a "mix" of question types, so there's nothing to preset-pick.
-                if (createStep === 1 && createKind === 'content') {
-                  setCreateStep(3);
-                  return;
-                }
-                setCreateStep((prev) => (prev === 3 ? 3 : (prev + 1) as 1 | 2 | 3));
-              }}>
-                {t.continueBtn}
-              </Button>
-            ) : (
-              <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment}>
-                {isCreatingAssignment ? t.creating : (createKind === 'test' ? t.createTest : createKind === 'content' ? t.createContent : t.createHomework)}
-              </Button>
-            )}
+            <Button onClick={handleCreateAssignment} disabled={!newAssignmentTitle.trim() || isCreatingAssignment}>
+              {isCreatingAssignment ? t.creating : t.create}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

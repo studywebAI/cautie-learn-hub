@@ -35,7 +35,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 1. `[x]` **Gebouwd.** De chatbox is geen aparte structuur-generator, maar een invoegcommando binnen de assignment-editor: "maak een multiple choice blok over X" → juiste bloktype wordt ingevoegd, met AI-gegenereerde inhoud (voor tekst/multiple_choice/open_question/fill_in_blank een volledig ingevuld blok; voor image/video alleen een caption, de teacher upload zelf het bestand). Bestaande blocks in de assignment gaan als context mee zodat toon/onderwerp aansluit. Nieuw endpoint `.../blocks/ai-command` + AI-flow `insert-block-command.ts`. Ingevoegde blokken landen gewoon in de bestaande block-state, dezelfde autosave als handmatig toegevoegde blokken. `[Competitor: Coda/Superhuman Docs insert-paneel]` `[Gemiste feature]`
 2. `[x]` **Bleek al gebouwd.** Bij onderzoek bleek sleepbaar herordenen van blocks al te bestaan in `AssignmentEditor.tsx` (custom pointer-drag met grip-handle, niet dnd-kit maar functioneel gelijk) — geen nieuwe bouw nodig. `[Competitor: Notion]` `[Forum/review — LMS-course-builders noemen drag-and-drop-herordenen als kernfeature in 2026]`
 3. `[x]` **Gebouwd.** De 4 bestaande wizard-presets (Concept check, Oefen-mix, Quiz 20 min, Hoofdstuktoets 45 min) zijn nu ook los toe te voegen als "template" binnen een al openstaande assignment, niet meer alleen kiesbaar bij het aanmaken. `[Competitor: Notion template-knoppen, Canvas Modules]`
-4. `[ ]` "Instellingen"-paneel voor het samenstellen van een paragraaf/chapter: stapelbare, inklapbare secties per onderdeel (vergelijkbaar met Framer's property-inspector-patroon, al eerder goedgekeurd als referentie voor instellingenpagina's in dit project). `[Competitor: Framer settings-paneel — al genoemd in het visuele reference-doc]`
+4. `[ ]` "Instellingen"-paneel voor het samenstellen van een paragraaf/chapter: stapelbare, inklapbare secties per onderdeel (vergelijkbaar met Framer's property-inspector-patroon, al eerder goedgekeurd als referentie voor instellingenpagina's in dit project). **Uitgewerkt in sectie H →**. `[Competitor: Framer settings-paneel — al genoemd in het visuele reference-doc]`
 5. `[ ]` AI-gegenereerde content ALS startpunt, nooit als eindresultaat zonder review: bv. "genereer een paragraaf-samenvatting op basis van geüpload materiaal" die de docent nog moet goedkeuren/bewerken — sluit aan bij het bestaande principe elders in de app (AI stelt voor, mens beslist). `[Eigen idee]` `[Gemiste feature]`
 
 ---
@@ -55,7 +55,7 @@ Referentie: Coda/Superhuman Docs insert-paneel (chatinvoer onderaan een AI-panee
 
 ## D. Chapter- en paragraaf-pagina
 
-13. `[~]` **Verduidelijkt door gebruiker — geen aparte content-viewer-pagina.** In plaats daarvan: het bestaande assignment/block-systeem breder gebruiken dan alleen toetsen. Een "assignment" binnen een paragraaf kan een contentblok zijn (tekst + foto's + video, via het al bestaande `text`-blocktype — foto/video-blocktype moet er nog bij) i.p.v. per se een set vragen. Zo staat in één paragraaf gewoon een lijst van assignments naast elkaar: de ene is de leerstof zelf, de andere een toets erover — **alles in hetzelfde tabblad**, geen gesplitste "leerstof hier, oefenen daar"-navigatie. Sluit aan bij het kernprincipe: Subjects = leerstof + oefensommen + toetsen in 1 plek. `[Gemiste feature]` — nog steeds de fundamentele lacune, alleen de oplossingsvorm is anders dan ik eerst voorstelde.
+13. `[x]` **Gebouwd.** Geen aparte content-viewer-pagina, maar een derde optie ("Content") naast Homework/Test in de aanmaak-wizard, met een eigen `settings.delivery.isContent`-vlag (geen due-date-eis, geen timer/anti-cheat/auto-grade, wizard slaat de preset-stap over). Foto/video-blocktypes zijn er ook bij gekomen. Content-opdrachten staan gewoon tussen de andere assignments in de paragraaflijst met een eigen blauwe "Content"-badge naast Test/Homework — alles in hetzelfde tabblad, zoals bedoeld. `[Gemiste feature]`
 14. `[x]` **Gebouwd.** "Genereren"-menu op de paragraafpagina (flashcards/quiz), verzamelt alle tekstblok-content in die paragraaf en stuurt door naar de bestaande Flashcards/Quiz-tools via hun `sourceText`-query-param (zelfde patroon als de Material-pagina al gebruikte). `[Competitor: RemNote, Quizlet AI-generator, StudyFetch, Knowt — allemaal one-click generatie uit materiaal]` `[Forum/review]`
 15. `[x]` **Gebouwd, zachte gate.** Optioneel "vereist eerst"-veld bij het aanmaken van een paragraaf. Vergrendelde paragrafen (prerequisite <100%) tonen een niet-klikbare rij met slotje i.p.v. een link, server-side berekend. Bewust géén harde toegangsblokkade (geen 403 als iemand de URL raadt) — puur UI-gate, zelfde niveau als het bestaande assignment-lock-icoon. `[Competitor: Canvas Modules prerequisites]`
 
@@ -103,6 +103,38 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
 29. `[x]` **Beslist, met uitbreiding.** Docent bepaalt zelf hoe de ruwe score naar een cijfer vertaalt. **Nieuw:** we bieden **cijfer-templates** aan (gebaseerd op land/systeem — NL 1-10, VS A-F, Duitsland 1-6, etc., of een eigen uitleg van hun scoresysteem) — als een docent zo'n template kiest, kan het cijfer daarna automatisch berekend worden volgens die template/formule i.p.v. steeds handmatig. Cautie bepaalt dus nog steeds nooit zelf "het" cijfer zonder een door de docent gekozen/ingestelde regel.
 
 **→ Sectie G is hiermee inhoudelijk klaar wat betreft beslissingen. De uitvoering van G5/G6 valt samen met een grotere Grades-tab-herziening — zie het nieuwe `docs/grades-feature-brainstorm.md`.**
+
+---
+
+## H. Editor-sidebar revamp: Workspace / Settings / Information (uitwerking van A4)
+
+**Kernidee (jouw omschrijving):** de rechter sidebar van de assignment-editor is nu één lange stapel (chatbox, templates, blocks-lijst, dan instellingen) — dat moet 3 aparte tabs worden, met per tab veel meer diepgang, in de stijl van Framer's rechterpaneel: professioneel, veel opties, geen "amateuristisch gezeik".
+
+34. `[x]` **Gebouwd — architectuurwijziging, apart van de sidebar-tabs.** De Homework/Test/Content-wizard is verwijderd. "+ Opdracht toevoegen" opent nu alleen een titel-veld + "Dit is een toets"-checkbox, en gaat direct de (lege) editor in — geen presets, geen aparte stappen. Beslist via vervolgvragen:
+    - **Test-status:** togglebaar in de Settings-sectie van de editor (`AssignmentEditor.tsx`, boven de Blocks-lijst) — PATCHed naar `assignments.type` (`small_test`/`homework`) via de bestaande autosave. **Én** automatisch aangevinkt bij aanmaken als de paragraaf in het Toetsen-hoofdstuk zit (`chapter.is_tests_chapter`, nieuw geselecteerd in `.../overview/route.ts`) — blijft overschrijfbaar. Zodra toets aangezet wordt terwijl de opdracht zichtbaar was, verbergt hij automatisch (zelfde exam-security-regel als G1) met een toast-melding.
+    - **Presets:** volledig weg uit de aanmaak-flow (`ASSIGNMENT_PRESETS`, `AssignmentCreateKind`, `toAssignmentType`, `withContentDefaults` niet meer gebruikt op de Subjects paragraafpagina). De "Add template"-knop in de Workspace-sectie van de editor (punt 3 hierboven) is met opzet **niet** aangeraakt — dat was al apart goedgekeurd.
+    - **Agenda-koppeling** bij aanmaken (de oude "Add to agenda"-checkbox) is ook weg, zonder vervanging — expliciet uitgesteld tot de agenda-revamp (jouw woorden: "dat is voor agenda revamp").
+    - **Niet gewijzigd:** `assignments.type`-kolom en de DB CHECK-constraint (`homework`/`small_test`/`big_test`/`other`) blijven ongewijzigd — alleen wanneer/hoe hij gezet wordt is anders.
+
+### Tab 1 — Workspace (bestaat al, wordt gewoon tab 1)
+30. `[x]` **Bestaat al, alleen nog niet in een tab.** AI-chatbox-invoegcommando, template-galerij, "Kopieer blokken van...", de sleepbare blocks-lijst — dit is exact de huidige sidebar-inhoud, verplaatst naar een eigen tab i.p.v. bovenaan een lange stapel.
+
+### Tab 2 — Settings
+31. `[~]` **Bestaat grotendeels al, moet gereorganiseerd + uitgebreid.** `AssignmentSettingsOverlay` is al het Framer-achtige stapelbare/inklapbare paneel (Time/Attempts/Access/Grading/AntiCheat/Delivery/Advanced) — dat verhuist ongewijzigd naar deze tab. Erbij:
+    - Titel/beschrijving bewerken — check of dit al ergens zit, anders toevoegen.
+    - Antwoorden open/dicht voor leerlingen — bestaat al als los mechanisme (`scheduled_answer_release_at`, G5-beslissing), moet hier als expliciete toggle/knop komen i.p.v. alleen scheduling.
+    - Zichtbaar/verborgen (publiceren) — bestaat al (`is_visible`, G1), moet hier een zichtbare toggle worden i.p.v. alleen wizard-default.
+    - **Nieuw:** opdracht verplaatsen naar een andere paragraaf/hoofdstuk/subject — geen endpoint voor, moet gebouwd worden.
+    - **Nieuw, uitbreiding van G3:** delen via code zodat een andere docent 'm kan importeren — bestaat al maar alleen voor test-type assignments (`share`/`tests/import`-routes); zou hier gelden voor élk assignment-type, dus die restrictie eraf + generieke import-flow (niet per se meer "tests/import" heten).
+32. `[ ]` Layout/customisation-opties (zoals bij Framer op de screenshot) — welke concrete opties dit worden (kleur, layout-stijl van de opdracht voor leerlingen, iets anders?) is nog niet scherp, graag concretiseren.
+
+### Tab 3 — Information (volledig nieuw in de UI, backend bestaat deels al)
+33. `[~]` **Backend-endpoint bestaat al (`.../assignments/[assignmentId]/analytics`), nergens aan UI gekoppeld.** Haalt nu per blok de `student_answers` op (score, correct, tijdstip, student). Voor een echte Information-tab nog nodig:
+    - Tijd besteed per leerling aan deze opdracht — nog niet berekend (zou uit `session_logs`/events moeten komen, zoals ook bij G4 "possiblyLeft"-heuristiek gebruikt).
+    - Score-overzicht per leerling/klas — data zit er, moet in de tab gerenderd worden.
+    - Eventueel: hoeveel keer geopend, laatste activiteit, per-blok moeilijkheid (hoog fout-percentage).
+
+**Voorstel:** ik bouw dit in 3 stappen — eerst de tab-structuur (Workspace/Settings/Information als échte tabs, bestaande content 1-op-1 verplaatst, geen gedragswijziging), dan Settings uitbreiden (verplaatsen + generieke share/import), dan de Information-tab. Zeg per punt (30-33) of dat klopt, en licht 32 verder toe zodra je weet welke layout-opties je concreet bedoelt.
 
 ---
 

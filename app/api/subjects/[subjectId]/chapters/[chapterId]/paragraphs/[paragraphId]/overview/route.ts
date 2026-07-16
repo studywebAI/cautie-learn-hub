@@ -123,7 +123,7 @@ export async function GET(
         .maybeSingle(),
       (supabase as any)
         .from('chapters')
-        .select('id, title, chapter_number')
+        .select('id, title, chapter_number, is_tests_chapter')
         .eq('id', canonicalChapterId)
         .maybeSingle(),
     ]);

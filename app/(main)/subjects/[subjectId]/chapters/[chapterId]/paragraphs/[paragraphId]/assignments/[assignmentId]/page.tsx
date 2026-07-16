@@ -20,6 +20,7 @@ const StudentAssignmentView = dynamic(
 type Assignment = {
   id: string;
   title: string;
+  type?: 'homework' | 'small_test' | 'big_test' | 'other' | null;
   assignment_index: number;
   class_id?: string | null;
   answers_enabled: boolean;
@@ -174,6 +175,7 @@ export default function AssignmentDetailPage() {
         answerMode={(assignment.answer_mode as any) || 'view_only'}
         aiGradingEnabled={Boolean(assignment.ai_grading_enabled)}
         initialSettings={normalizeAssignmentSettings(assignment.settings || {})}
+        initialType={assignment.type || 'homework'}
         onSave={(savedBlocks) => {
           // Refresh blocks after save
           setBlocks(savedBlocks as any);

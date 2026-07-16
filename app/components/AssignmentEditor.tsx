@@ -104,6 +104,7 @@ interface AssignmentEditorProps {
   answerMode?: 'view_only' | 'editable' | 'self_grade';
   aiGradingEnabled?: boolean;
   initialSettings?: AssignmentSettings | null;
+  initialType?: 'homework' | 'small_test' | 'big_test' | 'other' | null;
   onSave?: (blocks: AssignmentBlock[]) => void;
   onPreview?: () => void;
   onSettingsChange?: (settings: { answersEnabled: boolean; isVisible: boolean; settings: AssignmentSettings }) => void;
@@ -244,6 +245,7 @@ export function AssignmentEditor({
   answerMode = 'view_only',
   aiGradingEnabled = false,
   initialSettings = null,
+  initialType = 'homework',
   onSave,
   onPreview,
   onSettingsChange,
@@ -252,6 +254,9 @@ export function AssignmentEditor({
   const appContext = useContext(AppContext) as AppContextType | null;
   const isDutch = appContext?.language === 'nl';
   const t = {
+    isTestLabel: isDutch ? 'Dit is een toets' : 'This is a test',
+    isTestHint: isDutch ? 'Zet timer, anti-cheat en planning aan in de Time/Anti-Cheat secties hieronder.' : 'Turns on timer, anti-cheat, and scheduling in the Time/Anti-Cheat sections below.',
+    isTestHiddenNotice: isDutch ? 'Verborgen voor leerlingen totdat je hem publiceert.' : 'Hidden from students until you publish it.',
     back: isDutch ? 'Terug' : 'Back',
     undo: isDutch ? 'Ongedaan' : 'Undo',
     redo: isDutch ? 'Opnieuw' : 'Redo',
@@ -324,6 +329,7 @@ export function AssignmentEditor({
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
   const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
   const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
+  const [isTest, setIsTest] = useState(initialType === 'small_test' || initialType === 'big_test');
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
   const [expandedOwnAnswerBlockId, setExpandedOwnAnswerBlockId] = useState<string | null>(null);
   const [openAnswerRows, setOpenAnswerRows] = useState<OpenAnswerRow[]>([]);
@@ -338,6 +344,7 @@ export function AssignmentEditor({
   const answerModeRef = useRef(localAnswerMode);
   const aiGradingEnabledRef = useRef(localAiGradingEnabled);
   const settingsRef = useRef(localSettings);
+  const isTestRef = useRef(isTest);
 
   useEffect(() => {
     setBlocks(normalizedInitialBlocks);
@@ -432,6 +439,22 @@ export function AssignmentEditor({
   useEffect(() => {
     aiGradingEnabledRef.current = localAiGradingEnabled;
   }, [localAiGradingEnabled]);
+
+  useEffect(() => {
+    isTestRef.current = isTest;
+  }, [isTest]);
+
+  // Toggling "this is a test" on hides the assignment from students, matching
+  // the same exam-security default new tests get at creation time (docs/
+  // subjects-feature-brainstorm.md G1) — the teacher must explicitly publish it.
+  const handleTestToggle = (next: boolean) => {
+    setIsTest(next);
+    if (next && localIsVisible) {
+      setLocalIsVisible(false);
+      toast({ title: t.isTestHiddenNotice });
+    }
+    setHasUnsavedChanges(true);
+  };
 
   useEffect(() => {
     const loadReadOnlyAnswers = async () => {
@@ -1272,6 +1295,7 @@ export function AssignmentEditor({
           answers_enabled: answersEnabledRef.current,
           answer_mode: answerModeRef.current,
           ai_grading_enabled: aiGradingEnabledRef.current,
+          type: isTestRef.current ? 'small_test' : 'homework',
           settings: settingsRef.current,
         }),
       });
@@ -2400,6 +2424,19 @@ export function AssignmentEditor({
                   </Button>
                 </PopoverContent>
               </Popover>
+
+              <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={isTest}
+                  onChange={(e) => handleTestToggle(e.target.checked)}
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">{t.isTestLabel}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">{t.isTestHint}</span>
+                </span>
+              </label>
 
               <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
