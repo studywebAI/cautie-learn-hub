@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GripVertical, Lock } from 'lucide-react';
+import { GripVertical, Lock, Settings2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -69,7 +70,6 @@ export default function SubjectDetailPage() {
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
   const [dragOverChapterId, setDragOverChapterId] = useState<string | null>(null);
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
-  const [newParagraphPrerequisiteId, setNewParagraphPrerequisiteId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
@@ -253,9 +253,7 @@ export default function SubjectDetailPage() {
           : chapter
       )
     );
-    const resolvedPrerequisiteId = newParagraphPrerequisiteId || null;
     setNewParagraphTitle('');
-    setNewParagraphPrerequisiteId('');
     setSelectedChapterId(null);
     setIsCreateParagraphOpen(false);
 
@@ -263,7 +261,7 @@ export default function SubjectDetailPage() {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/${requestChapterId}/paragraphs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: resolvedTitle, prerequisite_paragraph_id: resolvedPrerequisiteId }),
+        body: JSON.stringify({ title: resolvedTitle }),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -530,29 +528,56 @@ export default function SubjectDetailPage() {
                       }
 
                       return (
-                        <Link prefetch={false}
+                        <div
                           key={paragraph.id}
-                          href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
-                          onClick={() => handleParagraphClick(chapter, paragraph)}
-                          className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-transparent bg-sidebar-accent/20 px-4 py-3 transition-colors hover:bg-sidebar-accent/35"
+                          className="mx-2 mb-2 flex items-center gap-1 rounded-xl border border-transparent bg-sidebar-accent/20 pr-2 transition-colors hover:bg-sidebar-accent/35"
                         >
-                          <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
-                            {chapter.chapter_number}.{paragraph.paragraph_number}
-                          </span>
-                          <span className="flex-1 truncate text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
-                          {paragraph.is_pending ? (
-                            <span className="text-xs text-muted-foreground">(creating...)</span>
-                          ) : null}
-                          <span className="w-10 text-right text-xs text-sidebar-foreground tabular-nums">
-                            {roundedProgress}%
-                          </span>
-                          <div className="h-2 w-16 overflow-hidden rounded-full bg-sidebar-accent">
-                            <div
-                              className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
-                              style={{ width: `${roundedProgress}%` }}
+                          <Link prefetch={false}
+                            href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
+                            onClick={() => handleParagraphClick(chapter, paragraph)}
+                            className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3"
+                          >
+                            <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
+                              {chapter.chapter_number}.{paragraph.paragraph_number}
+                            </span>
+                            <span className="flex-1 truncate text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
+                            {paragraph.is_pending ? (
+                              <span className="text-xs text-muted-foreground">(creating...)</span>
+                            ) : null}
+                            <span className="w-10 text-right text-xs text-sidebar-foreground tabular-nums">
+                              {roundedProgress}%
+                            </span>
+                            <div className="h-2 w-16 overflow-hidden rounded-full bg-sidebar-accent">
+                              <div
+                                className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
+                                style={{ width: `${roundedProgress}%` }}
+                              />
+                            </div>
+                          </Link>
+                          {isTeacher && !paragraph.is_pending && (
+                            <ParagraphPrerequisitePopover
+                              subjectId={subjectId}
+                              chapter={chapter}
+                              paragraph={paragraph}
+                              allParagraphs={allParagraphs}
+                              isDutch={isDutch}
+                              onSaved={(prerequisiteId) => {
+                                setChapters((prev) =>
+                                  prev.map((c) =>
+                                    c.id !== chapter.id
+                                      ? c
+                                      : {
+                                          ...c,
+                                          paragraphs: (c.paragraphs || []).map((p) =>
+                                            p.id === paragraph.id ? { ...p, prerequisite_paragraph_id: prerequisiteId } : p
+                                          ),
+                                        }
+                                  )
+                                );
+                              }}
                             />
-                          </div>
-                        </Link>
+                          )}
+                        </div>
                       );
                     })}
                     {hasMore && (
@@ -653,27 +678,11 @@ export default function SubjectDetailPage() {
               onChange={(e) => setNewParagraphTitle(e.target.value)}
               className="mt-2"
             />
-            <div>
-              <Label htmlFor="paragraph-prerequisite">{isDutch ? 'Vereist eerst (optioneel)' : 'Requires first (optional)'}</Label>
-              <select
-                id="paragraph-prerequisite"
-                value={newParagraphPrerequisiteId}
-                onChange={(e) => setNewParagraphPrerequisiteId(e.target.value)}
-                className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">{isDutch ? 'Geen' : 'None'}</option>
-                {chapters.flatMap((chapter) =>
-                  (chapter.paragraphs || []).map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {chapter.chapter_number}.{p.paragraph_number} {p.title}
-                    </option>
-                  ))
-                )}
-              </select>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {isDutch ? 'Leerlingen zien deze paragraaf pas na 100% voortgang op de gekozen paragraaf.' : 'Students only see this paragraph once the chosen one is 100% complete.'}
-              </p>
-            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {isDutch
+                ? 'Je kunt een vereiste paragraaf later instellen via het instellingen-icoon naast de paragraaf.'
+                : 'You can set a required paragraph later via the settings icon next to the paragraph.'}
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateParagraphOpen(false)}>Cancel</Button>
@@ -684,6 +693,94 @@ export default function SubjectDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function ParagraphPrerequisitePopover({
+  subjectId,
+  chapter,
+  paragraph,
+  allParagraphs,
+  isDutch,
+  onSaved,
+}: {
+  subjectId: string;
+  chapter: Chapter;
+  paragraph: Paragraph;
+  allParagraphs: Paragraph[];
+  isDutch: boolean;
+  onSaved: (prerequisiteId: string | null) => void;
+}) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(paragraph.prerequisite_paragraph_id || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prerequisite_paragraph_id: value || null }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || 'Failed to save');
+      }
+      onSaved(value || null);
+      setOpen(false);
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: isDutch ? 'Opslaan mislukt' : 'Save failed', description: err?.message });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title={isDutch ? 'Paragraafinstellingen' : 'Paragraph settings'}
+          onClick={(e) => e.preventDefault()}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 space-y-2 p-3" onClick={(e) => e.stopPropagation()}>
+        <Label htmlFor={`prereq-${paragraph.id}`} className="text-xs">
+          {isDutch ? 'Vereist eerst (optioneel)' : 'Requires first (optional)'}
+        </Label>
+        <select
+          id={`prereq-${paragraph.id}`}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="">{isDutch ? 'Geen' : 'None'}</option>
+          {allParagraphs
+            .filter((p) => p.id !== paragraph.id)
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {chapter.chapter_number}.{p.paragraph_number} {p.title}
+              </option>
+            ))}
+        </select>
+        <p className="text-[11px] text-muted-foreground">
+          {isDutch
+            ? 'Leerlingen zien deze paragraaf pas na 100% voortgang op de gekozen paragraaf.'
+            : 'Students only see this paragraph once the chosen one is 100% complete.'}
+        </p>
+        <Button size="sm" className="w-full" onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (isDutch ? 'Opslaan...' : 'Saving...') : isDutch ? 'Opslaan' : 'Save'}
+        </Button>
+      </PopoverContent>
+    </Popover>
   );
 }
 
