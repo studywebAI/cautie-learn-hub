@@ -170,28 +170,6 @@ export default function SubjectDetailPage() {
     }
   };
 
-  const handleCreateTestsChapter = async () => {
-    if (isCreatingChapter) return;
-    setIsCreatingChapter(true);
-    try {
-      const response = await fetch(`/api/subjects/${subjectId}/chapters`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'Toetsen', is_tests_chapter: true }),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data?.error || 'Failed to create tests chapter');
-      }
-      const newChapter = await response.json();
-      setChapters((prev) => [...prev, { ...newChapter, paragraphs: [] }]);
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message || 'Failed to create tests chapter', variant: 'destructive' });
-    } finally {
-      setIsCreatingChapter(false);
-    }
-  };
-
   const handleChapterDrop = async (targetChapterId: string) => {
     const sourceId = draggedChapterId;
     setDraggedChapterId(null);
@@ -390,17 +368,6 @@ export default function SubjectDetailPage() {
               <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
                 + Add Chapter
               </Button>
-              {!chapters.some((c) => c.is_tests_chapter) && (
-                <Button
-                  onClick={handleCreateTestsChapter}
-                  disabled={isCreatingChapter}
-                  size="sm"
-                  variant="outline"
-                  className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
-                >
-                  + Toetsen-hoofdstuk
-                </Button>
-              )}
             </>
           )
         }

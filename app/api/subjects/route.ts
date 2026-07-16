@@ -522,6 +522,22 @@ export async function POST(request: NextRequest) {
     logSubjects('POST - Linked subject to classes', { opId, subjectId: newSubject.id, classIds })
     }
 
+    // A Toetsen (tests) chapter now always exists by default instead of
+    // requiring a manual "+ Toetsen-hoofdstuk" button after creation.
+    const { error: testsChapterError } = await (supabase as any).from('chapters').insert({
+      subject_id: newSubject.id,
+      chapter_number: 1,
+      title: 'Toetsen',
+      is_tests_chapter: true,
+    })
+    if (testsChapterError) {
+      logSubjects('POST - Failed to auto-create tests chapter', {
+        opId,
+        message: testsChapterError.message,
+        subjectId: newSubject.id,
+      })
+    }
+
     // Fetch the subject with its classes
     logSubjects('POST - Fetching subject with class links', { opId, subjectId: newSubject.id })
     const { data: subjectWithClasses, error: fetchError } = await (supabase as any)

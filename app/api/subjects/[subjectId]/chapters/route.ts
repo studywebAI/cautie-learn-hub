@@ -116,7 +116,7 @@ export async function GET(
     }
 
     // Fetch chapters
-    const { data: chapters, error } = await (supabase as any)
+    let { data: chapters, error } = await (supabase as any)
       .from('chapters')
       .select('*')
       .eq('subject_id', resolvedParams.subjectId)
@@ -126,6 +126,20 @@ export async function GET(
       subjectsError('subject-chapters', requestId, 'chapters.query.error', { message: error.message });
       return NextResponse.json({ error: 'Failed to fetch chapters' }, { status: 500 });
     }
+
+    // Self-heal subjects created before the Toetsen chapter became automatic:
+    // create it lazily on first read instead of requiring a migration script.
+    if (isTeacher && !(chapters || []).some((c: any) => c.is_tests_chapter)) {
+      const { data: healedChapter } = await (supabase as any)
+        .from('chapters')
+        .insert({ subject_id: resolvedParams.subjectId, chapter_number: 1, title: 'Toetsen', is_tests_chapter: true })
+        .select()
+        .single();
+      if (healedChapter) {
+        chapters = [healedChapter, ...(chapters || [])];
+      }
+    }
+
     subjectsLog('subject-chapters', requestId, 'response.ready', {
       chapterCount: chapters?.length || 0,
     });
