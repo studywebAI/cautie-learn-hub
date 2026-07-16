@@ -116,25 +116,20 @@ Dit is expliciet omschreven door de gebruiker als één samenhangende levenscycl
     - **Agenda-koppeling** bij aanmaken (de oude "Add to agenda"-checkbox) is ook weg, zonder vervanging — expliciet uitgesteld tot de agenda-revamp (jouw woorden: "dat is voor agenda revamp").
     - **Niet gewijzigd:** `assignments.type`-kolom en de DB CHECK-constraint (`homework`/`small_test`/`big_test`/`other`) blijven ongewijzigd — alleen wanneer/hoe hij gezet wordt is anders.
 
-### Tab 1 — Workspace (bestaat al, wordt gewoon tab 1)
-30. `[x]` **Bestaat al, alleen nog niet in een tab.** AI-chatbox-invoegcommando, template-galerij, "Kopieer blokken van...", de sleepbare blocks-lijst — dit is exact de huidige sidebar-inhoud, verplaatst naar een eigen tab i.p.v. bovenaan een lange stapel.
+### Tab 1 — Workspace
+30. `[x]` **Gebouwd.** AI-chatbox-invoegcommando, template-galerij, "Kopieer blokken van...", de sleepbare blocks-lijst, en het per-blok instellingenpaneel — allemaal ongewijzigd, nu onder een eigen tab i.p.v. bovenaan een lange stapel.
 
 ### Tab 2 — Settings
-31. `[~]` **Bestaat grotendeels al, moet gereorganiseerd + uitgebreid.** `AssignmentSettingsOverlay` is al het Framer-achtige stapelbare/inklapbare paneel (Time/Attempts/Access/Grading/AntiCheat/Delivery/Advanced) — dat verhuist ongewijzigd naar deze tab. Erbij:
-    - Titel/beschrijving bewerken — check of dit al ergens zit, anders toevoegen.
-    - Antwoorden open/dicht voor leerlingen — bestaat al als los mechanisme (`scheduled_answer_release_at`, G5-beslissing), moet hier als expliciete toggle/knop komen i.p.v. alleen scheduling.
-    - Zichtbaar/verborgen (publiceren) — bestaat al (`is_visible`, G1), moet hier een zichtbare toggle worden i.p.v. alleen wizard-default.
-    - **Nieuw:** opdracht verplaatsen naar een andere paragraaf/hoofdstuk/subject — geen endpoint voor, moet gebouwd worden.
-    - **Nieuw, uitbreiding van G3:** delen via code zodat een andere docent 'm kan importeren — bestaat al maar alleen voor test-type assignments (`share`/`tests/import`-routes); zou hier gelden voor élk assignment-type, dus die restrictie eraf + generieke import-flow (niet per se meer "tests/import" heten).
-32. `[ ]` Layout/customisation-opties (zoals bij Framer op de screenshot) — welke concrete opties dit worden (kleur, layout-stijl van de opdracht voor leerlingen, iets anders?) is nog niet scherp, graag concretiseren.
+31. `[x]` **Gebouwd.** `AssignmentSettingsOverlay` verhuisd naar deze tab. Erbij:
+    - Titel/beschrijving bewerken — nieuw, bestond nergens (titel kon alleen bij aanmaken gezet worden, nooit daarna). Nieuwe `initialTitle`/`initialDescription` props + autosave.
+    - Antwoorden vrijgeven — nieuwe expliciete toggle, was er wel als state (`localAnswersEnabled`, vloeide al door naar autosave) maar had nergens een knop.
+    - Zichtbaar/verborgen — zelfde verhaal, nieuwe toggle voor bestaande `localIsVisible`-state.
+    - Verplaatsen naar andere paragraaf/hoofdstuk/subject — nieuwe `.../move`-endpoint + cascading picker.
+    - Generieke share/import — de test-only restrictie in `share`/`tests/import`-routes eraf, geldt nu voor elk assignment-type.
+32. `[ ]` Layout/customisation-opties — nog steeds niet geconcretiseerd, blijft open tot je aangeeft wat je hiermee bedoelt.
 
-### Tab 3 — Information (volledig nieuw in de UI, backend bestaat deels al)
-33. `[~]` **Backend-endpoint bestaat al (`.../assignments/[assignmentId]/analytics`), nergens aan UI gekoppeld.** Haalt nu per blok de `student_answers` op (score, correct, tijdstip, student). Voor een echte Information-tab nog nodig:
-    - Tijd besteed per leerling aan deze opdracht — nog niet berekend (zou uit `session_logs`/events moeten komen, zoals ook bij G4 "possiblyLeft"-heuristiek gebruikt).
-    - Score-overzicht per leerling/klas — data zit er, moet in de tab gerenderd worden.
-    - Eventueel: hoeveel keer geopend, laatste activiteit, per-blok moeilijkheid (hoog fout-percentage).
-
-**Voorstel:** ik bouw dit in 3 stappen — eerst de tab-structuur (Workspace/Settings/Information als échte tabs, bestaande content 1-op-1 verplaatst, geen gedragswijziging), dan Settings uitbreiden (verplaatsen + generieke share/import), dan de Information-tab. Zeg per punt (30-33) of dat klopt, en licht 32 verder toe zodra je weet welke layout-opties je concreet bedoelt.
+### Tab 3 — Information
+33. `[x]` **Gebouwd, met kanttekening.** Analytics-endpoint nu aan de UI gekoppeld (vragen/antwoorden-totalen + per-vraag pogingen/gem. score/moeilijkheid). **Tijd besteed per leerling is niet gebouwd** — vereist nieuwe session-log-aggregatie die nog niet bestaat, bewust uitgesteld i.p.v. half doen.
 
 ---
 
