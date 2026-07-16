@@ -99,6 +99,8 @@ interface AssignmentEditorProps {
   paragraphId: string;
   classId?: string | null;
   initialBlocks?: AssignmentBlock[];
+  initialTitle?: string;
+  initialDescription?: string | null;
   answersEnabled?: boolean;
   isVisible?: boolean;
   answerMode?: 'view_only' | 'editable' | 'self_grade';
@@ -240,6 +242,8 @@ export function AssignmentEditor({
   paragraphId,
   classId = null,
   initialBlocks = [],
+  initialTitle = '',
+  initialDescription = null,
   answersEnabled = false,
   isVisible = true,
   answerMode = 'view_only',
@@ -274,6 +278,37 @@ export function AssignmentEditor({
     selectBlockFirst: isDutch ? 'Selecteer eerst een blok' : 'Select a block first',
     noContentTitle: isDutch ? 'Nog geen inhoud' : 'No content yet',
     noContentHint: isDutch ? 'Gebruik het rechterpaneel om blokken toe te voegen' : 'Use the right panel to add blocks',
+    tabWorkspace: isDutch ? 'Werkruimte' : 'Workspace',
+    tabSettings: isDutch ? 'Instellingen' : 'Settings',
+    tabInformation: isDutch ? 'Informatie' : 'Information',
+    titleLabel: isDutch ? 'Titel' : 'Title',
+    descriptionLabel: isDutch ? 'Beschrijving (optioneel)' : 'Description (optional)',
+    visibleLabel: isDutch ? 'Zichtbaar voor leerlingen' : 'Visible to students',
+    visibleHint: isDutch ? 'Verbergen betekent dat leerlingen deze opdracht nergens zien.' : 'Hidden means students can’t see this assignment anywhere.',
+    answersEnabledLabel: isDutch ? 'Antwoorden vrijgeven' : 'Release answers',
+    answersEnabledHint: isDutch ? 'Leerlingen kunnen zien welke vragen goed/fout waren.' : 'Students can see which questions were right/wrong.',
+    moveTitle: isDutch ? 'Verplaatsen' : 'Move',
+    moveButton: isDutch ? 'Verplaats naar...' : 'Move to...',
+    moveChooseSubject: isDutch ? 'Kies vak...' : 'Choose subject...',
+    moveChooseChapter: isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...',
+    moveChooseParagraph: isDutch ? 'Kies paragraaf...' : 'Choose paragraph...',
+    moveConfirm: isDutch ? 'Verplaats' : 'Move',
+    moveSuccess: isDutch ? 'Opdracht verplaatst' : 'Assignment moved',
+    moveFailed: isDutch ? 'Verplaatsen mislukt' : 'Move failed',
+    shareTitle: isDutch ? 'Delen' : 'Share',
+    shareHint: isDutch ? 'Een andere docent kan deze code gebruiken om een eigen, losstaande kopie te importeren.' : 'Another teacher can use this code to import their own, independent copy.',
+    shareGenerate: isDutch ? 'Genereer deel-code' : 'Generate share code',
+    shareCode: isDutch ? 'Code' : 'Code',
+    shareLink: isDutch ? 'Link' : 'Link',
+    copy: isDutch ? 'Kopiëren' : 'Copy',
+    copied: isDutch ? 'Gekopieerd' : 'Copied',
+    infoLoading: isDutch ? 'Laden...' : 'Loading...',
+    infoNoData: isDutch ? 'Nog geen data — leerlingen hebben nog niets ingeleverd.' : 'No data yet — no students have submitted anything.',
+    infoQuestions: isDutch ? 'Vragen' : 'Questions',
+    infoAnswers: isDutch ? 'Antwoorden' : 'Answers',
+    infoAttempts: isDutch ? 'pogingen' : 'attempts',
+    infoAvgScore: isDutch ? 'gem. score' : 'avg score',
+    infoDifficulty: isDutch ? 'moeilijkheid' : 'difficulty',
   };
   const getTemplateDefaults = (type: string) => {
     const template = BLOCK_TEMPLATES.find((item) => item.type === type);
@@ -330,6 +365,29 @@ export function AssignmentEditor({
   const [localAnswerMode, setLocalAnswerMode] = useState<'view_only' | 'editable' | 'self_grade'>(answerMode);
   const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
   const [isTest, setIsTest] = useState(initialType === 'small_test' || initialType === 'big_test');
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'workspace' | 'settings' | 'information'>('workspace');
+  const [localTitle, setLocalTitle] = useState(initialTitle);
+  const [localDescription, setLocalDescription] = useState(initialDescription || '');
+  // Move-assignment popover state (Settings tab)
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveSubjects, setMoveSubjects] = useState<Array<{ id: string; title: string }>>([]);
+  const [moveChapters, setMoveChapters] = useState<Array<{ id: string; title: string }>>([]);
+  const [moveParagraphs, setMoveParagraphs] = useState<Array<{ id: string; title: string }>>([]);
+  const [moveSubjectId, setMoveSubjectId] = useState('');
+  const [moveChapterId, setMoveChapterId] = useState('');
+  const [moveParagraphId, setMoveParagraphId] = useState('');
+  const [isLoadingMoveOptions, setIsLoadingMoveOptions] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  // Share/import popover state (Settings tab) — generic for any assignment type
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  // Information tab state
+  const [infoData, setInfoData] = useState<{
+    total_questions: number;
+    total_answers: number;
+    question_metrics: Array<{ block_id: string; type: string; attempts: number; average_score: number; correct_count: number; wrong_count: number; error_rate_percent: number; difficulty_percent: number }>;
+  } | null>(null);
+  const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
   const [expandedOwnAnswerBlockId, setExpandedOwnAnswerBlockId] = useState<string | null>(null);
   const [openAnswerRows, setOpenAnswerRows] = useState<OpenAnswerRow[]>([]);
@@ -345,6 +403,8 @@ export function AssignmentEditor({
   const aiGradingEnabledRef = useRef(localAiGradingEnabled);
   const settingsRef = useRef(localSettings);
   const isTestRef = useRef(isTest);
+  const titleRef = useRef(localTitle);
+  const descriptionRef = useRef(localDescription);
 
   useEffect(() => {
     setBlocks(normalizedInitialBlocks);
@@ -444,6 +504,14 @@ export function AssignmentEditor({
     isTestRef.current = isTest;
   }, [isTest]);
 
+  useEffect(() => {
+    titleRef.current = localTitle;
+  }, [localTitle]);
+
+  useEffect(() => {
+    descriptionRef.current = localDescription;
+  }, [localDescription]);
+
   // Toggling "this is a test" on hides the assignment from students, matching
   // the same exam-security default new tests get at creation time (docs/
   // subjects-feature-brainstorm.md G1) — the teacher must explicitly publish it.
@@ -453,6 +521,26 @@ export function AssignmentEditor({
       setLocalIsVisible(false);
       toast({ title: t.isTestHiddenNotice });
     }
+    setHasUnsavedChanges(true);
+  };
+
+  const handleTitleChange = (next: string) => {
+    setLocalTitle(next);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleDescriptionChange = (next: string) => {
+    setLocalDescription(next);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleVisibleToggle = (next: boolean) => {
+    setLocalIsVisible(next);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleAnswersEnabledToggle = (next: boolean) => {
+    setLocalAnswersEnabled(next);
     setHasUnsavedChanges(true);
   };
 
@@ -814,6 +902,102 @@ export function AssignmentEditor({
       setIsCopyingBlocks(false);
     }
   };
+
+  // Move assignment to another paragraph/chapter/subject (docs/subjects-
+  // feature-brainstorm.md section H, Settings tab). Cascading subject ->
+  // chapter -> paragraph pickers, same pattern as "Copy blocks from...".
+  useEffect(() => {
+    if (!moveOpen) return;
+    setIsLoadingMoveOptions(true);
+    fetch('/api/subjects')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.subjects) ? data.subjects : []);
+        setMoveSubjects(list.map((s: any) => ({ id: s.id, title: s.title || s.name || 'Untitled' })));
+      })
+      .catch(() => setMoveSubjects([]))
+      .finally(() => setIsLoadingMoveOptions(false));
+  }, [moveOpen]);
+
+  useEffect(() => {
+    if (!moveSubjectId) { setMoveChapters([]); setMoveChapterId(''); return; }
+    setMoveChapterId('');
+    setMoveParagraphId('');
+    fetch(`/api/subjects/${moveSubjectId}/chapters`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setMoveChapters(Array.isArray(data) ? data : []))
+      .catch(() => setMoveChapters([]));
+  }, [moveSubjectId]);
+
+  useEffect(() => {
+    if (!moveSubjectId || !moveChapterId) { setMoveParagraphs([]); setMoveParagraphId(''); return; }
+    setMoveParagraphId('');
+    fetch(`/api/subjects/${moveSubjectId}/chapters/${moveChapterId}/paragraphs`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setMoveParagraphs(Array.isArray(data) ? data : []))
+      .catch(() => setMoveParagraphs([]));
+  }, [moveSubjectId, moveChapterId]);
+
+  const handleMoveAssignment = async () => {
+    if (!moveSubjectId || !moveChapterId || !moveParagraphId || isMoving) return;
+    setIsMoving(true);
+    try {
+      const res = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/move`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetSubjectId: moveSubjectId, targetChapterId: moveChapterId, targetParagraphId: moveParagraphId }),
+        }
+      );
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(payload?.error || 'Move failed');
+      }
+      const payload = await res.json().catch(() => ({}));
+      toast({ title: t.moveSuccess });
+      setMoveOpen(false);
+      if (payload?.redirectTo) {
+        window.location.href = payload.redirectTo;
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: t.moveFailed, description: error?.message });
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
+  // Generic share/import (extends G3 — was test-only, now any assignment
+  // type). Reuses the existing share endpoint with its type restriction
+  // relaxed server-side.
+  const handleGenerateShareCode = async () => {
+    if (shareCode || isSharing) return;
+    setIsSharing(true);
+    try {
+      const res = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/share`,
+        { method: 'POST' }
+      );
+      if (!res.ok) throw new Error('Failed to share');
+      const data = await res.json();
+      setShareCode(data.code);
+    } catch {
+      toast({ variant: 'destructive', title: isDutch ? 'Delen mislukt' : 'Failed to share' });
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // Information tab — surfaces the existing per-block analytics endpoint.
+  useEffect(() => {
+    if (activeSidebarTab !== 'information') return;
+    setIsLoadingInfo(true);
+    fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/analytics`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setInfoData(data))
+      .catch(() => setInfoData(null))
+      .finally(() => setIsLoadingInfo(false));
+  }, [activeSidebarTab, subjectId, chapterId, paragraphId, assignmentId]);
 
   const buildBlocksContextSummary = () => {
     return blocks.slice(0, 12).map((b, i) => {
@@ -1297,6 +1481,8 @@ export function AssignmentEditor({
           ai_grading_enabled: aiGradingEnabledRef.current,
           type: isTestRef.current ? 'small_test' : 'homework',
           settings: settingsRef.current,
+          title: titleRef.current,
+          description: descriptionRef.current,
         }),
       });
       if (!assignmentSettingsRes.ok) {
@@ -2331,8 +2517,31 @@ export function AssignmentEditor({
         </div>
 
         {showTeacherControls && (
-          <aside className="w-[320px] border-l border-border bg-background p-3 overflow-y-auto">
+          <aside className="w-[320px] border-l border-border bg-background flex flex-col overflow-hidden">
+            <div className="flex shrink-0 border-b border-border">
+              {([
+                { key: 'workspace' as const, label: t.tabWorkspace },
+                { key: 'settings' as const, label: t.tabSettings },
+                { key: 'information' as const, label: t.tabInformation },
+              ]).map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveSidebarTab(tab.key)}
+                  className={`flex-1 px-2 py-2.5 text-xs font-medium transition-colors border-b-2 ${
+                    activeSidebarTab === tab.key
+                      ? 'border-foreground text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
             <div className="space-y-3">
+            {activeSidebarTab === 'workspace' && (
+              <>
               <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
                 <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3" />
@@ -2425,19 +2634,6 @@ export function AssignmentEditor({
                 </PopoverContent>
               </Popover>
 
-              <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={isTest}
-                  onChange={(e) => handleTestToggle(e.target.checked)}
-                />
-                <span className="text-sm">
-                  <span className="block font-medium">{t.isTestLabel}</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5">{t.isTestHint}</span>
-                </span>
-              </label>
-
               <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
                 <div className="space-y-1.5">
@@ -2453,12 +2649,6 @@ export function AssignmentEditor({
                     </div>
                   ))}
                 </div>
-              </div>
-              <div className="rounded-xl border border-border surface-panel p-1">
-                <AssignmentSettingsOverlay
-                  settings={localSettings}
-                  onSettingsChange={handleAdvancedSettingsChange}
-                />
               </div>
               {selectedBlock && (() => {
                 const block = blocks.find((b) => b.id === selectedBlock);
@@ -2644,6 +2834,179 @@ export function AssignmentEditor({
                   </div>
                 );
               })()}
+              </>
+            )}
+
+            {activeSidebarTab === 'settings' && (
+              <>
+              <div className="rounded-xl border border-border surface-panel p-3 space-y-2.5">
+                <div>
+                  <Label className="text-[11px] font-medium text-muted-foreground">{t.titleLabel}</Label>
+                  <Input
+                    value={localTitle}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="h-8 text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-medium text-muted-foreground">{t.descriptionLabel}</Label>
+                  <Textarea
+                    value={localDescription}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+                    rows={2}
+                    className="text-sm resize-none mt-1"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={isTest}
+                  onChange={(e) => handleTestToggle(e.target.checked)}
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">{t.isTestLabel}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">{t.isTestHint}</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={localIsVisible}
+                  onChange={(e) => handleVisibleToggle(e.target.checked)}
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">{t.visibleLabel}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">{t.visibleHint}</span>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={localAnswersEnabled}
+                  onChange={(e) => handleAnswersEnabledToggle(e.target.checked)}
+                />
+                <span className="text-sm">
+                  <span className="block font-medium">{t.answersEnabledLabel}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5">{t.answersEnabledHint}</span>
+                </span>
+              </label>
+
+              <Popover open={moveOpen} onOpenChange={setMoveOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
+                    <Move className="h-3.5 w-3.5" />
+                    {t.moveButton}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 space-y-2.5">
+                  <p className="text-[11px] font-medium text-muted-foreground">{t.moveTitle}</p>
+                  <select
+                    value={moveSubjectId}
+                    onChange={(e) => setMoveSubjectId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={isLoadingMoveOptions}
+                  >
+                    <option value="">{t.moveChooseSubject}</option>
+                    {moveSubjects.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                  </select>
+                  <select
+                    value={moveChapterId}
+                    onChange={(e) => setMoveChapterId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!moveSubjectId}
+                  >
+                    <option value="">{t.moveChooseChapter}</option>
+                    {moveChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                  <select
+                    value={moveParagraphId}
+                    onChange={(e) => setMoveParagraphId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!moveChapterId}
+                  >
+                    <option value="">{t.moveChooseParagraph}</option>
+                    {moveParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <Button size="sm" className="h-7 w-full text-xs" disabled={!moveParagraphId || isMoving} onClick={handleMoveAssignment}>
+                    {isMoving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t.moveConfirm}
+                  </Button>
+                </PopoverContent>
+              </Popover>
+
+              <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
+                <div className="text-[11px] font-medium text-muted-foreground">{t.shareTitle}</div>
+                <p className="text-xs text-muted-foreground">{t.shareHint}</p>
+                {shareCode ? (
+                  <div className="space-y-2">
+                    <div>
+                      <Label className="text-[10px] uppercase text-muted-foreground">{t.shareCode}</Label>
+                      <Input value={shareCode} readOnly className="h-8 text-sm font-mono tracking-wider mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase text-muted-foreground">{t.shareLink}</Label>
+                      <Input
+                        value={typeof window !== 'undefined' ? `${window.location.origin}/tests/import/${shareCode}` : ''}
+                        readOnly
+                        className="h-8 text-xs mt-1"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-7 w-full text-xs" disabled={isSharing} onClick={handleGenerateShareCode}>
+                    {isSharing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t.shareGenerate}
+                  </Button>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-border surface-panel p-1">
+                <AssignmentSettingsOverlay
+                  settings={localSettings}
+                  onSettingsChange={handleAdvancedSettingsChange}
+                />
+              </div>
+              </>
+            )}
+
+            {activeSidebarTab === 'information' && (
+              <>
+              {isLoadingInfo ? (
+                <div className="rounded-xl border border-border surface-panel p-3 text-xs text-muted-foreground">{t.infoLoading}</div>
+              ) : !infoData || infoData.total_answers === 0 ? (
+                <div className="rounded-xl border border-border surface-panel p-3 text-xs text-muted-foreground">{t.infoNoData}</div>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-border surface-panel p-3 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">{t.infoQuestions}</div>
+                      <div className="text-lg font-semibold">{infoData.total_questions}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11px] text-muted-foreground">{t.infoAnswers}</div>
+                      <div className="text-lg font-semibold">{infoData.total_answers}</div>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
+                    {infoData.question_metrics.map((m, i) => (
+                      <div key={m.block_id} className="flex items-center justify-between gap-2 text-xs border-b border-border/60 pb-2 last:border-0 last:pb-0">
+                        <span className="text-muted-foreground shrink-0">#{i + 1} {m.type.replace('_', ' ')}</span>
+                        <span className="text-right">
+                          {m.attempts} {t.infoAttempts} · {m.average_score.toFixed(1)} {t.infoAvgScore} · {m.difficulty_percent.toFixed(0)}% {t.infoDifficulty}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              </>
+            )}
+            </div>
             </div>
           </aside>
         )}

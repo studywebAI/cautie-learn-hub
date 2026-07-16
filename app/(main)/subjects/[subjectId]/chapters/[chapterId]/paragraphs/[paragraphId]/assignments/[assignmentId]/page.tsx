@@ -20,6 +20,7 @@ const StudentAssignmentView = dynamic(
 type Assignment = {
   id: string;
   title: string;
+  description?: string | null;
   type?: 'homework' | 'small_test' | 'big_test' | 'other' | null;
   assignment_index: number;
   class_id?: string | null;
@@ -170,6 +171,8 @@ export default function AssignmentDetailPage() {
         paragraphId={paragraphId}
         classId={assignment.class_id || null}
         initialBlocks={blocks as any}
+        initialTitle={assignment.title || ''}
+        initialDescription={assignment.description || null}
         answersEnabled={Boolean(assignment.answers_enabled)}
         isVisible={assignment.is_visible !== false}
         answerMode={(assignment.answer_mode as any) || 'view_only'}

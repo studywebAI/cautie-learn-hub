@@ -52,11 +52,8 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const assignmentType = (assignment as any).type;
-    if (assignmentType !== 'small_test' && assignmentType !== 'big_test') {
-      return NextResponse.json({ error: 'Only tests can be shared' }, { status: 400 });
-    }
-
+    // Sharing was originally test-only (docs/subjects-feature-brainstorm.md
+    // G3); extended in section H to any assignment type.
     const currentSettings = normalizeAssignmentSettings((assignment as any).settings || {});
 
     // Idempotent: reuse an existing code rather than invalidating a link already shared.

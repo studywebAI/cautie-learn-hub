@@ -25,16 +25,16 @@ function getLetterIndex(index: number): string {
   return String.fromCharCode(97 + first) + String.fromCharCode(97 + second);
 }
 
-// Looks up a test assignment by its G3 share code (settings.sharing.code).
+// Looks up an assignment by its G3 share code (settings.sharing.code).
+// Originally test-only, extended to any assignment type in section H.
 // Tries the JSONB path filter first (cleaner, index-friendly if a functional
 // index ever gets added); falls back to a client-side scan over candidate
-// test rows if the DB-level path filter misbehaves for any reason.
+// rows if the DB-level path filter misbehaves for any reason.
 async function findAssignmentByShareCode(supabase: any, code: string): Promise<any | null> {
   const { data, error } = await supabase
     .from('assignments')
     .select('*')
     .filter('settings->sharing->>code', 'eq', code)
-    .in('type', ['small_test', 'big_test'])
     .maybeSingle();
 
   if (!error && data) return data;
@@ -42,7 +42,6 @@ async function findAssignmentByShareCode(supabase: any, code: string): Promise<a
   const { data: candidates } = await supabase
     .from('assignments')
     .select('*')
-    .in('type', ['small_test', 'big_test'])
     .not('settings', 'is', null);
 
   const match = (candidates || []).find((row: any) => {
