@@ -57,16 +57,15 @@ import { RecentsSidebar } from './recents-sidebar';
 
 type SidebarNavItem = { href: string; label: string; icon: React.ComponentType<any>; animated?: boolean };
 
-// Desktop nav row. Hover state is tracked locally and fed into AnimateIcon in
-// controlled mode (the `animate` prop) instead of using AnimateIcon's own
+// Desktop nav row. Deliberately does NOT use AnimateIcon's own
 // asChild/onMouseEnter wiring — that mode wraps the actual <Link> in a
 // motion.create(CustomComponent) + hand-rolled Slot, which is what caused
 // nav clicks to silently stop navigating after repeated use (see git log).
-// Controlled mode keeps the animation (now correctly triggered by hovering
-// anywhere on the row, not just the icon pixels) without touching the click
-// path at all.
+// A controlled-mode AnimateIcon (external hover state feeding its `animate`
+// prop) was tried next but didn't reliably fire either, so the
+// hover feedback here is plain CSS (group-hover) instead — guaranteed to
+// fire, no dependency on that system, still nudges the icon on hover.
 function SidebarNavRow({ item, isActive, iconSizeClass }: { item: SidebarNavItem; isActive: boolean; iconSizeClass: string }) {
-  const [hovered, setHovered] = useState(false);
   const canAnimate = item.animated !== false;
   return (
     <SidebarMenuButton
@@ -75,14 +74,15 @@ function SidebarNavRow({ item, isActive, iconSizeClass }: { item: SidebarNavItem
       tooltip={item.label}
       className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
     >
-      <Link
-        href={item.href}
-        onMouseEnter={() => canAnimate && setHovered(true)}
-        onMouseLeave={() => canAnimate && setHovered(false)}
-      >
-        <AnimateIcon animate={canAnimate && hovered}>
+      <Link href={item.href} className="group/navrow">
+        <span
+          className={cn(
+            'inline-flex shrink-0 transition-transform duration-200 ease-out',
+            canAnimate && 'group-hover/navrow:-translate-y-0.5 group-hover/navrow:translate-x-0.5'
+          )}
+        >
           <item.icon className={iconSizeClass} />
-        </AnimateIcon>
+        </span>
         <span className="text-sm font-medium leading-5 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">
           {item.label}
         </span>
