@@ -406,24 +406,11 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {[...Array(6)].map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-0">
-              <div className="aspect-[4/3] surface-interactive" />
-              <div className="p-4 space-y-2">
-                <div className="h-3 surface-interactive rounded w-3/4" />
-                <div className="h-2 surface-interactive rounded w-1/2" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
+  // These must stay above any early return (isLoading below) — hooks can't
+  // be called conditionally. They previously sat after the isLoading
+  // return, so the component called a different number of hooks on the
+  // loading vs. loaded render, which is exactly React error #310
+  // ("Rendered more hooks than during the previous render").
   const classFilterOptions = useMemo(() => {
     const map = new Map<string, string>();
     for (const subject of subjects) {
@@ -455,6 +442,24 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     }
     return list;
   }, [subjects, sortBy, filterClassId, filterFolderId, showArchived]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardContent className="p-0">
+              <div className="aspect-[4/3] surface-interactive" />
+              <div className="p-4 space-y-2">
+                <div className="h-3 surface-interactive rounded w-3/4" />
+                <div className="h-2 surface-interactive rounded w-1/2" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
