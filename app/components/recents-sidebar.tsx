@@ -501,18 +501,18 @@ export function RecentsSidebar() {
 
   return (
     <div className="px-2">
-      <div className="rounded-xl border border-sidebar-border/70 bg-sidebar-accent/25 p-1.5">
+      <div className="rounded-xl border border-border bg-background p-1.5">
       <div className="mb-1.5 flex items-center gap-1.5 px-0.5">
         <button
           type="button"
-          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'all' ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeTab === 'all' ? 'bg-foreground text-background' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
           onClick={() => setActiveTab('all')}
         >
           All
         </button>
         <button
           type="button"
-          className={`rounded-full px-2 py-0.5 text-[10px] ${activeTab === 'studysets' ? 'bg-sidebar-accent text-sidebar-foreground' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${activeTab === 'studysets' ? 'bg-foreground text-background' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground'}`}
           onClick={() => setActiveTab('studysets')}
         >
           Studysets
@@ -535,7 +535,7 @@ export function RecentsSidebar() {
               {item.source === 'studyset' ? (
                 <button
                   type="button"
-                  className="text-[12px] font-normal flex-1 truncate text-left hover:underline"
+                  className="text-[12.5px] font-medium flex-1 truncate text-left hover:underline"
                   onClick={(event) => {
                     event.stopPropagation();
                     router.push(item.analyticsHref || `/tools/studyset/${item.id}`);
@@ -544,7 +544,7 @@ export function RecentsSidebar() {
                   {item.title}
                 </button>
               ) : (
-                <span className="text-[12px] font-normal flex-1 truncate">{item.title}</span>
+                <span className="text-[12.5px] font-medium flex-1 truncate">{item.title}</span>
               )}
               {item.source === 'studyset' && item.progressLabel ? (
                 <div className="flex items-center gap-1 shrink-0">

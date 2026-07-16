@@ -59,6 +59,42 @@ const RecentsSidebar = dynamic(
   { ssr: false }
 );
 
+type SidebarNavItem = { href: string; label: string; icon: React.ComponentType<any>; animated?: boolean };
+
+// Desktop nav row. Hover state is tracked locally and fed into AnimateIcon in
+// controlled mode (the `animate` prop) instead of using AnimateIcon's own
+// asChild/onMouseEnter wiring — that mode wraps the actual <Link> in a
+// motion.create(CustomComponent) + hand-rolled Slot, which is what caused
+// nav clicks to silently stop navigating after repeated use (see git log).
+// Controlled mode keeps the animation (now correctly triggered by hovering
+// anywhere on the row, not just the icon pixels) without touching the click
+// path at all.
+function SidebarNavRow({ item, isActive, iconSizeClass }: { item: SidebarNavItem; isActive: boolean; iconSizeClass: string }) {
+  const [hovered, setHovered] = useState(false);
+  const canAnimate = item.animated !== false;
+  return (
+    <SidebarMenuButton
+      asChild
+      isActive={isActive}
+      tooltip={item.label}
+      className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
+    >
+      <Link
+        href={item.href}
+        onMouseEnter={() => canAnimate && setHovered(true)}
+        onMouseLeave={() => canAnimate && setHovered(false)}
+      >
+        <AnimateIcon animate={canAnimate && hovered}>
+          <item.icon className={iconSizeClass} />
+        </AnimateIcon>
+        <span className="text-sm font-medium leading-5 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">
+          {item.label}
+        </span>
+      </Link>
+    </SidebarMenuButton>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1272,19 +1308,11 @@ export function AppSidebar() {
                       </SidebarMenuButton>
                     </AnimateIcon>
                   ) : (
-                    <SidebarMenuButton
-                      asChild
+                    <SidebarNavRow
+                      item={item}
                       isActive={isMenuItemActive(item.href)}
-                      tooltip={item.label}
-                      className="group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
-                    >
-                      <Link href={item.href}>
-                        <AnimateIcon animateOnHover={item.animated !== false} completeOnStop>
-                          <item.icon className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
-                        </AnimateIcon>
-                        <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                      iconSizeClass="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4"
+                    />
                   )}
                 </SidebarMenuItem>
               ))}
@@ -1299,18 +1327,11 @@ export function AppSidebar() {
             <SidebarMenu>
               {visibleToolsItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
-                  <SidebarMenuButton
-                    asChild
+                  <SidebarNavRow
+                    item={item}
                     isActive={isMenuItemActive(item.href)}
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href}>
-                      <AnimateIcon animateOnHover={item.animated !== false} completeOnStop>
-                        <item.icon className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3" />
-                      </AnimateIcon>
-                      <span className="text-[13px] font-medium leading-4 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1">{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                    iconSizeClass="h-4 w-4 shrink-0 group-data-[collapsible=icon]:h-3 group-data-[collapsible=icon]:w-3"
+                  />
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
