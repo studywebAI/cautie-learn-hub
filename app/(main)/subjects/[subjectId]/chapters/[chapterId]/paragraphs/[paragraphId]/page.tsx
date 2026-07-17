@@ -145,7 +145,6 @@ export default function ParagraphDetailPage() {
   const [allParagraphs, setAllParagraphs] = useState<Paragraph[]>([]);
   const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
   const [newAssignmentTitle, setNewAssignmentTitle] = useState('');
-  const [createIsTest, setCreateIsTest] = useState(false);
   const [assignmentTypeFilter, setAssignmentTypeFilter] = useState<'all' | 'homework' | 'test'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState<string | null>(null);
@@ -179,9 +178,7 @@ export default function ParagraphDetailPage() {
     homework: isDutch ? 'Opdracht' : 'Assignment',
     test: isDutch ? 'Toets' : 'Test',
     content: isDutch ? 'Leerstof' : 'Content',
-    isTestLabel: isDutch ? 'Dit is een toets' : 'This is a test',
-    isTestHint: isDutch ? 'Schakelt timer, anti-cheat en planning in — verandert dit later ook in de editor.' : 'Turns on timer, anti-cheat, and scheduling — you can change this later in the editor too.',
-    isTestAutoHint: isDutch ? 'Automatisch aangezet omdat dit het Toetsen-hoofdstuk is.' : 'Automatically turned on because this is the Toetsen chapter.',
+    isTestAutoHint: isDutch ? 'Wordt automatisch een toets, want dit is het Toetsen-hoofdstuk.' : 'Automatically becomes a test, since this is the Toetsen chapter.',
     allAssignments: isDutch ? 'Alles' : 'All',
     onlyHomework: isDutch ? 'Opdrachten' : 'Assignments',
     onlyTests: isDutch ? 'Toetsen' : 'Tests',
@@ -215,7 +212,6 @@ export default function ParagraphDetailPage() {
     if (typeof window === 'undefined') return;
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('create') === '1') {
-      setCreateIsTest(urlParams.get('kind') === 'test');
       setIsCreateAssignmentOpen(true);
       window.history.replaceState(null, '', window.location.pathname);
     }
@@ -337,7 +333,7 @@ export default function ParagraphDetailPage() {
     if (isCreatingAssignment) return;
 
     const title = newAssignmentTitle.trim();
-    const isTest = createIsTest;
+    const isTest = Boolean(chapterPath?.is_tests_chapter);
     const effectiveSettings = normalizeAssignmentSettings(DEFAULT_ASSIGNMENT_SETTINGS);
 
     setIsCreatingAssignment(true);
@@ -415,7 +411,6 @@ export default function ParagraphDetailPage() {
 
   const resetCreateForm = () => {
     setNewAssignmentTitle('');
-    setCreateIsTest(Boolean(chapterPath?.is_tests_chapter));
   };
 
   if (isLoading) {
@@ -736,20 +731,9 @@ export default function ParagraphDetailPage() {
                 className="mt-1"
               />
             </div>
-            <label className="flex items-start gap-2 rounded-md border border-border/70 surface-interactive px-3 py-2 text-sm">
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={createIsTest}
-                onChange={(e) => setCreateIsTest(e.target.checked)}
-              />
-              <span>
-                <span className="block">{t.isTestLabel}</span>
-                <span className="block text-xs text-muted-foreground mt-0.5">
-                  {chapterPath?.is_tests_chapter ? t.isTestAutoHint : t.isTestHint}
-                </span>
-              </span>
-            </label>
+            {chapterPath?.is_tests_chapter && (
+              <p className="text-xs text-muted-foreground">{t.isTestAutoHint}</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsCreateAssignmentOpen(false); resetCreateForm(); }}>
