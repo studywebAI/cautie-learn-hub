@@ -757,6 +757,10 @@ create extension if not exists pgcrypto;
 -- For now, we'll use a default key that should be rotated in production
 
 -- RPC Function: Encrypt password using pgcrypto
+-- Drop first: CREATE OR REPLACE fails if a prior version has a differently
+-- named parameter (hit this on 2026-07-17: remote had "encrypted" instead
+-- of "password"/"encrypted_password").
+drop function if exists encrypt_password(text);
 create or replace function encrypt_password(password text)
 returns text as $$
 declare
@@ -781,6 +785,7 @@ end;
 $$ language plpgsql security definer;
 
 -- RPC Function: Decrypt password using pgcrypto
+drop function if exists decrypt_password(text);
 create or replace function decrypt_password(encrypted_password text)
 returns text as $$
 declare
@@ -877,6 +882,7 @@ create trigger update_personal_tasks_updated_at
 -- Move any existing Saturday/Sunday tasks to the following Monday
 
 -- Create a function to get next Monday for a given date
+drop function if exists get_next_weekday(date, integer);
 create or replace function get_next_weekday(input_date date, target_day integer)
 returns date as $$
 declare
