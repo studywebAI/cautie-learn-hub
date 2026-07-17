@@ -30,6 +30,17 @@ CREATE TABLE IF NOT EXISTS public.ideas_board_items (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT ideas_board_status_check CHECK (status IN ('open', 'planned', 'in_progress', 'shipped', 'archived'))
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS created_by uuid;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS status text;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS is_poll_seed boolean;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS vote_count integer;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.ideas_board_items ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 CREATE TABLE IF NOT EXISTS public.ideas_board_votes (
   idea_id uuid NOT NULL REFERENCES public.ideas_board_items(id) ON DELETE CASCADE,
@@ -37,6 +48,11 @@ CREATE TABLE IF NOT EXISTS public.ideas_board_votes (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (idea_id, user_id)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.ideas_board_votes ADD COLUMN IF NOT EXISTS idea_id uuid;
+ALTER TABLE public.ideas_board_votes ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.ideas_board_votes ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 CREATE INDEX IF NOT EXISTS ideas_board_items_status_idx
   ON public.ideas_board_items(status, vote_count DESC, created_at DESC);
@@ -181,6 +197,18 @@ CREATE TABLE IF NOT EXISTS public.ideas_board_polls (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT ideas_board_polls_status_check CHECK (status IN ('draft', 'open', 'closed', 'archived'))
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS month_key text;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS status text;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS starts_at timestamptz;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS ends_at timestamptz;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS created_by uuid;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.ideas_board_polls ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 CREATE UNIQUE INDEX IF NOT EXISTS ideas_board_polls_month_key_uidx
   ON public.ideas_board_polls(month_key);
@@ -195,6 +223,16 @@ CREATE TABLE IF NOT EXISTS public.ideas_board_poll_options (
   position integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS poll_id uuid;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS idea_id uuid;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS vote_count integer;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS position integer;
+ALTER TABLE public.ideas_board_poll_options ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 CREATE INDEX IF NOT EXISTS ideas_board_poll_options_poll_idx
   ON public.ideas_board_poll_options(poll_id, position);
@@ -206,6 +244,12 @@ CREATE TABLE IF NOT EXISTS public.ideas_board_poll_votes (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (poll_id, user_id)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.ideas_board_poll_votes ADD COLUMN IF NOT EXISTS poll_id uuid;
+ALTER TABLE public.ideas_board_poll_votes ADD COLUMN IF NOT EXISTS option_id uuid;
+ALTER TABLE public.ideas_board_poll_votes ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.ideas_board_poll_votes ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 CREATE INDEX IF NOT EXISTS ideas_board_poll_votes_option_idx
   ON public.ideas_board_poll_votes(option_id);
@@ -370,6 +414,17 @@ create table if not exists public.studyset_workflow_settings (
   updated_at timestamptz not null default now(),
   unique (studyset_id)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS studyset_id uuid;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS workflow_type text;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS knowledge_level text;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS study_days text[];
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS workflow_setting text;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.studyset_workflow_settings ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 create table if not exists public.studyset_generated_plans (
   id uuid primary key default gen_random_uuid(),
@@ -380,6 +435,14 @@ create table if not exists public.studyset_generated_plans (
   updated_at timestamptz not null default now(),
   unique (studyset_id)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS studyset_id uuid;
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS plan_data jsonb;
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.studyset_generated_plans ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 create index if not exists idx_studyset_workflow_settings_user_studyset
 on public.studyset_workflow_settings(user_id, studyset_id);
@@ -420,6 +483,17 @@ create table if not exists public.calendar_accounts (
   updated_at timestamptz not null default now(),
   last_synced_at timestamptz
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS provider text;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS username text;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS password text;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS caldav_url text;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+ALTER TABLE public.calendar_accounts ADD COLUMN IF NOT EXISTS last_synced_at timestamptz;
+
 
 -- Unique constraint to prevent duplicate connections to the same calendar
 create unique index if not exists idx_calendar_accounts_user_provider_username
@@ -487,6 +561,19 @@ create table if not exists public.class_calendar_events (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS class_id uuid;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS created_by uuid;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS event_type text;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS starts_at timestamptz;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS ends_at timestamptz;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS all_day boolean;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.class_calendar_events ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 alter table public.class_calendar_events enable row level security;
 
@@ -537,6 +624,19 @@ create table if not exists public.studyset_materials (
     check (extraction_status in ('ready', 'pending', 'error', 'empty')),
   created_at timestamptz not null default now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS studyset_id uuid;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS kind text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS content text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS file_name text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS file_size integer;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS mime_type text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS extraction_status text;
+ALTER TABLE public.studyset_materials ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 alter table public.studyset_materials enable row level security;
 
@@ -556,6 +656,12 @@ create table if not exists public.calendar_tokens (
   token text not null unique default encode(gen_random_bytes(24), 'hex'),
   created_at timestamptz not null default now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.calendar_tokens ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.calendar_tokens ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.calendar_tokens ADD COLUMN IF NOT EXISTS token text;
+ALTER TABLE public.calendar_tokens ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 alter table public.calendar_tokens enable row level security;
 
@@ -586,6 +692,20 @@ create table if not exists public.studyset_user_preferences (
   updated_at timestamptz not null default now(),
   unique (studyset_id, user_id)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS studyset_id uuid;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS random_order boolean;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS daily_reminders boolean;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS daily_task_limit integer;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS theme text;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS pinned boolean;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS folder text;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS tags text[];
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.studyset_user_preferences ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 create index if not exists idx_studyset_user_preferences_user
 on public.studyset_user_preferences(user_id, updated_at desc);
@@ -728,6 +848,17 @@ create table if not exists public.scheduled_study_items (
   notified_at timestamptz null,
   created_at timestamptz not null default now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS tool text;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS source_text text;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS scheduled_for timestamptz;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS status text;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS notified_at timestamptz;
+ALTER TABLE public.scheduled_study_items ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 alter table public.scheduled_study_items enable row level security;
 
@@ -841,6 +972,24 @@ create table if not exists public.personal_tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS user_id uuid;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS title text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS description text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS date text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS due_date text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS subject text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS priority text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS estimated_duration integer;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS tags text[];
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS dependencies uuid[];
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS status text;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS recurrence jsonb;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.personal_tasks ADD COLUMN IF NOT EXISTS updated_at timestamptz;
+
 
 -- Index for efficient lookup by user
 create index if not exists idx_personal_tasks_user_id on public.personal_tasks(user_id);
@@ -1029,6 +1178,12 @@ CREATE TABLE IF NOT EXISTS public.subject_folders (
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT subject_folders_name_len_chk CHECK (char_length(btrim(name)) BETWEEN 1 AND 80)
 );
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.subject_folders ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.subject_folders ADD COLUMN IF NOT EXISTS name text;
+ALTER TABLE public.subject_folders ADD COLUMN IF NOT EXISTS created_by uuid;
+ALTER TABLE public.subject_folders ADD COLUMN IF NOT EXISTS created_at timestamptz;
+
 
 ALTER TABLE public.subjects
   ADD COLUMN IF NOT EXISTS folder_id uuid REFERENCES public.subject_folders(id) ON DELETE SET NULL;
