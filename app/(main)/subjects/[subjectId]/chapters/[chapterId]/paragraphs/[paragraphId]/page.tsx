@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import Link from 'next/link';
-import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks } from 'lucide-react';
+import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks, ChevronLeft } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
@@ -446,26 +446,22 @@ export default function ParagraphDetailPage() {
   });
   return (
     <div className="page-content">
-      {/* Breadcrumb */}
-      <div className="mb-1 text-xs text-muted-foreground">
-        {[
+      <PageHeader
+        title={`${paragraph.paragraph_number}. ${paragraph.title}`}
+        subtitle={[
           subjectPath?.title || 'Subject',
           chapterPath?.title || 'Chapter',
           paragraph?.title || 'Paragraph',
           'Assignments',
         ].join(' / ')}
-      </div>
-      <Link prefetch={false}
-        href={`/subjects/${subjectId}`}
-        className="text-xs text-muted-foreground hover:text-foreground mb-3 block"
-      >
-        {t.backToChapters}
-      </Link>
-
-      <PageHeader
-        title={`${paragraph.paragraph_number}. ${paragraph.title}`}
         actions={
           <>
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1 px-2">
+              <Link prefetch={false} href={`/subjects/${subjectId}`}>
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {t.backToChapters}
+              </Link>
+            </Button>
             <div className="hidden items-center gap-1 rounded-md border border-border p-1 md:flex">
               <span className="px-1 text-[10px] text-muted-foreground">{t.filterByType}</span>
               <Button type="button" size="sm" variant={assignmentTypeFilter === 'all' ? 'default' : 'ghost'} className="h-7 text-xs" onClick={() => setAssignmentTypeFilter('all')}>

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Loader from '@/components/ui/loader';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CautieLoader } from '@/components/ui/cautie-loader';
+import { PageHeader } from '@/components/page-header';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 interface Chapter {
@@ -85,43 +87,34 @@ export default function ChapterOverviewPage() {
 
   return (
       <div className="page-content">
-      <div className="text-xs text-muted-foreground">
-        {`${subject?.title || 'Subjects'} / ${chapter?.title || 'Chapter'} / Paragraphs`}
-      </div>
-      {/* Minimal header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <Link prefetch={false} 
-            href={`/subjects/${subjectId}`}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            {'<-'} {subject?.title || 'Subjects'}
-          </Link>
-          <p className="text-base mt-1">
-            {chapter.chapter_number}. {chapter.title}
-          </p>
-        </div>
-        
-        {/* Minimal chapter navigation */}
-        <div className="flex gap-4 text-sm">
-          {adjacentChapters.prev && (
-            <Link prefetch={false}
-              href={`/subjects/${subjectId}/chapters/${adjacentChapters.prev.id}`}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {'<-'} {adjacentChapters.prev.chapter_number}
-            </Link>
-          )}
-          {adjacentChapters.next && (
-            <Link prefetch={false}
-              href={`/subjects/${subjectId}/chapters/${adjacentChapters.next.id}`}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {adjacentChapters.next.chapter_number} {'->'}
-            </Link>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title={`${chapter.chapter_number}. ${chapter.title}`}
+        subtitle={`${subject?.title || 'Subjects'} / ${chapter.title} / Paragraphs`}
+        actions={
+          <div className="flex items-center gap-1">
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1 px-2">
+              <Link prefetch={false} href={`/subjects/${subjectId}`}>
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {subject?.title || 'Subjects'}
+              </Link>
+            </Button>
+            {adjacentChapters.prev && (
+              <Button asChild variant="ghost" size="icon" className="h-8 w-8" title={`${adjacentChapters.prev.chapter_number}. ${adjacentChapters.prev.title}`}>
+                <Link prefetch={false} href={`/subjects/${subjectId}/chapters/${adjacentChapters.prev.id}`}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {adjacentChapters.next && (
+              <Button asChild variant="ghost" size="icon" className="h-8 w-8" title={`${adjacentChapters.next.chapter_number}. ${adjacentChapters.next.title}`}>
+                <Link prefetch={false} href={`/subjects/${subjectId}/chapters/${adjacentChapters.next.id}`}>
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Paragraphs list */}
       {paragraphs.length > 0 ? (
