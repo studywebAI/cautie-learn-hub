@@ -9,20 +9,23 @@ critical bug (below) is resolved, unless told otherwise.
 - [ ] Sidebar collapse animation / general animations "fucking laggy"
 
 ## Navigation / topbar
-- [ ] Breadcrumb path ("Subjects / watsubject / Chapters") should only show on
-      Subjects-tree pages (subject → chapter) — and separately on Grades/Agenda
-      item detail pages. Not everywhere.
-- [ ] Subject/chapter/paragraph page navigation is unclear — inconsistent fonts/
-      sizes, "back" link is tiny plain text instead of using the topbar
-      consistently with a title/path.
-- [ ] Chapter page inside a subject: default cover icons for chapters 1/2/3/4
-      etc. instead of a blank gray box — reuse whatever "clear icon" pattern
-      exists elsewhere.
+- [x] Chapter and paragraph detail pages had their own ad-hoc "Subjects /
+      Chapter / Paragraph" breadcrumb text + tiny "<- back" link sitting
+      above PageHeader instead of feeding into it. Folded into
+      PageHeader's title/subtitle/actions, scoped only to those two pages
+      (Grades detail already had an equivalent path-style subtitle).
+- [x] Subject/chapter/paragraph navigation: replaced the tiny plain-text
+      back links with real back buttons in the topbar, consistent font
+      sizing via PageHeader.
+- [x] Chapter cover icons: each chapter now gets a distinct icon + tint
+      (rotating set, keyed by chapter number) instead of a blank gray box;
+      Toetsen chapter always gets a fixed checklist icon.
 - [x] Remove the standalone "+ Toetsen-hoofdstuk" button — a Toetsen chapter
       now always exists by default (auto-created on subject creation, and
       self-healed in for existing subjects on next chapter-list fetch).
-- [ ] Chapter drag-reorder: drop the explicit reorder icon/drag handle: just
-      press-and-hold ~3s on a chapter row to enter reorder mode instead.
+- [x] Chapter drag-reorder: replaced the always-visible GripVertical handle
+      with a ~3s press-and-hold on the chapter row that enters a reorder
+      mode (up/down arrows per chapter, "Done" to exit).
 
 ## Sidebar
 - [x] Active sidebar item background + all sidebar text colors: darkened;
@@ -63,9 +66,10 @@ critical bug (below) is resolved, unless told otherwise.
 - [x] Removed the template gallery ("Add template" preset-block picker) from
       the Workspace tab. The separate at-creation preset picker in
       create/edit-assignment-dialog is a different flow and untouched.
-- [ ] Reorganize Workspace layout: automation-related stuff toward the
-      bottom, blocks list centered/main area, with a thin divider line
-      between block rows instead of plain white with no border.
+- [x] Reorganized Workspace layout: Blocks palette + per-block settings now
+      come first in the right rail, AI-assist/copy-from moved to the bottom.
+      Main canvas rows are centered (max-w-3xl) with a thin border-b divider
+      between rows instead of plain spacing.
 
 ## Backend/infra
 - [ ] Investigate what's leaking through the Settings "General" section
