@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 import {
   FileText,
   CheckSquare,
@@ -2264,7 +2265,7 @@ export function AssignmentEditor({
                   </div>
                 </div>
               ) : (
-              <div className="space-y-3">
+              <div className="mx-auto max-w-3xl">
                 {rows.map((row, rowIndex) => (
                   <React.Fragment key={row.rowId}>
                     {/* Drop indicator before row */}
@@ -2273,9 +2274,15 @@ export function AssignmentEditor({
                       <div className="h-1 w-full rounded-full bg-primary/70" />
                       </div>
                     )}
-                    
+
                     {/* Row */}
-                      <div className="flex gap-2.5" data-assignment-row-index={rowIndex}>
+                      <div
+                        className={cn(
+                          'flex gap-2.5 py-3',
+                          rowIndex < rows.length - 1 && 'border-b border-border/60'
+                        )}
+                        data-assignment-row-index={rowIndex}
+                      >
                       {row.blocks[0]?.width === 'full' ? (
                         // Full width block
                         <div className="flex-1 relative group">
@@ -2517,90 +2524,6 @@ export function AssignmentEditor({
             <div className="space-y-3">
             {activeSidebarTab === 'workspace' && (
               <>
-              <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3" />
-                  {isDutch ? 'Zeg wat je wilt toevoegen' : 'Say what to add'}
-                </div>
-                <Textarea
-                  value={aiCommand}
-                  onChange={(e) => setAiCommand(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      void handleAiCommandSubmit();
-                    }
-                  }}
-                  placeholder={isDutch ? 'bv. "maak een multiple choice blok over fotosynthese"' : 'e.g. "make a multiple choice block about photosynthesis"'}
-                  rows={2}
-                  disabled={aiCommandLoading}
-                  className="text-xs resize-none"
-                  maxLength={500}
-                />
-                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={aiIncludeSiblingContext}
-                    onChange={(e) => setAiIncludeSiblingContext(e.target.checked)}
-                    className="h-3 w-3"
-                  />
-                  {isDutch ? 'Ook vorige paragrafen/hoofdstukken gebruiken' : 'Also use previous paragraphs/chapters'}
-                </label>
-                <Button
-                  size="sm"
-                  className="h-7 w-full text-xs"
-                  disabled={!aiCommand.trim() || aiCommandLoading}
-                  onClick={() => void handleAiCommandSubmit()}
-                >
-                  {aiCommandLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <>{isDutch ? 'Invoegen' : 'Insert'}</>
-                  )}
-                </Button>
-              </div>
-              <Popover open={copyFromOpen} onOpenChange={setCopyFromOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
-                    <Copy className="h-3.5 w-3.5" />
-                    {isDutch ? 'Kopieer blokken van...' : 'Copy blocks from...'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" className="w-72 space-y-2.5">
-                  <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Kopieer van een andere opdracht' : 'Copy from another assignment'}</p>
-                  <select
-                    value={copyChapterId}
-                    onChange={(e) => setCopyChapterId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={isLoadingCopyOptions}
-                  >
-                    <option value="">{isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...'}</option>
-                    {copyChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                  <select
-                    value={copyParagraphId}
-                    onChange={(e) => setCopyParagraphId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!copyChapterId}
-                  >
-                    <option value="">{isDutch ? 'Kies paragraaf...' : 'Choose paragraph...'}</option>
-                    {copyParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
-                  <select
-                    value={copyAssignmentId}
-                    onChange={(e) => setCopyAssignmentId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!copyParagraphId}
-                  >
-                    <option value="">{isDutch ? 'Kies opdracht...' : 'Choose assignment...'}</option>
-                    {copyAssignments.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
-                  </select>
-                  <Button size="sm" className="h-7 w-full text-xs" disabled={!copyAssignmentId || isCopyingBlocks} onClick={handleCopyBlocks}>
-                    {isCopyingBlocks ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isDutch ? 'Kopiëren' : 'Copy')}
-                  </Button>
-                </PopoverContent>
-              </Popover>
-
               <div className="rounded-xl border border-border surface-panel p-3">
                 <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
                 <div className="space-y-1.5">
@@ -2801,6 +2724,92 @@ export function AssignmentEditor({
                   </div>
                 );
               })()}
+
+              {/* Automation last: blocks + per-block settings come first, AI
+                  assist and copy-from live at the bottom of the tab. */}
+              <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
+                <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  {isDutch ? 'Zeg wat je wilt toevoegen' : 'Say what to add'}
+                </div>
+                <Textarea
+                  value={aiCommand}
+                  onChange={(e) => setAiCommand(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      void handleAiCommandSubmit();
+                    }
+                  }}
+                  placeholder={isDutch ? 'bv. "maak een multiple choice blok over fotosynthese"' : 'e.g. "make a multiple choice block about photosynthesis"'}
+                  rows={2}
+                  disabled={aiCommandLoading}
+                  className="text-xs resize-none"
+                  maxLength={500}
+                />
+                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={aiIncludeSiblingContext}
+                    onChange={(e) => setAiIncludeSiblingContext(e.target.checked)}
+                    className="h-3 w-3"
+                  />
+                  {isDutch ? 'Ook vorige paragrafen/hoofdstukken gebruiken' : 'Also use previous paragraphs/chapters'}
+                </label>
+                <Button
+                  size="sm"
+                  className="h-7 w-full text-xs"
+                  disabled={!aiCommand.trim() || aiCommandLoading}
+                  onClick={() => void handleAiCommandSubmit()}
+                >
+                  {aiCommandLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>{isDutch ? 'Invoegen' : 'Insert'}</>
+                  )}
+                </Button>
+              </div>
+              <Popover open={copyFromOpen} onOpenChange={setCopyFromOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
+                    <Copy className="h-3.5 w-3.5" />
+                    {isDutch ? 'Kopieer blokken van...' : 'Copy blocks from...'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72 space-y-2.5">
+                  <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Kopieer van een andere opdracht' : 'Copy from another assignment'}</p>
+                  <select
+                    value={copyChapterId}
+                    onChange={(e) => setCopyChapterId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={isLoadingCopyOptions}
+                  >
+                    <option value="">{isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...'}</option>
+                    {copyChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+                  </select>
+                  <select
+                    value={copyParagraphId}
+                    onChange={(e) => setCopyParagraphId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!copyChapterId}
+                  >
+                    <option value="">{isDutch ? 'Kies paragraaf...' : 'Choose paragraph...'}</option>
+                    {copyParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <select
+                    value={copyAssignmentId}
+                    onChange={(e) => setCopyAssignmentId(e.target.value)}
+                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
+                    disabled={!copyParagraphId}
+                  >
+                    <option value="">{isDutch ? 'Kies opdracht...' : 'Choose assignment...'}</option>
+                    {copyAssignments.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
+                  </select>
+                  <Button size="sm" className="h-7 w-full text-xs" disabled={!copyAssignmentId || isCopyingBlocks} onClick={handleCopyBlocks}>
+                    {isCopyingBlocks ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isDutch ? 'Kopiëren' : 'Copy')}
+                  </Button>
+                </PopoverContent>
+              </Popover>
               </>
             )}
 
