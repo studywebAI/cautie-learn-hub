@@ -37,8 +37,10 @@ critical bug (below) is resolved, unless told otherwise.
       topbar so it's always visible everywhere, not just on "/". "Send
       message" stays page-scoped (teacher dashboard) since it needs a
       classId — no single global class context to hang it on.
-- [ ] Make "Dashboard customization" actually do something — currently only
-      toggles widgets that aren't really used anymore.
+- [x] "Dashboard customization" now also gates Today's Plan, Recent Grades
+      (student) and To Grade (teacher) — previously always-on and outside
+      the customize menu entirely, while the menu only covered a narrower,
+      partly-stale widget set.
 
 ## Settings page
 - [x] Move "Requires first" (paragraph prerequisite) out of default paragraph
