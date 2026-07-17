@@ -1054,16 +1054,43 @@ begin
 end;
 $$ language plpgsql;
 
--- Update any personal_tasks on weekends to Monday
-update public.personal_tasks
-set
-  "date" = get_next_weekday("date"::date, 1)::text,
-  due_date = get_next_weekday(due_date::date, 1)::text
-where
-  (
-    extract(dow from "date"::date)::integer in (0, 6)  -- Saturday or Sunday
-    or extract(dow from due_date::date)::integer in (0, 6)
-  );
+-- Update any personal_tasks on weekends to Monday.
+-- "date"/due_date type is drift-prone on this database (hit both a missing
+-- column and a text-vs-timestamptz mismatch already) -- detect the actual
+-- type per column and cast the write side accordingly instead of assuming text.
+DO $$
+DECLARE
+  date_is_text boolean;
+  due_date_is_text boolean;
+BEGIN
+  SELECT (data_type = 'text') INTO date_is_text
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'personal_tasks' AND column_name = 'date';
+
+  SELECT (data_type = 'text') INTO due_date_is_text
+  FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'personal_tasks' AND column_name = 'due_date';
+
+  IF date_is_text THEN
+    UPDATE public.personal_tasks
+    SET "date" = get_next_weekday("date"::date, 1)::text
+    WHERE "date" IS NOT NULL AND extract(dow from "date"::date)::integer IN (0, 6);
+  ELSE
+    UPDATE public.personal_tasks
+    SET "date" = get_next_weekday("date"::date, 1)
+    WHERE "date" IS NOT NULL AND extract(dow from "date"::date)::integer IN (0, 6);
+  END IF;
+
+  IF due_date_is_text THEN
+    UPDATE public.personal_tasks
+    SET due_date = get_next_weekday(due_date::date, 1)::text
+    WHERE due_date IS NOT NULL AND extract(dow from due_date::date)::integer IN (0, 6);
+  ELSE
+    UPDATE public.personal_tasks
+    SET due_date = get_next_weekday(due_date::date, 1)
+    WHERE due_date IS NOT NULL AND extract(dow from due_date::date)::integer IN (0, 6);
+  END IF;
+END $$;
 
 -- Add a constraint to prevent weekend dates in future inserts/updates
 -- (This is enforced at the application level, not in the database)
