@@ -144,7 +144,7 @@ function StudentDashboard() {
         }
         actions={
           <>
-            <DashboardCustomizeMenu role="student" widgetKeys={['studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
+            <DashboardCustomizeMenu role="student" widgetKeys={['todayPlan', 'gradesMini', 'studyToday', 'scheduled', 'subjects']} onChange={setDashboardPrefs} />
           </>
         }
       />
@@ -155,13 +155,15 @@ function StudentDashboard() {
       {/* Main content — single column, no duplicate nested sidebar */}
       <div className={`flex flex-col ${dashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>
         <TeacherMessageCard />
-        <TodayPlanCard
-          assignments={assignments}
-          personalTasks={personalTasks}
-          classes={classes}
-          schoolSlots={schoolSlots}
-        />
-        <GradesMiniCard />
+        {dashboardPrefs.widgets.todayPlan && (
+          <TodayPlanCard
+            assignments={assignments}
+            personalTasks={personalTasks}
+            classes={classes}
+            schoolSlots={schoolSlots}
+          />
+        )}
+        {dashboardPrefs.widgets.gradesMini && <GradesMiniCard />}
         {dashboardPrefs.widgets.studyToday && <TodaysStudysetTasks />}
         {dashboardPrefs.widgets.scheduled && <ScheduledStudyItems />}
         {dashboardPrefs.widgets.subjects && <MySubjects subjects={subjects} />}
@@ -234,7 +236,7 @@ function TeacherSummaryDashboard() {
                   <TeacherMessageComposer classId={resolvedClassId} />
                   <DashboardCustomizeMenu
                     role="teacher"
-                    widgetKeys={['agenda', 'liveTest']}
+                    widgetKeys={['agenda', 'liveTest', 'toGrade']}
                     onChange={setTeacherDashboardPrefs}
                   />
                 </>
@@ -265,7 +267,9 @@ function TeacherSummaryDashboard() {
                   <TeacherAgendaWidget assignments={assignments} classes={teacherClasses} />
                 )}
 
-                <TeacherToGradeCard classIds={teacherClassIds} />
+                {teacherDashboardPrefs.widgets.toGrade && (
+                  <TeacherToGradeCard classIds={teacherClassIds} />
+                )}
               </div>
             )}
         </div>

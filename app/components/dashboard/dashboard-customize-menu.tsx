@@ -11,14 +11,14 @@ import {
 } from '@/components/ui/popover';
 import { SlidersHorizontal } from 'lucide-react';
 
-export type WidgetKey = 'studyToday' | 'scheduled' | 'subjects' | 'agenda' | 'liveTest';
+export type WidgetKey = 'studyToday' | 'scheduled' | 'subjects' | 'agenda' | 'liveTest' | 'todayPlan' | 'gradesMini' | 'toGrade';
 
 export type DashboardPrefs = {
   density: 'comfortable' | 'compact';
   widgets: Record<WidgetKey, boolean>;
 };
 
-const ALL_WIDGET_KEYS: WidgetKey[] = ['studyToday', 'scheduled', 'subjects', 'agenda', 'liveTest'];
+const ALL_WIDGET_KEYS: WidgetKey[] = ['studyToday', 'scheduled', 'subjects', 'agenda', 'liveTest', 'todayPlan', 'gradesMini', 'toGrade'];
 
 export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
   density: 'comfortable',
@@ -31,6 +31,9 @@ const WIDGET_LABELS: Record<WidgetKey, string> = {
   subjects: 'My subjects',
   agenda: 'Agenda widget',
   liveTest: 'Live test monitor',
+  todayPlan: "Today's plan",
+  gradesMini: 'Recent grades',
+  toGrade: 'To grade',
 };
 
 const storageKey = (role: 'student' | 'teacher') => `studyweb-dashboard-prefs-${role}`;
