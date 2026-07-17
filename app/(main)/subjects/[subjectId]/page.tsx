@@ -7,7 +7,20 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GripVertical, Lock, Settings2 } from 'lucide-react';
+import { GripVertical, Lock, Settings2, BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music, ListChecks } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const CHAPTER_COVER_ICONS = [BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music];
+const CHAPTER_COVER_TINTS = [
+  'bg-sky-500/12 text-sky-600 dark:text-sky-400',
+  'bg-violet-500/12 text-violet-600 dark:text-violet-400',
+  'bg-amber-500/12 text-amber-600 dark:text-amber-400',
+  'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400',
+  'bg-rose-500/12 text-rose-600 dark:text-rose-400',
+  'bg-cyan-500/12 text-cyan-600 dark:text-cyan-400',
+  'bg-orange-500/12 text-orange-600 dark:text-orange-400',
+  'bg-indigo-500/12 text-indigo-600 dark:text-indigo-400',
+];
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
@@ -432,13 +445,24 @@ export default function SubjectDetailPage() {
                   )}
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                    className="relative w-32 shrink-0 bg-sidebar-accent/30 transition-colors hover:bg-sidebar-accent/40"
+                    className={cn(
+                      'relative w-32 shrink-0 transition-colors',
+                      chapter.is_tests_chapter
+                        ? 'bg-amber-500/12 text-amber-600 dark:text-amber-400'
+                        : CHAPTER_COVER_TINTS[(chapter.chapter_number - 1) % CHAPTER_COVER_TINTS.length]
+                    )}
                   >
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-2xl text-muted-foreground/60">
-                      <span>{chapter.chapter_number}</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                      {(() => {
+                        const CoverIcon = chapter.is_tests_chapter
+                          ? ListChecks
+                          : CHAPTER_COVER_ICONS[(chapter.chapter_number - 1) % CHAPTER_COVER_ICONS.length];
+                        return <CoverIcon className="h-6 w-6" />;
+                      })()}
+                      <span className="text-xs font-medium tabular-nums opacity-80">{chapter.chapter_number}</span>
                       {allParagraphs.length > 0 && (
-                        <div className="h-1 w-12 overflow-hidden rounded-full bg-sidebar-accent/50">
-                          <div className="h-full rounded-full bg-foreground/60" style={{ width: `${chapterProgress}%` }} />
+                        <div className="h-1 w-12 overflow-hidden rounded-full bg-current/15">
+                          <div className="h-full rounded-full bg-current/70" style={{ width: `${chapterProgress}%` }} />
                         </div>
                       )}
                     </div>
