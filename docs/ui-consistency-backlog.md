@@ -74,8 +74,61 @@ critical bug (below) is resolved, unless told otherwise.
       between rows instead of plain spacing.
 
 ## Backend/infra
-- [ ] Investigate what's leaking through the Settings "General" section
-      related to STT before removing it (see above).
+- [x] Investigated the Settings "General" section — see Settings page section
+      above, not a leak.
+- [x] Investigated the critical upload/save-failure bugs (2026-07-17 logs):
+      `supabase migration list --linked` shows 16 local migrations missing
+      from remote's history (ideas board, studyset/calendar features,
+      scheduled_study_items, subjects archive/folders/prerequisites, etc.) —
+      explains the `/api/scheduled-items/check` 500 and probably the
+      paragraph-prerequisite feature not persisting. Separately, no migration
+      anywhere creates the `content-uploads` storage bucket `/api/upload`
+      writes to, and `supabase storage ls --linked` returns zero buckets on
+      the linked project — direct cause of every "Upload failed" toast.
+      Bundled both into `supabase/RUN_ME_pending_migrations.sql` for manual
+      review/run (did not touch production directly). Also stopped
+      `/api/upload` from swallowing the real Supabase error message.
+- [ ] There was also a `PUT .../blocks/[blockId]` 403 ("Block does not
+      belong to this assignment") in the same log capture — separate from
+      the migration/bucket issue, possibly a stale block-id race during
+      autosave right after a block is created. Not yet root-caused; revisit
+      once the migration bundle is applied and see if it still reproduces.
+
+## Future: classes → subjects/groups restructuring (not started, big)
+2026-07-17 braindump, verbatim intent — classes will eventually be removed
+as a first-class concept. The direction: a teacher creates a *subject*,
+students join it, and that becomes the group (no separate "class" object).
+Everything currently keyed off `class_id` (subjects, agenda items, etc.)
+needs to move onto the new subject-as-group model. Class-related UI will
+mostly get reorganized into tabs on the subject, but that's later.
+Specific tab-by-tab plan as described:
+- **Attendance**: becomes its own tab, ordered under Grades and above
+  Analytics.
+- **Messenger**: removed entirely — teachers can still message students
+  (existing targeted-message system), but "we are not a messaging platform,
+  we're a study platform."
+- **Schedule & Calendar**: merge into Agenda. Agenda gets a "Configure"
+  button for setting up the school schedule. "Calendar" is currently a
+  placeholder tab that (as far as known) does nothing — verify before
+  removing, but it's slated to merge into Agenda too.
+- **Logs**: move under Help & FAQ as "My logs".
+- **Help & FAQ**: full redesign into three parts:
+  1. *Reach us* — a message box to leave a message (later: email/phone and
+     an AI chatbot).
+  2. *Help & FAQ* — categories + a smart search that matches on associated
+     concepts, not just literal words (e.g. "wifi" surfacing a connectivity
+     article). Articles list concrete issues, each with its own fix
+     explanation in a dedicated paragraph when clicked. Also needs the
+     usual how-to articles (e.g. "how do I create a class") that aren't
+     issue/fix format, just a guide.
+  3. *My logs* (moved from its current tab, see above).
+  User offered: if I build this article-heavy structure, a cheaper model
+  could be used for generating the step-by-step "how to fix" content later
+  to save tokens versus a more expensive model.
+- **Class selector dropdown**: flagged as broken across the board (design,
+  color usage, overlap, too many classes shown, wrong classes) — but the
+  real fix is replacing it with a subject/group picker once the above
+  migration happens, not a cosmetic patch on the current classes model.
 
 ---
 *This file exists purely as a shared checklist — safe to delete once everything
