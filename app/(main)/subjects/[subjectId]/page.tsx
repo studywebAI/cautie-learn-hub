@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GripVertical, Lock, Settings2, BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music, ListChecks } from 'lucide-react';
+import { Lock, Settings2, BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music, ListChecks, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CHAPTER_COVER_ICONS = [BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music];
@@ -80,8 +80,8 @@ export default function SubjectDetailPage() {
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
   const [lockSelectedChapter, setLockSelectedChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState('');
-  const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
-  const [dragOverChapterId, setDragOverChapterId] = useState<string | null>(null);
+  const [chapterReorderMode, setChapterReorderMode] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -183,24 +183,10 @@ export default function SubjectDetailPage() {
     }
   };
 
-  const handleChapterDrop = async (targetChapterId: string) => {
-    const sourceId = draggedChapterId;
-    setDraggedChapterId(null);
-    setDragOverChapterId(null);
-    if (!sourceId || sourceId === targetChapterId) return;
-
-    const currentOrder = [...chapters].sort((a, b) => a.chapter_number - b.chapter_number);
-    const sourceIndex = currentOrder.findIndex((c) => c.id === sourceId);
-    const targetIndex = currentOrder.findIndex((c) => c.id === targetChapterId);
-    if (sourceIndex === -1 || targetIndex === -1) return;
-
-    const reordered = [...currentOrder];
-    const [moved] = reordered.splice(sourceIndex, 1);
-    reordered.splice(targetIndex, 0, moved);
-
+  const persistChapterOrder = async (reordered: Chapter[]) => {
+    const previous = chapters;
     const withNumbers = reordered.map((c, i) => ({ ...c, chapter_number: i + 1 }));
     setChapters(withNumbers);
-
     try {
       const response = await fetch(`/api/subjects/${subjectId}/chapters/reorder`, {
         method: 'POST',
@@ -209,8 +195,33 @@ export default function SubjectDetailPage() {
       });
       if (!response.ok) throw new Error('Failed to save order');
     } catch {
-      setChapters(currentOrder);
+      setChapters(previous);
       toast({ title: 'Error', description: 'Failed to save chapter order', variant: 'destructive' });
+    }
+  };
+
+  // Entered via a ~3s press-and-hold on a chapter row instead of a
+  // permanently-visible drag handle icon.
+  const handleChapterMove = async (chapterId: string, direction: 'up' | 'down') => {
+    const currentOrder = [...chapters].sort((a, b) => a.chapter_number - b.chapter_number);
+    const index = currentOrder.findIndex((c) => c.id === chapterId);
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (index === -1 || targetIndex < 0 || targetIndex >= currentOrder.length) return;
+
+    const reordered = [...currentOrder];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+    await persistChapterOrder(reordered);
+  };
+
+  const startChapterLongPress = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => setChapterReorderMode(true), 3000);
+  };
+  const cancelChapterLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
 
@@ -386,6 +397,17 @@ export default function SubjectDetailPage() {
         }
       />
 
+      {chapterReorderMode && (
+        <div className="mb-3 flex items-center justify-between rounded-xl surface-interactive px-4 py-2">
+          <p className="text-xs text-muted-foreground">
+            {isDutch ? 'Herordenmodus: gebruik de pijltjes om hoofdstukken te verplaatsen.' : 'Reorder mode: use the arrows to move chapters.'}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => setChapterReorderMode(false)}>
+            {isDutch ? 'Klaar' : 'Done'}
+          </Button>
+        </div>
+      )}
+
       {/* Flat chapter + paragraph list */}
       {chapters.length === 0 ? (
         <div className="py-12">
@@ -399,7 +421,7 @@ export default function SubjectDetailPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {chapters.map((chapter) => {
+          {chapters.map((chapter, chapterIndex) => {
             const maxVisible = 10;
             const allParagraphs = chapter.paragraphs || [];
             const isFullyExpanded = expandedParagraphs.has(chapter.id);
@@ -413,35 +435,38 @@ export default function SubjectDetailPage() {
             return (
               <div
                 key={chapter.id}
-                className={`overflow-hidden rounded-2xl border bg-sidebar-accent/12 transition-colors ${
-                  dragOverChapterId === chapter.id && draggedChapterId && draggedChapterId !== chapter.id
-                    ? 'border-foreground/40'
-                    : 'border-transparent'
-                } ${draggedChapterId === chapter.id ? 'opacity-50' : ''}`}
-                onDragOver={(e) => {
-                  if (!isTeacher || !draggedChapterId) return;
-                  e.preventDefault();
-                  setDragOverChapterId(chapter.id);
-                }}
-                onDragLeave={() => setDragOverChapterId((prev) => (prev === chapter.id ? null : prev))}
-                onDrop={(e) => {
-                  if (!isTeacher || !draggedChapterId) return;
-                  e.preventDefault();
-                  void handleChapterDrop(chapter.id);
-                }}
+                className={cn(
+                  'overflow-hidden rounded-2xl border bg-sidebar-accent/12 transition-colors',
+                  chapterReorderMode ? 'border-foreground/25' : 'border-transparent'
+                )}
+                onPointerDown={isTeacher ? startChapterLongPress : undefined}
+                onPointerUp={isTeacher ? cancelChapterLongPress : undefined}
+                onPointerLeave={isTeacher ? cancelChapterLongPress : undefined}
+                onPointerCancel={isTeacher ? cancelChapterLongPress : undefined}
+                title={isTeacher ? (isDutch ? 'Ingedrukt houden om te herordenen' : 'Press and hold to reorder') : undefined}
               >
                 <div className="flex min-h-[108px] items-stretch">
-                  {isTeacher && (
-                    <button
-                      type="button"
-                      draggable
-                      onDragStart={() => setDraggedChapterId(chapter.id)}
-                      onDragEnd={() => { setDraggedChapterId(null); setDragOverChapterId(null); }}
-                      className="flex items-center justify-center px-1 cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
-                      title="Drag to reorder"
-                    >
-                      <GripVertical className="h-4 w-4" />
-                    </button>
+                  {isTeacher && chapterReorderMode && (
+                    <div className="flex flex-col items-center justify-center gap-1 px-1">
+                      <button
+                        type="button"
+                        disabled={chapterIndex === 0}
+                        onClick={() => void handleChapterMove(chapter.id, 'up')}
+                        className="rounded p-1 text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground disabled:opacity-30"
+                        title={isDutch ? 'Omhoog' : 'Move up'}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={chapterIndex === chapters.length - 1}
+                        onClick={() => void handleChapterMove(chapter.id, 'down')}
+                        className="rounded p-1 text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground disabled:opacity-30"
+                        title={isDutch ? 'Omlaag' : 'Move down'}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
                   )}
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${chapter.id}`}
