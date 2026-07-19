@@ -65,6 +65,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
@@ -448,6 +454,11 @@ export function AssignmentEditor({
   );
   const blocksRef = useRef<AssignmentBlock[]>(normalizedInitialBlocks);
   const isSavingRef = useRef(false);
+  const lastVersionSnapshotAtRef = useRef(0);
+  const [docHistoryOpen, setDocHistoryOpen] = useState(false);
+  const [versions, setVersions] = useState<Array<{ id: string; created_at: string; created_by_name: string | null; title_snapshot: string | null }>>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+  const [restoringVersionId, setRestoringVersionId] = useState<string | null>(null);
   const answersEnabledRef = useRef(localAnswersEnabled);
   const isVisibleRef = useRef(localIsVisible);
   const answerModeRef = useRef(localAnswerMode);
@@ -1034,6 +1045,35 @@ export function AssignmentEditor({
     }
   };
 
+  const fetchVersions = async () => {
+    setIsLoadingVersions(true);
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/versions`, { cache: 'no-store' });
+      if (res.ok) setVersions(await res.json());
+    } catch {
+      // non-fatal
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  };
+
+  const handleRestoreVersion = async (versionId: string) => {
+    if (restoringVersionId) return;
+    setRestoringVersionId(versionId);
+    try {
+      const res = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/versions/${versionId}/restore`,
+        { method: 'POST' }
+      );
+      if (!res.ok) throw new Error('Restore failed');
+      // Block ids change on restore -- reload rather than try to reconcile local state.
+      window.location.reload();
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: isDutch ? 'Herstellen mislukt' : 'Restore failed', description: error?.message });
+      setRestoringVersionId(null);
+    }
+  };
+
   const handleDeleteAssignment = async () => {
     if (isDeleting || !appContext?.deleteAssignment) return;
     setIsDeleting(true);
@@ -1555,6 +1595,23 @@ export function AssignmentEditor({
 
       setHasUnsavedChanges(false);
       if (onSave) onSave(blocksToPersist);
+
+      // Throttled version snapshot -- at most once every 5 minutes, not on
+      // every 3s autosave tick (Phase 5, docs/mockups/editor-redesign.html).
+      const now = Date.now();
+      if (now - lastVersionSnapshotAtRef.current > 5 * 60 * 1000) {
+        lastVersionSnapshotAtRef.current = now;
+        fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/versions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            blocks_snapshot: blocksToPersist,
+            settings_snapshot: settingsRef.current,
+            title_snapshot: titleRef.current,
+            description_snapshot: descriptionRef.current,
+          }),
+        }).catch(() => {});
+      }
     } catch (error) {
       toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
@@ -2449,7 +2506,7 @@ export function AssignmentEditor({
                 <Pencil className="h-4 w-4 mr-2" />
                 {t.assignmentSettings}
               </DropdownMenuItem>
-              <DropdownMenuItem disabled title={t.docHistorySoon}>
+              <DropdownMenuItem onClick={() => { setDocHistoryOpen(true); void fetchVersions(); }}>
                 <History className="h-4 w-4 mr-2" />
                 {t.docHistory}
               </DropdownMenuItem>
@@ -2501,6 +2558,42 @@ export function AssignmentEditor({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={docHistoryOpen} onOpenChange={setDocHistoryOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.docHistory}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-96 overflow-y-auto space-y-1.5">
+            {isLoadingVersions ? (
+              <p className="text-sm text-muted-foreground">{isDutch ? 'Laden...' : 'Loading...'}</p>
+            ) : versions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{isDutch ? 'Nog geen versies opgeslagen.' : 'No versions saved yet.'}</p>
+            ) : (
+              versions.map((v) => (
+                <div key={v.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm truncate">{v.title_snapshot || (isDutch ? 'Naamloos' : 'Untitled')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(v.created_at).toLocaleString(isDutch ? 'nl-NL' : 'en-US')}
+                      {v.created_by_name ? ` · ${v.created_by_name}` : ''}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs shrink-0"
+                    disabled={restoringVersionId === v.id}
+                    onClick={() => void handleRestoreVersion(v.id)}
+                  >
+                    {restoringVersionId === v.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isDutch ? 'Herstel' : 'Restore')}
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
