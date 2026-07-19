@@ -435,8 +435,13 @@ export function AssignmentEditor({
   } | null>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
+  // Per-block student answers, any block type (Phase 4 -- extends the
+  // formerly open_question-only "View Student Answers" quick check).
+  const [studentAnswersByBlockId, setStudentAnswersByBlockId] = useState<Record<string, Array<{
+    student_id: string; student_name: string; answer_data: any; is_correct: boolean | null; score: number | null;
+  }>>>({});
+  const [loadingStudentAnswersBlockId, setLoadingStudentAnswersBlockId] = useState<string | null>(null);
   const [expandedOwnAnswerBlockId, setExpandedOwnAnswerBlockId] = useState<string | null>(null);
-  const [openAnswerRows, setOpenAnswerRows] = useState<OpenAnswerRow[]>([]);
   const [ownAnswers, setOwnAnswers] = useState<OwnAnswer[]>([]);
   const [localSettings, setLocalSettings] = useState<AssignmentSettings>(
     normalizeAssignmentSettings(initialSettings || DEFAULT_ASSIGNMENT_SETTINGS)
@@ -593,19 +598,6 @@ export function AssignmentEditor({
   useEffect(() => {
     const loadReadOnlyAnswers = async () => {
       if (isEditMode) return;
-
-      if (isTeacher && classId) {
-        try {
-          const res = await fetch(
-            `/api/classes/${classId}/assignments/open-answers?assignmentId=${assignmentId}&status=graded&limit=200`,
-            { cache: 'no-store' }
-          );
-          const payload = await res.json().catch(() => ({}));
-          if (res.ok) {
-            setOpenAnswerRows(Array.isArray(payload?.rows) ? payload.rows : []);
-          }
-        } catch {}
-      }
 
       try {
         const res = await fetch(
@@ -1020,6 +1012,25 @@ export function AssignmentEditor({
       toast({ variant: 'destructive', title: isDutch ? 'Delen mislukt' : 'Failed to share' });
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const fetchStudentAnswersForBlock = async (blockId: string) => {
+    if (studentAnswersByBlockId[blockId] || loadingStudentAnswersBlockId === blockId) return;
+    setLoadingStudentAnswersBlockId(blockId);
+    try {
+      const res = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${blockId}/student-answers`,
+        { cache: 'no-store' }
+      );
+      if (res.ok) {
+        const payload = await res.json();
+        setStudentAnswersByBlockId((prev) => ({ ...prev, [blockId]: Array.isArray(payload?.answers) ? payload.answers : [] }));
+      }
+    } catch {
+      // non-fatal — the panel just shows nothing
+    } finally {
+      setLoadingStudentAnswersBlockId((prev) => (prev === blockId ? null : prev));
     }
   };
 
@@ -1705,7 +1716,10 @@ export function AssignmentEditor({
             variant="outline"
             size="sm"
             className="h-8 surface-panel"
-            onClick={() => setExpandedAnswersBlockId((prev) => prev === block.id ? null : block.id)}
+            onClick={() => {
+              setExpandedAnswersBlockId((prev) => prev === block.id ? null : block.id);
+              void fetchStudentAnswersForBlock(block.id);
+            }}
           >
             <Users className="mr-1.5 h-3.5 w-3.5" />
             {t.viewStudentAnswers}
@@ -1744,25 +1758,28 @@ export function AssignmentEditor({
                   </>
                 ) : null}
               </div>
-              {openAnswerRows.filter((row) => row.block_id === block.id).slice(0, 8).map((row) => {
-                const max = Number(row.max_points || 0);
-                const score = Number(row.score || 0);
-                const ratio = max > 0 ? score / max : 0;
-                const verdict = ratio >= 0.85 ? 'Correct' : ratio >= 0.45 ? 'Partially Correct' : 'Incorrect';
-                const verdictClass = ratio >= 0.85 ? 'text-emerald-600' : ratio >= 0.45 ? 'text-amber-600' : 'text-rose-600';
-                return (
-                  <div key={row.id} className="rounded-md border border-border/50 bg-background p-2">
-                    <div className="flex items-center justify-between">
-                      <span>{row.student_name || 'Student'}</span>
-                      <span className={verdictClass}>{verdict}</span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-foreground/65">Student Answer</p>
-                    <p className="mt-1 line-clamp-2 text-foreground/80">{String(row.answer_data?.text || row.answer_data?.answer || '')}</p>
-                  </div>
-                );
-              })}
-              {openAnswerRows.filter((row) => row.block_id === block.id).length === 0 && (
-                <div className="text-foreground/70">No graded answers yet.</div>
+              {loadingStudentAnswersBlockId === block.id ? (
+                <div className="text-foreground/70">{isDutch ? 'Laden...' : 'Loading...'}</div>
+              ) : (
+                <>
+                  {(studentAnswersByBlockId[block.id] || []).slice(0, 30).map((row) => {
+                    const verdict = row.is_correct === true ? 'Correct' : row.is_correct === false ? 'Incorrect' : 'Not graded';
+                    const verdictClass = row.is_correct === true ? 'text-emerald-600' : row.is_correct === false ? 'text-rose-600' : 'text-muted-foreground';
+                    const answerText = String(row.answer_data?.text || row.answer_data?.answer || row.answer_data?.value || JSON.stringify(row.answer_data?.selected ?? row.answer_data ?? ''));
+                    return (
+                      <div key={row.student_id} className="rounded-md border border-border/50 bg-background p-2">
+                        <div className="flex items-center justify-between">
+                          <span>{row.student_name}</span>
+                          <span className={verdictClass}>{verdict}</span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-foreground/80">{answerText}</p>
+                      </div>
+                    );
+                  })}
+                  {(studentAnswersByBlockId[block.id] || []).length === 0 && (
+                    <div className="text-foreground/70">{isDutch ? 'Nog geen ingeleverde antwoorden.' : 'No submitted answers yet.'}</div>
+                  )}
+                </>
               )}
             </div>
           )}
