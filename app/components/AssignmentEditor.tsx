@@ -32,7 +32,13 @@ import {
   Image as ImageIcon,
   Video,
   Loader2,
-  Copy
+  Copy,
+  MoreVertical,
+  Play,
+  History,
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -42,6 +48,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
@@ -306,6 +329,24 @@ export function AssignmentEditor({
     infoNoSubmissions: isDutch ? 'Nog geen inzendingen' : 'No submissions yet',
     infoTimeSpent: isDutch ? 'tijd besteed (schatting)' : 'time spent (estimate)',
     infoMinutes: isDutch ? 'min' : 'min',
+    editMode: isDutch ? 'Bewerken' : 'Edit',
+    viewMode: isDutch ? 'Bekijken' : 'View',
+    present: isDutch ? 'Presenteren' : 'Present',
+    exitPresent: isDutch ? 'Stoppen' : 'Exit present',
+    docHistory: isDutch ? 'Versiegeschiedenis' : 'Doc history',
+    docHistorySoon: isDutch ? 'Binnenkort beschikbaar' : 'Coming soon',
+    assignmentSettings: isDutch ? 'Opdrachtinstellingen' : 'Assignment settings',
+    helpFaq: isDutch ? 'Help & FAQ' : 'Help & FAQ',
+    deleteAssignment: isDutch ? 'Verwijder opdracht' : 'Delete assignment',
+    deleteConfirmTitle: isDutch ? 'Opdracht verwijderen?' : 'Delete this assignment?',
+    deleteConfirmDesc: isDutch ? 'Dit kan niet ongedaan worden gemaakt. De opdracht en alle inzendingen worden permanent verwijderd.' : 'This can\'t be undone. The assignment and all submissions will be permanently deleted.',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    confirmDelete: isDutch ? 'Verwijderen' : 'Delete',
+    deleteFailed: isDutch ? 'Verwijderen mislukt' : 'Failed to delete assignment',
+    questionOf: isDutch ? 'Vraag' : 'Question',
+    previous: isDutch ? 'Vorige' : 'Previous',
+    next: isDutch ? 'Volgende' : 'Next',
+    copyAssignment: isDutch ? 'Kopieer opdracht' : 'Copy assignment',
   };
   const getTemplateDefaults = (type: string) => {
     const template = BLOCK_TEMPLATES.find((item) => item.type === type);
@@ -364,6 +405,10 @@ export function AssignmentEditor({
   const [localAiGradingEnabled, setLocalAiGradingEnabled] = useState(aiGradingEnabled);
   const [isTest, setIsTest] = useState(initialType === 'small_test' || initialType === 'big_test');
   const [activeSidebarTab, setActiveSidebarTab] = useState<'workspace' | 'settings' | 'information'>('workspace');
+  const [isPresenting, setIsPresenting] = useState(false);
+  const [presentIndex, setPresentIndex] = useState(0);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [localTitle, setLocalTitle] = useState(initialTitle);
   const [localDescription, setLocalDescription] = useState(initialDescription || '');
   // Move-assignment popover state (Settings tab)
@@ -957,6 +1002,19 @@ export function AssignmentEditor({
       toast({ variant: 'destructive', title: isDutch ? 'Delen mislukt' : 'Failed to share' });
     } finally {
       setIsSharing(false);
+    }
+  };
+
+  const handleDeleteAssignment = async () => {
+    if (isDeleting || !appContext?.deleteAssignment) return;
+    setIsDeleting(true);
+    try {
+      await appContext.deleteAssignment(assignmentId);
+      router.push(`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}`);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: t.deleteFailed, description: error?.message });
+      setIsDeleting(false);
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -2166,6 +2224,66 @@ export function AssignmentEditor({
   };
 
   const rows = getRows();
+  const presentableBlocks = [...blocks].sort((a, b) => a.position - b.position);
+  const QUESTION_BLOCK_TYPES = new Set(['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering']);
+  const questionNumberByBlockId = new Map<string, number>();
+  {
+    let n = 0;
+    for (const b of presentableBlocks) {
+      if (QUESTION_BLOCK_TYPES.has(b.type)) {
+        n += 1;
+        questionNumberByBlockId.set(b.id, n);
+      }
+    }
+  }
+
+  // Present mode: full takeover, one question at a time, everything but
+  // the exit control disappears (matches docs/mockups/editor-redesign.html).
+  if (isPresenting) {
+    const currentBlock = presentableBlocks[presentIndex];
+    return (
+      <div className="h-screen flex flex-col bg-background text-foreground font-sans">
+        <div className="flex justify-end p-3 border-b border-border">
+          <Button variant="outline" size="sm" onClick={() => setIsPresenting(false)} className="h-8 gap-1.5">
+            <X className="h-3.5 w-3.5" />
+            {t.exitPresent}
+          </Button>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 overflow-auto">
+          <p className="text-xs text-muted-foreground mb-4">
+            {t.questionOf} {presentIndex + 1} / {presentableBlocks.length}
+          </p>
+          <div className="w-full max-w-xl">
+            {currentBlock ? renderBlockContent(currentBlock) : (
+              <p className="text-center text-muted-foreground">{t.noContentTitle}</p>
+            )}
+          </div>
+          <div className="flex gap-2 mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              disabled={presentIndex === 0}
+              onClick={() => setPresentIndex((i) => Math.max(0, i - 1))}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              {t.previous}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              disabled={presentIndex >= presentableBlocks.length - 1}
+              onClick={() => setPresentIndex((i) => Math.min(presentableBlocks.length - 1, i + 1))}
+            >
+              {t.next}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -2174,79 +2292,138 @@ export function AssignmentEditor({
       onPointerMove={handlePointerMove}
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
-      {/* Top toolbar */}
+      {/* Top toolbar: back+title / Edit-View switch / ⋮ menu (docs/mockups/editor-redesign.html) */}
       <div className="flex items-center justify-between p-3 border-b border-border bg-background">
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md surface-interactive gap-1.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="outline" size="sm" onClick={() => router.back()} className="h-8 px-2.5 rounded-md surface-interactive gap-1.5 shrink-0">
             <ArrowLeft className="h-4 w-4" />
             {t.back}
           </Button>
-          <Button variant="outline" size="sm" onClick={undo} disabled={historyIndex === 0} className="h-8 rounded-md px-2.5 surface-interactive gap-1.5" title={t.undo}>
-            <Undo2 className="h-4 w-4" />
-            {t.undo}
-          </Button>
-          <Button variant="outline" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} className="h-8 rounded-md px-2.5 surface-interactive gap-1.5" title={t.redo}>
-            <Redo2 className="h-4 w-4" />
-            {t.redo}
-          </Button>
-          <div className="w-px h-4 bg-border mx-0.5" />
-          <Button variant="outline" size="sm" onClick={handleExport} className="h-8 rounded-md px-2.5 surface-interactive" title={t.export}>
-            <Download className="h-4 w-4 mr-1.5" />
-            {t.export}
-          </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                data-testid="assignment-size-button"
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-md px-2.5 surface-interactive"
-                title={t.size}
-                disabled={!isTeacher || !selectedBlockRecord || !isEditMode}
-              >
-                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-                {t.size}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-3" align="start">
-              <Label className="text-xs">
-                {selectedBlockRecord ? `${t.widthFor} ${BLOCK_TEMPLATES.find((item) => item.type === selectedBlockRecord.type)?.label || 'block'}` : t.selectBlockFirst}
-              </Label>
-              <input
-                data-testid="assignment-size-slider"
-                type="range"
-                min={1}
-                max={3}
-                step={1}
-                value={selectedBlockRecord?.size ?? 3}
-                onChange={(e) => {
-                  if (!selectedBlockRecord || !isEditMode) return;
-                  setBlockSize(selectedBlockRecord.id, Number(e.target.value) as 1 | 2 | 3);
-                }}
-                className="mt-2 w-full"
-                disabled={!selectedBlockRecord || !isEditMode}
-              />
-            </PopoverContent>
-          </Popover>
-          <Button variant="outline" size="sm" onClick={handleImport} className="h-8 rounded-md px-2.5 surface-interactive" title={t.import}>
-            <Upload className="h-4 w-4 mr-1.5" />
-            {t.import}
-          </Button>
+          {localTitle && <span className="text-sm font-medium truncate hidden sm:inline">{localTitle}</span>}
+          {isSaving && <span className="text-xs text-muted-foreground animate-pulse shrink-0">{t.saving}</span>}
+        </div>
+
+        <div className="flex items-center gap-1.5 rounded-lg bg-muted p-0.5">
           <Button
             data-testid="assignment-edit-toggle"
-            variant={isEditMode ? 'default' : 'outline'}
+            variant={isEditMode ? 'default' : 'ghost'}
             size="sm"
-            onClick={handleEditModeToggle}
-            className="h-8 rounded-md px-2.5"
+            onClick={() => { if (!isEditMode) handleEditModeToggle(); }}
+            className="h-7 rounded-md px-3 text-xs"
           >
-            {t.edit}: {isEditMode ? t.on : t.off}
+            {t.editMode}
+          </Button>
+          <Button
+            variant={!isEditMode ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => { if (isEditMode) handleEditModeToggle(); }}
+            className="h-7 rounded-md px-3 text-xs"
+          >
+            {t.viewMode}
           </Button>
         </div>
-        
-        <div className="flex items-center gap-2">
-          {isSaving && <span className="text-xs text-muted-foreground animate-pulse">{t.saving}</span>}
+
+        <div className="flex items-center gap-1.5">
+          {isTeacher && selectedBlockRecord && isEditMode && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button data-testid="assignment-size-button" variant="outline" size="icon" className="h-8 w-8 surface-interactive" title={t.size}>
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <Label className="text-xs">
+                  {`${t.widthFor} ${BLOCK_TEMPLATES.find((item) => item.type === selectedBlockRecord.type)?.label || 'block'}`}
+                </Label>
+                <input
+                  data-testid="assignment-size-slider"
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={1}
+                  value={selectedBlockRecord?.size ?? 3}
+                  onChange={(e) => setBlockSize(selectedBlockRecord.id, Number(e.target.value) as 1 | 2 | 3)}
+                  className="mt-2 w-full"
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8 surface-interactive" aria-label={isDutch ? 'Meer opties' : 'More options'}>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => { setIsPresenting(true); setPresentIndex(0); }}>
+                <Play className="h-4 w-4 mr-2" />
+                {t.present}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={undo} disabled={historyIndex === 0}>
+                <Undo2 className="h-4 w-4 mr-2" />
+                {t.undo}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={redo} disabled={historyIndex >= history.length - 1}>
+                <Redo2 className="h-4 w-4 mr-2" />
+                {t.redo}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { if (!isEditMode) handleEditModeToggle(); setActiveSidebarTab('settings'); }}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t.assignmentSettings}
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled title={t.docHistorySoon}>
+                <History className="h-4 w-4 mr-2" />
+                {t.docHistory}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                {t.export}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleImport}>
+                <Upload className="h-4 w-4 mr-2" />
+                {t.import}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { if (!isEditMode) handleEditModeToggle(); setActiveSidebarTab('workspace'); setCopyFromOpen(true); }}>
+                <Copy className="h-4 w-4 mr-2" />
+                {t.copyAssignment}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { if (!isEditMode) handleEditModeToggle(); setActiveSidebarTab('settings'); setMoveOpen(true); }}>
+                <Move className="h-4 w-4 mr-2" />
+                {t.moveButton}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/help')}>
+                <HelpCircle className="h-4 w-4 mr-2" />
+                {t.helpFaq}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteConfirmOpen(true)} className="text-destructive focus:text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                {t.deleteAssignment}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.deleteConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{t.deleteConfirmDesc}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); void handleDeleteAssignment(); }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t.confirmDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
@@ -2321,7 +2498,12 @@ export function AssignmentEditor({
                             {/* Controls */}
                             {showTeacherControls && (
                             <div className="absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm opacity-100">
-                              <div className="text-[11px] font-medium text-muted-foreground">
+                              <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                                {questionNumberByBlockId.has(row.blocks[0].id) && (
+                                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                                    {questionNumberByBlockId.get(row.blocks[0].id)}
+                                  </span>
+                                )}
                                 {BLOCK_TEMPLATES.find((t) => t.type === row.blocks[0].type)?.label || 'Block'}
                               </div>
                               <div className="flex items-center gap-1">
@@ -2405,7 +2587,12 @@ export function AssignmentEditor({
                                     {/* Controls */}
                                     {showTeacherControls && (
                                     <div className="absolute top-2 right-2 left-2 flex items-center justify-between gap-1 bg-background/95 border border-border rounded-lg px-1.5 py-1 shadow-sm opacity-100">
-                                      <div className="text-[11px] font-medium text-muted-foreground">
+                                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                                        {questionNumberByBlockId.has(block.id) && (
+                                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                                            {questionNumberByBlockId.get(block.id)}
+                                          </span>
+                                        )}
                                         {BLOCK_TEMPLATES.find((t) => t.type === block.type)?.label || 'Block'}
                                       </div>
                                       <div className="flex items-center gap-1">
