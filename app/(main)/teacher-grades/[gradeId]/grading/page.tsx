@@ -24,7 +24,8 @@ import { calculateGradeStats, getGradeDistribution } from '@/lib/grade-calculati
 import { exportGradesToHTML, exportGradesToPDF, exportGradesToCSV, downloadGradesAsCSV } from '@/lib/grade-export';
 import BulkImportDialog from '@/components/grades/bulk-import-dialog';
 import { GradingTemplatePicker } from '@/components/grades/grading-template-picker';
-import { Send, MessageSquareText, Flag, RotateCcw as ReopenIcon, X as DismissIcon } from 'lucide-react';
+import { Send, MessageSquareText, Flag, RotateCcw as ReopenIcon, X as DismissIcon, ListChecks } from 'lucide-react';
+import { AnswerReviewDialog } from '@/components/grades/answer-review-dialog';
 
 type Student = {
   id: string;
@@ -65,6 +66,7 @@ export default function GradingInterfacePage() {
   const [releasing, setReleasing] = useState<'answers' | 'grade' | null>(null);
   const [disputes, setDisputes] = useState<Array<{ event_id: string; student_name: string; question: string; note: string }>>([]);
   const [resolvingDispute, setResolvingDispute] = useState<string | null>(null);
+  const [answerReviewOpen, setAnswerReviewOpen] = useState(false);
 
   // Load grade set and students
   useEffect(() => {
@@ -510,6 +512,14 @@ export default function GradingInterfacePage() {
             <Button
               size="sm"
               variant="outline"
+              onClick={() => setAnswerReviewOpen(true)}
+            >
+              <ListChecks className="h-4 w-4 mr-1.5" />
+              {isDutch ? 'Antwoorden bekijken' : 'Review answers'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               disabled={releasing !== null || !!gradeSet.answers_released_at}
               onClick={() => releaseResults('answers')}
             >
@@ -764,6 +774,16 @@ export default function GradingInterfacePage() {
         onImport={handleBulkImport}
         studentNames={students.map(s => s.full_name)}
       />
+
+      {gradeSet?.assignment_id && classId && (
+        <AnswerReviewDialog
+          open={answerReviewOpen}
+          onOpenChange={setAnswerReviewOpen}
+          classId={classId}
+          gradeSetId={gradeId}
+          isDutch={isDutch}
+        />
+      )}
     </div>
   );
 }
