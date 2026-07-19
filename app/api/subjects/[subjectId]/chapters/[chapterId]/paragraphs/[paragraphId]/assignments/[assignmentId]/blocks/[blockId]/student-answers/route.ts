@@ -37,6 +37,7 @@ export async function GET(
       .eq('id', resolvedParams.blockId)
       .maybeSingle()
     if (blockError || !block || block.assignment_id !== resolvedParams.assignmentId) {
+      if (blockError) console.error('[student-answers] block_lookup_error', { message: blockError.message, blockId: resolvedParams.blockId })
       return NextResponse.json({ error: 'Block not found' }, { status: 404 })
     }
 
@@ -46,6 +47,7 @@ export async function GET(
       .eq('id', resolvedParams.assignmentId)
       .maybeSingle()
     if (assignmentError || !assignment) {
+      if (assignmentError) console.error('[student-answers] assignment_lookup_error', { message: assignmentError.message, assignmentId: resolvedParams.assignmentId })
       return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
     }
 
@@ -70,6 +72,7 @@ export async function GET(
       .order('submitted_at', { ascending: false })
 
     if (answersError) {
+      console.error('[student-answers] answers_query_error', { message: answersError.message, blockId: resolvedParams.blockId })
       return NextResponse.json({ error: answersError.message }, { status: 500 })
     }
 
@@ -95,7 +98,8 @@ export async function GET(
     }))
 
     return NextResponse.json({ block_id: resolvedParams.blockId, type: block.type, answers: results })
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[student-answers] unhandled_error', { message: err?.message, stack: err?.stack })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

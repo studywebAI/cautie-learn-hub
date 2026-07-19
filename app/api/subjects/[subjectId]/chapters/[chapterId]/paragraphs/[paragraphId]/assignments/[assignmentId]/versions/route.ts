@@ -49,7 +49,10 @@ export async function GET(
       .order('created_at', { ascending: false })
       .limit(50)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[assignment-versions] list_error', { message: error.message, assignmentId: resolvedParams.assignmentId })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
 
     const createdByIds = Array.from(new Set((versions || []).map((v: any) => v.created_by).filter(Boolean)))
     let namesById = new Map<string, string>()
@@ -64,7 +67,8 @@ export async function GET(
       created_by_name: namesById.get(v.created_by) || null,
       title_snapshot: v.title_snapshot,
     })))
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[assignment-versions] GET unhandled_error', { message: err?.message, stack: err?.stack })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -107,9 +111,13 @@ export async function POST(
       .select('id, created_at')
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[assignment-versions] insert_error', { message: error.message, assignmentId: resolvedParams.assignmentId })
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     return NextResponse.json(version, { status: 201 })
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[assignment-versions] POST unhandled_error', { message: err?.message, stack: err?.stack })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

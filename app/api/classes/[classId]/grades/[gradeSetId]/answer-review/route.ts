@@ -37,7 +37,10 @@ export async function GET(
       .eq('id', gradeSetId)
       .eq('class_id', classId)
       .maybeSingle()
-    if (gradeSetError || !gradeSet) return NextResponse.json({ error: 'Grade set not found' }, { status: 404 })
+    if (gradeSetError || !gradeSet) {
+      if (gradeSetError) console.error('[answer-review] grade_set_lookup_error', { message: gradeSetError.message, gradeSetId })
+      return NextResponse.json({ error: 'Grade set not found' }, { status: 404 })
+    }
     if (!gradeSet.assignment_id) return NextResponse.json({ questions: [] })
 
     const { data: blocks, error: blocksError } = await (supabase as any)
@@ -46,7 +49,10 @@ export async function GET(
       .eq('assignment_id', gradeSet.assignment_id)
       .in('type', ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'])
       .order('position', { ascending: true })
-    if (blocksError) return NextResponse.json({ error: blocksError.message }, { status: 500 })
+    if (blocksError) {
+      console.error('[answer-review] blocks_query_error', { message: blocksError.message, assignmentId: gradeSet.assignment_id })
+      return NextResponse.json({ error: blocksError.message }, { status: 500 })
+    }
 
     const blockIds = (blocks || []).map((b: any) => b.id)
     if (blockIds.length === 0) return NextResponse.json({ questions: [] })
@@ -55,7 +61,10 @@ export async function GET(
       .from('student_answers')
       .select('student_id, block_id, answer_data, is_correct, score')
       .in('block_id', blockIds)
-    if (answersError) return NextResponse.json({ error: answersError.message }, { status: 500 })
+    if (answersError) {
+      console.error('[answer-review] answers_query_error', { message: answersError.message, assignmentId: gradeSet.assignment_id })
+      return NextResponse.json({ error: answersError.message }, { status: 500 })
+    }
 
     const studentIds = Array.from(new Set((answers || []).map((a: any) => a.student_id).filter(Boolean)))
     let namesById = new Map<string, string>()
@@ -95,7 +104,8 @@ export async function GET(
     }))
 
     return NextResponse.json({ questions })
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[answer-review] unhandled_error', { message: err?.message, stack: err?.stack })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

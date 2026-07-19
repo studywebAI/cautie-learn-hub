@@ -1037,9 +1037,12 @@ export function AssignmentEditor({
       if (res.ok) {
         const payload = await res.json();
         setStudentAnswersByBlockId((prev) => ({ ...prev, [blockId]: Array.isArray(payload?.answers) ? payload.answers : [] }));
+      } else {
+        const payload = await res.json().catch(() => ({}));
+        console.error('[fetchStudentAnswersForBlock] request_failed', { status: res.status, error: payload?.error, blockId });
       }
-    } catch {
-      // non-fatal — the panel just shows nothing
+    } catch (error) {
+      console.error('[fetchStudentAnswersForBlock] network_error', { blockId, error });
     } finally {
       setLoadingStudentAnswersBlockId((prev) => (prev === blockId ? null : prev));
     }
@@ -1049,9 +1052,14 @@ export function AssignmentEditor({
     setIsLoadingVersions(true);
     try {
       const res = await fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/versions`, { cache: 'no-store' });
-      if (res.ok) setVersions(await res.json());
-    } catch {
-      // non-fatal
+      if (res.ok) {
+        setVersions(await res.json());
+      } else {
+        const payload = await res.json().catch(() => ({}));
+        console.error('[fetchVersions] request_failed', { status: res.status, error: payload?.error, assignmentId });
+      }
+    } catch (error) {
+      console.error('[fetchVersions] network_error', { assignmentId, error });
     } finally {
       setIsLoadingVersions(false);
     }
@@ -1528,7 +1536,8 @@ export function AssignmentEditor({
           { method: 'DELETE' }
         );
         if (!res.ok) {
-          throw new Error(`Failed to delete block ${blockToDelete.id}`);
+          const errPayload = await res.json().catch(() => ({}));
+          throw new Error(`Failed to delete block ${blockToDelete.id}: ${res.status} ${errPayload?.error || ''}`);
         }
       }
 
@@ -1556,7 +1565,8 @@ export function AssignmentEditor({
             }
           );
           if (!updateRes.ok) {
-            throw new Error(`Failed to update block ${block.id}`);
+            const errPayload = await updateRes.json().catch(() => ({}));
+            throw new Error(`Failed to update block ${block.id} (${block.type}): ${updateRes.status} ${errPayload?.error || ''}`);
           }
         } else {
           const createRes = await fetch(
@@ -1568,7 +1578,8 @@ export function AssignmentEditor({
             }
           );
           if (!createRes.ok) {
-            throw new Error('Failed to create block');
+            const errPayload = await createRes.json().catch(() => ({}));
+            throw new Error(`Failed to create block (${block.type}): ${createRes.status} ${errPayload?.error || ''}`);
           }
           const created = await createRes.json();
           setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, id: created.id } : b)));
@@ -1590,7 +1601,8 @@ export function AssignmentEditor({
         }),
       });
       if (!assignmentSettingsRes.ok) {
-        throw new Error('Failed to save assignment settings');
+        const errPayload = await assignmentSettingsRes.json().catch(() => ({}));
+        throw new Error(`Failed to save assignment settings: ${assignmentSettingsRes.status} ${errPayload?.error || ''}`);
       }
 
       setHasUnsavedChanges(false);
@@ -1610,9 +1622,17 @@ export function AssignmentEditor({
             title_snapshot: titleRef.current,
             description_snapshot: descriptionRef.current,
           }),
-        }).catch(() => {});
+        }).then(async (res) => {
+          if (!res.ok) {
+            const payload = await res.json().catch(() => ({}));
+            console.error('[handleSilentSave] version_snapshot_failed', { status: res.status, error: payload?.error, assignmentId });
+          }
+        }).catch((error) => {
+          console.error('[handleSilentSave] version_snapshot_network_error', { assignmentId, error });
+        });
       }
     } catch (error) {
+      console.error('[handleSilentSave] save_failed', { assignmentId, error });
       toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
       isSavingRef.current = false;

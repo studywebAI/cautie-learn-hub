@@ -46,25 +46,39 @@ export async function POST(
       .eq('id', resolvedParams.versionId)
       .eq('assignment_id', resolvedParams.assignmentId)
       .maybeSingle()
-    if (versionError || !version) return NextResponse.json({ error: 'Version not found' }, { status: 404 })
+    if (versionError || !version) {
+      if (versionError) console.error('[versions-restore] version_lookup_error', { message: versionError.message, versionId: resolvedParams.versionId })
+      return NextResponse.json({ error: 'Version not found' }, { status: 404 })
+    }
 
     // Snapshot the pre-restore state so restoring is itself undoable.
-    const { data: currentBlocks } = await (supabase as any)
+    const { data: currentBlocks, error: currentBlocksError } = await (supabase as any)
       .from('blocks')
       .select('*')
       .eq('assignment_id', resolvedParams.assignmentId)
       .order('position', { ascending: true })
+    if (currentBlocksError) {
+      console.error('[versions-restore] current_blocks_fetch_error', { message: currentBlocksError.message, assignmentId: resolvedParams.assignmentId })
+    }
 
-    await (supabase as any).from('assignment_versions').insert({
+    const { error: preRestoreSnapshotError } = await (supabase as any).from('assignment_versions').insert({
       assignment_id: resolvedParams.assignmentId,
       blocks_snapshot: currentBlocks || [],
       title_snapshot: assignment.title,
       description_snapshot: assignment.description,
       created_by: user.id,
     })
+    if (preRestoreSnapshotError) {
+      console.error('[versions-restore] pre_restore_snapshot_error', { message: preRestoreSnapshotError.message, assignmentId: resolvedParams.assignmentId })
+      return NextResponse.json({ error: 'Failed to snapshot current state before restoring' }, { status: 500 })
+    }
 
     // Replace current blocks with the snapshot's blocks.
-    await (supabase as any).from('blocks').delete().eq('assignment_id', resolvedParams.assignmentId)
+    const { error: deleteError } = await (supabase as any).from('blocks').delete().eq('assignment_id', resolvedParams.assignmentId)
+    if (deleteError) {
+      console.error('[versions-restore] delete_current_blocks_error', { message: deleteError.message, assignmentId: resolvedParams.assignmentId })
+      return NextResponse.json({ error: 'Failed to clear current blocks' }, { status: 500 })
+    }
 
     const blocksToInsert = (version.blocks_snapshot || []).map((b: any) => ({
       assignment_id: resolvedParams.assignmentId,
@@ -79,7 +93,10 @@ export async function POST(
     }))
     if (blocksToInsert.length > 0) {
       const { error: insertError } = await (supabase as any).from('blocks').insert(blocksToInsert)
-      if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
+      if (insertError) {
+        console.error('[versions-restore] blocks_insert_error', { message: insertError.message, assignmentId: resolvedParams.assignmentId, blockCount: blocksToInsert.length })
+        return NextResponse.json({ error: insertError.message }, { status: 500 })
+      }
     }
 
     const assignmentUpdate: Record<string, any> = {}
@@ -89,11 +106,15 @@ export async function POST(
     }
     if (version.settings_snapshot) assignmentUpdate.settings = version.settings_snapshot
     if (Object.keys(assignmentUpdate).length > 0) {
-      await (supabase as any).from('assignments').update(assignmentUpdate).eq('id', resolvedParams.assignmentId)
+      const { error: assignmentUpdateError } = await (supabase as any).from('assignments').update(assignmentUpdate).eq('id', resolvedParams.assignmentId)
+      if (assignmentUpdateError) {
+        console.error('[versions-restore] assignment_update_error', { message: assignmentUpdateError.message, assignmentId: resolvedParams.assignmentId })
+      }
     }
 
     return NextResponse.json({ success: true })
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[versions-restore] unhandled_error', { message: err?.message, stack: err?.stack })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
