@@ -89,6 +89,7 @@ interface AssignmentBlock {
   showFeedback?: boolean; // Whether to show correct/incorrect feedback
   aiGradingOverride?: Partial<GradingPresetSettings>; // Per-block AI grading settings
   settings?: any;
+  attachedToBlockId?: string | null; // When set, this block renders as a banner inside that question block's card
 }
 
 type OpenAnswerRow = {
@@ -364,6 +365,7 @@ export function AssignmentEditor({
     size: b.size || 3,
     position: b.position ?? i,
     showFeedback: b.showFeedback ?? false,
+    attachedToBlockId: (b as any).attached_to_block_id ?? b.attachedToBlockId ?? null,
     settings: normalizeBlockSettings((b as any).settings || (b as any).data?.settings || {}),
     data: {
       ...getTemplateDefaults(b.type),
@@ -635,6 +637,18 @@ export function AssignmentEditor({
     });
   };
 
+  // Attach/detach a media block to a question block (renders as a banner
+  // inside that question's card instead of its own row).
+  const updateBlockAttachment = (blockId: string, attachedToBlockId: string | null) => {
+    setBlocks(prev => {
+      const newBlocks = prev.map(block =>
+        block.id === blockId ? { ...block, attachedToBlockId } : block
+      );
+      saveToHistory(newBlocks);
+      return newBlocks;
+    });
+  };
+
   // Update AI grading override for a block
   const updateBlockAiOverride = (blockId: string, override: Partial<GradingPresetSettings> | null) => {
     setBlocks(prev => {
@@ -681,9 +695,13 @@ export function AssignmentEditor({
     const rowMap = new Map<string, AssignmentBlock[]>();
     const rowOrder: string[] = [];
     
-    // Sort blocks by position first
-    const sortedBlocks = [...blocks].sort((a, b) => a.position - b.position);
-    
+    // Sort blocks by position first, excluding blocks attached to a question
+    // (docs/mockups/editor-redesign.html) -- those render as a banner inside
+    // their parent question's card via renderBlockContent, not as their own row.
+    const sortedBlocks = [...blocks]
+      .filter((b) => !b.attachedToBlockId)
+      .sort((a, b) => a.position - b.position);
+
     sortedBlocks.forEach(block => {
       if (!rowMap.has(block.rowId)) {
         rowMap.set(block.rowId, []);
@@ -1473,6 +1491,7 @@ export function AssignmentEditor({
           locked: block.data?.locked ?? false,
           show_feedback: block.showFeedback || false,
           ai_grading_override: block.aiGradingOverride || null,
+          attached_to_block_id: block.attachedToBlockId || null,
         };
 
         const isLocalId = String(block.id || '').startsWith('block-');
@@ -1625,6 +1644,42 @@ export function AssignmentEditor({
       }
     };
     input.click();
+  };
+
+  // Attached media (image/video) renders as a banner inside its parent
+  // question's card instead of as its own row (docs/mockups/editor-redesign.html).
+  const renderAttachedMediaBanner = (block: AssignmentBlock) => {
+    const media = blocks.find((b) => b.attachedToBlockId === block.id);
+    if (!media) return null;
+    const url = media.data?.url;
+    return (
+      <div className="mb-3 rounded-lg bg-muted overflow-hidden">
+        {media.type === 'video' ? (
+          url ? (
+            <video src={url} controls className="w-full max-h-56 object-cover" />
+          ) : (
+            <div className="flex h-24 items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Video className="h-4 w-4" /> {media.data?.caption || 'Linked video'}
+            </div>
+          )
+        ) : url ? (
+          <img src={url} alt={media.data?.caption || ''} className="w-full max-h-56 object-cover" />
+        ) : (
+          <div className="flex h-24 items-center justify-center gap-2 text-xs text-muted-foreground">
+            <ImageIcon className="h-4 w-4" /> {media.data?.caption || 'Linked image'}
+          </div>
+        )}
+        {showTeacherControls && (
+          <button
+            type="button"
+            className="w-full border-t border-border/60 px-2 py-1 text-[11px] text-muted-foreground hover:text-destructive"
+            onClick={(e) => { e.stopPropagation(); updateBlockAttachment(media.id, null); }}
+          >
+            {isDutch ? 'Losmaken van vraag' : 'Detach from question'}
+          </button>
+        )}
+      </div>
+    );
   };
 
   const renderBlockContent = (block: AssignmentBlock) => {
@@ -2254,7 +2309,12 @@ export function AssignmentEditor({
             {t.questionOf} {presentIndex + 1} / {presentableBlocks.length}
           </p>
           <div className="w-full max-w-xl">
-            {currentBlock ? renderBlockContent(currentBlock) : (
+            {currentBlock ? (
+              <>
+                {renderAttachedMediaBanner(currentBlock)}
+                {renderBlockContent(currentBlock)}
+              </>
+            ) : (
               <p className="text-center text-muted-foreground">{t.noContentTitle}</p>
             )}
           </div>
@@ -2507,6 +2567,22 @@ export function AssignmentEditor({
                                 {BLOCK_TEMPLATES.find((t) => t.type === row.blocks[0].type)?.label || 'Block'}
                               </div>
                               <div className="flex items-center gap-1">
+                                {(row.blocks[0].type === 'image' || row.blocks[0].type === 'video') && questionNumberByBlockId.size > 0 && (
+                                  <select
+                                    className="h-6 text-[11px] border border-border rounded-md bg-background px-1 surface-chip"
+                                    value={row.blocks[0].attachedToBlockId || ''}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => updateBlockAttachment(row.blocks[0].id, e.target.value || null)}
+                                    title={isDutch ? 'Koppel aan vraag' : 'Attach to question'}
+                                  >
+                                    <option value="">{isDutch ? 'Niet gekoppeld' : 'Not attached'}</option>
+                                    {presentableBlocks.filter((b) => questionNumberByBlockId.has(b.id)).map((b) => (
+                                      <option key={b.id} value={b.id}>
+                                        {isDutch ? 'Vraag' : 'Q'} {questionNumberByBlockId.get(b.id)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
                                 <Popover>
                                   <PopoverTrigger asChild>
                                     <Button variant="outline" size="sm" className="h-6 px-2 text-[11px] surface-chip" title="Block size">
@@ -2527,7 +2603,7 @@ export function AssignmentEditor({
                                     />
                                   </PopoverContent>
                                 </Popover>
-                                <div 
+                                <div
                                   className="h-6 w-6 p-0 flex items-center justify-center cursor-grab surface-chip hover:surface-interactive rounded"
                                   onPointerDown={(e) => handleGripPointerDown(e, row.blocks[0].id)}
                                   title="Move block"
@@ -2547,6 +2623,7 @@ export function AssignmentEditor({
                             </div>
                             )}
                             
+                            {renderAttachedMediaBanner(row.blocks[0])}
                             {renderBlockContent(row.blocks[0])}
                           </div>
                         </div>
@@ -2636,6 +2713,7 @@ export function AssignmentEditor({
                                     </div>
                                     )}
                                     
+                                    {renderAttachedMediaBanner(block)}
                                     {renderBlockContent(block)}
                                   </div>
                                 ) : (

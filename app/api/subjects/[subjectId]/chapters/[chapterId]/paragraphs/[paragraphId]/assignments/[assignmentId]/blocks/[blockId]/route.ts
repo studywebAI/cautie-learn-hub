@@ -419,6 +419,7 @@ export async function PUT(
     const ai_grading_override = body?.ai_grading_override ?? newData?.ai_grading_override
     const nextType = body?.type ?? newData?.type
     const nextPosition = body?.position ?? newData?.position
+    const attachedToBlockId = body?.attached_to_block_id !== undefined ? body.attached_to_block_id : undefined
 
     // Verify the block belongs to this assignment and user has access
     const { data: block, error: blockError } = await supabase
@@ -493,6 +494,7 @@ export async function PUT(
     if (locked !== undefined) fullPayload.locked = locked;
     if (show_feedback !== undefined) fullPayload.show_feedback = show_feedback;
     if (ai_grading_override !== undefined) fullPayload.ai_grading_override = ai_grading_override;
+    if (attachedToBlockId !== undefined) fullPayload.attached_to_block_id = attachedToBlockId;
 
     const updateWith = async (client: any, payload: Record<string, any>) =>
       client

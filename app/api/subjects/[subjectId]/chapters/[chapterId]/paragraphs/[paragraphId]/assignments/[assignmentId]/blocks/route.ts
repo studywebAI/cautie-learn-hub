@@ -161,7 +161,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    const { type, position, data: blockData, locked, show_feedback, ai_grading_override, settings } = body
+    const { type, position, data: blockData, locked, show_feedback, ai_grading_override, settings, attached_to_block_id } = body
     const normalizedSettings = normalizeBlockSettings(settings || blockData?.settings || {});
 
     if (!type || position === undefined || !blockData) {
@@ -193,6 +193,7 @@ export async function POST(
       locked: locked || false,
       show_feedback: show_feedback || false,
       ai_grading_override: ai_grading_override || null,
+      attached_to_block_id: attached_to_block_id || null,
     };
     const baseInsert = {
       assignment_id: resolvedParams.assignmentId,
