@@ -1,6 +1,5 @@
 export const TEACHER_CLASS_TAB_IDS = [
   'group',
-  'logs',
   'settings',
 ] as const;
 

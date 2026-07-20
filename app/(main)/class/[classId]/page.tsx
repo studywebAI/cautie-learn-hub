@@ -21,10 +21,6 @@ const InviteTab = dynamic(
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
 );
-const LogsTab = dynamic(
-  () => import('@/components/class/logs-tab-redesigned').then((m) => m.LogsTabRedesigned),
-  { ssr: false }
-);
 const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
   { ssr: false }
@@ -159,9 +155,6 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
-        case 'logs':
-          url = `/api/classes/${classId}/audit-logs?limit=100&offset=0`;
-          break;
         default:
           return null;
       }
@@ -240,7 +233,6 @@ export default function ClassDetailsPage() {
     const warmTabs = async () => {
       await Promise.allSettled([
         loadTabData('group'),
-        loadTabData('logs'),
       ]);
     };
     void warmTabs();
@@ -299,8 +291,6 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'logs':
-        return isTeacher ? <LogsTab classId={classId} cachedData={cachedTabData['logs']} parentLoading={!!loadingTabs['logs']} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':
         return isTeacher ? (
           <ClassSettings
