@@ -1263,6 +1263,46 @@ export function AssignmentEditor({
         data = { url: '', caption: block.caption || '', alt: '' };
       } else if (blockType === 'video') {
         data = { url: '', caption: block.caption || '' };
+      } else if (blockType === 'flashcard') {
+        const cards = Array.isArray(block.cards) && block.cards.length > 0
+          ? block.cards.map((c: any) => ({ id: generateId(), front: c.front || '', back: c.back || '' }))
+          : getTemplateDefaults('flashcard').cards;
+        data = { cards };
+      } else if (blockType === 'table') {
+        const columns = Array.isArray(block.table_columns) && block.table_columns.length > 0
+          ? block.table_columns.map((label: string, i: number) => ({ id: `col-${i}-${generateId()}`, label }))
+          : getTemplateDefaults('table').columns;
+        const rows = Array.isArray(block.table_rows) && block.table_rows.length > 0
+          ? block.table_rows.map((rowValues: string[]) => ({
+              id: `row-${generateId()}`,
+              cells: columns.map((_: any, ci: number) => ({ value: rowValues[ci] || '', editable: false })),
+            }))
+          : getTemplateDefaults('table').rows;
+        data = { columns, rows };
+      } else if (blockType === 'number_line') {
+        const defaults = getTemplateDefaults('number_line');
+        data = {
+          prompt: block.number_line_prompt || '',
+          min: block.number_line_min ?? defaults.min,
+          max: block.number_line_max ?? defaults.max,
+          step: block.number_line_step ?? defaults.step,
+          correctValue: block.number_line_correct_value ?? defaults.correctValue,
+          tolerance: block.number_line_tolerance ?? defaults.tolerance,
+        };
+      } else if (blockType === 'diagram_labeling') {
+        data = { url: '', points: [], labelBank: Array.isArray(block.diagram_label_bank) ? block.diagram_label_bank : [] };
+      } else if (blockType === 'graph_plot') {
+        const defaults = getTemplateDefaults('graph_plot');
+        data = {
+          xLabel: block.graph_x_label || defaults.xLabel,
+          yLabel: block.graph_y_label || defaults.yLabel,
+          xMin: block.graph_x_min ?? defaults.xMin,
+          xMax: block.graph_x_max ?? defaults.xMax,
+          yMin: block.graph_y_min ?? defaults.yMin,
+          yMax: block.graph_y_max ?? defaults.yMax,
+          correctPoints: defaults.correctPoints,
+          tolerance: defaults.tolerance,
+        };
       } else {
         data = { header: block?.header || '', content: block?.content || '', style: 'normal' };
       }
