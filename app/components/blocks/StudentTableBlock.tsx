@@ -26,7 +26,7 @@ export const StudentTableBlock: React.FC<StudentTableBlockProps> = ({
   const editableCellIds = rows.flatMap((row: any) =>
     row.cells.map((cell: any, ci: number) => (cell.editable ? `${row.id}:${ci}` : null)).filter((id: any) => id) as string[]
   );
-  const allFilled = editableCellIds.length > 0 && editableCellIds.every((id) => (values[id] || '').trim());
+  const allFilled = editableCellIds.length > 0 && editableCellIds.every((id: string) => (values[id] || '').trim());
 
   const handleSubmit = async () => {
     setIsSubmitting(true);

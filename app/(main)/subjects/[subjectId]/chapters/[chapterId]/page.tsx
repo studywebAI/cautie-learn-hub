@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { AppContext, AppContextType } from '@/contexts/app-context';
+import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
 
 interface Chapter {
@@ -55,29 +55,29 @@ export default function ChapterOverviewPage() {
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
-  const { role, language } = useContext(AppContext) as AppContextType;
+  const { role } = useContext(AppContext) as AppContextType;
+  const { dictionary } = useDictionary();
   const isTeacher = role === 'teacher';
-  const isDutch = language === 'nl';
+  const s = dictionary.subjects;
+  const c = dictionary.common;
   const t = {
-    paragraphs: isDutch ? 'Paragrafen' : 'Paragraphs',
-    addParagraph: isDutch ? '+ Paragraaf toevoegen' : '+ Add Paragraph',
-    addParagraphTitle: isDutch ? 'Paragraaf toevoegen' : 'Add Paragraph',
-    addParagraphDescription: isDutch ? 'Maak een nieuwe paragraaf voor dit hoofdstuk.' : 'Create a new paragraph for this chapter.',
-    title: isDutch ? 'Titel' : 'Title',
-    cancel: isDutch ? 'Annuleren' : 'Cancel',
-    creating: isDutch ? 'Aanmaken...' : 'Creating...',
-    create: isDutch ? 'Maken' : 'Create',
-    assignmentsWord: isDutch ? 'opdrachten' : 'assignments',
-    finishFirst: isDutch ? 'Rond eerst af' : 'Finish first',
-    prerequisiteSettings: isDutch ? 'Paragraafinstellingen' : 'Paragraph settings',
-    requiresFirst: isDutch ? 'Vereist eerst (optioneel)' : 'Requires first (optional)',
-    none: isDutch ? 'Geen' : 'None',
-    lockedHint: isDutch
-      ? 'Leerlingen zien deze paragraaf pas na 100% voortgang op de gekozen paragraaf.'
-      : 'Students only see this paragraph once the chosen one is 100% complete.',
-    save: isDutch ? 'Opslaan' : 'Save',
-    saving: isDutch ? 'Opslaan...' : 'Saving...',
-    saveFailed: isDutch ? 'Opslaan mislukt' : 'Save failed',
+    paragraphs: s.paragraphs,
+    addParagraph: s.addParagraph,
+    addParagraphTitle: s.addParagraphTitle,
+    addParagraphDescription: s.addParagraphDescriptionInChapter,
+    title: s.fieldTitle,
+    cancel: c.cancel,
+    creating: s.creatingEllipsis,
+    create: c.create,
+    assignmentsWord: s.assignments,
+    finishFirst: s.finishFirst,
+    prerequisiteSettings: s.paragraphSettings,
+    requiresFirst: s.requiresFirst,
+    none: c.none,
+    lockedHint: s.lockedHint,
+    save: c.save,
+    saving: s.savingEllipsis,
+    saveFailed: s.saveFailed,
   };
 
   const fetchChapterData = async () => {
@@ -179,11 +179,13 @@ export default function ChapterOverviewPage() {
     return <div className="page-content text-muted-foreground">Chapter not found</div>;
   }
 
+  const chapterNumberLabel = chapter.is_tests_chapter ? 'T' : String(chapter.chapter_number);
+
   return (
     <div className="page-content">
       <PageHeader
-        title={`${chapter.chapter_number}. ${chapter.title}`}
-        subtitle={`${subject?.title || 'Subjects'} / ${t.paragraphs}`}
+        title={`${chapterNumberLabel}. ${chapter.title}`}
+        subtitle={`${subject?.title || dictionary.sidebar.subjects} / ${t.paragraphs}`}
         actions={
           <div className="flex items-center gap-1">
             {isTeacher && (
@@ -233,7 +235,7 @@ export default function ChapterOverviewPage() {
                     <Lock className="h-3.5 w-3.5" />
                   </span>
                   <span className="flex-1 min-w-0 truncate text-sm text-muted-foreground">
-                    {chapter.chapter_number}.{paragraph.paragraph_number} {paragraph.title}
+                    {chapterNumberLabel}.{paragraph.paragraph_number} {paragraph.title}
                   </span>
                 </div>
               );
@@ -248,7 +250,7 @@ export default function ChapterOverviewPage() {
                   className="flex flex-1 min-w-0 items-center gap-3 py-3 px-1 hover:bg-accent/40 rounded-lg transition-colors"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-muted-foreground tabular-nums">
-                    {chapter.chapter_number}.{paragraph.paragraph_number}
+                    {chapterNumberLabel}.{paragraph.paragraph_number}
                   </span>
                   <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
                     {paragraph.title}
@@ -275,7 +277,6 @@ export default function ChapterOverviewPage() {
                     chapter={chapter}
                     paragraph={paragraph}
                     allParagraphs={paragraphs}
-                    isDutch={isDutch}
                     t={t}
                     onSaved={(prerequisiteId) => {
                       setParagraphs((prev) =>
@@ -323,7 +324,6 @@ function ParagraphPrerequisitePopover({
   chapter,
   paragraph,
   allParagraphs,
-  isDutch,
   t,
   onSaved,
 }: {
@@ -331,7 +331,6 @@ function ParagraphPrerequisitePopover({
   chapter: Chapter;
   paragraph: Paragraph;
   allParagraphs: Paragraph[];
-  isDutch: boolean;
   t: Record<string, string>;
   onSaved: (prerequisiteId: string | null) => void;
 }) {
@@ -391,7 +390,7 @@ function ParagraphPrerequisitePopover({
             .filter((p) => p.id !== paragraph.id)
             .map((p) => (
               <option key={p.id} value={p.id}>
-                {chapter.chapter_number}.{p.paragraph_number} {p.title}
+                {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}.{p.paragraph_number} {p.title}
               </option>
             ))}
         </select>

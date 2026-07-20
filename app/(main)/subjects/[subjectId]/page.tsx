@@ -18,7 +18,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { AppContext, AppContextType } from '@/contexts/app-context';
+import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
 
 type Paragraph = {
@@ -74,33 +74,35 @@ export default function SubjectDetailPage() {
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
-  const { role, language } = useContext(AppContext) as AppContextType;
+  const { role } = useContext(AppContext) as AppContextType;
+  const { dictionary } = useDictionary();
   const isTeacher = role === 'teacher';
-  const isDutch = language === 'nl';
+  const s = dictionary.subjects;
+  const c = dictionary.common;
   const t = {
-    chapters: isDutch ? 'Hoofdstukken' : 'Chapters',
-    addChapter: isDutch ? '+ Hoofdstuk toevoegen' : '+ Add Chapter',
-    addParagraph: isDutch ? '+ Paragraaf toevoegen' : '+ Add Paragraph',
-    lastActiveIn: isDutch ? 'Laatst actief in ' : 'Last active in ',
-    reorderHint: isDutch ? 'Herordenmodus: gebruik de pijltjes om hoofdstukken te verplaatsen.' : 'Reorder mode: use the arrows to move chapters.',
-    done: isDutch ? 'Klaar' : 'Done',
-    createFirstChapter: isDutch ? 'Eerste hoofdstuk maken' : 'Create First Chapter',
-    addChapterTitle: isDutch ? 'Hoofdstuk toevoegen' : 'Add Chapter',
-    addChapterDescription: isDutch ? 'Maak een nieuw hoofdstuk voor dit vak.' : 'Create a new chapter for this subject.',
-    title: isDutch ? 'Titel' : 'Title',
-    cancel: isDutch ? 'Annuleren' : 'Cancel',
-    creating: isDutch ? 'Aanmaken...' : 'Creating...',
-    create: isDutch ? 'Maken' : 'Create',
-    addParagraphTitle: isDutch ? 'Paragraaf toevoegen' : 'Add Paragraph',
-    addParagraphDescription: isDutch ? 'Kies een hoofdstuk en maak een nieuwe paragraaf.' : 'Select a Chapter and create a new paragraph.',
-    chapter: isDutch ? 'Hoofdstuk' : 'Chapter',
-    selectChapter: isDutch ? 'Kies hoofdstuk' : 'Select Chapter',
-    paragraphsWord: isDutch ? 'paragrafen' : 'paragraphs',
-    assignmentsWord: isDutch ? 'opdrachten' : 'assignments',
-    testsBadge: isDutch ? 'Toetsen' : 'Tests',
-    reorderTitle: isDutch ? 'Ingedrukt houden om te herordenen' : 'Press and hold to reorder',
-    moveUp: isDutch ? 'Omhoog' : 'Move up',
-    moveDown: isDutch ? 'Omlaag' : 'Move down',
+    chapters: s.chapters,
+    addChapter: s.addChapter,
+    addParagraph: s.addParagraph,
+    lastActiveIn: s.lastActiveIn,
+    reorderHint: s.reorderHint,
+    done: s.reorderDone,
+    createFirstChapter: s.createFirstChapter,
+    addChapterTitle: s.addChapterTitle,
+    addChapterDescription: s.addChapterDescription,
+    title: s.fieldTitle,
+    cancel: c.cancel,
+    creating: s.creatingEllipsis,
+    create: c.create,
+    addParagraphTitle: s.addParagraphTitle,
+    addParagraphDescription: s.addParagraphDescription,
+    chapter: s.chapterLabel,
+    selectChapter: s.selectChapter,
+    paragraphsWord: s.paragraphs,
+    assignmentsWord: s.assignments,
+    testsBadge: s.testsBadge,
+    reorderTitle: s.pressHoldReorder,
+    moveUp: s.moveUp,
+    moveDown: s.moveDown,
   };
 
   const loadSubjectOverview = async () => {
@@ -353,7 +355,7 @@ export default function SubjectDetailPage() {
     <div className="page-content">
       <PageHeader
         title={subject.name}
-        subtitle={`${isDutch ? 'Vakken' : 'Subjects'} / ${t.chapters}`}
+        subtitle={`${dictionary.sidebar.subjects} / ${t.chapters}`}
         actions={
           isTeacher && (
             <>
@@ -430,7 +432,7 @@ export default function SubjectDetailPage() {
                 )}
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-muted-foreground tabular-nums">
-                  {chapter.chapter_number}
+                  {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}
                 </span>
                 <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
                   {chapter.title}

@@ -21,7 +21,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import { AppContext, AppContextType } from '@/contexts/app-context';
+import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
 import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks, ChevronLeft } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
@@ -162,42 +162,43 @@ export default function ParagraphDetailPage() {
   const { toast } = useToast();
   const { role } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
-  const appContext = useContext(AppContext) as AppContextType;
-  const isDutch = appContext.language === 'nl';
+  const { dictionary } = useDictionary();
+  const s = dictionary.subjects;
+  const c = dictionary.common;
   const t = {
-    backToChapters: isDutch ? 'Terug naar hoofdstukken' : 'Back to chapters',
-    allSettings: isDutch ? 'Alle instellingen' : 'All settings',
-    addAssignment: isDutch ? '+ Opdracht Toevoegen' : '+ Add Assignment',
-    noAssignmentsYet: isDutch ? 'Nog geen opdrachten' : 'No assignments yet',
-    createFirstAssignment: isDutch ? 'Eerste opdracht maken' : 'Create First Assignment',
-    addAssignmentTitle: isDutch ? 'Opdracht Toevoegen' : 'Add Assignment',
-    addAssignmentDescription: isDutch ? 'Maak een nieuwe opdracht voor deze paragraaf.' : 'Create a new assignment for this paragraph.',
-    addAssignmentDescriptionWizard: isDutch ? 'Geef een titel — de rest stel je zo in de editor in.' : 'Give it a title — everything else is set up in the editor.',
-    title: isDutch ? 'Titel' : 'Title',
-    back: isDutch ? 'Terug' : 'Back',
-    homework: isDutch ? 'Opdracht' : 'Assignment',
-    test: isDutch ? 'Toets' : 'Test',
-    content: isDutch ? 'Leerstof' : 'Content',
-    isTestAutoHint: isDutch ? 'Wordt automatisch een toets, want dit is het Toetsen-hoofdstuk.' : 'Automatically becomes a test, since this is the Toetsen chapter.',
-    allAssignments: isDutch ? 'Alles' : 'All',
-    onlyHomework: isDutch ? 'Opdrachten' : 'Assignments',
-    onlyTests: isDutch ? 'Toetsen' : 'Tests',
-    filterByType: isDutch ? 'Filter Op Type' : 'Filter by Type',
-    cancel: isDutch ? 'Annuleren' : 'Cancel',
-    creating: isDutch ? 'Aanmaken...' : 'Creating...',
-    create: isDutch ? 'Maken' : 'Create',
-    error: isDutch ? 'Fout' : 'Error',
-    failedUpdate: isDutch ? 'Instellingen bijwerken mislukt' : 'Failed to update settings',
-    failedBulkUpdate: isDutch ? 'Bijwerken mislukt' : 'Failed to update',
-    failedCreateAssignment: isDutch ? 'Opdracht maken mislukt' : 'Failed to create assignment',
-    shareTest: isDutch ? 'Delen' : 'Share',
-    shareTestTitle: isDutch ? 'Toets delen' : 'Share test',
-    shareTestHint: isDutch ? 'Een andere docent kan deze code gebruiken om een eigen, losstaande kopie te importeren.' : 'Another teacher can use this code to import their own, independent copy.',
-    shareCode: isDutch ? 'Code' : 'Code',
-    shareLink: isDutch ? 'Link' : 'Link',
-    copy: isDutch ? 'Kopiëren' : 'Copy',
-    copied: isDutch ? 'Gekopieerd' : 'Copied',
-    failedShare: isDutch ? 'Delen mislukt' : 'Failed to share',
+    backToChapters: s.backToChapters,
+    allSettings: s.allSettings,
+    addAssignment: s.addAssignment,
+    noAssignmentsYet: s.noAssignmentsYet,
+    createFirstAssignment: s.createFirstAssignment,
+    addAssignmentTitle: s.addAssignmentTitle,
+    addAssignmentDescription: s.addParagraphDescriptionInChapter,
+    addAssignmentDescriptionWizard: s.addAssignmentDescriptionWizard,
+    title: s.fieldTitle,
+    back: c.back,
+    homework: s.homeworkBadge,
+    test: s.testBadge,
+    content: s.contentBadge,
+    isTestAutoHint: s.isTestAutoHint,
+    allAssignments: s.allAssignmentsFilter,
+    onlyHomework: s.onlyHomeworkFilter,
+    onlyTests: s.testsBadge,
+    filterByType: s.filterByType,
+    cancel: c.cancel,
+    creating: s.creatingEllipsis,
+    create: c.create,
+    error: c.error,
+    failedUpdate: s.failedUpdateSettings,
+    failedBulkUpdate: s.failedBulkUpdate,
+    failedCreateAssignment: s.failedCreateAssignment,
+    shareTest: s.shareTest,
+    shareTestTitle: s.shareTestTitle,
+    shareTestHint: s.shareTestHint,
+    shareCode: s.shareCode,
+    shareLink: s.shareLink,
+    copy: c.copy,
+    copied: s.copied,
+    failedShare: s.failedShare,
   };
   const effectiveChapterId = resolvedChapterId || chapterId;
 
@@ -391,8 +392,8 @@ export default function ParagraphDetailPage() {
       if (!sourceText) {
         toast({
           variant: 'destructive',
-          title: isDutch ? 'Geen leerstof gevonden' : 'No content found',
-          description: isDutch ? 'Voeg eerst tekstblokken toe aan deze paragraaf.' : 'Add text blocks to this paragraph first.',
+          title: s.noContentFound,
+          description: s.addTextBlocksFirst,
         });
         return;
       }
@@ -403,7 +404,7 @@ export default function ParagraphDetailPage() {
         router.push(`/tools/quiz?sourceText=${encoded}&autostart=1`);
       }
     } catch {
-      toast({ variant: 'destructive', title: isDutch ? 'Mislukt' : 'Failed' });
+      toast({ variant: 'destructive', title: s.generateFailed });
     } finally {
       setIsGenerating(false);
     }
@@ -444,10 +445,10 @@ export default function ParagraphDetailPage() {
       <PageHeader
         title={`${paragraph.paragraph_number}. ${paragraph.title}`}
         subtitle={[
-          subjectPath?.title || 'Subject',
-          chapterPath?.title || 'Chapter',
-          paragraph?.title || 'Paragraph',
-          'Assignments',
+          subjectPath?.title || dictionary.sidebar.subjects,
+          chapterPath?.title || s.chapterLabel,
+          paragraph?.title || s.paragraphs,
+          s.assignments,
         ].join(' / ')}
         actions={
           <>
@@ -475,7 +476,7 @@ export default function ParagraphDetailPage() {
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={isGenerating}>
                     <Sparkles className="h-3.5 w-3.5" />
-                    <span className="text-xs">{isDutch ? 'Genereren' : 'Generate'}</span>
+                    <span className="text-xs">{s.generate}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-56 p-1.5">
@@ -484,14 +485,14 @@ export default function ParagraphDetailPage() {
                     className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
                   >
                     <Layers className="h-4 w-4 text-muted-foreground" />
-                    {isDutch ? 'Flashcards van dit hoofdstuk' : 'Flashcards from this chapter'}
+                    {s.flashcardsFromChapter}
                   </button>
                   <button
                     onClick={() => handleGenerateFromParagraph('quiz')}
                     className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
                   >
                     <ListChecks className="h-4 w-4 text-muted-foreground" />
-                    {isDutch ? 'Quiz van dit hoofdstuk' : 'Quiz from this chapter'}
+                    {s.quizFromChapter}
                   </button>
                 </PopoverContent>
               </Popover>
@@ -617,7 +618,7 @@ export default function ParagraphDetailPage() {
                       href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}/results`}
                       className="text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2 shrink-0"
                     >
-                      {isDutch ? 'Resultaten' : 'Results'}
+                      {s.results}
                     </Link>
                   )}
 
