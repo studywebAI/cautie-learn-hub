@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import {
   calculateDragDropScore,
   calculateFillInBlankScore,
+  calculateFlashcardScore,
   calculateMcqScore,
   calculateNumericScore,
   calculateOrderingScore,
@@ -157,6 +158,14 @@ export async function POST(
           isCorrect = result.isCorrect;
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'Correct number' : 'Incorrect number');
+        }
+        if (block.type === 'flashcard') {
+          const allCardIds = (blockData?.cards || []).map((c: any) => c.id);
+          const result = calculateFlashcardScore(answer_data?.knownCardIds || [], allCardIds, blockSettings);
+          score = result.score;
+          isCorrect = result.isCorrect;
+          totalScore += Number(score || 0);
+          feedback = blockSettings.feedbackText || (isCorrect ? 'All cards known' : 'Reviewed');
         }
 
         // For open questions, mark as submitted but don't grade yet

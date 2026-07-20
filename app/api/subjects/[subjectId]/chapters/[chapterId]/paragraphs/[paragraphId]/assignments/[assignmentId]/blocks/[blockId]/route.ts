@@ -10,6 +10,7 @@ import {
   calculateOrderingScore,
   calculateDragDropScore,
   calculateNumericScore,
+  calculateFlashcardScore,
   canReleaseFeedback,
   getAssignmentAvailabilityState,
   normalizeAssignmentSettings,
@@ -250,6 +251,13 @@ export async function POST(
           return NextResponse.json({ error: `Required unit: ${blockSettings.numeric.requiredUnit}` }, { status: 400 });
         }
       }
+    }
+    if (block.type === 'flashcard') {
+      const allCardIds = ((block as any).data?.cards || []).map((c: any) => c.id);
+      const result = calculateFlashcardScore(answerData?.knownCardIds || [], allCardIds, blockSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
     }
 
     const existingAnswerRes = await supabase

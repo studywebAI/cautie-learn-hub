@@ -429,6 +429,19 @@ export function calculateNumericScore(
   return { score: isCorrect ? settings.points : 0, isCorrect };
 }
 
+export function calculateFlashcardScore(
+  knownCardIds: string[],
+  allCardIds: string[],
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  if (!Array.isArray(allCardIds) || allCardIds.length === 0) return { score: 0, isCorrect: false };
+  const known = new Set(knownCardIds);
+  const knownCount = allCardIds.filter((id) => known.has(id)).length;
+  const fraction = knownCount / allCardIds.length;
+  const score = Math.round(settings.points * fraction * 1000) / 1000;
+  return { score, isCorrect: fraction === 1 };
+}
+
 export function deterministicShuffle<T>(items: T[], seedInput: string): T[] {
   const arr = [...items];
   let seed = 0;

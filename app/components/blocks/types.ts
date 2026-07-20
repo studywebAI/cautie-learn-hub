@@ -22,7 +22,12 @@ export type BlockType =
   | 'complex'
   | 'rich_text'
   | 'executable_code'
-  | 'paragraph';
+  | 'paragraph'
+  | 'flashcard'
+  | 'table'
+  | 'number_line'
+  | 'diagram_labeling'
+  | 'graph_plot';
 
 export interface BaseBlock {
   id: string;
@@ -195,6 +200,11 @@ export interface ExecutableCodeBlockContent {
   canExecute: boolean;
 }
 
+// 18. FlashcardBlock
+export interface FlashcardBlockContent {
+  cards: Array<{ id: string; front: string; back: string }>;
+}
+
 // Union type for all block contents
 export type BlockContent =
   | TextBlockContent
@@ -216,7 +226,8 @@ export type BlockContent =
   | RichTextBlockContent
   | ExecutableCodeBlockContent
   | ParagraphBlockContent
-  | ImageSimpleBlockContent;
+  | ImageSimpleBlockContent
+  | FlashcardBlockContent;
 
 // Props for block components
 export interface BlockProps {

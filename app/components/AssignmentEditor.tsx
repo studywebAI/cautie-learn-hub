@@ -245,6 +245,19 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'flashcard',
+    type: 'flashcard',
+    icon: <Layers className="h-4 w-4" />,
+    label: 'Flashcard',
+    category: 'interactive',
+    defaultData: {
+      cards: [
+        { id: 'card-1', front: '', back: '' },
+        { id: 'card-2', front: '', back: '' },
+      ],
+    }
+  },
+  {
     id: 'media_embed',
     type: 'media_embed',
     icon: <Link className="h-4 w-4" />,
@@ -1794,6 +1807,10 @@ export function AssignmentEditor({
         }
         if (block.type === 'open_question') return String(block.data.correct_answer || 'No reference answer set.');
         if (block.type === 'fill_in_blank') return ((block.data.answers || []) as string[]).filter(Boolean).join(', ') || 'No reference answer set.';
+        if (block.type === 'flashcard') {
+          const cards = (block.data.cards || []) as Array<{ front: string; back: string }>;
+          return cards.map((c) => `${c.front || '...'} → ${c.back || '...'}`).join(' | ') || 'No cards yet.';
+        }
         return '';
       })();
       return (
@@ -2200,6 +2217,75 @@ export function AssignmentEditor({
             {renderReadOnlyActions()}
           </div>
         );
+
+      case 'flashcard': {
+        const cards = (block.data.cards || []) as Array<{ id: string; front: string; back: string }>;
+        return (
+          <div className="space-y-2">
+            <p className="text-[10px] text-muted-foreground">{isDutch ? 'Kaartjes (voor- en achterkant)' : 'Cards (front and back)'}</p>
+            <div className="space-y-1.5">
+              {cards.map((card, idx) => (
+                <div key={card.id} className="flex items-center gap-1.5 group">
+                  <span className="text-xs font-medium text-muted-foreground w-4">{idx + 1}.</span>
+                  <Input
+                    value={card.front}
+                    onChange={(e) => {
+                      const newCards = [...cards];
+                      newCards[idx] = { ...newCards[idx], front: e.target.value };
+                      updateBlock(block.id, { ...block.data, cards: newCards });
+                    }}
+                    placeholder={isDutch ? 'Voorkant' : 'Front'}
+                    className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
+                  />
+                  <Input
+                    value={card.back}
+                    onChange={(e) => {
+                      const newCards = [...cards];
+                      newCards[idx] = { ...newCards[idx], back: e.target.value };
+                      updateBlock(block.id, { ...block.data, cards: newCards });
+                    }}
+                    placeholder={isDutch ? 'Achterkant' : 'Back'}
+                    className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                    onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      if (!canEditBlock || cards.length <= 1) return;
+                      e.stopPropagation();
+                      updateBlock(block.id, { ...block.data, cards: cards.filter((_, i) => i !== idx) });
+                    }}
+                    disabled={!canEditBlock || cards.length <= 1}
+                    className="h-5 w-5 p-0 text-muted-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  if (!canEditBlock) return;
+                  e.stopPropagation();
+                  updateBlock(block.id, { ...block.data, cards: [...cards, { id: generateId(), front: '', back: '' }] });
+                }}
+                className="text-xs text-muted-foreground h-6"
+                disabled={!canEditBlock}
+              >
+                <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Kaartje toevoegen' : 'Add card'}
+              </Button>
+            </div>
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
 
       case 'media_embed':
         return (

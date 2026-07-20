@@ -11,6 +11,7 @@ import { StudentDividerBlock } from './StudentDividerBlock';
 import { StudentNumericQuestionBlock } from './StudentNumericQuestionBlock';
 import { StudentOrderingBlock } from './StudentOrderingBlock';
 import { StudentDragDropBlock } from './StudentDragDropBlock';
+import { StudentFlashcardBlock } from './StudentFlashcardBlock';
 import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
@@ -61,6 +62,8 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
       case 'drag_drop':
       case 'matching':
         return <StudentDragDropBlock {...commonProps} />;
+      case 'flashcard':
+        return <StudentFlashcardBlock {...commonProps} />;
       case 'image':
       case 'video':
       case 'media_embed':
