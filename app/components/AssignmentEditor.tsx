@@ -532,6 +532,7 @@ export function AssignmentEditor({
   const [isDragging, setIsDragging] = useState(false);
   const [dragSource, setDragSource] = useState<{ type: 'block'; id: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
+  const [dragGhostPos, setDragGhostPos] = useState<{ x: number; y: number } | null>(null);
   const [addBlockMenuOpen, setAddBlockMenuOpen] = useState(false);
 
   // Settings state
@@ -1603,16 +1604,17 @@ export function AssignmentEditor({
   };
 
   // Drag handlers for grip
-  const startDragBlock = (blockId: string) => {
+  const startDragBlock = (blockId: string, clientX: number, clientY: number) => {
     setIsDragging(true);
     setDragSource({ type: 'block', id: blockId });
+    setDragGhostPos({ x: clientX, y: clientY });
   };
 
   const handleGripPointerDown = (e: React.PointerEvent, blockId: string) => {
     if (!showTeacherControls) return;
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    startDragBlock(blockId);
+    startDragBlock(blockId, e.clientX, e.clientY);
   };
 
   const handleMouseUp = () => {
@@ -1627,10 +1629,12 @@ export function AssignmentEditor({
     setIsDragging(false);
     setDragSource(null);
     setDropTarget(null);
+    setDragGhostPos(null);
   };
 
   const updateDropTargetFromPoint = (clientX: number, clientY: number) => {
     if (!isDragging || !paperRef.current) return;
+    setDragGhostPos({ x: clientX, y: clientY });
 
     const rowElements = Array.from(
       paperRef.current.querySelectorAll<HTMLElement>('[data-assignment-row-index]')
@@ -1682,6 +1686,7 @@ export function AssignmentEditor({
       setIsDragging(false);
       setDragSource(null);
       setDropTarget(null);
+      setDragGhostPos(null);
     };
     window.addEventListener('pointermove', handleGlobalPointerMove);
     window.addEventListener('pointerup', handleGlobalPointerUp);
@@ -3148,6 +3153,24 @@ export function AssignmentEditor({
       onPointerMove={handlePointerMove}
       style={{ touchAction: isDragging ? 'none' : 'auto' }}
     >
+      {/* Ghost preview that follows the cursor while dragging a block — the
+          original block dims in place instead of vanishing, so it's always
+          clear what's being moved and where it will land. */}
+      {isDragging && dragGhostPos && dragSource && (() => {
+        const draggedBlock = blocks.find((b) => b.id === dragSource.id);
+        if (!draggedBlock) return null;
+        const template = BLOCK_TEMPLATES.find((t) => t.type === draggedBlock.type);
+        return (
+          <div
+            className="pointer-events-none fixed z-50 flex items-center gap-2 rounded-lg border border-primary bg-background px-3 py-2 shadow-lg opacity-90"
+            style={{ left: dragGhostPos.x + 12, top: dragGhostPos.y + 12 }}
+          >
+            {template?.icon}
+            <span className="text-sm font-medium">{template?.label || draggedBlock.type}</span>
+          </div>
+        );
+      })()}
+
       {/* Top toolbar: back+title / Edit-View switch / ⋮ menu (docs/mockups/editor-redesign.html) */}
       <div className="flex items-center justify-between p-3 border-b border-border bg-background">
         <div className="flex items-center gap-2 min-w-0">
@@ -3335,20 +3358,23 @@ export function AssignmentEditor({
                 </div>
               ) : (
               <div className="mx-auto max-w-3xl">
-                {rows.map((row, rowIndex) => (
+                {rows.map((row, rowIndex) => {
+                  const isSourceRow = isDragging && !!dragSource && row.blocks.some((b) => b.id === dragSource.id);
+                  return (
                   <React.Fragment key={row.rowId}>
                     {/* Drop indicator before row */}
                     {isDragging && dropTarget?.rowIndex === rowIndex && !dropTarget.column && (
-                      <div className="h-3 flex items-center justify-center">
-                      <div className="h-1 w-full rounded-full bg-primary/70" />
+                      <div className="h-4 flex items-center justify-center">
+                        <div className="h-[3px] w-full rounded-full bg-primary shadow-[0_0_6px_rgba(0,0,0,0.25)]" />
                       </div>
                     )}
 
                     {/* Row */}
                       <div
                         className={cn(
-                          'flex gap-2.5 py-3',
-                          rowIndex < rows.length - 1 && 'border-b border-border/60'
+                          'flex gap-2.5 py-3 transition-[opacity,transform] duration-150 ease-out',
+                          rowIndex < rows.length - 1 && 'border-b border-border/60',
+                          isSourceRow && 'opacity-30 scale-[0.98]'
                         )}
                         data-assignment-row-index={rowIndex}
                       >
@@ -3564,12 +3590,13 @@ export function AssignmentEditor({
                       )}
                     </div>
                   </React.Fragment>
-                ))}
-                
+                  );
+                })}
+
                 {/* Drop indicator after last row */}
                 {isDragging && dropTarget?.rowIndex === rows.length && !dropTarget.column && (
-                  <div className="h-3 flex items-center justify-center">
-                    <div className="h-1 w-full rounded-full bg-primary/70" />
+                  <div className="h-4 flex items-center justify-center">
+                    <div className="h-[3px] w-full rounded-full bg-primary shadow-[0_0_6px_rgba(0,0,0,0.25)]" />
                   </div>
                 )}
               </div>
