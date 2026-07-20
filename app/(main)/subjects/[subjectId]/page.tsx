@@ -424,10 +424,12 @@ export default function SubjectDetailPage() {
               : 0;
             const totalAssignments = allParagraphs.reduce((sum, p) => sum + (p.assignment_count || 0), 0);
 
+            const chapterDisplayTitle = chapter.is_tests_chapter ? t.testsBadge : chapter.title;
+
             const row = (
               <div
                 className={cn(
-                  'flex items-center gap-3 py-3 px-1 border-b border-border transition-colors',
+                  'flex items-center gap-3 py-3.5 px-1 border-b border-border transition-colors',
                   chapterReorderMode ? '' : 'hover:bg-accent/40 rounded-lg'
                 )}
               >
@@ -435,12 +437,7 @@ export default function SubjectDetailPage() {
                   {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}
                 </span>
                 <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
-                  {chapter.title}
-                  {chapter.is_tests_chapter && (
-                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 align-middle">
-                      {t.testsBadge}
-                    </span>
-                  )}
+                  {chapterDisplayTitle}
                   {chapter.is_pending ? (
                     <span className="ml-2 text-xs text-muted-foreground">({t.creating})</span>
                   ) : null}
@@ -543,7 +540,7 @@ export default function SubjectDetailPage() {
                 <option value="">{t.selectChapter}</option>
                 {chapters.map((chapter) => (
                   <option key={chapter.id} value={chapter.id}>
-                    {chapter.chapter_number}. {chapter.title}
+                    {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}. {chapter.is_tests_chapter ? t.testsBadge : chapter.title}
                   </option>
                 ))}
               </select>

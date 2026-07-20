@@ -178,7 +178,8 @@
     "generate": "Genereren",
     "flashcardsFromChapter": "Flashcards van dit hoofdstuk",
     "quizFromChapter": "Quiz van dit hoofdstuk",
-    "results": "Resultaten"
+    "results": "Resultaten",
+    "notesFromChapter": "Notities van dit hoofdstuk"
   },
   "classes": {
     "searchClasses": "Lessen zoeken...",

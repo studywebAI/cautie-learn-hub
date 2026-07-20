@@ -23,7 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { AppContext, AppContextType, useDictionary } from '@/contexts/app-context';
 import Link from 'next/link';
-import { Settings, EyeOff, Lock, Share2, Copy, Check, Sparkles, Layers, ListChecks, ChevronLeft } from 'lucide-react';
+import { Settings, EyeOff, Lock, Share2, Copy, Check, Wand2, Layers, CircleCheck, Brush, ChevronLeft } from 'lucide-react';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, normalizeAssignmentSettings } from '@/lib/assignments/settings';
 
@@ -380,7 +380,7 @@ export default function ParagraphDetailPage() {
   // (docs/subjects-feature-brainstorm.md section D point 14) — reuses the
   // existing standalone Flashcards/Quiz tools via their sourceText query-param
   // handoff, same pattern as app/(main)/material/page.tsx.
-  const handleGenerateFromParagraph = async (kind: 'flashcards' | 'quiz') => {
+  const handleGenerateFromParagraph = async (kind: 'flashcards' | 'quiz' | 'notes') => {
     if (isGenerating) return;
     setIsGenerating(true);
     setGenerateMenuOpen(false);
@@ -400,6 +400,8 @@ export default function ParagraphDetailPage() {
       const encoded = encodeURIComponent(sourceText.slice(0, 4000));
       if (kind === 'flashcards') {
         router.push(`/tools/flashcards?sourceText=${encoded}`);
+      } else if (kind === 'notes') {
+        router.push(`/tools/notes?sourceText=${encoded}&autostart=1`);
       } else {
         router.push(`/tools/quiz?sourceText=${encoded}&autostart=1`);
       }
@@ -446,7 +448,7 @@ export default function ParagraphDetailPage() {
         title={`${paragraph.paragraph_number}. ${paragraph.title}`}
         subtitle={[
           subjectPath?.title || dictionary.sidebar.subjects,
-          chapterPath?.title || s.chapterLabel,
+          (chapterPath?.is_tests_chapter ? s.testsBadge : chapterPath?.title) || s.chapterLabel,
           paragraph?.title || s.paragraphs,
           s.assignments,
         ].join(' / ')}
@@ -475,7 +477,7 @@ export default function ParagraphDetailPage() {
               <Popover open={generateMenuOpen} onOpenChange={setGenerateMenuOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1.5" disabled={isGenerating}>
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Wand2 className="h-3.5 w-3.5" />
                     <span className="text-xs">{s.generate}</span>
                   </Button>
                 </PopoverTrigger>
@@ -488,10 +490,17 @@ export default function ParagraphDetailPage() {
                     {s.flashcardsFromChapter}
                   </button>
                   <button
+                    onClick={() => handleGenerateFromParagraph('notes')}
+                    className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
+                  >
+                    <Brush className="h-4 w-4 text-muted-foreground" />
+                    {s.notesFromChapter}
+                  </button>
+                  <button
                     onClick={() => handleGenerateFromParagraph('quiz')}
                     className="w-full flex items-center gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
                   >
-                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                    <CircleCheck className="h-4 w-4 text-muted-foreground" />
                     {s.quizFromChapter}
                   </button>
                 </PopoverContent>
@@ -552,7 +561,7 @@ export default function ParagraphDetailPage() {
             return (
               <div
                 key={assignment.id}
-                className={`flex items-center gap-3 border-b border-border px-1 py-3 transition-colors hover:bg-accent/40 rounded-lg ${
+                className={`flex items-center gap-3 border-b border-border px-1 py-3.5 transition-colors hover:bg-accent/40 rounded-lg ${
                   !assignment.is_visible ? 'opacity-50' : ''
                 }`}
               >

@@ -210,10 +210,18 @@ export async function GET(
       return acc;
     }, {});
 
-    const chaptersWithParagraphs = (chapters || []).map((chapter: any) => ({
-      ...chapter,
-      paragraphs: paragraphsByChapter[chapter.id] || [],
-    }));
+    const chaptersWithParagraphs = (chapters || [])
+      .map((chapter: any) => ({
+        ...chapter,
+        paragraphs: paragraphsByChapter[chapter.id] || [],
+      }))
+      // The Toetsen (tests) chapter always sorts last, regardless of its
+      // chapter_number, so it doesn't interleave with regular chapters.
+      .sort((a: any, b: any) => {
+        if (a.is_tests_chapter && !b.is_tests_chapter) return 1;
+        if (!a.is_tests_chapter && b.is_tests_chapter) return -1;
+        return a.chapter_number - b.chapter_number;
+      });
 
     const response = {
       subject: {

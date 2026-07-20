@@ -180,11 +180,12 @@ export default function ChapterOverviewPage() {
   }
 
   const chapterNumberLabel = chapter.is_tests_chapter ? 'T' : String(chapter.chapter_number);
+  const chapterDisplayTitle = chapter.is_tests_chapter ? s.testsBadge : chapter.title;
 
   return (
     <div className="page-content">
       <PageHeader
-        title={`${chapterNumberLabel}. ${chapter.title}`}
+        title={`${chapterNumberLabel}. ${chapterDisplayTitle}`}
         subtitle={`${subject?.title || dictionary.sidebar.subjects} / ${t.paragraphs}`}
         actions={
           <div className="flex items-center gap-1">
@@ -228,7 +229,7 @@ export default function ChapterOverviewPage() {
               return (
                 <div
                   key={paragraph.id}
-                  className="flex items-center gap-3 py-3 px-1 border-b border-border opacity-60 cursor-not-allowed"
+                  className="flex items-center gap-3 py-3.5 px-1 border-b border-border opacity-60 cursor-not-allowed"
                   title={prereq ? `${t.finishFirst}: ${prereq.title}` : undefined}
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-muted-foreground">
@@ -247,7 +248,7 @@ export default function ChapterOverviewPage() {
                   prefetch={false}
                   href={`/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraph.id}`}
                   onClick={() => handleParagraphClick(paragraph.id, paragraph.paragraph_number, paragraph.title)}
-                  className="flex flex-1 min-w-0 items-center gap-3 py-3 px-1 hover:bg-accent/40 rounded-lg transition-colors"
+                  className="flex flex-1 min-w-0 items-center gap-3 py-3.5 px-1 hover:bg-accent/40 rounded-lg transition-colors"
                 >
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-muted-foreground tabular-nums">
                     {chapterNumberLabel}.{paragraph.paragraph_number}

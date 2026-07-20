@@ -178,7 +178,8 @@
     "generate": "Generate",
     "flashcardsFromChapter": "Flashcards from this chapter",
     "quizFromChapter": "Quiz from this chapter",
-    "results": "Results"
+    "results": "Results",
+    "notesFromChapter": "Note da questo capitolo"
   },
   "classes": {
     "searchClasses": "Cerca classi...",
