@@ -1637,7 +1637,15 @@ export function AssignmentEditor({
         }
       }
 
-      // Create or update blocks
+      // Create or update blocks. Each block is isolated: a single block
+      // failing (e.g. a stale-id 403 right after it was just created, see
+      // docs/ui-consistency-backlog.md) no longer aborts the whole save
+      // cycle and blanket-fails every other block plus the assignment
+      // settings save. A PUT that comes back 403/404 "doesn't belong"/"not
+      // found" self-heals by re-creating the block via POST instead of
+      // hard-failing, since that's a stale-local-id situation, not a real
+      // permissions problem (the user already owns this assignment).
+      const blockFailures: string[] = [];
       for (const block of blocksToPersist) {
         const payload = {
           type: block.type,
@@ -1650,21 +1658,7 @@ export function AssignmentEditor({
           attached_to_block_id: block.attachedToBlockId || null,
         };
 
-        const isLocalId = String(block.id || '').startsWith('block-');
-        if (block.id && !isLocalId) {
-          const updateRes = await fetch(
-            `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`,
-            {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            }
-          );
-          if (!updateRes.ok) {
-            const errPayload = await updateRes.json().catch(() => ({}));
-            throw new Error(`Failed to update block ${block.id} (${block.type}): ${updateRes.status} ${errPayload?.error || ''}`);
-          }
-        } else {
+        const createBlock = async () => {
           const createRes = await fetch(
             `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks`,
             {
@@ -1675,10 +1669,39 @@ export function AssignmentEditor({
           );
           if (!createRes.ok) {
             const errPayload = await createRes.json().catch(() => ({}));
-            throw new Error(`Failed to create block (${block.type}): ${createRes.status} ${errPayload?.error || ''}`);
+            throw new Error(`${createRes.status} ${errPayload?.error || ''}`);
           }
           const created = await createRes.json();
           setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, id: created.id } : b)));
+        };
+
+        try {
+          const isLocalId = String(block.id || '').startsWith('block-');
+          if (block.id && !isLocalId) {
+            const updateRes = await fetch(
+              `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}`,
+              {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              }
+            );
+            if (!updateRes.ok) {
+              if (updateRes.status === 403 || updateRes.status === 404) {
+                console.warn('[handleSilentSave] stale_block_id_self_healing', { blockId: block.id, status: updateRes.status });
+                await createBlock();
+              } else {
+                const errPayload = await updateRes.json().catch(() => ({}));
+                throw new Error(`${updateRes.status} ${errPayload?.error || ''}`);
+              }
+            }
+          } else {
+            await createBlock();
+          }
+        } catch (blockError) {
+          const message = blockError instanceof Error ? blockError.message : String(blockError);
+          console.error('[handleSilentSave] block_save_failed', { blockId: block.id, type: block.type, error: message });
+          blockFailures.push(`${block.type} (${block.id}): ${message}`);
         }
       }
 
@@ -1701,7 +1724,15 @@ export function AssignmentEditor({
         throw new Error(`Failed to save assignment settings: ${assignmentSettingsRes.status} ${errPayload?.error || ''}`);
       }
 
-      setHasUnsavedChanges(false);
+      if (blockFailures.length > 0) {
+        toast({
+          title: 'Some blocks failed to save',
+          description: blockFailures.slice(0, 2).join('; '),
+          variant: 'destructive',
+        });
+      } else {
+        setHasUnsavedChanges(false);
+      }
       if (onSave) onSave(blocksToPersist);
 
       // Throttled version snapshot -- at most once every 5 minutes, not on
@@ -2064,7 +2095,7 @@ export function AssignmentEditor({
                       updateBlock(block.id, { ...block.data, options: newOptions });
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-3 w-3"
+                    className="h-4 w-4 shrink-0"
                     disabled={!canEditBlock}
                   />
                   <span className="text-xs text-muted-foreground w-3">{String.fromCharCode(65 + idx)}.</span>
@@ -2747,12 +2778,14 @@ export function AssignmentEditor({
           <div className="space-y-2">
             {block.data.url ? (
               <div className="space-y-2">
-                <img
-                  src={block.data.url}
-                  alt={block.data.alt || ''}
-                  className="max-w-full max-h-64 rounded-md border border-border object-contain"
-                  onClick={(e) => e.stopPropagation()}
-                />
+                <div className="flex justify-center rounded-md bg-muted/40 p-3">
+                  <img
+                    src={block.data.url}
+                    alt={block.data.alt || ''}
+                    className="max-w-full max-h-96 rounded-md border border-border object-contain"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
                 {canEditBlock && (
                   <Button
                     variant="ghost"
@@ -3441,35 +3474,37 @@ export function AssignmentEditor({
                       {isDutch ? 'Blok toevoegen' : 'Add block'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent align="center" className="w-80 p-3 max-h-[70vh] overflow-y-auto">
-                    {(['question', 'interactive', 'data', 'content'] as BlockTemplateCategory[]).map((category) => {
-                      const templates = BLOCK_TEMPLATES.filter((tpl) => tpl.category === category);
-                      if (templates.length === 0) return null;
-                      return (
-                        <div key={category} className="mb-3 last:mb-0">
-                          <div className="text-[11px] font-medium text-muted-foreground mb-1.5 px-1">
-                            {isDutch ? BLOCK_TEMPLATE_CATEGORY_LABELS[category].nl : BLOCK_TEMPLATE_CATEGORY_LABELS[category].en}
+                  <PopoverContent align="center" className="w-[560px] max-w-[90vw] p-4 max-h-[70vh] overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      {(['question', 'interactive', 'data', 'content'] as BlockTemplateCategory[]).map((category, categoryIndex) => {
+                        const templates = BLOCK_TEMPLATES.filter((tpl) => tpl.category === category);
+                        if (templates.length === 0) return null;
+                        return (
+                          <div key={category} className={cn(categoryIndex >= 2 && 'border-t border-border pt-3')}>
+                            <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-2 px-1">
+                              {isDutch ? BLOCK_TEMPLATE_CATEGORY_LABELS[category].nl : BLOCK_TEMPLATE_CATEGORY_LABELS[category].en}
+                            </div>
+                            <div className="space-y-0.5">
+                              {templates.map((template) => (
+                                <button
+                                  type="button"
+                                  key={template.id}
+                                  data-testid={`assignment-template-${template.id}`}
+                                  className="flex w-full items-center gap-2 px-2.5 py-2 rounded-lg hover:surface-interactive border border-transparent hover:border-border text-left"
+                                  onClick={() => {
+                                    addBlock(template, rows.length);
+                                    setAddBlockMenuOpen(false);
+                                  }}
+                                >
+                                  {template.icon}
+                                  <span className="text-sm truncate">{template.label}</span>
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-1">
-                            {templates.map((template) => (
-                              <button
-                                type="button"
-                                key={template.id}
-                                data-testid={`assignment-template-${template.id}`}
-                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:surface-interactive border border-transparent hover:border-border text-left"
-                                onClick={() => {
-                                  addBlock(template, rows.length);
-                                  setAddBlockMenuOpen(false);
-                                }}
-                              >
-                                {template.icon}
-                                <span className="text-sm truncate">{template.label}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </PopoverContent>
                 </Popover>
               </div>
@@ -3691,9 +3726,8 @@ export function AssignmentEditor({
               {/* Automation last: blocks + per-block settings come first, AI
                   assist and copy-from live at the bottom of the tab. */}
               <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                <div className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3" />
-                  {isDutch ? 'Zeg wat je wilt toevoegen' : 'Say what to add'}
+                <div className="text-[11px] font-medium text-muted-foreground">
+                  {isDutch ? 'Automatisering' : 'Automation'}
                 </div>
                 <Textarea
                   value={aiCommand}
@@ -3704,7 +3738,7 @@ export function AssignmentEditor({
                       void handleAiCommandSubmit();
                     }
                   }}
-                  placeholder={isDutch ? 'bv. "maak een multiple choice blok over fotosynthese"' : 'e.g. "make a multiple choice block about photosynthesis"'}
+                  placeholder={isDutch ? 'Maak een multiple choice blok over fotosynthese' : 'Make a multiple choice block about photosynthesis'}
                   rows={2}
                   disabled={aiCommandLoading}
                   className="text-xs resize-none"
@@ -3717,7 +3751,7 @@ export function AssignmentEditor({
                     onChange={(e) => setAiIncludeSiblingContext(e.target.checked)}
                     className="h-3 w-3"
                   />
-                  {isDutch ? 'Ook vorige paragrafen/hoofdstukken gebruiken' : 'Also use previous paragraphs/chapters'}
+                  {isDutch ? 'Geheugen ingeschakeld' : 'Memory enabled'}
                 </label>
                 <Button
                   size="sm"
@@ -3736,11 +3770,11 @@ export function AssignmentEditor({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
                     <Copy className="h-3.5 w-3.5" />
-                    {isDutch ? 'Kopieer blokken van...' : 'Copy blocks from...'}
+                    {isDutch ? 'Blokken importeren...' : 'Import blocks...'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-72 space-y-2.5">
-                  <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Kopieer van een andere opdracht' : 'Copy from another assignment'}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Importeer van een andere opdracht' : 'Import from another assignment'}</p>
                   <select
                     value={copyChapterId}
                     onChange={(e) => setCopyChapterId(e.target.value)}
@@ -3792,8 +3826,8 @@ export function AssignmentEditor({
                   <Textarea
                     value={localDescription}
                     onChange={(e) => handleDescriptionChange(e.target.value)}
-                    rows={2}
-                    className="text-sm resize-none mt-1"
+                    rows={1}
+                    className="text-xs resize-none mt-1 min-h-0 py-1.5"
                   />
                 </div>
               </div>

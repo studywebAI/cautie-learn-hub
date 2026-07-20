@@ -583,9 +583,12 @@ export default function ParagraphDetailPage() {
                     {assignment.title}
                   </Link>
                 )}
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${isTest ? 'bg-amber-100 text-amber-900' : isContent ? 'bg-sky-100 text-sky-900' : 'bg-emerald-100 text-emerald-900'}`}>
-                  {isTest ? t.test : isContent ? t.content : t.homework}
-                </span>
+                {/* No badge for a plain assignment — that's the default; only Test/Content are worth calling out. */}
+                {(isTest || isContent) && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${isTest ? 'bg-amber-100 text-amber-900' : 'bg-sky-100 text-sky-900'}`}>
+                    {isTest ? t.test : t.content}
+                  </span>
+                )}
 
                 {/* Status indicators */}
                 <div className="flex items-center gap-2 shrink-0">

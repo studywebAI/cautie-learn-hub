@@ -64,7 +64,12 @@ critical bug (below) is resolved, unless told otherwise.
 ## Assignment editor (Workspace tab)
 - [x] AI chatbox already only saw the current assignment's own content by
       default. Added an explicit, off-by-default "Also use previous
-      paragraphs/chapters" checkbox for the opt-in case.
+      paragraphs/chapters" checkbox for the opt-in case. Later renamed to
+      "Memory enabled" (2026-07-20) — clearer label for the same toggle.
+- [ ] **Later: gate "Memory enabled" behind premium.** (2026-07-20) Currently
+      free/unlimited for everyone. When a premium tier exists, this toggle
+      should require it — needs a paywall/upsell state on the checkbox
+      itself, not just a silent capability check.
 - [x] Removed the template gallery ("Add template" preset-block picker) from
       the Workspace tab. The separate at-creation preset picker in
       create/edit-assignment-dialog is a different flow and untouched.
