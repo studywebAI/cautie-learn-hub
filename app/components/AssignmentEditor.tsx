@@ -273,6 +273,18 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'diagram_labeling',
+    type: 'diagram_labeling',
+    icon: <MapPin className="h-4 w-4" />,
+    label: 'Diagram Labeling',
+    category: 'interactive',
+    defaultData: {
+      url: '',
+      points: [],
+      labelBank: [],
+    }
+  },
+  {
     id: 'table',
     type: 'table',
     icon: <TableIcon className="h-4 w-4" />,
@@ -1870,6 +1882,10 @@ export function AssignmentEditor({
           const tolerance = Number(block.data.tolerance || 0);
           return tolerance > 0 ? `${block.data.correctValue} (± ${tolerance})` : String(block.data.correctValue ?? 'No value set.');
         }
+        if (block.type === 'diagram_labeling') {
+          const points = (block.data.points || []) as Array<{ correctLabel: string }>;
+          return points.map((p, idx) => `${idx + 1}: ${p.correctLabel || '...'}`).join(', ') || 'No points set.';
+        }
         return '';
       })();
       return (
@@ -2508,6 +2524,105 @@ export function AssignmentEditor({
                 {nlData.correctValue}{Number(nlData.tolerance) > 0 ? ` ± ${nlData.tolerance}` : ''}
               </p>
             </div>
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
+
+      case 'diagram_labeling': {
+        const isUploading = uploadingBlockId === block.id;
+        const dlPoints = (block.data.points || []) as Array<{ id: string; x: number; y: number; correctLabel: string }>;
+        const dlLabelBank = (block.data.labelBank || []) as string[];
+        const addPoint = (x: number, y: number) => {
+          updateBlock(block.id, { ...block.data, points: [...dlPoints, { id: generateId(), x, y, correctLabel: '' }] });
+        };
+        const updatePoint = (id: string, patch: Partial<{ correctLabel: string }>) => {
+          updateBlock(block.id, { ...block.data, points: dlPoints.map((p) => (p.id === id ? { ...p, ...patch } : p)) });
+        };
+        const removePoint = (id: string) => {
+          updateBlock(block.id, { ...block.data, points: dlPoints.filter((p) => p.id !== id) });
+        };
+        return (
+          <div className="space-y-2">
+            {block.data.url ? (
+              <div
+                className="relative inline-block max-w-full cursor-crosshair"
+                onClick={(e) => {
+                  if (!canEditBlock) return;
+                  e.stopPropagation();
+                  const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                  const x = Math.round(((e.clientX - rect.left) / rect.width) * 1000) / 10;
+                  const y = Math.round(((e.clientY - rect.top) / rect.height) * 1000) / 10;
+                  addPoint(x, y);
+                }}
+              >
+                <img src={block.data.url} alt="" className="block max-w-full max-h-72 rounded-md border border-border object-contain" draggable={false} />
+                {dlPoints.map((p, idx) => (
+                  <span
+                    key={p.id}
+                    className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-foreground text-[10px] font-semibold text-background"
+                    style={{ left: `${p.x}%`, top: `${p.y}%` }}
+                  >
+                    {idx + 1}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'image'); }}
+                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                disabled={!canEditBlock || isUploading}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
+                ) : (
+                  <><ImageIcon className="h-4 w-4 mr-2" /> Click to upload image</>
+                )}
+              </Button>
+            )}
+            {block.data.url && canEditBlock && (
+              <p className="text-[10px] text-muted-foreground">
+                {isDutch ? 'Klik op de afbeelding om een label-punt te plaatsen.' : 'Click the image to place a label point.'}
+              </p>
+            )}
+            {dlPoints.length > 0 && (
+              <div className="space-y-1">
+                {dlPoints.map((p, idx) => (
+                  <div key={p.id} className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground w-4">{idx + 1}.</span>
+                    <Input
+                      value={p.correctLabel}
+                      onChange={(e) => updatePoint(p.id, { correctLabel: e.target.value })}
+                      placeholder={isDutch ? 'Juist label' : 'Correct label'}
+                      className="flex-1 h-7 text-xs"
+                      onClick={(e) => e.stopPropagation()}
+                      readOnly={!canEditBlock}
+                      disabled={!canEditBlock}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      onClick={(e) => { e.stopPropagation(); removePoint(p.id); }}
+                      disabled={!canEditBlock}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <Textarea
+              value={dlLabelBank.join('\n')}
+              onChange={(e) => updateBlock(block.id, { ...block.data, labelBank: e.target.value.split('\n') })}
+              placeholder={isDutch ? 'Woordenbank (één per regel)' : 'Label bank (one per line)'}
+              className="min-h-[50px] text-xs"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+            />
             {renderReadOnlyActions()}
           </div>
         );

@@ -6,6 +6,7 @@ import {
   calculateFillInBlankScore,
   calculateFlashcardScore,
   calculateTableScore,
+  calculateLabelingScore,
   calculateMcqScore,
   calculateNumericScore,
   calculateOrderingScore,
@@ -182,6 +183,13 @@ export async function POST(
           isCorrect = result.isCorrect;
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'Correct' : 'Incorrect');
+        }
+        if (block.type === 'diagram_labeling') {
+          const result = calculateLabelingScore(answer_data?.labels || {}, blockData?.points || [], blockSettings);
+          score = result.score;
+          isCorrect = result.isCorrect;
+          totalScore += Number(score || 0);
+          feedback = blockSettings.feedbackText || (isCorrect ? 'All labels correct' : 'Some labels incorrect');
         }
 
         // For open questions, mark as submitted but don't grade yet

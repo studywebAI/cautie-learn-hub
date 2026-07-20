@@ -14,6 +14,7 @@ import { StudentDragDropBlock } from './StudentDragDropBlock';
 import { StudentFlashcardBlock } from './StudentFlashcardBlock';
 import { StudentTableBlock } from './StudentTableBlock';
 import { StudentNumberLineBlock } from './StudentNumberLineBlock';
+import { StudentDiagramLabelingBlock } from './StudentDiagramLabelingBlock';
 import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
@@ -70,6 +71,8 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
         return <StudentTableBlock {...commonProps} />;
       case 'number_line':
         return <StudentNumberLineBlock {...commonProps} />;
+      case 'diagram_labeling':
+        return <StudentDiagramLabelingBlock {...commonProps} />;
       case 'image':
       case 'video':
       case 'media_embed':

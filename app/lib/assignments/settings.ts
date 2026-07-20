@@ -466,6 +466,19 @@ export function calculateTableScore(
   return { score, isCorrect: fraction === 1 };
 }
 
+export function calculateLabelingScore(
+  labels: Record<string, string>,
+  points: Array<{ id: string; correctLabel: string }>,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  const normalize = (v: string) => String(v || '').trim().toLowerCase();
+  if (!Array.isArray(points) || points.length === 0) return { score: 0, isCorrect: false };
+  const correct = points.filter((p) => normalize(labels?.[p.id]) === normalize(p.correctLabel) && normalize(p.correctLabel) !== '').length;
+  const fraction = correct / points.length;
+  const score = Math.round(settings.points * fraction * 1000) / 1000;
+  return { score, isCorrect: fraction === 1 };
+}
+
 export function deterministicShuffle<T>(items: T[], seedInput: string): T[] {
   const arr = [...items];
   let seed = 0;

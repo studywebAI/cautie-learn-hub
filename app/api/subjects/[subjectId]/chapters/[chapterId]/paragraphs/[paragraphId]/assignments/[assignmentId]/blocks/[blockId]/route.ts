@@ -12,6 +12,7 @@ import {
   calculateNumericScore,
   calculateFlashcardScore,
   calculateTableScore,
+  calculateLabelingScore,
   canReleaseFeedback,
   getAssignmentAvailabilityState,
   normalizeAssignmentSettings,
@@ -270,6 +271,12 @@ export async function POST(
       const nlData = (block as any).data || {};
       const nlSettings = { ...blockSettings, numeric: { ...blockSettings.numeric, exactMatch: false, tolerance: Number(nlData.tolerance || 0) } };
       const result = calculateNumericScore(answerData?.value, nlData.correctValue, nlSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'diagram_labeling') {
+      const result = calculateLabelingScore(answerData?.labels || {}, (block as any).data?.points || [], blockSettings);
       score = result.score;
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;

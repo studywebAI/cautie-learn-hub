@@ -221,6 +221,13 @@ export interface NumberLineBlockContent {
   tolerance: number;
 }
 
+// 21. DiagramLabelingBlock
+export interface DiagramLabelingBlockContent {
+  url: string;
+  points: Array<{ id: string; x: number; y: number; correctLabel: string }>;
+  labelBank: string[];
+}
+
 // Union type for all block contents
 export type BlockContent =
   | TextBlockContent
@@ -245,7 +252,8 @@ export type BlockContent =
   | ImageSimpleBlockContent
   | FlashcardBlockContent
   | TableBlockContent
-  | NumberLineBlockContent;
+  | NumberLineBlockContent
+  | DiagramLabelingBlockContent;
 
 // Props for block components
 export interface BlockProps {
