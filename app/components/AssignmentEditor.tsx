@@ -39,6 +39,7 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Table as TableIcon,
   Ruler,
   MapPin,
@@ -519,6 +520,7 @@ export function AssignmentEditor({
 
   // Settings state
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
+  const [openBlockSettingsSection, setOpenBlockSettingsSection] = useState<'general' | 'hints' | 'grading' | 'multipleChoice' | 'matching' | 'media'>('general');
   const [isEditMode, setIsEditMode] = useState(true);
   const [localAnswersEnabled, setLocalAnswersEnabled] = useState(answersEnabled);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
@@ -3583,116 +3585,151 @@ export function AssignmentEditor({
                 if (!block) return null;
                 const s = normalizeBlockSettings(block.settings || {});
                 const isQuestionBlock = ['multiple_choice', 'open_question', 'fill_in_blank', 'drag_drop', 'matching', 'ordering'].includes(block.type);
+                const isMultipleChoice = block.type === 'multiple_choice';
+                const isOpenQuestion = block.type === 'open_question';
+                const isMatchingLike = block.type === 'drag_drop' || block.type === 'matching' || block.type === 'ordering';
+                const isMediaLike = block.type === 'media_embed' || block.type === 'video' || block.type === 'image';
+
+                const SettingsSection = ({
+                  id,
+                  title,
+                  children,
+                }: {
+                  id: typeof openBlockSettingsSection;
+                  title: string;
+                  children: React.ReactNode;
+                }) => {
+                  const isOpen = openBlockSettingsSection === id;
+                  return (
+                    <section className="rounded-lg border border-border/60 surface-panel">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setOpenBlockSettingsSection(id); }}
+                        className="flex w-full items-center justify-between px-2.5 py-1.5 text-left"
+                      >
+                        <span className="text-[11px] font-medium text-muted-foreground">{title}</span>
+                        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {isOpen && <div className="space-y-2 px-2.5 pb-2.5">{children}</div>}
+                    </section>
+                  );
+                };
+
                 return (
                   <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                    <div className="text-[11px] font-medium text-muted-foreground">Question Settings</div>
-                    {isQuestionBlock && localAnswersEnabled && (
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs">Show feedback</Label>
-                        <Checkbox
-                          checked={!!block.showFeedback}
-                          onCheckedChange={() => toggleBlockFeedback(block.id)}
+                    <div className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Vraaginstellingen' : 'Question Settings'}</div>
+
+                    <SettingsSection id="general" title={isDutch ? 'Algemeen' : 'General'}>
+                      {isQuestionBlock && localAnswersEnabled && (
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">{isDutch ? 'Toon feedback' : 'Show feedback'}</Label>
+                          <Checkbox
+                            checked={!!block.showFeedback}
+                            onCheckedChange={() => toggleBlockFeedback(block.id)}
+                          />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          min={0}
+                          step={0.1}
+                          value={s.points}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, points: Number(e.target.value || 0) }))}
+                          className="h-8"
+                          placeholder={isDutch ? 'Punten' : 'Points'}
+                        />
+                        <Input
+                          value={s.tags.join(',')}
+                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, tags: e.target.value.split(',').map((v: string) => v.trim()).filter(Boolean) }))}
+                          className="h-8"
+                          placeholder={isDutch ? 'Labels' : 'Tags'}
                         />
                       </div>
-                    )}
-                    {block.type === 'open_question' && (
-                      <Popover
-                        open={aiSettingsBlockId === block.id}
-                        onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
-                      >
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2">
-                            <Sparkles className="h-3.5 w-3.5" />
-                            AI Grading Preset
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="p-0 w-auto">
-                          <AIGradingPresets
-                            presets={gradingPresets}
-                            selectedPresetId={selectedPresetId}
-                            blockOverride={block.aiGradingOverride}
-                            onSelectPreset={setSelectedPresetId}
-                            onSavePreset={(preset) => {
-                              setGradingPresets((prev) => {
-                                const exists = prev.find((p) => p.id === preset.id);
-                                if (exists) return prev.map((p) => (p.id === preset.id ? preset : p));
-                                return [...prev, preset];
-                              });
-                            }}
-                            onDeletePreset={(id) => {
-                              setGradingPresets((prev) => prev.filter((p) => p.id !== id));
-                            }}
-                            onSetDefault={(id) => {
-                              setGradingPresets((prev) => prev.map((p) => ({ ...p, is_default: p.id === id })));
-                            }}
-                            onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">{isDutch ? 'Verplicht' : 'Required'}</Label>
+                        <Checkbox
+                          checked={s.required}
+                          onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, required: !!checked }))}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">{isDutch ? 'Willekeurige positie' : 'Random position'}</Label>
+                        <Checkbox
+                          checked={s.randomPosition}
+                          onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, randomPosition: !!checked }))}
+                        />
+                      </div>
                       <Input
                         type="number"
                         min={0}
-                        step={0.1}
-                        value={s.points}
-                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, points: Number(e.target.value || 0) }))}
+                        value={s.timeLimitSeconds ?? ''}
+                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, timeLimitSeconds: e.target.value ? Number(e.target.value) : null }))}
                         className="h-8"
-                        placeholder="Points"
+                        placeholder={isDutch ? 'Tijdslimiet vraag (s)' : 'Question time limit (s)'}
                       />
-                      <Input
-                        value={s.tags.join(',')}
-                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, tags: e.target.value.split(',').map((v: string) => v.trim()).filter(Boolean) }))}
-                        className="h-8"
-                        placeholder="Tags"
+                    </SettingsSection>
+
+                    <SettingsSection id="hints" title={isDutch ? 'Hints & feedback' : 'Hints & feedback'}>
+                      <Textarea
+                        value={s.hints.join('\n')}
+                        onChange={(e) =>
+                          updateBlockSettings(block.id, (prev) => ({
+                            ...prev,
+                            hints: e.target.value.split('\n').map((v: string) => v.trim()).filter(Boolean),
+                          }))
+                        }
+                        className="text-xs min-h-[52px]"
+                        placeholder={isDutch ? 'Hints (1 per regel)' : 'Hints (1 per line)'}
                       />
-                    </div>
-                    <Textarea
-                      value={s.hints.join('\n')}
-                      onChange={(e) =>
-                        updateBlockSettings(block.id, (prev) => ({
-                          ...prev,
-                          hints: e.target.value.split('\n').map((v: string) => v.trim()).filter(Boolean),
-                        }))
-                      }
-                      className="text-xs min-h-[52px]"
-                      placeholder="Hints (1 per line)"
-                    />
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">Required</Label>
-                      <Checkbox
-                        checked={s.required}
-                        onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, required: !!checked }))}
+                      <Textarea
+                        value={s.feedbackText}
+                        onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, feedbackText: e.target.value }))}
+                        className="text-xs min-h-[52px]"
+                        placeholder={isDutch ? 'Eigen feedbacktekst' : 'Custom feedback text'}
                       />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">Random position</Label>
-                      <Checkbox
-                        checked={s.randomPosition}
-                        onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, randomPosition: !!checked }))}
-                      />
-                    </div>
-                    <Textarea
-                      value={s.feedbackText}
-                      onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, feedbackText: e.target.value }))}
-                      className="text-xs min-h-[52px]"
-                      placeholder="Custom feedback text"
-                    />
-                    <Input
-                      type="number"
-                      min={0}
-                      value={s.timeLimitSeconds ?? ''}
-                      onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, timeLimitSeconds: e.target.value ? Number(e.target.value) : null }))}
-                      className="h-8"
-                      placeholder="Question time limit (s)"
-                    />
-                    {block.type === 'open_question' && (
-                      <div className="space-y-2 border-t pt-2">
+                    </SettingsSection>
+
+                    {isOpenQuestion && (
+                      <SettingsSection id="grading" title={isDutch ? 'Beoordeling' : 'Grading'}>
+                        <Popover
+                          open={aiSettingsBlockId === block.id}
+                          onOpenChange={(open) => setAiSettingsBlockId(open ? block.id : null)}
+                        >
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 w-full justify-start gap-2" onClick={(e) => e.stopPropagation()}>
+                              <Sparkles className="h-3.5 w-3.5" />
+                              {isDutch ? 'AI-beoordelingsvoorkeur' : 'AI Grading Preset'}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="p-0 w-auto">
+                            <AIGradingPresets
+                              presets={gradingPresets}
+                              selectedPresetId={selectedPresetId}
+                              blockOverride={block.aiGradingOverride}
+                              onSelectPreset={setSelectedPresetId}
+                              onSavePreset={(preset) => {
+                                setGradingPresets((prev) => {
+                                  const exists = prev.find((p) => p.id === preset.id);
+                                  if (exists) return prev.map((p) => (p.id === preset.id ? preset : p));
+                                  return [...prev, preset];
+                                });
+                              }}
+                              onDeletePreset={(id) => {
+                                setGradingPresets((prev) => prev.filter((p) => p.id !== id));
+                              }}
+                              onSetDefault={(id) => {
+                                setGradingPresets((prev) => prev.map((p) => ({ ...p, is_default: p.id === id })));
+                              }}
+                              onBlockOverrideChange={(override) => updateBlockAiOverride(block.id, override)}
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <Input
                           value={s.openQuestion.modelAnswer}
                           onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, modelAnswer: e.target.value } }))}
                           className="h-8"
-                          placeholder="Model answer"
+                          placeholder={isDutch ? 'Modelantwoord' : 'Model answer'}
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <Input
@@ -3701,7 +3738,7 @@ export function AssignmentEditor({
                             value={s.openQuestion.maxWords ?? ''}
                             onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, maxWords: e.target.value ? Number(e.target.value) : null } }))}
                             className="h-8"
-                            placeholder="Max words"
+                            placeholder={isDutch ? 'Max woorden' : 'Max words'}
                           />
                           <Input
                             type="number"
@@ -3709,55 +3746,61 @@ export function AssignmentEditor({
                             value={s.openQuestion.maxChars ?? ''}
                             onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, maxChars: e.target.value ? Number(e.target.value) : null } }))}
                             className="h-8"
-                            placeholder="Max chars"
+                            placeholder={isDutch ? 'Max tekens' : 'Max chars'}
                           />
                         </div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Spellcheck</Label><Checkbox checked={s.openQuestion.spellcheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, spellcheck: !!checked } }))} /></div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Allow file upload</Label><Checkbox checked={s.openQuestion.allowFileUpload} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, allowFileUpload: !!checked } }))} /></div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Plagiarism check</Label><Checkbox checked={s.openQuestion.plagiarismCheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, plagiarismCheck: !!checked } }))} /></div>
-                      </div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Spellingscontrole' : 'Spellcheck'}</Label><Checkbox checked={s.openQuestion.spellcheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, spellcheck: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Bestand uploaden toestaan' : 'Allow file upload'}</Label><Checkbox checked={s.openQuestion.allowFileUpload} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, allowFileUpload: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Plagiaatcontrole' : 'Plagiarism check'}</Label><Checkbox checked={s.openQuestion.plagiarismCheck} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, openQuestion: { ...prev.openQuestion, plagiarismCheck: !!checked } }))} /></div>
+                      </SettingsSection>
                     )}
-                    {block.type === 'multiple_choice' && (
-                      <div className="space-y-2 border-t pt-2">
-                        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle options</Label><Checkbox checked={s.multipleChoice.shuffleOptions} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, shuffleOptions: !!checked } }))} /></div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Partial credit</Label><Checkbox checked={s.multipleChoice.partialCredit} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, partialCredit: !!checked } }))} /></div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Negative scoring</Label><Checkbox checked={s.multipleChoice.negativeScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, negativeScoring: !!checked } }))} /></div>
-                        <select
-                          className="h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full"
-                          value={s.multipleChoice.scoringMode}
-                          onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: e.target.value } }))}
-                        >
-                          <option value="partial">Partial</option>
-                          <option value="all_or_nothing">All or nothing</option>
-                        </select>
-                      </div>
+
+                    {isMultipleChoice && (
+                      <SettingsSection id="multipleChoice" title={isDutch ? 'Meerkeuze' : 'Multiple choice'}>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Opties husselen' : 'Shuffle options'}</Label><Checkbox checked={s.multipleChoice.shuffleOptions} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, shuffleOptions: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Deelscore' : 'Partial credit'}</Label><Checkbox checked={s.multipleChoice.partialCredit} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, partialCredit: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Negatieve score' : 'Negative scoring'}</Label><Checkbox checked={s.multipleChoice.negativeScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, negativeScoring: !!checked } }))} /></div>
+                        <div>
+                          <Label className="text-[10px] text-muted-foreground">{isDutch ? 'Scoremodus bij meerdere juiste antwoorden' : 'Scoring mode with multiple correct answers'}</Label>
+                          <select
+                            className="h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full mt-0.5"
+                            value={s.multipleChoice.scoringMode}
+                            onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: e.target.value } }))}
+                          >
+                            <option value="partial">{isDutch ? 'Gedeeltelijk (elk goed antwoord telt apart)' : 'Partial (each correct answer counts independently)'}</option>
+                            <option value="all_or_nothing">{isDutch ? 'Alles of niets (moet alle juiste kiezen)' : 'All or nothing (must select every correct one)'}</option>
+                          </select>
+                        </div>
+                      </SettingsSection>
                     )}
-                    {(block.type === 'drag_drop' || block.type === 'matching' || block.type === 'ordering') && (
-                      <div className="space-y-2 border-t pt-2">
-                        <div className="flex items-center justify-between"><Label className="text-xs">Shuffle items</Label><Checkbox checked={s.matching.shuffleItems} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, shuffleItems: !!checked } }))} /></div>
-                        <div className="flex items-center justify-between"><Label className="text-xs">Partial scoring</Label><Checkbox checked={s.matching.partialScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, partialScoring: !!checked } }))} /></div>
+
+                    {isMatchingLike && (
+                      <SettingsSection id="matching" title={isDutch ? 'Koppelen & volgorde' : 'Matching & ordering'}>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Items husselen' : 'Shuffle items'}</Label><Checkbox checked={s.matching.shuffleItems} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, shuffleItems: !!checked } }))} /></div>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Deelscore' : 'Partial scoring'}</Label><Checkbox checked={s.matching.partialScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, partialScoring: !!checked } }))} /></div>
                         <Input
                           type="number"
                           min={1}
                           value={s.matching.maxAttemptsInQuestion ?? ''}
                           onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, matching: { ...prev.matching, maxAttemptsInQuestion: e.target.value ? Number(e.target.value) : null } }))}
                           className="h-8"
-                          placeholder="Max attempts in question"
+                          placeholder={isDutch ? 'Max pogingen bij deze vraag' : 'Max attempts in question'}
                         />
-                      </div>
+                      </SettingsSection>
                     )}
-                    {(block.type === 'media_embed' || block.type === 'video' || block.type === 'image') && (
-                      <div className="space-y-2 border-t pt-2">
-                        <div className="flex items-center justify-between"><Label className="text-xs">Must watch before answer</Label><Checkbox checked={s.media.mustWatchBeforeAnswer} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, media: { ...prev.media, mustWatchBeforeAnswer: !!checked } }))} /></div>
+
+                    {isMediaLike && (
+                      <SettingsSection id="media" title={isDutch ? 'Media' : 'Media'}>
+                        <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Verplicht bekijken voor antwoord' : 'Must watch before answer'}</Label><Checkbox checked={s.media.mustWatchBeforeAnswer} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, media: { ...prev.media, mustWatchBeforeAnswer: !!checked } }))} /></div>
                         <Input
                           type="number"
                           min={0}
                           value={s.media.revealDelaySeconds}
                           onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, media: { ...prev.media, revealDelaySeconds: Number(e.target.value || 0) } }))}
                           className="h-8"
-                          placeholder="Reveal delay seconds"
+                          placeholder={isDutch ? 'Vertraging voor tonen (s)' : 'Reveal delay seconds'}
                         />
-                      </div>
+                      </SettingsSection>
                     )}
                   </div>
                 );
