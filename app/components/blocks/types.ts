@@ -205,6 +205,12 @@ export interface FlashcardBlockContent {
   cards: Array<{ id: string; front: string; back: string }>;
 }
 
+// 19. TableBlock
+export interface TableBlockContent {
+  columns: Array<{ id: string; label: string }>;
+  rows: Array<{ id: string; cells: Array<{ value: string; editable: boolean; correctValue?: string }> }>;
+}
+
 // Union type for all block contents
 export type BlockContent =
   | TextBlockContent
@@ -227,7 +233,8 @@ export type BlockContent =
   | ExecutableCodeBlockContent
   | ParagraphBlockContent
   | ImageSimpleBlockContent
-  | FlashcardBlockContent;
+  | FlashcardBlockContent
+  | TableBlockContent;
 
 // Props for block components
 export interface BlockProps {

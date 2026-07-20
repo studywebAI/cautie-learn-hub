@@ -258,6 +258,35 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'table',
+    type: 'table',
+    icon: <TableIcon className="h-4 w-4" />,
+    label: 'Table',
+    category: 'data',
+    defaultData: {
+      columns: [
+        { id: 'col-1', label: 'Column 1' },
+        { id: 'col-2', label: 'Column 2' },
+      ],
+      rows: [
+        {
+          id: 'row-1',
+          cells: [
+            { value: '', editable: false },
+            { value: '', editable: true, correctValue: '' },
+          ],
+        },
+        {
+          id: 'row-2',
+          cells: [
+            { value: '', editable: false },
+            { value: '', editable: true, correctValue: '' },
+          ],
+        },
+      ],
+    }
+  },
+  {
     id: 'media_embed',
     type: 'media_embed',
     icon: <Link className="h-4 w-4" />,
@@ -1811,6 +1840,17 @@ export function AssignmentEditor({
           const cards = (block.data.cards || []) as Array<{ front: string; back: string }>;
           return cards.map((c) => `${c.front || '...'} → ${c.back || '...'}`).join(' | ') || 'No cards yet.';
         }
+        if (block.type === 'table') {
+          const columns = (block.data.columns || []) as Array<{ id: string; label: string }>;
+          const rows = (block.data.rows || []) as Array<{ cells: Array<{ editable?: boolean; correctValue?: string }> }>;
+          const parts: string[] = [];
+          rows.forEach((row) => {
+            row.cells.forEach((cell, ci) => {
+              if (cell.editable) parts.push(`${columns[ci]?.label || `Col ${ci + 1}`}: ${cell.correctValue || '...'}`);
+            });
+          });
+          return parts.join(', ') || 'No answer cells set.';
+        }
         return '';
       })();
       return (
@@ -2282,6 +2322,125 @@ export function AssignmentEditor({
                 <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Kaartje toevoegen' : 'Add card'}
               </Button>
             </div>
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
+
+      case 'table': {
+        const columns = (block.data.columns || []) as Array<{ id: string; label: string }>;
+        const tableRows = (block.data.rows || []) as Array<{ id: string; cells: Array<{ value: string; editable: boolean; correctValue?: string }> }>;
+
+        const setColumnLabel = (ci: number, label: string) => {
+          const newColumns = [...columns];
+          newColumns[ci] = { ...newColumns[ci], label };
+          updateBlock(block.id, { ...block.data, columns: newColumns });
+        };
+        const addColumn = () => {
+          const newColumns = [...columns, { id: `col-${generateId()}`, label: `Column ${columns.length + 1}` }];
+          const newRows = tableRows.map((row) => ({ ...row, cells: [...row.cells, { value: '', editable: false }] }));
+          updateBlock(block.id, { ...block.data, columns: newColumns, rows: newRows });
+        };
+        const removeColumn = (ci: number) => {
+          if (columns.length <= 1) return;
+          const newColumns = columns.filter((_, i) => i !== ci);
+          const newRows = tableRows.map((row) => ({ ...row, cells: row.cells.filter((_, i) => i !== ci) }));
+          updateBlock(block.id, { ...block.data, columns: newColumns, rows: newRows });
+        };
+        const addRow = () => {
+          const newRow = { id: `row-${generateId()}`, cells: columns.map(() => ({ value: '', editable: false })) };
+          updateBlock(block.id, { ...block.data, rows: [...tableRows, newRow] });
+        };
+        const removeRow = (ri: number) => {
+          if (tableRows.length <= 1) return;
+          updateBlock(block.id, { ...block.data, rows: tableRows.filter((_, i) => i !== ri) });
+        };
+        const updateCell = (ri: number, ci: number, patch: Partial<{ value: string; editable: boolean; correctValue: string }>) => {
+          const newRows = [...tableRows];
+          const newCells = [...newRows[ri].cells];
+          newCells[ci] = { ...newCells[ci], ...patch };
+          newRows[ri] = { ...newRows[ri], cells: newCells };
+          updateBlock(block.id, { ...block.data, rows: newRows });
+        };
+
+        return (
+          <div className="space-y-2 overflow-x-auto">
+            <p className="text-[10px] text-muted-foreground">
+              {isDutch ? 'Vink een cel aan om deze door de leerling te laten invullen.' : 'Check a cell to make students fill it in.'}
+            </p>
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr>
+                  {columns.map((col, ci) => (
+                    <th key={col.id} className="border border-border p-1">
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={col.label}
+                          onChange={(e) => setColumnLabel(ci, e.target.value)}
+                          className="h-6 text-xs border-0 shadow-none focus-visible:ring-0 bg-transparent font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                          readOnly={!canEditBlock}
+                          disabled={!canEditBlock}
+                        />
+                        {canEditBlock && columns.length > 1 && (
+                          <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); removeColumn(ci); }}>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((row, ri) => (
+                  <tr key={row.id}>
+                    {row.cells.map((cell, ci) => (
+                      <td key={ci} className="border border-border p-1 align-top">
+                        <div className="space-y-1">
+                          <label className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Checkbox
+                              checked={!!cell.editable}
+                              onCheckedChange={(checked) => updateCell(ri, ci, { editable: !!checked })}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-3 w-3"
+                              disabled={!canEditBlock}
+                            />
+                            {isDutch ? 'Invullen' : 'Fill in'}
+                          </label>
+                          <Input
+                            value={cell.editable ? (cell.correctValue || '') : cell.value}
+                            onChange={(e) => updateCell(ri, ci, cell.editable ? { correctValue: e.target.value } : { value: e.target.value })}
+                            placeholder={cell.editable ? (isDutch ? 'Juist antwoord' : 'Correct answer') : (isDutch ? 'Waarde' : 'Value')}
+                            className="h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
+                            onClick={(e) => e.stopPropagation()}
+                            readOnly={!canEditBlock}
+                            disabled={!canEditBlock}
+                          />
+                        </div>
+                      </td>
+                    ))}
+                    {canEditBlock && (
+                      <td className="border-0 p-1 align-top">
+                        <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={(e) => { e.stopPropagation(); removeRow(ri); }} disabled={tableRows.length <= 1}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {canEditBlock && (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); addRow(); }} className="text-xs text-muted-foreground h-6">
+                  <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Rij toevoegen' : 'Add row'}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); addColumn(); }} className="text-xs text-muted-foreground h-6">
+                  <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Kolom toevoegen' : 'Add column'}
+                </Button>
+              </div>
+            )}
             {renderReadOnlyActions()}
           </div>
         );

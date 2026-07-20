@@ -11,6 +11,7 @@ import {
   calculateDragDropScore,
   calculateNumericScore,
   calculateFlashcardScore,
+  calculateTableScore,
   canReleaseFeedback,
   getAssignmentAvailabilityState,
   normalizeAssignmentSettings,
@@ -255,6 +256,12 @@ export async function POST(
     if (block.type === 'flashcard') {
       const allCardIds = ((block as any).data?.cards || []).map((c: any) => c.id);
       const result = calculateFlashcardScore(answerData?.knownCardIds || [], allCardIds, blockSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'table') {
+      const result = calculateTableScore(answerData?.values || {}, (block as any).data?.rows || [], blockSettings);
       score = result.score;
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;

@@ -5,6 +5,7 @@ import {
   calculateDragDropScore,
   calculateFillInBlankScore,
   calculateFlashcardScore,
+  calculateTableScore,
   calculateMcqScore,
   calculateNumericScore,
   calculateOrderingScore,
@@ -166,6 +167,13 @@ export async function POST(
           isCorrect = result.isCorrect;
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'All cards known' : 'Reviewed');
+        }
+        if (block.type === 'table') {
+          const result = calculateTableScore(answer_data?.values || {}, blockData?.rows || [], blockSettings);
+          score = result.score;
+          isCorrect = result.isCorrect;
+          totalScore += Number(score || 0);
+          feedback = blockSettings.feedbackText || (isCorrect ? 'Table correct' : 'Table has mistakes');
         }
 
         // For open questions, mark as submitted but don't grade yet

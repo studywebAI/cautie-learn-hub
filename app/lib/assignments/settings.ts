@@ -442,6 +442,30 @@ export function calculateFlashcardScore(
   return { score, isCorrect: fraction === 1 };
 }
 
+export function calculateTableScore(
+  values: Record<string, string>,
+  rows: Array<{ id: string; cells: Array<{ editable?: boolean; correctValue?: string }> }>,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  const normalize = (v: string) => String(v || '').trim().toLowerCase();
+  let editableCount = 0;
+  let correctCount = 0;
+  for (const row of rows || []) {
+    (row.cells || []).forEach((cell, ci) => {
+      if (!cell.editable) return;
+      editableCount += 1;
+      const cellId = `${row.id}:${ci}`;
+      if (normalize(values?.[cellId]) === normalize(cell.correctValue || '') && normalize(cell.correctValue || '') !== '') {
+        correctCount += 1;
+      }
+    });
+  }
+  if (editableCount === 0) return { score: 0, isCorrect: false };
+  const fraction = correctCount / editableCount;
+  const score = Math.round(settings.points * fraction * 1000) / 1000;
+  return { score, isCorrect: fraction === 1 };
+}
+
 export function deterministicShuffle<T>(items: T[], seedInput: string): T[] {
   const arr = [...items];
   let seed = 0;
