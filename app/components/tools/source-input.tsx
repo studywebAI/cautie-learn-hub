@@ -25,8 +25,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Spinner } from '@/components/ui/spinner';
 import { AppContext, type AppContextType } from '@/contexts/app-context';
-import { extractShareableClasses } from '@/lib/classes/shareable-classes';
-import { fetchClassShareRows } from '@/lib/class-share/client';
 import type { ReactNode } from 'react';
 
 interface SourceInputProps {
@@ -118,8 +116,6 @@ const formatTime = (epochMs?: number) => {
   const ss = String(d.getSeconds()).padStart(2, '0');
   return `${hh}:${mm}:${ss}`;
 };
-
-type ClassShareRow = Awaited<ReturnType<typeof fetchClassShareRows>>[number];
 
 const formatDateTimeStable = (value?: string) => {
   if (!value) return '-';
@@ -328,10 +324,6 @@ export function SourceInput({
   const [recentsSort, setRecentsSort] = useState<'newest' | 'oldest' | 'most_used' | 'name'>('newest');
   const [recentsSearch, setRecentsSearch] = useState('');
   const [importMenuOpen, setImportMenuOpen] = useState(false);
-  const [chatImportOpen, setChatImportOpen] = useState(false);
-  const [chatImportLoading, setChatImportLoading] = useState(false);
-  const [chatImportClassId, setChatImportClassId] = useState('');
-  const [chatImportRows, setChatImportRows] = useState<ClassShareRow[]>([]);
   const [linkInputOpen, setLinkInputOpen] = useState(false);
   const [linkInputValue, setLinkInputValue] = useState('');
   const [removingSourceIds, setRemovingSourceIds] = useState<string[]>([]);
@@ -848,45 +840,6 @@ export function SourceInput({
     });
     return sorted;
   }, [getRecentsUsageMap, recentsCatalog, recentsSearch, recentsSort]);
-
-  const classOptions = useMemo(
-    () => extractShareableClasses(appContext?.classes || []),
-    [appContext?.classes]
-  );
-
-  const loadClassChat = useCallback(async (classId: string) => {
-    if (!classId) return;
-    setChatImportLoading(true);
-    try {
-      const [allRows, teacherRows] = await Promise.all([
-        fetchClassShareRows(classId, 'all').catch(() => []),
-        fetchClassShareRows(classId, 'teacher').catch(() => []),
-      ]);
-      const deduped = new Map<string, ClassShareRow>();
-      for (const row of [...allRows, ...teacherRows]) {
-        if (!row?.id) continue;
-        if (!deduped.has(row.id)) deduped.set(row.id, row);
-      }
-      const rows = Array.from(deduped.values());
-      setChatImportRows(rows.slice(-120).reverse());
-    } catch (error: any) {
-      setChatImportRows([]);
-      toast({ variant: 'destructive', title: 'Chat import failed', description: error?.message || 'Could not load class chat.' });
-    } finally {
-      setChatImportLoading(false);
-    }
-  }, [toast]);
-
-  const openChatImport = useCallback(() => {
-    if (classOptions.length === 0) {
-      toast({ variant: 'destructive', title: 'No classes found', description: 'Join or create a class first.' });
-      return;
-    }
-    const initialClassId = chatImportClassId || classOptions[0].id;
-    setChatImportClassId(initialClassId);
-    setChatImportOpen(true);
-    void loadClassChat(initialClassId);
-  }, [chatImportClassId, classOptions, loadClassChat, toast]);
 
   const recentToolIcon = useCallback((item: RecentCatalogItem) => {
     if (item.sourceType === 'material') return <FileText className="h-4 w-4 shrink-0 text-primary" />;
@@ -1697,9 +1650,6 @@ export function SourceInput({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="start" sideOffset={6} className="min-w-[180px]">
-                <DropdownMenuItem onClick={() => { openChatImport(); }}>
-                  Chat
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => { openMicrosoftPicker(); }}>
                   OneDrive
                 </DropdownMenuItem>
@@ -1892,75 +1842,6 @@ export function SourceInput({
           </div>
         </div>
       )}
-      {chatImportOpen && (
-        <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/40 p-3">
-          <div className="flex h-[72vh] w-full max-w-3xl flex-col rounded-xl border border-sidebar-border bg-background p-3 shadow-xl">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-medium">Import from Chat</p>
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setChatImportOpen(false)}>Close</Button>
-            </div>
-            <div className="mb-2">
-              <select
-                value={chatImportClassId}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setChatImportClassId(next);
-                  void loadClassChat(next);
-                }}
-                className="h-8 w-full rounded-md border border-sidebar-border bg-sidebar-accent/50 px-2 text-xs"
-              >
-                {classOptions.map((item) => (
-                  <option key={item.id} value={item.id}>{item.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-sidebar-border bg-sidebar-accent/20 p-2">
-              {chatImportLoading ? (
-                <div className="flex h-full items-center justify-center"><Spinner size={16} /></div>
-              ) : chatImportRows.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-xs text-muted-foreground">No class chat items found.</div>
-              ) : (
-                <div className="space-y-1.5">
-                  {chatImportRows.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className="flex w-full items-start gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left hover:bg-sidebar-accent/30"
-                      onClick={() => {
-                        const body = [item.text, item.attachmentLabel ? `[Attachment] ${item.attachmentLabel}` : ''].filter(Boolean).join('\n');
-                        addSource({
-                          id: `chat-${item.id}`,
-                          kind: 'file',
-                          label: `Chat${item.authorName ? ` (${item.authorName})` : ''}`,
-                          text: body,
-                          selected: true,
-                        });
-                        upsertMaterial({
-                          title: item.attachmentLabel || 'Chat item',
-                          type: 'text',
-                          preview: (item.text || item.attachmentLabel || '').slice(0, 180),
-                          detail: item.authorName || 'Class chat',
-                        });
-                        setChatImportOpen(false);
-                        toast({ title: 'Chat imported', description: 'Class shared content added to your source.' });
-                      }}
-                    >
-                      <FileText className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <div className="min-w-0 flex-1">
-                        <p className="line-clamp-2 text-xs">{item.text || item.attachmentLabel || 'Shared item'}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {item.authorName || 'User'} {item.createdAt ? `- ${formatRecentTimestamp(item.createdAt)}` : ''}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       <input
         ref={fileInputRef}
         type="file"

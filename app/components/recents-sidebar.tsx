@@ -59,11 +59,6 @@ type RecentItem = {
   weakestTool?: string | null;
 };
 
-type ClassOption = {
-  id: string;
-  name: string;
-};
-
 const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string; animateOnHover?: boolean }>> = {
   flashcards: Layers,
   notes: Brush,
@@ -112,12 +107,8 @@ export function RecentsSidebar() {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'studysets'>('all');
   const [isShareToUserOpen, setIsShareToUserOpen] = useState(false);
-  const [isShareToClassOpen, setIsShareToClassOpen] = useState(false);
   const [shareTargetItem, setShareTargetItem] = useState<RecentItem | null>(null);
   const [recipientInput, setRecipientInput] = useState('');
-  const [classes, setClasses] = useState<ClassOption[]>([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
-  const [classAudience, setClassAudience] = useState<'all' | 'teacher'>('all');
   const [isSubmittingShare, setIsSubmittingShare] = useState(false);
   const [isRecentsSettingsOpen, setIsRecentsSettingsOpen] = useState(false);
   const [shareLinkDays, setShareLinkDays] = useState('30');
@@ -243,25 +234,6 @@ export function RecentsSidebar() {
   }, [userId]);
 
   useEffect(() => {
-    if (!userId) return;
-    const fetchClasses = async () => {
-      try {
-        const response = await fetch('/api/classes');
-        if (!response.ok) return;
-        const data = await response.json();
-        const options: ClassOption[] = Array.isArray(data)
-          ? data
-              .filter((c: any) => c?.id && c?.name)
-              .map((c: any) => ({ id: String(c.id), name: String(c.name) }))
-          : [];
-        setClasses(options);
-      } catch (error) {
-      }
-    };
-    fetchClasses();
-  }, [userId]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
     const saved = window.localStorage.getItem('studyweb-recents-share-days');
     if (saved && ['1', '7', '30'].includes(saved)) {
@@ -350,43 +322,11 @@ export function RecentsSidebar() {
     });
   };
 
-  const handleShareToClass = async (item: RecentItem, classId: string, audience: 'all' | 'teacher') => {
-    const safeUrl = await createSafeShareLink(item);
-    const response = await fetch(`/api/classes/${classId}/share`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: item.title,
-        attachmentLabel: item.title,
-        audience,
-        source: {
-          link_type: item.source,
-          link_ref_id: item.id,
-          metadata_json: { href: safeUrl },
-        },
-      }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(String(payload?.error || 'Share to class failed'));
-    toast({
-      title: isDutch ? 'Gedeeld met class' : 'Shared to class',
-      description: isDutch ? 'Item staat nu in class shared feed.' : 'Item is now in class shared feed.',
-    });
-  };
-
   const openShareToUserDialog = (item: RecentItem) => {
     setShareTargetItem(item);
     setRecipientInput('');
     setShareStatus(null);
     setIsShareToUserOpen(true);
-  };
-
-  const openShareToClassDialog = (item: RecentItem) => {
-    setShareTargetItem(item);
-    setSelectedClassId(classes[0]?.id || '');
-    setClassAudience('all');
-    setShareStatus(null);
-    setIsShareToClassOpen(true);
   };
 
   const submitShareToUser = async () => {
@@ -410,34 +350,6 @@ export function RecentsSidebar() {
       setShareStatus({ type: 'error', text: error?.message || 'Share failed.' });
       toast({
         title: isDutch ? 'Delen mislukt' : 'Share failed',
-        description: error?.message || (isDutch ? 'Kon niet delen.' : 'Could not share.'),
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmittingShare(false);
-    }
-  };
-
-  const submitShareToClass = async () => {
-    if (!shareTargetItem) return;
-    if (!selectedClassId) {
-      toast({
-        title: isDutch ? 'Class ontbreekt' : 'Class missing',
-        description: isDutch ? 'Kies eerst een class.' : 'Select a class first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsSubmittingShare(true);
-    try {
-      await handleShareToClass(shareTargetItem, selectedClassId, classAudience);
-      setShareStatus({ type: 'success', text: isDutch ? 'Gedeeld met class.' : 'Shared to class.' });
-      setIsShareToClassOpen(false);
-      setShareTargetItem(null);
-    } catch (error: any) {
-      setShareStatus({ type: 'error', text: error?.message || 'Share to class failed.' });
-      toast({
-        title: isDutch ? 'Delen met class mislukt' : 'Share to class failed',
         description: error?.message || (isDutch ? 'Kon niet delen.' : 'Could not share.'),
         variant: 'destructive',
       });
@@ -594,10 +506,6 @@ export function RecentsSidebar() {
                       <span>Share via</span>
                       <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openShareToClassDialog(item)} disabled={classes.length === 0}>
-                      <span>Share to class</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 text-sidebar-foreground/70" />
-                    </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -699,65 +607,6 @@ export function RecentsSidebar() {
           <DialogFooter>
             <Button type="button" onClick={() => setIsRecentsSettingsOpen(false)}>
               {isDutch ? 'Klaar' : 'Done'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={isShareToClassOpen}
-        onOpenChange={(open) => {
-          setIsShareToClassOpen(open);
-          if (!open) setShareTargetItem(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{isDutch ? 'Deel met class' : 'Share to class'}</DialogTitle>
-            <DialogDescription>{shareTargetItem?.title}</DialogDescription>
-          </DialogHeader>
-          {shareStatus?.type === 'error' ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {shareStatus.text}
-            </div>
-          ) : null}
-          <div className="space-y-2">
-            <Label>{isDutch ? 'Class' : 'Class'}</Label>
-            <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-              <SelectTrigger>
-                <SelectValue placeholder={isDutch ? 'Kies een class' : 'Choose a class'} />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((classOption) => (
-                  <SelectItem key={classOption.id} value={classOption.id}>
-                    {classOption.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {classes.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {isDutch ? 'Geen class beschikbaar om mee te delen.' : 'No class available to share to yet.'}
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label>{isDutch ? 'Publiek' : 'Audience'}</Label>
-            <Select value={classAudience} onValueChange={(value) => setClassAudience(value === 'teacher' ? 'teacher' : 'all')}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{isDutch ? 'Iedereen in class' : 'Everyone in class'}</SelectItem>
-                <SelectItem value="teacher">{isDutch ? 'Alleen teachers' : 'Teachers only'}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsShareToClassOpen(false)}>
-              {isDutch ? 'Annuleren' : 'Cancel'}
-            </Button>
-            <Button type="button" onClick={() => void submitShareToClass()} disabled={isSubmittingShare}>
-              {isSubmittingShare ? (isDutch ? 'Delen...' : 'Sharing...') : (isDutch ? 'Delen' : 'Share')}
             </Button>
           </DialogFooter>
         </DialogContent>

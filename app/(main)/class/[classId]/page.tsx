@@ -29,9 +29,6 @@ const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
   { ssr: false }
 );
-const ShareTab = dynamic(
-  () => import('@/components/class/chat-share-tab-redesigned').then((m) => m.ChatShareTabRedesigned)
-);
 const ScheduleTab = dynamic(
   () => import('@/components/class/schedule-tab-redesigned').then((m) => m.ScheduleTabRedesigned)
 );
@@ -312,8 +309,6 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'share':
-        return <ShareTab classId={classId} />;
       case 'schedule':
         return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
       case 'calendar':

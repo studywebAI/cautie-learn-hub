@@ -32,9 +32,6 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { WordwebCanvas } from '@/components/tools/wordweb-canvas';
 import { TimelineBoard } from '@/components/tools/timeline-board';
-import { SendToClassButton } from '@/components/tools/send-to-class-button';
-import { extractShareableClasses } from '@/lib/classes/shareable-classes';
-import { postClassShareItem } from '@/lib/class-share/client';
 import type { CanonicalDocument } from '@/lib/tools/canonical-model';
 import {
   canonicalToNotesSections,
@@ -177,7 +174,6 @@ function NotesPageContent() {
   const mode: 'notes' | 'wordweb' | 'timeline' =
     pathname === '/tools/wordweb' ? 'wordweb' : pathname === '/tools/timeline' ? 'timeline' : 'notes';
   const runId = searchParams.get('runId');
-  const classId = searchParams.get('classId');
   const taskId = searchParams.get('taskId');
   const studysetId = searchParams.get('studysetId');
   const launchRequested = searchParams.get('launch') === '1';
@@ -189,10 +185,6 @@ function NotesPageContent() {
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
-  const shareableClasses = useMemo(
-    () => extractShareableClasses((appContext as any)?.classes || []),
-    [appContext]
-  );
   const noteStyleOptions = [
     { value: 'structured', label: 'Structured', description: 'Clear headings and concise key points' },
     { value: 'standard', label: 'Standard', description: 'Balanced summary style for general studying' },
@@ -243,7 +235,6 @@ function NotesPageContent() {
   const [showLaunchScreen, setShowLaunchScreen] = useState(Boolean(launchRequested && taskId && studysetId));
   const [launchStageIndex, setLaunchStageIndex] = useState(0);
   const [saveToRecents, setSaveToRecents] = useState(true);
-  const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [showNotesSources, setShowNotesSources] = useState(false);
   const notesContentRef = useRef<HTMLDivElement>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1174,26 +1165,6 @@ function NotesPageContent() {
     persistNotesState(nextHtml);
   }, [editMode, persistNotesState]);
 
-  const handleShareToClass = useCallback(async (targetClassId: string) => {
-    if (!targetClassId || !generatedNotes) return;
-    setIsSharingToClass(true);
-    try {
-      const sections = editableSections.length;
-      await postClassShareItem({
-        classId: targetClassId,
-        audience: 'teacher',
-        text: `Shared notes: ${customTitle.trim() || 'Untitled notes'}`,
-        attachmentLabel: `${sections} sections`,
-      });
-      toast({ title: 'Shared to class', description: 'Notes were posted in class share.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share notes.' });
-    } finally {
-      setIsSharingToClass(false);
-    }
-  }, [customTitle, editableSections.length, generatedNotes, toast]);
-
-
   if (showLaunchScreen) {
     return (
       <>
@@ -1279,13 +1250,6 @@ function NotesPageContent() {
                 getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
               />
               <SourcesPill data={notesSourcesData} onOpen={() => setShowNotesSources(true)} />
-              <SendToClassButton
-                classes={shareableClasses}
-                classIdFromRoute={classId}
-                sending={isSharingToClass}
-                onSend={handleShareToClass}
-                className="rounded-full h-8"
-              />
             </div>
           </div>
 
@@ -1804,13 +1768,6 @@ function NotesPageContent() {
                   getMarkdown={() => notesToMarkdown(editableSections)}
                   getHtml={() => noteHtml || notesToHtml(generatedNotes)}
                   getPrintHtml={() => notesContentRef.current?.innerHTML || noteHtml || notesToHtml(generatedNotes)}
-                />
-                <SendToClassButton
-                  classes={shareableClasses}
-                  classIdFromRoute={classId}
-                  sending={isSharingToClass}
-                  onSend={handleShareToClass}
-                  className="rounded-full h-8"
                 />
               </div>
             </div>

@@ -1,13 +1,12 @@
 export const TEACHER_CLASS_TAB_IDS = [
   'group',
-  'share',
   'schedule',
   'calendar',
   'logs',
   'settings',
 ] as const;
 
-export const STUDENT_CLASS_TAB_IDS = ['invite', 'group', 'share', 'schedule'] as const;
+export const STUDENT_CLASS_TAB_IDS = ['invite', 'group', 'schedule'] as const;
 
 export type TeacherClassTabId = (typeof TEACHER_CLASS_TAB_IDS)[number];
 export type StudentClassTabId = (typeof STUDENT_CLASS_TAB_IDS)[number];

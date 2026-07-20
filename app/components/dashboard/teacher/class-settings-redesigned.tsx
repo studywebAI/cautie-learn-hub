@@ -39,18 +39,13 @@ export function ClassSettingsRedesigned({
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   const [editName, setEditName] = useState(className);
   const [editDesc, setEditDesc] = useState('');
 
-  const [studentChatEnabled, setStudentChatEnabled] = useState(true);
-  const [teacherChatEnabled, setTeacherChatEnabled] = useState(true);
-
   const [tabVisibility, setTabVisibility] = useState<Record<string, boolean>>({
     group: true,
     schedule: true,
-    share: true,
     grades: true,
     analytics: true,
     logs: true,
@@ -85,10 +80,9 @@ export function ClassSettingsRedesigned({
   async function loadSettings() {
     setLoading(true);
     try {
-      const [classRes, groupRes, shareRes] = await Promise.allSettled([
+      const [classRes, groupRes] = await Promise.allSettled([
         fetch(`/api/classes/${classId}`),
         fetch(`/api/classes/${classId}/group`),
-        fetch(`/api/classes/${classId}/share/settings`),
       ]);
 
       if (classRes.status === 'fulfilled' && classRes.value.ok) {
@@ -107,34 +101,9 @@ export function ClassSettingsRedesigned({
         setTeachers(rawTeachers.map((t: any) => ({ id: t.id, name: t.name || t.full_name || t.email || t.id })));
       }
 
-      if (shareRes.status === 'fulfilled' && shareRes.value.ok) {
-        const data = await shareRes.value.json();
-        const settings = data.settings || {};
-        setStudentChatEnabled(settings.allChatEnabled !== false);
-        setTeacherChatEnabled(settings.teacherChatEnabled !== false);
-      }
     } catch (e) {
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function saveChatSettings() {
-    setSaving(true);
-    try {
-      await fetch(`/api/classes/${classId}/share/settings`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          settings: {
-            allChatEnabled: studentChatEnabled,
-            teacherChatEnabled: teacherChatEnabled,
-          },
-        }),
-      });
-    } catch (e) {
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -340,12 +309,6 @@ export function ClassSettingsRedesigned({
                     description={isDutch ? 'In groepslijsten en profielen' : 'In group lists and profiles'}
                     enabled={true}
                     onChange={() => {}}
-                  />
-                  <Toggle
-                    label={isDutch ? 'Students kunnen messages sturen' : 'Students can send messages'}
-                    description={isDutch ? 'In chat- en share-tabs' : 'In chat and share tabs'}
-                    enabled={studentChatEnabled}
-                    onChange={setStudentChatEnabled}
                   />
                 </div>
               </div>

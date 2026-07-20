@@ -24,9 +24,6 @@ import { getToolStrings } from '@/lib/tool-i18n';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { useAdvancedToolSettings } from '@/hooks/use-advanced-tool-settings';
 import { detectAdvancedSettingsConflicts } from '@/lib/tools/advanced-settings-schema';
-import { SendToClassButton } from '@/components/tools/send-to-class-button';
-import { extractShareableClasses } from '@/lib/classes/shareable-classes';
-import { postClassShareItem } from '@/lib/class-share/client';
 import { classifyContent, isFlashcardTypeAvailable } from '@/lib/tools/content-classifier';
 import type { ContentClassification } from '@/lib/tools/content-classifier';
 import { PageHeader } from '@/components/ui/page-header';
@@ -95,10 +92,6 @@ function FlashcardsPageContent() {
   const region = appContext?.region ?? 'global';
   const schoolingLevel = appContext?.schoolingLevel ?? 2;
   const t = getToolStrings(language);
-  const shareableClasses = React.useMemo(
-    () => extractShareableClasses((appContext as any)?.classes || []),
-    [appContext]
-  );
 
   const [phase, setPhase] = useState<Phase>('input');
   const [sourceText, setSourceText] = useState(sourceTextFromParams || '');
@@ -116,7 +109,6 @@ function FlashcardsPageContent() {
   const [saveToRecents, setSaveToRecents] = useState(true);
   const [explanationMode, setExplanationMode] = useState<'literal' | 'research'>('literal');
   const [studyCompleted, setStudyCompleted] = useState(false);
-  const [isSharingToClass, setIsSharingToClass] = useState(false);
   const [contentClass, setContentClass] = useState<ContentClassification | null>(null);
   const [enabledCardTypes, setEnabledCardTypes] = useState<string[]>(['term-definition']);
   const launchHandledRef = useRef(false);
@@ -415,26 +407,6 @@ function FlashcardsPageContent() {
     [taskId, studysetId]
   );
 
-  const handleShareToClass = useCallback(async (targetClassId: string) => {
-    if (!targetClassId || !generatedCards) return;
-    setIsSharingToClass(true);
-    try {
-      const summary = `${generatedCards.length} cards | mode: ${studyMode}`;
-      await postClassShareItem({
-        classId: targetClassId,
-        audience: 'teacher',
-        text: `Shared flashcards: ${customTitle.trim() || 'Untitled flashcards'}`,
-        attachmentLabel: summary,
-      });
-      toast({ title: 'Shared to class', description: 'Flashcards were posted in class share.' });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Share failed', description: error?.message || 'Could not share flashcards.' });
-    } finally {
-      setIsSharingToClass(false);
-    }
-  }, [customTitle, generatedCards, studyMode, toast]);
-
-
   // INPUT PHASE - just textbox, no sidebar
   if (phase === 'input') {
     const modeToggle = (
@@ -522,13 +494,6 @@ function FlashcardsPageContent() {
               getHtml={() => flashcardsToHtml(generatedCards)}
             />
           )}
-          <SendToClassButton
-            classes={shareableClasses}
-            classIdFromRoute={classId}
-            sending={isSharingToClass}
-            onSend={handleShareToClass}
-            className="rounded-full text-xs"
-          />
         </div>
           <div className="flex-1 min-h-0 overflow-auto">
             <FlashcardViewer

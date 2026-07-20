@@ -1,10 +1,10 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { useContext, useEffect, useState } from 'react';
+import { useContext } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  UsersRound, Settings2, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, MessageSquare, CalendarDays
+  UsersRound, Settings2, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck, History, CalendarDays
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -16,12 +16,10 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const { role, isLoading, language } = useContext(AppContext) as any;
   const classId = params.classId as string;
   const isDutch = language === 'nl';
-  const [shareVisibility, setShareVisibility] = useState({ allChatEnabled: true, teacherChatEnabled: true });
 
   const tabDefinitions = {
     invite: { label: isDutch ? 'Uitnodigen' : 'Invite', icon: UserRoundPlus, href: '?tab=invite' },
     group: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UsersRound, href: '?tab=group' },
-    share: { label: isDutch ? 'Berichten' : 'Messenger', icon: MessageSquare, href: '?tab=share' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },
     schedule: { label: isDutch ? 'Rooster' : 'Schedule', icon: CalendarDays, href: '?tab=schedule' },
@@ -33,31 +31,11 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const teacherTabs = TEACHER_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
   const studentTabs = STUDENT_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
 
-  useEffect(() => {
-    const loadShareSettings = async () => {
-      try {
-        const response = await fetch(`/api/classes/${classId}/share/settings`, { cache: 'no-store' });
-        if (!response.ok) return;
-        const data = await response.json().catch(() => ({}));
-        setShareVisibility({
-          allChatEnabled: data?.settings?.allChatEnabled !== false,
-          teacherChatEnabled: data?.settings?.teacherChatEnabled !== false,
-        });
-      } catch {}
-    };
-    if (classId) void loadShareSettings();
-  }, [classId]);
-
   const isTeacherRole = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
   const requestedTabRaw = searchParams?.get('tab') || '';
   const requestedTab = requestedTabRaw.trim().toLowerCase();
   const requestedTeacherTab = teacherTabs.some((tab) => tab.id === requestedTab);
-  const rawVisibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
-  const visibleTabs = rawVisibleTabs.filter((tab) => {
-    if (tab.id !== 'share') return true;
-    if (isTeacherRole) return shareVisibility.allChatEnabled || shareVisibility.teacherChatEnabled;
-    return shareVisibility.allChatEnabled;
-  });
+  const visibleTabs = (isTeacherRole || (isLoading && requestedTeacherTab)) ? teacherTabs : studentTabs;
   const tabIds = new Set<string>(visibleTabs.map((tab) => tab.id));
   const defaultTab = isTeacherRole ? 'group' : 'invite';
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
