@@ -479,6 +479,35 @@ export function calculateLabelingScore(
   return { score, isCorrect: fraction === 1 };
 }
 
+export function calculateGraphScore(
+  placedPoints: Array<{ x: number; y: number }>,
+  correctPoints: Array<{ x: number; y: number }>,
+  tolerance: number,
+  settings: BlockSettings,
+): { score: number; isCorrect: boolean } {
+  if (!Array.isArray(correctPoints) || correctPoints.length === 0) return { score: 0, isCorrect: false };
+  const remaining = Array.isArray(placedPoints) ? [...placedPoints] : [];
+  let matched = 0;
+  for (const target of correctPoints) {
+    let bestIndex = -1;
+    let bestDist = Infinity;
+    remaining.forEach((p, i) => {
+      const dist = Math.hypot(p.x - target.x, p.y - target.y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIndex = i;
+      }
+    });
+    if (bestIndex !== -1 && bestDist <= tolerance) {
+      matched += 1;
+      remaining.splice(bestIndex, 1);
+    }
+  }
+  const fraction = matched / correctPoints.length;
+  const score = Math.round(settings.points * fraction * 1000) / 1000;
+  return { score, isCorrect: fraction === 1 };
+}
+
 export function deterministicShuffle<T>(items: T[], seedInput: string): T[] {
   const arr = [...items];
   let seed = 0;

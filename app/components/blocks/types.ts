@@ -228,6 +228,18 @@ export interface DiagramLabelingBlockContent {
   labelBank: string[];
 }
 
+// 22. GraphPlotBlock
+export interface GraphPlotBlockContent {
+  xLabel: string;
+  yLabel: string;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+  correctPoints: Array<{ x: number; y: number }>;
+  tolerance: number;
+}
+
 // Union type for all block contents
 export type BlockContent =
   | TextBlockContent
@@ -253,7 +265,8 @@ export type BlockContent =
   | FlashcardBlockContent
   | TableBlockContent
   | NumberLineBlockContent
-  | DiagramLabelingBlockContent;
+  | DiagramLabelingBlockContent
+  | GraphPlotBlockContent;
 
 // Props for block components
 export interface BlockProps {

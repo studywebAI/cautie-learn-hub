@@ -13,6 +13,7 @@ import {
   calculateFlashcardScore,
   calculateTableScore,
   calculateLabelingScore,
+  calculateGraphScore,
   canReleaseFeedback,
   getAssignmentAvailabilityState,
   normalizeAssignmentSettings,
@@ -277,6 +278,13 @@ export async function POST(
     }
     if (block.type === 'diagram_labeling') {
       const result = calculateLabelingScore(answerData?.labels || {}, (block as any).data?.points || [], blockSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
+    if (block.type === 'graph_plot') {
+      const gpData = (block as any).data || {};
+      const result = calculateGraphScore(answerData?.points || [], gpData.correctPoints || [], Number(gpData.tolerance || 0), blockSettings);
       score = result.score;
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;

@@ -7,6 +7,7 @@ import {
   calculateFlashcardScore,
   calculateTableScore,
   calculateLabelingScore,
+  calculateGraphScore,
   calculateMcqScore,
   calculateNumericScore,
   calculateOrderingScore,
@@ -190,6 +191,13 @@ export async function POST(
           isCorrect = result.isCorrect;
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'All labels correct' : 'Some labels incorrect');
+        }
+        if (block.type === 'graph_plot') {
+          const result = calculateGraphScore(answer_data?.points || [], blockData?.correctPoints || [], Number(blockData?.tolerance || 0), blockSettings);
+          score = result.score;
+          isCorrect = result.isCorrect;
+          totalScore += Number(score || 0);
+          feedback = blockSettings.feedbackText || (isCorrect ? 'All points correct' : 'Some points incorrect');
         }
 
         // For open questions, mark as submitted but don't grade yet

@@ -285,6 +285,23 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'graph_plot',
+    type: 'graph_plot',
+    icon: <LineChart className="h-4 w-4" />,
+    label: 'Graph / Plot',
+    category: 'interactive',
+    defaultData: {
+      xLabel: 'x',
+      yLabel: 'y',
+      xMin: 0,
+      xMax: 10,
+      yMin: 0,
+      yMax: 10,
+      correctPoints: [{ x: 5, y: 5 }],
+      tolerance: 0.5,
+    }
+  },
+  {
     id: 'table',
     type: 'table',
     icon: <TableIcon className="h-4 w-4" />,
@@ -1886,6 +1903,10 @@ export function AssignmentEditor({
           const points = (block.data.points || []) as Array<{ correctLabel: string }>;
           return points.map((p, idx) => `${idx + 1}: ${p.correctLabel || '...'}`).join(', ') || 'No points set.';
         }
+        if (block.type === 'graph_plot') {
+          const points = (block.data.correctPoints || []) as Array<{ x: number; y: number }>;
+          return points.map((p) => `(${p.x}, ${p.y})`).join(', ') || 'No points set.';
+        }
         return '';
       })();
       return (
@@ -2623,6 +2644,85 @@ export function AssignmentEditor({
               readOnly={!canEditBlock}
               disabled={!canEditBlock}
             />
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
+
+      case 'graph_plot': {
+        const gpData = block.data as { xLabel: string; yLabel: string; xMin: number; xMax: number; yMin: number; yMax: number; correctPoints: Array<{ x: number; y: number }>; tolerance: number };
+        const gpPoints = gpData.correctPoints || [];
+        const updateGp = (patch: Partial<typeof gpData>) => updateBlock(block.id, { ...block.data, ...patch });
+        const updateGpPoint = (idx: number, patch: Partial<{ x: number; y: number }>) => {
+          const newPoints = [...gpPoints];
+          newPoints[idx] = { ...newPoints[idx], ...patch };
+          updateGp({ correctPoints: newPoints });
+        };
+        const addGpPoint = () => updateGp({ correctPoints: [...gpPoints, { x: gpData.xMin, y: gpData.yMin }] });
+        const removeGpPoint = (idx: number) => updateGp({ correctPoints: gpPoints.filter((_, i) => i !== idx) });
+
+        const W = 280, H = 180;
+        const xRange = (gpData.xMax - gpData.xMin) || 1;
+        const yRange = (gpData.yMax - gpData.yMin) || 1;
+        const toSvgX = (x: number) => ((x - gpData.xMin) / xRange) * W;
+        const toSvgY = (y: number) => H - ((y - gpData.yMin) / yRange) * H;
+
+        return (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-[10px] text-muted-foreground">{isDutch ? 'X-as label' : 'X axis label'}</Label>
+                <Input value={gpData.xLabel} onChange={(e) => updateGp({ xLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground">{isDutch ? 'Y-as label' : 'Y axis label'}</Label>
+                <Input value={gpData.yLabel} onChange={(e) => updateGp({ yLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} />
+              </div>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {([
+                ['xMin', 'X min'], ['xMax', 'X max'], ['yMin', 'Y min'], ['yMax', 'Y max'], ['tolerance', isDutch ? 'Marge' : 'Tolerance'],
+              ] as const).map(([field, label]) => (
+                <div key={field}>
+                  <Label className="text-[10px] text-muted-foreground">{label}</Label>
+                  <Input
+                    type="number"
+                    value={(gpData as any)[field]}
+                    onChange={(e) => updateGp({ [field]: Number(e.target.value) } as any)}
+                    className="h-7 text-xs mt-0.5"
+                    onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
+                  />
+                </div>
+              ))}
+            </div>
+            <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-xs rounded-md border border-border bg-background">
+              {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+                <React.Fragment key={f}>
+                  <line x1={0} y1={f * H} x2={W} y2={f * H} stroke="currentColor" className="text-border" strokeWidth={1} />
+                  <line x1={f * W} y1={0} x2={f * W} y2={H} stroke="currentColor" className="text-border" strokeWidth={1} />
+                </React.Fragment>
+              ))}
+              {gpPoints.map((p, idx) => (
+                <circle key={idx} cx={toSvgX(p.x)} cy={toSvgY(p.y)} r={4} className="fill-foreground" />
+              ))}
+            </svg>
+            <div className="space-y-1">
+              {gpPoints.map((p, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground w-4">{idx + 1}.</span>
+                  <Input type="number" value={p.x} onChange={(e) => updateGpPoint(idx, { x: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} placeholder="x" />
+                  <Input type="number" value={p.y} onChange={(e) => updateGpPoint(idx, { y: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} placeholder="y" />
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); removeGpPoint(idx); }} disabled={!canEditBlock}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); addGpPoint(); }} className="text-xs text-muted-foreground h-6" disabled={!canEditBlock}>
+                <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Punt toevoegen' : 'Add point'}
+              </Button>
+            </div>
             {renderReadOnlyActions()}
           </div>
         );
