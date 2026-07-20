@@ -535,7 +535,7 @@ export default function ParagraphDetailPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div>
           {filteredAssignments.map((assignment, index) => {
             // For students, hide invisible assignments
             if (!isTeacher && !assignment.is_visible) return null;
@@ -551,12 +551,12 @@ export default function ParagraphDetailPage() {
             return (
               <div
                 key={assignment.id}
-                className={`flex items-center gap-3 rounded-xl bg-sidebar-accent/40 px-4 py-3 transition-colors hover:bg-sidebar-accent/65 ${
+                className={`flex items-center gap-3 border-b border-border px-1 py-3 transition-colors hover:bg-accent/40 rounded-lg ${
                   !assignment.is_visible ? 'opacity-50' : ''
                 }`}
               >
                 {/* Letter badge */}
-                <span className="bg-foreground text-background px-2.5 py-1 rounded-full text-xs font-medium shrink-0 min-w-[2rem] text-center">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-muted-foreground">
                   {letter}
                 </span>
 
@@ -568,7 +568,7 @@ export default function ParagraphDetailPage() {
                 ) : (
                   <Link prefetch={false}
                     href={`/subjects/${subjectId}/chapters/${effectiveChapterId}/paragraphs/${paragraphId}/assignments/${assignment.id}`}
-                    className="text-sm flex-1 hover:underline truncate"
+                    className="text-sm font-medium flex-1 hover:underline truncate"
                   >
                     {assignment.title}
                   </Link>
@@ -592,7 +592,7 @@ export default function ParagraphDetailPage() {
                     <span className="text-xs text-muted-foreground tabular-nums w-8 text-right">
                       {roundedProgress}%
                     </span>
-                    <div className="w-20 h-2 surface-interactive rounded-full overflow-hidden flex">
+                    <div className="w-14 h-1.5 bg-accent rounded-full overflow-hidden flex">
                   {correctPct > 0 && (
                         <div
                           className="h-full bg-success/70 transition-all"

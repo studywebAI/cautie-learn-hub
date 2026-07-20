@@ -92,7 +92,7 @@ export async function GET(
 
     const { data: chapters, error: chapterError } = await (supabase as any)
       .from('chapters')
-      .select('id, title, chapter_number')
+      .select('id, title, chapter_number, is_tests_chapter')
       .eq('subject_id', subjectId)
       .order('chapter_number', { ascending: true });
 
@@ -157,6 +157,26 @@ export async function GET(
       paragraphCount: paragraphRows.length || 0,
     });
 
+    const paragraphIds = (paragraphRows || []).map((row: any) => row.id).filter(Boolean);
+    const assignmentCountByParagraph: Record<string, number> = {};
+    if (paragraphIds.length > 0) {
+      const { data: assignmentRows, error: assignmentError } = await supabase
+        .from('assignments')
+        .select('paragraph_id')
+        .in('paragraph_id', paragraphIds);
+      if (assignmentError) {
+        subjectsWarn('subject-overview', requestId, 'assignments.count.failed', {
+          message: assignmentError.message,
+        });
+      } else {
+        for (const row of (assignmentRows || [])) {
+          const pid = (row as any).paragraph_id as string;
+          if (!pid) continue;
+          assignmentCountByParagraph[pid] = (assignmentCountByParagraph[pid] || 0) + 1;
+        }
+      }
+    }
+
     // First pass: resolve each paragraph's own progress + prerequisite id.
     const progressById: Record<string, number> = {};
     const prerequisiteById: Record<string, string | null> = {};
@@ -181,7 +201,7 @@ export async function GET(
         id: row.id,
         title: row.title,
         paragraph_number: row.paragraph_number,
-        assignment_count: 0,
+        assignment_count: assignmentCountByParagraph[row.id] || 0,
         answers_enabled: false,
         progress_percent: progressById[row.id] ?? 0,
         prerequisite_paragraph_id: prerequisiteId,

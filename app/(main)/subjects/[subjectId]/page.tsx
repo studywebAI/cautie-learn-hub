@@ -7,21 +7,8 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Settings2, BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music, ListChecks, ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const CHAPTER_COVER_ICONS = [BookOpen, FlaskConical, Calculator, Globe, Atom, PenTool, Microscope, Music];
-const CHAPTER_COVER_TINTS = [
-  'bg-sky-500/12 text-sky-600 dark:text-sky-400',
-  'bg-violet-500/12 text-violet-600 dark:text-violet-400',
-  'bg-amber-500/12 text-amber-600 dark:text-amber-400',
-  'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400',
-  'bg-rose-500/12 text-rose-600 dark:text-rose-400',
-  'bg-cyan-500/12 text-cyan-600 dark:text-cyan-400',
-  'bg-orange-500/12 text-orange-600 dark:text-orange-400',
-  'bg-indigo-500/12 text-indigo-600 dark:text-indigo-400',
-];
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -78,20 +65,43 @@ export default function SubjectDetailPage() {
   const [isCreateChapterOpen, setIsCreateChapterOpen] = useState(false);
   const [isCreateParagraphOpen, setIsCreateParagraphOpen] = useState(false);
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
-  const [lockSelectedChapter, setLockSelectedChapter] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState('');
   const [chapterReorderMode, setChapterReorderMode] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [newParagraphTitle, setNewParagraphTitle] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [expandedParagraphs, setExpandedParagraphs] = useState<Set<string>>(new Set());
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
   const { role, language } = useContext(AppContext) as AppContextType;
   const isTeacher = role === 'teacher';
   const isDutch = language === 'nl';
+  const t = {
+    chapters: isDutch ? 'Hoofdstukken' : 'Chapters',
+    addChapter: isDutch ? '+ Hoofdstuk toevoegen' : '+ Add Chapter',
+    addParagraph: isDutch ? '+ Paragraaf toevoegen' : '+ Add Paragraph',
+    lastActiveIn: isDutch ? 'Laatst actief in ' : 'Last active in ',
+    reorderHint: isDutch ? 'Herordenmodus: gebruik de pijltjes om hoofdstukken te verplaatsen.' : 'Reorder mode: use the arrows to move chapters.',
+    done: isDutch ? 'Klaar' : 'Done',
+    createFirstChapter: isDutch ? 'Eerste hoofdstuk maken' : 'Create First Chapter',
+    addChapterTitle: isDutch ? 'Hoofdstuk toevoegen' : 'Add Chapter',
+    addChapterDescription: isDutch ? 'Maak een nieuw hoofdstuk voor dit vak.' : 'Create a new chapter for this subject.',
+    title: isDutch ? 'Titel' : 'Title',
+    cancel: isDutch ? 'Annuleren' : 'Cancel',
+    creating: isDutch ? 'Aanmaken...' : 'Creating...',
+    create: isDutch ? 'Maken' : 'Create',
+    addParagraphTitle: isDutch ? 'Paragraaf toevoegen' : 'Add Paragraph',
+    addParagraphDescription: isDutch ? 'Kies een hoofdstuk en maak een nieuwe paragraaf.' : 'Select a Chapter and create a new paragraph.',
+    chapter: isDutch ? 'Hoofdstuk' : 'Chapter',
+    selectChapter: isDutch ? 'Kies hoofdstuk' : 'Select Chapter',
+    paragraphsWord: isDutch ? 'paragrafen' : 'paragraphs',
+    assignmentsWord: isDutch ? 'opdrachten' : 'assignments',
+    testsBadge: isDutch ? 'Toetsen' : 'Tests',
+    reorderTitle: isDutch ? 'Ingedrukt houden om te herordenen' : 'Press and hold to reorder',
+    moveUp: isDutch ? 'Omhoog' : 'Move up',
+    moveDown: isDutch ? 'Omlaag' : 'Move down',
+  };
 
   const loadSubjectOverview = async () => {
     const response = await fetch(`/api/subjects/${subjectId}/overview`, { cache: 'no-store' });
@@ -311,17 +321,6 @@ export default function SubjectDetailPage() {
     }
   };
 
-  const handleParagraphClick = (chapter: Chapter, paragraph: Paragraph) => {
-    const activity: LastActivity = {
-      chapterId: chapter.id,
-      chapterNumber: chapter.chapter_number,
-      paragraphId: paragraph.id,
-      paragraphNumber: paragraph.paragraph_number,
-      paragraphTitle: paragraph.title,
-    };
-    localStorage.setItem(`lastActivity_${subjectId}`, JSON.stringify(activity));
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -329,7 +328,7 @@ export default function SubjectDetailPage() {
           <Card key={i} className="animate-pulse">
             <CardContent className="p-4">
               <div className="flex gap-4">
-                <div className="w-20 h-20 surface-interactive rounded" />
+                <div className="w-8 h-8 surface-interactive rounded-full" />
                 <div className="flex-1 space-y-2">
                   <div className="h-4 surface-interactive rounded w-1/3" />
                   <div className="h-3 surface-interactive rounded w-full" />
@@ -351,265 +350,146 @@ export default function SubjectDetailPage() {
   }
 
   return (
-    <div className="page-content rounded-2xl surface-panel p-4">
-      <div className="mb-2 text-xs text-foreground/65">
-        {`Subjects / ${subject?.name || 'Subject'} / Chapters`}
-      </div>
-      {/* Last activity banner */}
-      {lastActivity && (
-        <Link prefetch={false}
-          href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
-          className="mb-4 block rounded-xl border border-transparent bg-sidebar-accent/42 p-3 transition-colors hover:bg-sidebar-accent/62"
-        >
-          <p className="text-sm">
-            <span className="text-foreground/65">Last active in </span>
-            <span>{lastActivity.chapterNumber}.{lastActivity.paragraphNumber} {lastActivity.paragraphTitle}</span>
-          </p>
-        </Link>
-      )}
-
+    <div className="page-content">
       <PageHeader
         title={subject.name}
-        subtitle={subject.description || undefined}
+        subtitle={`${isDutch ? 'Vakken' : 'Subjects'} / ${t.chapters}`}
         actions={
           isTeacher && (
             <>
               {chapters.length > 0 && (
                 <Button
                   onClick={() => {
-                    setLockSelectedChapter(false);
                     setSelectedChapterId(chapters[0]?.id || null);
                     setNewParagraphTitle('');
                     setIsCreateParagraphOpen(true);
                   }}
                   size="sm"
                   variant="outline"
-                  className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62"
                 >
-                  + Add Paragraph
+                  {t.addParagraph}
                 </Button>
               )}
-              <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline" className="border-transparent bg-sidebar-accent/45 hover:bg-sidebar-accent/62">
-                + Add Chapter
+              <Button onClick={() => setIsCreateChapterOpen(true)} size="sm" variant="outline">
+                {t.addChapter}
               </Button>
             </>
           )
         }
       />
 
+      {/* Last activity banner */}
+      {lastActivity && (
+        <Link prefetch={false}
+          href={`/subjects/${subjectId}/chapters/${lastActivity.chapterId}/paragraphs/${lastActivity.paragraphId}`}
+          className="mb-3 block rounded-xl border border-transparent bg-sidebar-accent/42 p-3 transition-colors hover:bg-sidebar-accent/62"
+        >
+          <p className="text-sm">
+            <span className="text-foreground/65">{t.lastActiveIn}</span>
+            <span>{lastActivity.chapterNumber}.{lastActivity.paragraphNumber} {lastActivity.paragraphTitle}</span>
+          </p>
+        </Link>
+      )}
+
       {chapterReorderMode && (
         <div className="mb-3 flex items-center justify-between rounded-xl surface-interactive px-4 py-2">
-          <p className="text-xs text-muted-foreground">
-            {isDutch ? 'Herordenmodus: gebruik de pijltjes om hoofdstukken te verplaatsen.' : 'Reorder mode: use the arrows to move chapters.'}
-          </p>
+          <p className="text-xs text-muted-foreground">{t.reorderHint}</p>
           <Button size="sm" variant="outline" onClick={() => setChapterReorderMode(false)}>
-            {isDutch ? 'Klaar' : 'Done'}
+            {t.done}
           </Button>
         </div>
       )}
 
-      {/* Flat chapter + paragraph list */}
+      {/* Numbered chapter list — clicking a chapter navigates to its own
+          paragraphs page instead of expanding inline, so this view stays a
+          single flat, scannable list rather than a nested accordion. */}
       {chapters.length === 0 ? (
         <div className="py-12">
           {isTeacher ? (
             <div className="flex justify-center">
               <Button onClick={() => setIsCreateChapterOpen(true)} size="sm">
-                Create First Chapter
+                {t.createFirstChapter}
               </Button>
             </div>
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div>
           {chapters.map((chapter, chapterIndex) => {
-            const maxVisible = 10;
             const allParagraphs = chapter.paragraphs || [];
-            const isFullyExpanded = expandedParagraphs.has(chapter.id);
-            const visibleParagraphs = isFullyExpanded ? allParagraphs : allParagraphs.slice(0, maxVisible);
-            const hasMore = allParagraphs.length > maxVisible && !isFullyExpanded;
-            const remainingCount = allParagraphs.length - maxVisible;
             const chapterProgress = allParagraphs.length > 0
               ? Math.round(allParagraphs.reduce((sum, p) => sum + (p.progress_percent || 0), 0) / allParagraphs.length)
               : 0;
+            const totalAssignments = allParagraphs.reduce((sum, p) => sum + (p.assignment_count || 0), 0);
+
+            const row = (
+              <div
+                className={cn(
+                  'flex items-center gap-3 py-3 px-1 border-b border-border transition-colors',
+                  chapterReorderMode ? '' : 'hover:bg-accent/40 rounded-lg'
+                )}
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-semibold text-muted-foreground tabular-nums">
+                  {chapter.chapter_number}
+                </span>
+                <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
+                  {chapter.title}
+                  {chapter.is_tests_chapter && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 align-middle">
+                      {t.testsBadge}
+                    </span>
+                  )}
+                  {chapter.is_pending ? (
+                    <span className="ml-2 text-xs text-muted-foreground">({t.creating})</span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                  {allParagraphs.length} {t.paragraphsWord} · {totalAssignments} {t.assignmentsWord}
+                </span>
+                <div className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-accent">
+                  <div className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all" style={{ width: `${chapterProgress}%` }} />
+                </div>
+              </div>
+            );
 
             return (
               <div
                 key={chapter.id}
-                className={cn(
-                  'overflow-hidden rounded-2xl border bg-sidebar-accent/12 transition-colors',
-                  chapterReorderMode ? 'border-foreground/25' : 'border-transparent'
-                )}
                 onPointerDown={isTeacher ? startChapterLongPress : undefined}
                 onPointerUp={isTeacher ? cancelChapterLongPress : undefined}
                 onPointerLeave={isTeacher ? cancelChapterLongPress : undefined}
                 onPointerCancel={isTeacher ? cancelChapterLongPress : undefined}
-                title={isTeacher ? (isDutch ? 'Ingedrukt houden om te herordenen' : 'Press and hold to reorder') : undefined}
+                title={isTeacher ? t.reorderTitle : undefined}
               >
-                <div className="flex min-h-[108px] items-stretch">
-                  {isTeacher && chapterReorderMode && (
-                    <div className="flex flex-col items-center justify-center gap-1 px-1">
+                {chapterReorderMode ? (
+                  <div className="flex items-center gap-1">
+                    <div className="flex flex-col">
                       <button
                         type="button"
                         disabled={chapterIndex === 0}
                         onClick={() => void handleChapterMove(chapter.id, 'up')}
-                        className="rounded p-1 text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground disabled:opacity-30"
-                        title={isDutch ? 'Omhoog' : 'Move up'}
+                        className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                        title={t.moveUp}
                       >
-                        <ChevronUp className="h-4 w-4" />
+                        <ChevronUp className="h-3.5 w-3.5" />
                       </button>
                       <button
                         type="button"
                         disabled={chapterIndex === chapters.length - 1}
                         onClick={() => void handleChapterMove(chapter.id, 'down')}
-                        className="rounded p-1 text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground disabled:opacity-30"
-                        title={isDutch ? 'Omlaag' : 'Move down'}
+                        className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                        title={t.moveDown}
                       >
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                  )}
-                  <Link prefetch={false}
-                    href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                    className={cn(
-                      'relative w-32 shrink-0 transition-colors',
-                      chapter.is_tests_chapter
-                        ? 'bg-amber-500/12 text-amber-600 dark:text-amber-400'
-                        : CHAPTER_COVER_TINTS[(chapter.chapter_number - 1) % CHAPTER_COVER_TINTS.length]
-                    )}
-                  >
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
-                      {(() => {
-                        const CoverIcon = chapter.is_tests_chapter
-                          ? ListChecks
-                          : CHAPTER_COVER_ICONS[(chapter.chapter_number - 1) % CHAPTER_COVER_ICONS.length];
-                        return <CoverIcon className="h-6 w-6" />;
-                      })()}
-                      <span className="text-xs font-medium tabular-nums opacity-80">{chapter.chapter_number}</span>
-                      {allParagraphs.length > 0 && (
-                        <div className="h-1 w-12 overflow-hidden rounded-full bg-current/15">
-                          <div className="h-full rounded-full bg-current/70" style={{ width: `${chapterProgress}%` }} />
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                    <div className="flex flex-1 items-start justify-between gap-3 p-4">
-                      <Link prefetch={false}
-                        href={`/subjects/${subjectId}/chapters/${chapter.id}`}
-                        className="text-sm text-[hsl(var(--sidebar-active-foreground))] hover:underline"
-                      >
-                        {chapter.title}
-                        {chapter.is_tests_chapter && (
-                          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 align-middle">Toetsen</span>
-                        )}
-                        {chapter.is_pending ? (
-                          <span className="ml-2 text-xs text-muted-foreground">(creating...)</span>
-                        ) : null}
-                      </Link>
-                    {isTeacher && (
-                      <button
-                        className="rounded-md bg-sidebar-accent/35 px-2 py-1 text-xs text-sidebar-foreground transition-colors hover:bg-sidebar-accent/55"
-                        onClick={() => {
-                          setLockSelectedChapter(true);
-                          setSelectedChapterId(chapter.id);
-                          setNewParagraphTitle('');
-                          setIsCreateParagraphOpen(true);
-                        }}
-                      >
-                        + Add Paragraph
-                      </button>
-                    )}
+                    <div className="flex-1">{row}</div>
                   </div>
-                </div>
-
-                {allParagraphs.length > 0 ? (
-                  <>
-                    {visibleParagraphs.map((paragraph) => {
-                      const roundedProgress = Math.ceil(paragraph.progress_percent || 0);
-
-                      if (paragraph.locked) {
-                        const prereq = allParagraphs.find((p) => p.id === paragraph.prerequisite_paragraph_id);
-                        return (
-                          <div
-                            key={paragraph.id}
-                            className="mx-2 mb-2 flex items-center gap-3 rounded-xl border border-dashed border-border/60 px-4 py-3 opacity-60 cursor-not-allowed"
-                            title={prereq ? `${isDutch ? 'Rond eerst af' : 'Finish first'}: ${prereq.title}` : undefined}
-                          >
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                            <span className="w-11 text-xs text-muted-foreground tabular-nums">
-                              {chapter.chapter_number}.{paragraph.paragraph_number}
-                            </span>
-                            <span className="flex-1 truncate text-sm text-muted-foreground">{paragraph.title}</span>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div
-                          key={paragraph.id}
-                          className="mx-2 mb-2 flex items-center gap-1 rounded-xl border border-transparent bg-sidebar-accent/20 pr-2 transition-colors hover:bg-sidebar-accent/35"
-                        >
-                          <Link prefetch={false}
-                            href={`/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`}
-                            onClick={() => handleParagraphClick(chapter, paragraph)}
-                            className="flex flex-1 min-w-0 items-center gap-3 px-4 py-3"
-                          >
-                            <span className="w-14 text-xs text-sidebar-foreground tabular-nums">
-                              {chapter.chapter_number}.{paragraph.paragraph_number}
-                            </span>
-                            <span className="flex-1 truncate text-sm text-[hsl(var(--sidebar-active-foreground))]">{paragraph.title}</span>
-                            {paragraph.is_pending ? (
-                              <span className="text-xs text-muted-foreground">(creating...)</span>
-                            ) : null}
-                            <span className="w-10 text-right text-xs text-sidebar-foreground tabular-nums">
-                              {roundedProgress}%
-                            </span>
-                            <div className="h-2 w-16 overflow-hidden rounded-full bg-sidebar-accent">
-                              <div
-                                className="h-full rounded-full bg-[hsl(var(--sidebar-active-foreground))] transition-all"
-                                style={{ width: `${roundedProgress}%` }}
-                              />
-                            </div>
-                          </Link>
-                          {isTeacher && !paragraph.is_pending && (
-                            <ParagraphPrerequisitePopover
-                              subjectId={subjectId}
-                              chapter={chapter}
-                              paragraph={paragraph}
-                              allParagraphs={allParagraphs}
-                              isDutch={isDutch}
-                              onSaved={(prerequisiteId) => {
-                                setChapters((prev) =>
-                                  prev.map((c) =>
-                                    c.id !== chapter.id
-                                      ? c
-                                      : {
-                                          ...c,
-                                          paragraphs: (c.paragraphs || []).map((p) =>
-                                            p.id === paragraph.id ? { ...p, prerequisite_paragraph_id: prerequisiteId } : p
-                                          ),
-                                        }
-                                  )
-                                );
-                              }}
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                    {hasMore && (
-                      <button
-                        onClick={() => setExpandedParagraphs(prev => {
-                          const next = new Set(prev);
-                          next.add(chapter.id);
-                          return next;
-                        })}
-                        className="w-full rounded-lg bg-sidebar-accent/28 py-3 px-4 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/45"
-                      >
-                        +{remainingCount} more paragraph{remainingCount > 1 ? 's' : ''}
-                      </button>
-                    )}
-                  </>
-                ) : null}
+                ) : (
+                  <Link prefetch={false} href={`/subjects/${subjectId}/chapters/${chapter.id}`}>
+                    {row}
+                  </Link>
+                )}
               </div>
             );
           })}
@@ -620,11 +500,11 @@ export default function SubjectDetailPage() {
       <Dialog open={isCreateChapterOpen} onOpenChange={setIsCreateChapterOpen}>
       <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Chapter</DialogTitle>
-            <DialogDescription>Create a new chapter for this subject.</DialogDescription>
+            <DialogTitle>{t.addChapterTitle}</DialogTitle>
+            <DialogDescription>{t.addChapterDescription}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="chapter-title">Title</Label>
+            <Label htmlFor="chapter-title">{t.title}</Label>
             <Input
               id="chapter-title"
               placeholder=""
@@ -634,59 +514,39 @@ export default function SubjectDetailPage() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateChapterOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsCreateChapterOpen(false)}>{t.cancel}</Button>
             <Button onClick={handleCreateChapter} disabled={!newChapterTitle.trim() || isCreatingChapter}>
-              {isCreatingChapter ? 'Creating...' : 'Create'}
+              {isCreatingChapter ? t.creating : t.create}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Create Paragraph Dialog */}
-      <Dialog
-        open={isCreateParagraphOpen}
-        onOpenChange={(open) => {
-          setIsCreateParagraphOpen(open);
-          if (!open) {
-            setLockSelectedChapter(false);
-          }
-        }}
-      >
+      <Dialog open={isCreateParagraphOpen} onOpenChange={setIsCreateParagraphOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Paragraph</DialogTitle>
-            <DialogDescription>Select a Chapter and create a new paragraph.</DialogDescription>
+            <DialogTitle>{t.addParagraphTitle}</DialogTitle>
+            <DialogDescription>{t.addParagraphDescription}</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-3">
             <div>
-              <Label htmlFor="paragraph-chapter">Chapter</Label>
-              {lockSelectedChapter && selectedChapterId ? (
-                <div className="mt-2 h-9 w-full rounded-md border border-input surface-interactive px-3 text-sm flex items-center">
-                  {(() => {
-                    const chapter = chapters.find((item) => item.id === selectedChapterId);
-                    return chapter ? `${chapter.chapter_number}. ${chapter.title}` : '';
-                  })()}
-                </div>
-              ) : (
-                <select
-                  id="paragraph-chapter"
-                  value={selectedChapterId || ''}
-                  onChange={(e) => {
-                    const nextChapterId = e.target.value || null;
-                    setSelectedChapterId(nextChapterId);
-                  }}
-                  className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                >
-                  <option value="">Select Chapter</option>
-                  {chapters.map((chapter) => (
-                    <option key={chapter.id} value={chapter.id}>
-                      {chapter.chapter_number}. {chapter.title}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <Label htmlFor="paragraph-chapter">{t.chapter}</Label>
+              <select
+                id="paragraph-chapter"
+                value={selectedChapterId || ''}
+                onChange={(e) => setSelectedChapterId(e.target.value || null)}
+                className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="">{t.selectChapter}</option>
+                {chapters.map((chapter) => (
+                  <option key={chapter.id} value={chapter.id}>
+                    {chapter.chapter_number}. {chapter.title}
+                  </option>
+                ))}
+              </select>
             </div>
-            <Label htmlFor="paragraph-title">Title</Label>
+            <Label htmlFor="paragraph-title">{t.title}</Label>
             <Input
               id="paragraph-title"
               placeholder=""
@@ -694,16 +554,11 @@ export default function SubjectDetailPage() {
               onChange={(e) => setNewParagraphTitle(e.target.value)}
               className="mt-2"
             />
-            <p className="text-[11px] text-muted-foreground">
-              {isDutch
-                ? 'Je kunt een vereiste paragraaf later instellen via het instellingen-icoon naast de paragraaf.'
-                : 'You can set a required paragraph later via the settings icon next to the paragraph.'}
-            </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateParagraphOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsCreateParagraphOpen(false)}>{t.cancel}</Button>
             <Button onClick={handleCreateParagraph} disabled={!selectedChapterId || !newParagraphTitle.trim() || isCreatingParagraph}>
-              {isCreatingParagraph ? 'Creating...' : 'Create'}
+              {isCreatingParagraph ? t.creating : t.create}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -711,92 +566,3 @@ export default function SubjectDetailPage() {
     </div>
   );
 }
-
-function ParagraphPrerequisitePopover({
-  subjectId,
-  chapter,
-  paragraph,
-  allParagraphs,
-  isDutch,
-  onSaved,
-}: {
-  subjectId: string;
-  chapter: Chapter;
-  paragraph: Paragraph;
-  allParagraphs: Paragraph[];
-  isDutch: boolean;
-  onSaved: (prerequisiteId: string | null) => void;
-}) {
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(paragraph.prerequisite_paragraph_id || '');
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch(
-        `/api/subjects/${subjectId}/chapters/${chapter.id}/paragraphs/${paragraph.id}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prerequisite_paragraph_id: value || null }),
-        }
-      );
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.error || 'Failed to save');
-      }
-      onSaved(value || null);
-      setOpen(false);
-    } catch (err: any) {
-      toast({ variant: 'destructive', title: isDutch ? 'Opslaan mislukt' : 'Save failed', description: err?.message });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          title={isDutch ? 'Paragraafinstellingen' : 'Paragraph settings'}
-          onClick={(e) => e.preventDefault()}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-2 p-3" onClick={(e) => e.stopPropagation()}>
-        <Label htmlFor={`prereq-${paragraph.id}`} className="text-xs">
-          {isDutch ? 'Vereist eerst (optioneel)' : 'Requires first (optional)'}
-        </Label>
-        <select
-          id={`prereq-${paragraph.id}`}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="">{isDutch ? 'Geen' : 'None'}</option>
-          {allParagraphs
-            .filter((p) => p.id !== paragraph.id)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {chapter.chapter_number}.{p.paragraph_number} {p.title}
-              </option>
-            ))}
-        </select>
-        <p className="text-[11px] text-muted-foreground">
-          {isDutch
-            ? 'Leerlingen zien deze paragraaf pas na 100% voortgang op de gekozen paragraaf.'
-            : 'Students only see this paragraph once the chosen one is 100% complete.'}
-        </p>
-        <Button size="sm" className="w-full" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (isDutch ? 'Opslaan...' : 'Saving...') : isDutch ? 'Opslaan' : 'Save'}
-        </Button>
-      </PopoverContent>
-    </Popover>
-  );
-}
-

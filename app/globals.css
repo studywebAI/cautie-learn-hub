@@ -425,10 +425,13 @@
   }
 
   .page-title {
-    font-size: var(--type-page);
-    line-height: 1.27;
+    /* Deliberately matches the sidebar nav item size (--type-body / .text-base)
+       rather than --type-page — the header page name should read at the same
+       scale as the sidebar, just bold instead of normal weight. */
+    font-size: var(--type-body);
+    line-height: 1.4;
     font-weight: 700;
-    letter-spacing: -0.022em;
+    letter-spacing: -0.01em;
   }
 
   .page-subtitle {

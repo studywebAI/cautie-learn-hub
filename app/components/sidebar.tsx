@@ -86,7 +86,7 @@ function SidebarNavRow({ item, isActive, iconSizeClass }: { item: SidebarNavItem
         <span
           className={cn(
             'text-base leading-5 transition-[opacity,transform] duration-200 group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:-translate-x-1',
-            isActive ? 'font-semibold text-sidebar-active-foreground' : 'font-normal'
+            isActive ? 'font-normal text-sidebar-active-foreground' : 'font-normal text-sidebar-foreground'
           )}
         >
           {item.label}
