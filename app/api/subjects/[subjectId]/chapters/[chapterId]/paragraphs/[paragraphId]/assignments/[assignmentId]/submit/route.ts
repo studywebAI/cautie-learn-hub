@@ -175,6 +175,14 @@ export async function POST(
           totalScore += Number(score || 0);
           feedback = blockSettings.feedbackText || (isCorrect ? 'Table correct' : 'Table has mistakes');
         }
+        if (block.type === 'number_line') {
+          const nlSettings = { ...blockSettings, numeric: { ...blockSettings.numeric, exactMatch: false, tolerance: Number(blockData?.tolerance || 0) } };
+          const result = calculateNumericScore(answer_data?.value, blockData?.correctValue, nlSettings);
+          score = result.score;
+          isCorrect = result.isCorrect;
+          totalScore += Number(score || 0);
+          feedback = blockSettings.feedbackText || (isCorrect ? 'Correct' : 'Incorrect');
+        }
 
         // For open questions, mark as submitted but don't grade yet
         if (block.type === 'open_question') {

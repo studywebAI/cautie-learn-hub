@@ -266,6 +266,14 @@ export async function POST(
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;
     }
+    if (block.type === 'number_line') {
+      const nlData = (block as any).data || {};
+      const nlSettings = { ...blockSettings, numeric: { ...blockSettings.numeric, exactMatch: false, tolerance: Number(nlData.tolerance || 0) } };
+      const result = calculateNumericScore(answerData?.value, nlData.correctValue, nlSettings);
+      score = result.score;
+      isCorrect = result.isCorrect;
+      feedback = blockSettings.feedbackText || null;
+    }
 
     const existingAnswerRes = await supabase
       .from('student_answers')

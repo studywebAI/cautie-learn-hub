@@ -258,6 +258,21 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     }
   },
   {
+    id: 'number_line',
+    type: 'number_line',
+    icon: <Ruler className="h-4 w-4" />,
+    label: 'Number Line',
+    category: 'interactive',
+    defaultData: {
+      prompt: '',
+      min: 0,
+      max: 10,
+      step: 1,
+      correctValue: 5,
+      tolerance: 0,
+    }
+  },
+  {
     id: 'table',
     type: 'table',
     icon: <TableIcon className="h-4 w-4" />,
@@ -1851,6 +1866,10 @@ export function AssignmentEditor({
           });
           return parts.join(', ') || 'No answer cells set.';
         }
+        if (block.type === 'number_line') {
+          const tolerance = Number(block.data.tolerance || 0);
+          return tolerance > 0 ? `${block.data.correctValue} (± ${tolerance})` : String(block.data.correctValue ?? 'No value set.');
+        }
         return '';
       })();
       return (
@@ -2441,6 +2460,54 @@ export function AssignmentEditor({
                 </Button>
               </div>
             )}
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
+
+      case 'number_line': {
+        const nlData = block.data as { prompt: string; min: number; max: number; step: number; correctValue: number; tolerance: number };
+        const updateNl = (patch: Partial<typeof nlData>) => updateBlock(block.id, { ...block.data, ...patch });
+        return (
+          <div className="space-y-2">
+            <Input
+              value={nlData.prompt}
+              onChange={(e) => updateNl({ prompt: e.target.value })}
+              placeholder={isDutch ? 'Vraag...' : 'Prompt...'}
+              className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
+              onClick={(e) => e.stopPropagation()}
+              readOnly={!canEditBlock}
+              disabled={!canEditBlock}
+              autoFocus={canEditBlock && selectedBlock === block.id}
+            />
+            <div className="grid grid-cols-5 gap-2">
+              {([
+                ['min', isDutch ? 'Min' : 'Min'],
+                ['max', isDutch ? 'Max' : 'Max'],
+                ['step', isDutch ? 'Stap' : 'Step'],
+                ['correctValue', isDutch ? 'Juiste waarde' : 'Correct value'],
+                ['tolerance', isDutch ? 'Marge' : 'Tolerance'],
+              ] as const).map(([field, label]) => (
+                <div key={field}>
+                  <Label className="text-[10px] text-muted-foreground">{label}</Label>
+                  <Input
+                    type="number"
+                    value={nlData[field]}
+                    onChange={(e) => updateNl({ [field]: Number(e.target.value) } as Partial<typeof nlData>)}
+                    className="h-7 text-xs mt-0.5"
+                    onClick={(e) => e.stopPropagation()}
+                    readOnly={!canEditBlock}
+                    disabled={!canEditBlock}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-md border border-dashed border-border/70 surface-chip p-2">
+              <p className="text-[11px] text-muted-foreground">{isDutch ? 'Verwacht antwoord' : 'Expected Answer'}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {nlData.correctValue}{Number(nlData.tolerance) > 0 ? ` ± ${nlData.tolerance}` : ''}
+              </p>
+            </div>
             {renderReadOnlyActions()}
           </div>
         );

@@ -13,6 +13,7 @@ import { StudentOrderingBlock } from './StudentOrderingBlock';
 import { StudentDragDropBlock } from './StudentDragDropBlock';
 import { StudentFlashcardBlock } from './StudentFlashcardBlock';
 import { StudentTableBlock } from './StudentTableBlock';
+import { StudentNumberLineBlock } from './StudentNumberLineBlock';
 import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
@@ -67,6 +68,8 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
         return <StudentFlashcardBlock {...commonProps} />;
       case 'table':
         return <StudentTableBlock {...commonProps} />;
+      case 'number_line':
+        return <StudentNumberLineBlock {...commonProps} />;
       case 'image':
       case 'video':
       case 'media_embed':

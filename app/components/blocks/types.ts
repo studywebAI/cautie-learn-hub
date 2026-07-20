@@ -211,6 +211,16 @@ export interface TableBlockContent {
   rows: Array<{ id: string; cells: Array<{ value: string; editable: boolean; correctValue?: string }> }>;
 }
 
+// 20. NumberLineBlock
+export interface NumberLineBlockContent {
+  prompt: string;
+  min: number;
+  max: number;
+  step: number;
+  correctValue: number;
+  tolerance: number;
+}
+
 // Union type for all block contents
 export type BlockContent =
   | TextBlockContent
@@ -234,7 +244,8 @@ export type BlockContent =
   | ParagraphBlockContent
   | ImageSimpleBlockContent
   | FlashcardBlockContent
-  | TableBlockContent;
+  | TableBlockContent
+  | NumberLineBlockContent;
 
 // Props for block components
 export interface BlockProps {
