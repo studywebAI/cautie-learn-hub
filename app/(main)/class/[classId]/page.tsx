@@ -29,12 +29,6 @@ const ClassSettings = dynamic(
   () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
   { ssr: false }
 );
-const ScheduleTab = dynamic(
-  () => import('@/components/class/schedule-tab-redesigned').then((m) => m.ScheduleTabRedesigned)
-);
-const CalendarTab = dynamic(
-  () => import('@/components/class/calendar-tab').then((m) => ({ default: m.CalendarTab }))
-);
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
@@ -165,9 +159,6 @@ export default function ClassDetailsPage() {
         case 'group':
           url = `/api/classes/${classId}/group`;
           break;
-        case 'schedule':
-          url = `/api/classes/${classId}/school-schedule`;
-          break;
         case 'logs':
           url = `/api/classes/${classId}/audit-logs?limit=100&offset=0`;
           break;
@@ -249,7 +240,6 @@ export default function ClassDetailsPage() {
     const warmTabs = async () => {
       await Promise.allSettled([
         loadTabData('group'),
-        loadTabData('schedule'),
         loadTabData('logs'),
       ]);
     };
@@ -309,10 +299,6 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'schedule':
-        return <ScheduleTab classId={classId} cachedData={cachedTabData['schedule']} parentLoading={!!loadingTabs['schedule']} />;
-      case 'calendar':
-        return isTeacher ? <CalendarTab classId={classId} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'logs':
         return isTeacher ? <LogsTab classId={classId} cachedData={cachedTabData['logs']} parentLoading={!!loadingTabs['logs']} /> : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       case 'settings':

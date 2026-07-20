@@ -22,7 +22,9 @@ function createClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   )
 }
 
-// GET - list calendar events for a class (teachers only)
+// GET - list calendar events for a class. Any class member can read (merged
+// into the Agenda feed for students too — Calendar used to be a teacher-only
+// tab, folding it into Agenda closes that gap); only teachers can write.
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ classId: string }> }
@@ -37,8 +39,8 @@ export async function GET(
   }
 
   const perm = await getClassPermission(supabase, classId, user.id)
-  if (!perm.isTeacher) {
-    return NextResponse.json({ error: 'Only teachers can view class calendar events' }, { status: 403 })
+  if (!perm.isMember) {
+    return NextResponse.json({ error: 'Not a member of this class' }, { status: 403 })
   }
 
   const { data: events, error } = await (supabase as any)

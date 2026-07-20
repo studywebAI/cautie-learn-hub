@@ -15,11 +15,12 @@ import { TeacherDeadlineDialog } from '@/components/agenda/teacher-deadline-dial
 import { AssignmentDetailsPanel } from '@/components/agenda/assignment-details-panel';
 import { CalendarConnectionDialog } from '@/components/agenda/calendar-connection-dialog';
 import { CalendarProvidersCircle } from '@/components/agenda/calendar-providers-circle';
+import { ScheduleConfigureDialog } from '@/components/agenda/schedule-configure-dialog';
 import Loader from '@/components/ui/loader';
 import { PageSection } from '@/components/layout/page-section';
 import { PageHeader } from '@/components/page-header';
 import { CautieLoader } from '@/components/ui/cautie-loader';
-import { PlusCircle, SlidersHorizontal } from 'lucide-react';
+import { PlusCircle, SlidersHorizontal, CalendarClock } from 'lucide-react';
 import type { CalendarEvent } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +36,17 @@ type ScheduleSlot = {
   end_time: string;
   is_break: boolean;
   notes?: string | null;
+};
+
+type ClassCalendarEventRow = {
+  id: string;
+  class_id: string;
+  class_name?: string;
+  title: string;
+  event_type: string;
+  starts_at: string;
+  ends_at: string | null;
+  description: string | null;
 };
 
 type ScheduledStudyItem = {
@@ -194,6 +206,8 @@ function AgendaPageContent() {
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [overlayClassIds, setOverlayClassIds] = useState<string[]>([]);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<ClassCalendarEventRow[]>([]);
+  const [isScheduleConfigureOpen, setIsScheduleConfigureOpen] = useState(false);
   const [studysetAgendaItems, setStudysetAgendaItems] = useState<StudysetAgendaItem[]>([]);
   const [scheduledStudyItems, setScheduledStudyItems] = useState<ScheduledStudyItem[]>([]);
   const [teacherAgendaItems, setTeacherAgendaItems] = useState<AgendaApiItem[]>([]);
@@ -302,7 +316,61 @@ function AgendaPageContent() {
 
     void loadSchedule();
     return () => controller.abort();
-  }, [agendaDebugId, isLoading, isTeacher, isStudent, selectedClassId]);
+  }, [agendaDebugId, isLoading, isTeacher, isStudent, selectedClassId, agendaReloadKey]);
+
+  // Calendar events (formerly the class detail page's "Calendar" tab, teacher-
+  // only) are merged into the Agenda feed here — students now see them too
+  // via the same GET endpoint, relaxed from teacher-only to any class member.
+  useEffect(() => {
+    if (isLoading) return;
+    const controller = new AbortController();
+
+    const loadCalendarEvents = async () => {
+      try {
+        if (isTeacher) {
+          if (!selectedClassId) {
+            setCalendarEvents([]);
+            return;
+          }
+          const response = await fetch(`/api/classes/${selectedClassId}/calendar-events`, { signal: controller.signal });
+          if (!response.ok) {
+            setCalendarEvents([]);
+            return;
+          }
+          const data = await response.json();
+          const className = (classes || []).find((c: any) => c.id === selectedClassId)?.name;
+          setCalendarEvents((data?.events || []).map((event: any) => ({ ...event, class_id: selectedClassId, class_name: className })));
+          return;
+        }
+
+        if (isStudent) {
+          const studentClasses = (classes || []).filter((classItem: any) => classItem.status !== 'archived');
+          if (studentClasses.length === 0) {
+            setCalendarEvents([]);
+            return;
+          }
+          const results = await Promise.allSettled(
+            studentClasses.map((classItem: any) =>
+              fetch(`/api/classes/${classItem.id}/calendar-events`, { signal: controller.signal })
+                .then((res) => (res.ok ? res.json() : { events: [] }))
+                .then((data) => (data?.events || []).map((event: any) => ({ ...event, class_id: classItem.id, class_name: classItem.name })))
+            )
+          );
+          const merged = results.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+          setCalendarEvents(merged);
+          return;
+        }
+
+        setCalendarEvents([]);
+      } catch (error: any) {
+        if (error?.name === 'AbortError') return;
+        setCalendarEvents([]);
+      }
+    };
+
+    void loadCalendarEvents();
+    return () => controller.abort();
+  }, [isLoading, isTeacher, isStudent, selectedClassId, classes, agendaReloadKey]);
 
   useEffect(() => {
     if (isLoading) {
@@ -510,18 +578,31 @@ function AgendaPageContent() {
         });
       });
 
+    const calendarFeedEvents: CalendarEvent[] = calendarEvents.map((event) => ({
+      id: `calendar-${event.id}`,
+      title: event.title,
+      subject: event.class_name || 'Class calendar',
+      class_id: event.class_id,
+      class_name: event.class_name,
+      date: parseISO(event.starts_at),
+      type: event.event_type === 'exam' || event.event_type === 'deadline' ? 'agenda_item' : 'study_plan',
+      href: '/agenda',
+      description: event.description || undefined,
+    }));
+
     if (isTeacher) {
       const overlaySet = new Set(overlayClassIds);
       const agendaEvents = teacherAgendaItems
         .filter((item) => overlaySet.has(item.class_id))
         .map(agendaApiItemToEvent);
-      const merged = [...agendaEvents, ...scheduleEvents, ...studysetEvents];
+      const merged = [...agendaEvents, ...scheduleEvents, ...studysetEvents, ...calendarFeedEvents];
       console.info('[AGENDA] events computed', {
         agendaDebugId,
         role: 'teacher',
         agendaEvents: agendaEvents.length,
         scheduleEvents: scheduleEvents.length,
         studysetEvents: studysetEvents.length,
+        calendarFeedEvents: calendarFeedEvents.length,
         merged: merged.length,
       });
       return merged;
@@ -557,7 +638,7 @@ function AgendaPageContent() {
       };
     });
 
-    const merged = [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents, ...scheduledEvents];
+    const merged = [...feedEvents, ...personalEvents, ...scheduleEvents, ...studysetEvents, ...scheduledEvents, ...calendarFeedEvents];
     console.info('[AGENDA] events computed', {
       agendaDebugId,
       role: 'student-or-other',
@@ -566,10 +647,11 @@ function AgendaPageContent() {
       scheduleEvents: scheduleEvents.length,
       studysetEvents: studysetEvents.length,
       scheduledEvents: scheduledEvents.length,
+      calendarFeedEvents: calendarFeedEvents.length,
       merged: merged.length,
     });
     return merged;
-  }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems, scheduledStudyItems]);
+  }, [agendaDebugId, isLoading, isTeacher, isStudent, overlayClassIds, teacherAgendaItems, studentAgendaItems, personalTasks, scheduleSlots, studysetAgendaItems, scheduledStudyItems, calendarEvents]);
 
   const handleTaskCreated = async (newTask: Omit<PersonalTask, 'id' | 'created_at' | 'user_id'>) => {
     await createPersonalTask(newTask);
@@ -776,6 +858,20 @@ function AgendaPageContent() {
                 Add Agenda Item
               </Button>
             )}
+
+            {isTeacher && (
+              <Button
+                variant="ghost"
+                className="h-9 rounded-xl surface-interactive px-3.5 text-foreground/90 hover:surface-chip"
+                onClick={() => {
+                  if (!selectedClassId && teacherClasses.length > 0) setSelectedClassId(teacherClasses[0].id);
+                  setIsScheduleConfigureOpen(true);
+                }}
+              >
+                <CalendarClock className="mr-2 h-4 w-4" />
+                Configure
+              </Button>
+            )}
           </div>
         </div>
 
@@ -838,6 +934,17 @@ function AgendaPageContent() {
         classes={(classes || []).map((c: any) => ({ id: c.id, name: c.name || c.title || '' }))}
         initialProvider={selectedCalendarProvider}
       />
+
+      {isTeacher && (
+        <ScheduleConfigureDialog
+          open={isScheduleConfigureOpen}
+          onOpenChange={setIsScheduleConfigureOpen}
+          classes={teacherClasses.map((c: any) => ({ id: c.id, name: c.name || c.title || '' }))}
+          classId={selectedClassId || null}
+          onClassIdChange={setSelectedClassId}
+          onSaved={() => setAgendaReloadKey((prev) => prev + 1)}
+        />
+      )}
     </PageSection>
     </>
   );
