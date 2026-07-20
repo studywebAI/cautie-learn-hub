@@ -39,6 +39,11 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  Table as TableIcon,
+  Ruler,
+  MapPin,
+  LineChart,
+  Layers,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -75,13 +80,23 @@ import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverla
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
 import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
 
+type BlockTemplateCategory = 'content' | 'question' | 'interactive' | 'data';
+
 interface BlockTemplate {
   id: string;
   type: string;
   icon: React.ReactNode;
   label: string;
+  category: BlockTemplateCategory;
   defaultData: any;
 }
+
+const BLOCK_TEMPLATE_CATEGORY_LABELS: Record<BlockTemplateCategory, { en: string; nl: string }> = {
+  question: { en: 'Question types', nl: 'Vraagtypes' },
+  interactive: { en: 'Interactive', nl: 'Interactief' },
+  data: { en: 'Data & tables', nl: 'Data & tabellen' },
+  content: { en: 'Content', nl: 'Inhoud' },
+};
 
 interface AssignmentBlock {
   id: string;
@@ -142,6 +157,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'text',
     icon: <Type className="h-4 w-4" />,
     label: 'Text',
+    category: 'content',
     defaultData: { header: '', content: '', style: 'normal' }
   },
   {
@@ -149,6 +165,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'multiple_choice',
     icon: <CheckSquare className="h-4 w-4" />,
     label: 'Multiple Choice',
+    category: 'question',
     defaultData: {
       question: '',
       options: [
@@ -166,6 +183,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'open_question',
     icon: <MessageSquare className="h-4 w-4" />,
     label: 'Open Question',
+    category: 'question',
     defaultData: {
       question: '',
       correct_answer: '',
@@ -179,6 +197,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'fill_in_blank',
     icon: <FileText className="h-4 w-4" />,
     label: 'Fill Blank',
+    category: 'question',
     defaultData: {
       text: 'My shoes ___ 100 euros.',
       answers: ['cost'],
@@ -190,6 +209,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'drag_drop',
     icon: <Move className="h-4 w-4" />,
     label: 'Drag & Drop',
+    category: 'question',
     defaultData: {
       prompt: '',
       pairs: [
@@ -203,6 +223,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'matching',
     icon: <Move className="h-4 w-4" />,
     label: 'Matching',
+    category: 'question',
     defaultData: {
       prompt: '',
       pairs: [
@@ -216,6 +237,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'ordering',
     icon: <ListOrdered className="h-4 w-4" />,
     label: 'Ordering',
+    category: 'question',
     defaultData: {
       prompt: '',
       items: ['', '', ''],
@@ -227,6 +249,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'media_embed',
     icon: <Link className="h-4 w-4" />,
     label: 'Media',
+    category: 'content',
     defaultData: {
       embed_url: '',
       description: ''
@@ -237,6 +260,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'image',
     icon: <ImageIcon className="h-4 w-4" />,
     label: 'Image',
+    category: 'content',
     defaultData: { url: '', caption: '', alt: '' }
   },
   {
@@ -244,6 +268,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'video',
     icon: <Video className="h-4 w-4" />,
     label: 'Video',
+    category: 'content',
     defaultData: { url: '', caption: '' }
   },
   {
@@ -251,6 +276,7 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     type: 'file',
     icon: <FileText className="h-4 w-4" />,
     label: 'File',
+    category: 'content',
     defaultData: { url: '', filename: '', caption: '' }
   }
 ];
@@ -401,9 +427,10 @@ export function AssignmentEditor({
   
   // Drag state
   const [isDragging, setIsDragging] = useState(false);
-  const [dragSource, setDragSource] = useState<{ type: 'template' | 'block'; id: string } | null>(null);
+  const [dragSource, setDragSource] = useState<{ type: 'block'; id: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ rowIndex: number; column?: 'left' | 'right' } | null>(null);
-  
+  const [addBlockMenuOpen, setAddBlockMenuOpen] = useState(false);
+
   // Settings state
   const [aiSettingsBlockId, setAiSettingsBlockId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(true);
@@ -1404,11 +1431,6 @@ export function AssignmentEditor({
     setDragSource({ type: 'block', id: blockId });
   };
 
-  const startDragTemplate = (templateId: string) => {
-    setIsDragging(true);
-    setDragSource({ type: 'template', id: templateId });
-  };
-
   const handleGripPointerDown = (e: React.PointerEvent, blockId: string) => {
     if (!showTeacherControls) return;
     e.preventDefault();
@@ -1416,21 +1438,9 @@ export function AssignmentEditor({
     startDragBlock(blockId);
   };
 
-  const handleTemplatePointerDown = (e: React.PointerEvent, templateId: string) => {
-    if (!showTeacherControls) return;
-    e.preventDefault();
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    startDragTemplate(templateId);
-  };
-
   const handleMouseUp = () => {
     if (isDragging && dragSource && dropTarget !== null) {
-      if (dragSource.type === 'template') {
-        const template = BLOCK_TEMPLATES.find(t => t.id === dragSource.id);
-        if (template) {
-          addBlock(template, dropTarget.rowIndex, dropTarget.column);
-        }
-      } else {
+      {
         const sourceRowIndex = rows.findIndex((row) => row.blocks.some((b) => b.id === dragSource.id));
         if (!(sourceRowIndex === dropTarget.rowIndex && dropTarget.column === undefined)) {
           moveBlock(dragSource.id, dropTarget.rowIndex, dropTarget.column);
@@ -2890,6 +2900,53 @@ export function AssignmentEditor({
                 </div>
               </div>
             )}
+
+            {showTeacherControls && (
+              <div className="mx-auto max-w-3xl mt-3">
+                <Popover open={addBlockMenuOpen} onOpenChange={setAddBlockMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      data-testid="assignment-add-block-button"
+                      className="w-full justify-center gap-1.5 border-dashed"
+                    >
+                      <Plus className="h-4 w-4" />
+                      {isDutch ? 'Blok toevoegen' : 'Add block'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-80 p-3 max-h-[70vh] overflow-y-auto">
+                    {(['question', 'interactive', 'data', 'content'] as BlockTemplateCategory[]).map((category) => {
+                      const templates = BLOCK_TEMPLATES.filter((tpl) => tpl.category === category);
+                      if (templates.length === 0) return null;
+                      return (
+                        <div key={category} className="mb-3 last:mb-0">
+                          <div className="text-[11px] font-medium text-muted-foreground mb-1.5 px-1">
+                            {isDutch ? BLOCK_TEMPLATE_CATEGORY_LABELS[category].nl : BLOCK_TEMPLATE_CATEGORY_LABELS[category].en}
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {templates.map((template) => (
+                              <button
+                                type="button"
+                                key={template.id}
+                                data-testid={`assignment-template-${template.id}`}
+                                className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:surface-interactive border border-transparent hover:border-border text-left"
+                                onClick={() => {
+                                  addBlock(template, rows.length);
+                                  setAddBlockMenuOpen(false);
+                                }}
+                              >
+                                {template.icon}
+                                <span className="text-sm truncate">{template.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
         </div>
 
@@ -2919,22 +2976,6 @@ export function AssignmentEditor({
             <div className="space-y-3">
             {activeSidebarTab === 'workspace' && (
               <>
-              <div className="rounded-xl border border-border surface-panel p-3">
-                <div className="text-[11px] font-medium text-muted-foreground mb-2">Blocks</div>
-                <div className="space-y-1.5">
-                  {BLOCK_TEMPLATES.map((template) => (
-                    <div
-                      key={template.id}
-                      data-testid={`assignment-template-${template.id}`}
-                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-grab hover:surface-interactive border border-transparent hover:border-border"
-                      onPointerDown={(e) => handleTemplatePointerDown(e, template.id)}
-                    >
-                      {template.icon}
-                      <span className="text-sm">{template.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
               {selectedBlock && (() => {
                 const block = blocks.find((b) => b.id === selectedBlock);
                 if (!block) return null;
