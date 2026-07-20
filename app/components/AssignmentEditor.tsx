@@ -79,7 +79,23 @@ import {
 } from '@/components/ui/dialog';
 import { AssignmentSettingsOverlay } from '@/components/AssignmentSettingsOverlay';
 import { AIGradingPresets, GradingPreset, GradingPresetSettings } from '@/components/AIGradingPresets';
-import { AssignmentSettings, DEFAULT_ASSIGNMENT_SETTINGS, DEFAULT_BLOCK_SETTINGS, normalizeAssignmentSettings, normalizeBlockSettings } from '@/lib/assignments/settings';
+import {
+  AssignmentSettings,
+  DEFAULT_ASSIGNMENT_SETTINGS,
+  DEFAULT_BLOCK_SETTINGS,
+  normalizeAssignmentSettings,
+  normalizeBlockSettings,
+  calculateFlashcardScore,
+  calculateTableScore,
+  calculateNumericScore,
+  calculateLabelingScore,
+  calculateGraphScore,
+} from '@/lib/assignments/settings';
+import { StudentFlashcardBlock } from '@/components/blocks/StudentFlashcardBlock';
+import { StudentTableBlock } from '@/components/blocks/StudentTableBlock';
+import { StudentNumberLineBlock } from '@/components/blocks/StudentNumberLineBlock';
+import { StudentDiagramLabelingBlock } from '@/components/blocks/StudentDiagramLabelingBlock';
+import { StudentGraphPlotBlock } from '@/components/blocks/StudentGraphPlotBlock';
 
 type BlockTemplateCategory = 'content' | 'question' | 'interactive' | 'data';
 
@@ -1226,6 +1242,39 @@ export function AssignmentEditor({
       const snippet = b.data?.question || b.data?.content || b.data?.prompt || b.data?.caption || '';
       return `${i + 1}. [${b.type}] ${String(snippet).slice(0, 80)}`;
     }).join('\n') || '(nog geen blokken)';
+  };
+
+  // View-mode "try it yourself" for the 5 interactive block types: reuses
+  // the real StudentXBlock components (same ones a student actually gets)
+  // and scores locally with the same calculateXScore helpers the server
+  // uses, purely as a local sandbox — nothing here touches student_answers,
+  // it's for a teacher (or a student browsing in View mode) to feel out
+  // the mechanic, not a real graded submission.
+  const handlePracticeSubmit = async (block: AssignmentBlock, answerData: any): Promise<{ ok: boolean; error?: string }> => {
+    const settings = normalizeBlockSettings(block.settings || {});
+    let result: { score: number; isCorrect: boolean } | null = null;
+    if (block.type === 'flashcard') {
+      const allCardIds = (block.data.cards || []).map((c: any) => c.id);
+      result = calculateFlashcardScore(answerData?.knownCardIds || [], allCardIds, settings);
+    } else if (block.type === 'table') {
+      result = calculateTableScore(answerData?.values || {}, block.data.rows || [], settings);
+    } else if (block.type === 'number_line') {
+      const nlSettings = { ...settings, numeric: { ...settings.numeric, exactMatch: false, tolerance: Number(block.data.tolerance || 0) } };
+      result = calculateNumericScore(answerData?.value, block.data.correctValue, nlSettings);
+    } else if (block.type === 'diagram_labeling') {
+      result = calculateLabelingScore(answerData?.labels || {}, block.data.points || [], settings);
+    } else if (block.type === 'graph_plot') {
+      result = calculateGraphScore(answerData?.points || [], block.data.correctPoints || [], Number(block.data.tolerance || 0), settings);
+    }
+    if (result) {
+      toast({
+        title: result.isCorrect
+          ? (isDutch ? 'Helemaal goed!' : 'All correct!')
+          : (isDutch ? 'Niet helemaal' : 'Not quite'),
+        description: isDutch ? `Score: ${result.score}/${settings.points}` : `Score: ${result.score}/${settings.points}`,
+      });
+    }
+    return { ok: true };
   };
 
   const handleAiCommandSubmit = async () => {
@@ -2389,6 +2438,14 @@ export function AssignmentEditor({
 
       case 'flashcard': {
         const cards = (block.data.cards || []) as Array<{ id: string; front: string; back: string }>;
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <StudentFlashcardBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
         return (
           <div className="space-y-2">
             <p className="text-[10px] text-muted-foreground">{isDutch ? 'Kaartjes (voor- en achterkant)' : 'Cards (front and back)'}</p>
@@ -2459,6 +2516,15 @@ export function AssignmentEditor({
       case 'table': {
         const columns = (block.data.columns || []) as Array<{ id: string; label: string }>;
         const tableRows = (block.data.rows || []) as Array<{ id: string; cells: Array<{ value: string; editable: boolean; correctValue?: string }> }>;
+
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <StudentTableBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
 
         const setColumnLabel = (ci: number, label: string) => {
           const newColumns = [...columns];
@@ -2578,6 +2644,14 @@ export function AssignmentEditor({
       case 'number_line': {
         const nlData = block.data as { prompt: string; min: number; max: number; step: number; correctValue: number; tolerance: number };
         const updateNl = (patch: Partial<typeof nlData>) => updateBlock(block.id, { ...block.data, ...patch });
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <StudentNumberLineBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
         return (
           <div className="space-y-2">
             <Input
@@ -2627,6 +2701,14 @@ export function AssignmentEditor({
         const isUploading = uploadingBlockId === block.id;
         const dlPoints = (block.data.points || []) as Array<{ id: string; x: number; y: number; correctLabel: string }>;
         const dlLabelBank = (block.data.labelBank || []) as string[];
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <StudentDiagramLabelingBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
         const addPoint = (x: number, y: number) => {
           updateBlock(block.id, { ...block.data, points: [...dlPoints, { id: generateId(), x, y, correctLabel: '' }] });
         };
@@ -2726,6 +2808,14 @@ export function AssignmentEditor({
         const gpData = block.data as { xLabel: string; yLabel: string; xMin: number; xMax: number; yMin: number; yMax: number; correctPoints: Array<{ x: number; y: number }>; tolerance: number };
         const gpPoints = gpData.correctPoints || [];
         const updateGp = (patch: Partial<typeof gpData>) => updateBlock(block.id, { ...block.data, ...patch });
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <StudentGraphPlotBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
         const updateGpPoint = (idx: number, patch: Partial<{ x: number; y: number }>) => {
           const newPoints = [...gpPoints];
           newPoints[idx] = { ...newPoints[idx], ...patch };
