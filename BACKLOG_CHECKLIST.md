@@ -118,6 +118,8 @@ Layout herbouwd naar quiz's settings-rail structuur: breadcrumb boven, Card Type
 
 **Jouw voorkeur?** A (lanceren) of B (verwijderen)?
 
+**Status (2026-07-21):** nog steeds pending — expliciet laten liggen, geen actie ondernomen.
+
 ---
 
 ## Hoe "100% klaar" te verifiëren per item

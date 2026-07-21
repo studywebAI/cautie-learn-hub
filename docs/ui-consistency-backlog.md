@@ -98,8 +98,10 @@ critical bug (below) is resolved, unless told otherwise.
       the migration/bucket issue, possibly a stale block-id race during
       autosave right after a block is created. Not yet root-caused; revisit
       once the migration bundle is applied and see if it still reproduces.
+      **Deferred (2026-07-21):** explicitly left as-is for now, no priority
+      set yet.
 
-## Future: classes → subjects/groups restructuring (not started, big)
+## Done: classes → subjects/groups restructuring (2026-07-21, all 5 phases)
 2026-07-17 braindump, verbatim intent — classes will eventually be removed
 as a first-class concept. The direction: a teacher creates a *subject*,
 students join it, and that becomes the group (no separate "class" object).
@@ -134,6 +136,8 @@ Specific tab-by-tab plan as described:
   color usage, overlap, too many classes shown, wrong classes) — but the
   real fix is replacing it with a subject/group picker once the above
   migration happens, not a cosmetic patch on the current classes model.
+  **Deferred (2026-07-21):** explicitly left as-is until the full
+  `class_id` → subject-as-group data-model migration lands.
 
 ---
 *This file exists purely as a shared checklist — safe to delete once everything

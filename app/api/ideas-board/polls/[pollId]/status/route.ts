@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getIdeasRole } from '../../../_shared'
+import { getIdeasRole, logIdeasBoardAudit } from '../../../_shared'
 
 const ALLOWED_STATUS = new Set(['draft', 'open', 'closed', 'archived'])
 
@@ -22,6 +22,12 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid poll status' }, { status: 400 })
     }
 
+    const { data: before } = await supabase
+      .from('ideas_board_polls')
+      .select('status')
+      .eq('id', pollId)
+      .maybeSingle()
+
     const { data, error } = await supabase
       .from('ideas_board_polls')
       .update({
@@ -33,6 +39,16 @@ export async function POST(
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    void logIdeasBoardAudit({
+      actorId: userId,
+      action: 'poll_status_changed',
+      entityType: 'poll',
+      entityId: pollId,
+      before,
+      after: { status: data.status },
+    })
+
     return NextResponse.json({ poll: data })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })

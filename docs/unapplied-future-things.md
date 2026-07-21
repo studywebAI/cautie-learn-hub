@@ -1,19 +1,23 @@
 # Unapplied Future Things
 
-Last updated: 2026-06-20
+Last updated: 2026-07-21
 
 This file tracks features that are in codebase planning/partial state but are not fully shipped in UX yet.
 
-## 1) School Schedule UI (hidden for now)
-- Decision: hide school schedule from the class UI for now.
-- UI status: hidden from class tabs (`schedule` tab removed from teacher tab list).
-- Backend status: still implemented and available in API/routes:
+## 1) School Schedule UI (superseded — now live via Agenda, 2026-07-21)
+- **Stale as of 2026-07-21** — this entry described the schedule tab as hidden;
+  that's no longer true. As part of the classes → subjects UI restructuring
+  (see `ui-consistency-backlog.md`), the Schedule and Calendar tabs were
+  removed from the class detail page and merged into Agenda: Agenda now has
+  a "Configure" button opening a dialog with the same weekly-schedule and
+  calendar-event CRUD (`ScheduleTabRedesigned`/`CalendarTab`, reused as-is).
+- Decision (2026-07-21): keep this integration as the baseline. Further UX
+  work on it (visual pass, richer editing) happens later, together with a
+  planned Agenda revamp — not scheduled yet, no date set.
+- Backend status: unchanged, still implemented in API/routes:
   - `/api/classes/[classId]/school-schedule`
   - `/api/school-schedule`
-- Estimated completeness:
-  - backend/data: ~85%
-  - UX for launch quality: ~35%
-- Current direction: keep endpoints intact, re-introduce when design/system parity pass is complete.
+  - `/api/classes/[classId]/calendar-events`
 
 ## 2) Ideas Board (community polling)
 - Goal: community-style intake where users submit ideas and vote.
@@ -46,9 +50,19 @@ This file tracks features that are in codebase planning/partial state but are no
   - backend/data: ~92%
   - UX moderation/workflow: ~82%
 - Remaining later iteration (not applied yet):
-  - explicit monthly scheduler/auto-close
   - separate staff role model (beyond `subscription_type`)
-  - richer moderation audit trail
+- **Done (2026-07-21):**
+  - Explicit monthly scheduler/auto-close: new `ideas_board_polls.ends_at`-driven
+    cron (`/api/ideas-board/admin/auto-close-cron`, registered in
+    `vercel.json`) auto-closes polls once `ends_at` passes; poll creation now
+    defaults `ends_at` to end-of-month when not explicitly set.
+  - Richer moderation audit trail: new `ideas_board_audit_log` table (admin-only
+    read) logging idea stage changes, poll creation, poll status changes
+    (manual and auto), with an admin-facing "Recent admin actions" panel on
+    `/ideas-board`.
+  - Explicitly NOT built (per 2026-07-21 decision): any admin UI for editing
+    idea content or resetting votes — those stay manual/code-level operations
+    (direct DB edits), not a feature surface.
 
 ## 3) Tools settings unification (planned, not fully applied)
 - Requested direction:
@@ -64,6 +78,10 @@ This file tracks features that are in codebase planning/partial state but are no
 - Next implementation wave:
   - single shared `ToolRuntimeSettings` schema + shared panel component
   - per-tier enforcement tied to subscription checks and upgrade CTA
+- **Status (2026-07-21):** Quiz and Flashcards already have this (settings-rail
+  layout, real settings, gating). Deferred: finish rollout to remaining tools
+  (Notes, Studyset, etc.) together with a planned Tools tab revamp — not
+  scheduled yet.
 
 ## 4) Feature inventory from repository markers
 - Existing broader backlog files already in repo:
@@ -87,6 +105,10 @@ This file tracks features that are in codebase planning/partial state but are no
   - remain hidden in class UI until parity pass is signed off.
 
 ## 6) Advanced Tool Settings Backlog (requested spec)
+- **Status (2026-07-21): blocked on clarification.** This list is too
+  unscoped to act on as-is — need more explanation/context on which of these
+  are real near-term asks vs. brainstorm before any of it is actionable.
+  Revisit with the user before picking anything off this list.
 - Scope note (important):
   - `Speedrun` is deferred and only valid for curated/fixed community sets later.
   - `Speedrun` is explicitly not for live-generated 1:1 quizzes (those are not route-stable/fair for speedrun ranking).
@@ -274,6 +296,10 @@ This file tracks features that are in codebase planning/partial state but are no
 
 ## 7) Deferred quiz grading + source-citation architecture (PROPOSED — NOT implemented, needs decision)
 
+**Status (2026-07-21):** deferred until a planned Quiz (and other tools) revamp
+— not scheduled yet. The A/B/C decision below still needs to be made before
+any of this is built.
+
 Requested 2026-06-20. User considers this very important: "if the answers/questions
 aren't good, the quiz is completely pointless." Do NOT implement until the user
 explicitly picks an approach below — they asked for alternatives before building.
@@ -455,6 +481,10 @@ from hallucinating what's "correct."
 
 ## 8) Analytics for students AND teachers (reminder — not specced yet)
 
+**Status (2026-07-21):** makes sense, deferred to a planned Analytics revamp
+— not scheduled yet. Still needs a follow-up conversation to spec before
+building, per the note below.
+
 Requested 2026-06-20, to revisit once the end-of-quiz results/analytics layout
 pass is done. User wants:
 - Students to be able to revisit their own past results for a quiz/flashcards
@@ -466,8 +496,14 @@ pass is done. User wants:
 
 ## 9) Typography rules: bold, caps, font-weight (living standard)
 
-**Status:** Partially applied (main user-facing pages cleaned); full enforcement is a living
-rule applied incrementally as files are touched.
+**Status (2026-07-21): rule relaxed — no longer strictly enforced.** User
+confirmed bold is used occasionally by design now, so this is no longer a
+"no font-bold anywhere" rule to sweep files against. Treat the rest of this
+section as historical context for why some files were changed, not as an
+active constraint on new code.
+
+~~**Status:** Partially applied (main user-facing pages cleaned); full enforcement is a living
+rule applied incrementally as files are touched.~~
 
 **Rule (clarified 2026-06-20):**
 - **No `font-bold`, `font-semibold`, `uppercase` Tailwind classes** as emphasis signals

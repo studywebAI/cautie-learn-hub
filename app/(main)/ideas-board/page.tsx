@@ -28,6 +28,18 @@ type PollOption = {
   position: number
 }
 
+type AuditLogEntry = {
+  id: string
+  action: string
+  entity_type: 'idea' | 'poll'
+  entity_id: string
+  before: Record<string, unknown> | null
+  after: Record<string, unknown> | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+  actor: { display_name: string }
+}
+
 export default function IdeasBoardPage() {
   const [ideas, setIdeas] = useState<IdeaItem[]>([])
   const [polls, setPolls] = useState<PollItem[]>([])
@@ -40,6 +52,8 @@ export default function IdeasBoardPage() {
   const [votingPollId, setVotingPollId] = useState<string | null>(null)
   const [rotatePollStatus, setRotatePollStatus] = useState<string>('')
   const [rotatingPoll, setRotatingPoll] = useState(false)
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([])
+  const [auditLogLoaded, setAuditLogLoaded] = useState(false)
 
   const loadBoard = async () => {
     setLoading(true)
@@ -59,6 +73,20 @@ export default function IdeasBoardPage() {
   useEffect(() => {
     void loadBoard()
   }, [])
+
+  const loadAuditLog = async () => {
+    try {
+      const response = await fetch('/api/ideas-board/admin/audit-log?limit=30', { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      setAuditLog(Array.isArray(payload?.entries) ? payload.entries : [])
+    } finally {
+      setAuditLogLoaded(true)
+    }
+  }
+
+  useEffect(() => {
+    if (canManagePolls && !auditLogLoaded) void loadAuditLog()
+  }, [canManagePolls, auditLogLoaded])
 
   const activePoll = useMemo(() => polls.find((poll) => poll.status === 'open') || null, [polls])
   const activePollOptions = useMemo(
@@ -116,6 +144,7 @@ export default function IdeasBoardPage() {
       if (!res.ok) throw new Error(data?.error || 'Rotation failed')
       setRotatePollStatus(`Done — ${data.closed_count} poll(s) closed. Next month key: ${data.next_month_key}`)
       await loadBoard()
+      await loadAuditLog()
     } catch (e: any) {
       setRotatePollStatus(e?.message || 'Failed')
     } finally {
@@ -213,6 +242,26 @@ export default function IdeasBoardPage() {
             </div>
             {rotatePollStatus && (
               <p className="text-xs text-muted-foreground">{rotatePollStatus}</p>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t border-border pt-3">
+            <h3 className="text-xs text-muted-foreground">Recent admin actions</h3>
+            {auditLog.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No admin actions logged yet.</p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-auto pr-1">
+                {auditLog.map((entry) => (
+                  <div key={entry.id} className="flex items-center justify-between gap-2 rounded-md surface-interactive px-2.5 py-1.5 text-xs">
+                    <span className="text-foreground/85">
+                      {entry.action.replace(/_/g, ' ')} <span className="text-muted-foreground">({entry.entity_type})</span>
+                    </span>
+                    <span className="shrink-0 text-muted-foreground">
+                      {entry.actor.display_name} · {new Date(entry.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

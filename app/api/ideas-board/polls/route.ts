@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getIdeasRole } from '../_shared'
+import { getIdeasRole, logIdeasBoardAudit } from '../_shared'
+
+// Last instant of the given "YYYY-MM" month, used as the default auto-close
+// time when the admin doesn't set an explicit endsAt.
+function endOfMonth(monthKey: string): string | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(monthKey)
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  // Day 0 of next month = last day of this month.
+  return new Date(Date.UTC(year, month, 0, 23, 59, 59)).toISOString()
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,11 +25,16 @@ export async function POST(request: Request) {
     const title = String(body?.title || '').trim()
     const description = String(body?.description || '').trim()
     const monthKey = String(body?.monthKey || '').trim()
+    const endsAtRaw = typeof body?.endsAt === 'string' ? body.endsAt.trim() : ''
     const optionIdeaIds = Array.isArray(body?.optionIdeaIds) ? body.optionIdeaIds.map((v: unknown) => String(v)) : []
 
     if (!title) return NextResponse.json({ error: 'Poll title is required' }, { status: 400 })
     if (!monthKey) return NextResponse.json({ error: 'monthKey is required' }, { status: 400 })
     if (optionIdeaIds.length < 2) return NextResponse.json({ error: 'At least 2 options are required' }, { status: 400 })
+
+    const endsAt = (endsAtRaw && !Number.isNaN(new Date(endsAtRaw).getTime()))
+      ? new Date(endsAtRaw).toISOString()
+      : endOfMonth(monthKey)
 
     const { data: poll, error: pollError } = await supabase
       .from('ideas_board_polls')
@@ -27,6 +43,7 @@ export async function POST(request: Request) {
         description: description || null,
         month_key: monthKey,
         status: 'open',
+        ends_at: endsAt,
         created_by: userId,
       })
       .select('id')
@@ -56,6 +73,14 @@ export async function POST(request: Request) {
       .from('ideas_board_poll_options')
       .insert(optionsPayload)
     if (optionsError) return NextResponse.json({ error: optionsError.message }, { status: 500 })
+
+    void logIdeasBoardAudit({
+      actorId: userId,
+      action: 'poll_created',
+      entityType: 'poll',
+      entityId: poll.id,
+      after: { title, month_key: monthKey, ends_at: endsAt, option_count: validIdeas.length },
+    })
 
     return NextResponse.json({ ok: true, pollId: poll.id }, { status: 201 })
   } catch (error) {

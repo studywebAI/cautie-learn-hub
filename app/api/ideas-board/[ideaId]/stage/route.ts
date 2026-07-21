@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getIdeasRole } from '../../_shared'
+import { getIdeasRole, logIdeasBoardAudit } from '../../_shared'
 
 const ALLOWED_STAGES = new Set(['submitted', 'candidate', 'planned', 'rejected', 'shipped'])
 
@@ -22,6 +22,12 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid lifecycle stage' }, { status: 400 })
     }
 
+    const { data: before } = await supabase
+      .from('ideas_board_items')
+      .select('lifecycle_stage, status')
+      .eq('id', ideaId)
+      .maybeSingle()
+
     const { data, error } = await supabase
       .from('ideas_board_items')
       .update({
@@ -39,6 +45,16 @@ export async function POST(
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    void logIdeasBoardAudit({
+      actorId: userId,
+      action: 'idea_stage_changed',
+      entityType: 'idea',
+      entityId: ideaId,
+      before,
+      after: { lifecycle_stage: data.lifecycle_stage, status: data.status },
+    })
+
     return NextResponse.json({ idea: data })
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 })

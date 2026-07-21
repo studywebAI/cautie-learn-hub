@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
-import { getIdeasRole } from '../../_shared'
+import { getIdeasRole, logIdeasBoardAudit, notifyIdeasBoardAdmins } from '../../_shared'
 
 export async function POST() {
   try {
@@ -22,6 +22,15 @@ export async function POST() {
         .update({ status: 'closed', updated_at: new Date().toISOString() })
         .eq('id', poll.id)
       closedIds.push(poll.id)
+      void logIdeasBoardAudit({
+        actorId: userId,
+        action: 'poll_status_changed',
+        entityType: 'poll',
+        entityId: poll.id,
+        before: { status: 'open' },
+        after: { status: 'closed' },
+        metadata: { via: 'manual_rotate' },
+      })
     }
 
     const now = new Date()
@@ -29,22 +38,12 @@ export async function POST() {
     const nextMonthKey = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`
 
     if (closedIds.length > 0) {
-      const { data: adminProfiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .in('subscription_type', ['admin', 'owner', 'creator'])
-      const adminIds = (adminProfiles || []).map((p) => p.id)
-      if (adminIds.length > 0) {
-        void supabase.from('notifications').insert(
-          adminIds.map((adminId) => ({
-            user_id: adminId,
-            type: 'poll_rotated',
-            title: 'Poll rotated',
-            message: `${closedIds.length} poll(s) closed. Next month: ${nextMonthKey}`,
-            data: { closed_poll_ids: closedIds, next_month_key: nextMonthKey, rotated_by: userId },
-          }))
-        )
-      }
+      void notifyIdeasBoardAdmins({
+        type: 'poll_rotated',
+        title: 'Poll rotated',
+        message: `${closedIds.length} poll(s) closed. Next month: ${nextMonthKey}`,
+        data: { closed_poll_ids: closedIds, next_month_key: nextMonthKey, rotated_by: userId },
+      })
     }
 
     return NextResponse.json({
