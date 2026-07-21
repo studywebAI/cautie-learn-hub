@@ -46,6 +46,10 @@ import {
   MapPin,
   LineChart,
   Layers,
+  AlertTriangle,
+  Clipboard,
+  CheckCircle2,
+  Circle,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -567,12 +571,33 @@ export function AssignmentEditor({
   const [isSharing, setIsSharing] = useState(false);
   // Information tab state
   const [infoData, setInfoData] = useState<{
+    class_name: string | null;
+    class_student_count: number;
+    completed_student_count: number;
+    completed_percent: number | null;
     total_questions: number;
     total_answers: number;
     question_metrics: Array<{ block_id: string; type: string; attempts: number; average_score: number; correct_count: number; wrong_count: number; error_rate_percent: number; difficulty_percent: number }>;
     student_scores: Array<{ student_id: string; name: string; total_answered: number; total_questions: number; correct_count: number; score_percent: number; last_submitted_at: string | null; time_spent_minutes: number | null }>;
   } | null>(null);
   const [isLoadingInfo, setIsLoadingInfo] = useState(false);
+  // Live monitor -- reuses the same endpoint the dashboard's teacher-live-
+  // test-widget already polls: per-student status, tab-switch/fullscreen/
+  // paste counts, "possibly left" heuristic.
+  const [liveData, setLiveData] = useState<{
+    isLive: boolean;
+    inProgressCount: number;
+    submittedCount: number;
+    students: Array<{
+      attemptId: string; studentId: string; studentName: string; status: string;
+      startedAt: string | null; submittedAt: string | null;
+      correct: number; incorrect: number; ungraded: number; totalBlocks: number;
+      score: number | null; maxScore: number | null;
+      tabSwitchCount: number; fullscreenExitCount: number; suspiciousPasteCount: number;
+      lastSeenAt: string | null; possiblyLeft: boolean;
+    }>;
+  } | null>(null);
+  const [expandedInfoStudentId, setExpandedInfoStudentId] = useState<string | null>(null);
   const [expandedAnswersBlockId, setExpandedAnswersBlockId] = useState<string | null>(null);
   // Per-block student answers, any block type (Phase 4 -- extends the
   // formerly open_question-only "View Student Answers" quick check).
@@ -1228,15 +1253,35 @@ export function AssignmentEditor({
     }
   };
 
-  // Information tab — surfaces the existing per-block analytics endpoint.
+  // Information tab — surfaces the existing per-block analytics endpoint
+  // plus the live-monitor endpoint (same data the dashboard's live-test
+  // widget already uses: per-student status, security flags, last seen).
+  // Polled every 15s while the tab is open for a "live" feel without
+  // needing websockets.
   useEffect(() => {
     if (activeSidebarTab !== 'information') return;
-    setIsLoadingInfo(true);
-    fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/analytics`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setInfoData(data))
-      .catch(() => setInfoData(null))
-      .finally(() => setIsLoadingInfo(false));
+    let cancelled = false;
+
+    const loadAnalytics = () => {
+      setIsLoadingInfo(true);
+      fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/analytics`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => { if (!cancelled) setInfoData(data); })
+        .catch(() => { if (!cancelled) setInfoData(null); })
+        .finally(() => { if (!cancelled) setIsLoadingInfo(false); });
+    };
+
+    const loadLive = () => {
+      fetch(`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/live`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => { if (!cancelled) setLiveData(data); })
+        .catch(() => { if (!cancelled) setLiveData(null); });
+    };
+
+    loadAnalytics();
+    loadLive();
+    const interval = setInterval(loadLive, 15000);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [activeSidebarTab, subjectId, chapterId, paragraphId, assignmentId]);
 
   const buildBlocksContextSummary = () => {
@@ -4150,6 +4195,30 @@ export function AssignmentEditor({
                 <div className="rounded-xl border border-border surface-panel p-3 text-xs text-muted-foreground">{t.infoNoData}</div>
               ) : (
                 <>
+                  {/* Completion headline — "X% of [class] completed this" */}
+                  {infoData.class_student_count > 0 && (
+                    <div className="rounded-xl border border-border surface-panel p-3 space-y-1.5">
+                      <div className="text-lg font-semibold">
+                        {infoData.completed_percent?.toFixed(1)}%
+                        <span className="text-xs font-normal text-muted-foreground">
+                          {' '}{isDutch ? 'van' : 'of'} {infoData.class_name || (isDutch ? 'de klas' : 'the class')} {isDutch ? 'heeft dit afgerond' : 'has completed this'}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-foreground transition-all"
+                          style={{ width: `${Math.min(100, infoData.completed_percent || 0)}%` }}
+                        />
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {infoData.completed_student_count}/{infoData.class_student_count} {isDutch ? 'leerlingen klaar' : 'students done'}
+                        {liveData && liveData.inProgressCount > 0 && (
+                          <> · {liveData.inProgressCount} {isDutch ? 'nu bezig' : 'working now'}</>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-xl border border-border surface-panel p-3 grid grid-cols-2 gap-3">
                     <div>
                       <div className="text-[11px] text-muted-foreground">{t.infoQuestions}</div>
@@ -4160,33 +4229,133 @@ export function AssignmentEditor({
                       <div className="text-lg font-semibold">{infoData.total_answers}</div>
                     </div>
                   </div>
-                  <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                    <div className="text-[11px] font-medium text-muted-foreground mb-1">{t.infoStudents}</div>
+
+                  {/* Numbered, clickable block list -- click a question to see
+                      exactly which students answered it (reuses the same
+                      per-block student-answers fetch as the Workspace quick-check). */}
+                  <div className="rounded-xl border border-border surface-panel p-3 space-y-1">
+                    <div className="text-[11px] font-medium text-muted-foreground mb-1.5">
+                      {isDutch ? 'Blokken' : 'Blocks'}
+                    </div>
+                    {infoData.question_metrics.map((m, i) => {
+                      const isExpanded = expandedAnswersBlockId === m.block_id;
+                      return (
+                        <div key={m.block_id} className="border-b border-border/60 pb-1.5 last:border-0 last:pb-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = isExpanded ? null : m.block_id;
+                              setExpandedAnswersBlockId(next);
+                              if (next) void fetchStudentAnswersForBlock(m.block_id);
+                            }}
+                            className="flex w-full items-center justify-between gap-2 py-1 text-left text-xs hover:text-foreground"
+                          >
+                            <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
+                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-foreground">
+                                {i + 1}
+                              </span>
+                              {m.type.replace('_', ' ')}
+                            </span>
+                            <span className="flex items-center gap-1 text-right text-muted-foreground">
+                              {m.attempts} {t.infoAttempts} · {m.difficulty_percent.toFixed(0)}% {t.infoDifficulty}
+                              <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div className="mt-1 space-y-1 pl-7 pb-1">
+                              {loadingStudentAnswersBlockId === m.block_id ? (
+                                <p className="text-[11px] text-muted-foreground">{isDutch ? 'Laden...' : 'Loading...'}</p>
+                              ) : (studentAnswersByBlockId[m.block_id] || []).length === 0 ? (
+                                <p className="text-[11px] text-muted-foreground">{isDutch ? 'Nog geen antwoorden' : 'No answers yet'}</p>
+                              ) : (
+                                (studentAnswersByBlockId[m.block_id] || []).map((row) => (
+                                  <div key={row.student_id} className="flex items-center justify-between gap-2 text-[11px]">
+                                    <span className="truncate text-foreground/85">{row.student_name}</span>
+                                    {row.is_correct === true ? (
+                                      <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-600" />
+                                    ) : row.is_correct === false ? (
+                                      <X className="h-3 w-3 shrink-0 text-destructive" />
+                                    ) : (
+                                      <span className="shrink-0 text-muted-foreground">{isDutch ? 'nagekeken' : 'ungraded'}</span>
+                                    )}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Live / security feed -- per-student status plus anti-cheat
+                      signals already tracked server-side (tab switches,
+                      fullscreen exits, suspicious pastes) but previously only
+                      surfaced on the dashboard's live-test widget. */}
+                  <div className="rounded-xl border border-border surface-panel p-3 space-y-1">
+                    <div className="text-[11px] font-medium text-muted-foreground mb-1.5">{t.infoStudents}</div>
                     {infoData.student_scores.length === 0 ? (
                       <p className="text-xs text-muted-foreground">{t.infoNoSubmissions}</p>
                     ) : (
-                      infoData.student_scores.map((s) => (
-                        <div key={s.student_id} className="flex items-center justify-between gap-2 text-xs border-b border-border/60 pb-2 last:border-0 last:pb-0">
-                          <span className="truncate">{s.name}</span>
-                          <span className="text-right shrink-0 text-muted-foreground">
-                            {s.correct_count}/{s.total_answered} · {s.score_percent.toFixed(0)}%
-                            {typeof s.time_spent_minutes === 'number' && (
-                              <> · {s.time_spent_minutes} {t.infoMinutes} {t.infoTimeSpent}</>
+                      infoData.student_scores.map((s) => {
+                        const live = liveData?.students.find((row) => row.studentId === s.student_id);
+                        const isExpanded = expandedInfoStudentId === s.student_id;
+                        const isComplete = s.total_questions > 0 && s.total_answered >= s.total_questions;
+                        const hasFlags = live && (live.tabSwitchCount > 0 || live.fullscreenExitCount > 0 || live.suspiciousPasteCount > 0);
+                        return (
+                          <div key={s.student_id} className="border-b border-border/60 pb-1.5 last:border-0 last:pb-0">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedInfoStudentId(isExpanded ? null : s.student_id)}
+                              className="flex w-full items-center justify-between gap-2 py-1 text-left text-xs"
+                            >
+                              <span className="flex items-center gap-1.5 truncate">
+                                {isComplete ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                ) : live?.status === 'in_progress' ? (
+                                  <Circle className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                                ) : (
+                                  <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                                )}
+                                <span className="truncate">{s.name}</span>
+                                {live?.possiblyLeft && (
+                                  <span className="shrink-0 text-[10px] text-amber-600">{isDutch ? 'mogelijk weg' : 'possibly left'}</span>
+                                )}
+                                {hasFlags && <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />}
+                              </span>
+                              <span className="text-right shrink-0 text-muted-foreground">
+                                {s.correct_count}/{s.total_answered} · {s.score_percent.toFixed(0)}%
+                              </span>
+                            </button>
+                            {isExpanded && (
+                              <div className="mt-1 space-y-1 pl-5 pb-1 text-[11px] text-muted-foreground">
+                                <div>{isDutch ? 'Voortgang' : 'Progress'}: {s.total_answered}/{s.total_questions}</div>
+                                {typeof s.time_spent_minutes === 'number' && (
+                                  <div>{isDutch ? 'Tijd besteed' : 'Time spent'}: {s.time_spent_minutes} {t.infoMinutes}</div>
+                                )}
+                                {live && (
+                                  <>
+                                    <div>{isDutch ? 'Status' : 'Status'}: {live.status.replace('_', ' ')}</div>
+                                    {live.lastSeenAt && (
+                                      <div>{isDutch ? 'Laatst actief' : 'Last seen'}: {new Date(live.lastSeenAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    )}
+                                    {live.tabSwitchCount > 0 && (
+                                      <div className="flex items-center gap-1"><Eye className="h-3 w-3" /> {live.tabSwitchCount} {isDutch ? 'keer weggeklikt' : 'tab switches'}</div>
+                                    )}
+                                    {live.fullscreenExitCount > 0 && (
+                                      <div className="flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {live.fullscreenExitCount} {isDutch ? 'keer volledig scherm verlaten' : 'fullscreen exits'}</div>
+                                    )}
+                                    {live.suspiciousPasteCount > 0 && (
+                                      <div className="flex items-center gap-1"><Clipboard className="h-3 w-3" /> {live.suspiciousPasteCount} {isDutch ? 'verdachte plak-acties' : 'suspicious pastes'}</div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             )}
-                          </span>
-                        </div>
-                      ))
+                          </div>
+                        );
+                      })
                     )}
-                  </div>
-                  <div className="rounded-xl border border-border surface-panel p-3 space-y-2">
-                    {infoData.question_metrics.map((m, i) => (
-                      <div key={m.block_id} className="flex items-center justify-between gap-2 text-xs border-b border-border/60 pb-2 last:border-0 last:pb-0">
-                        <span className="text-muted-foreground shrink-0">#{i + 1} {m.type.replace('_', ' ')}</span>
-                        <span className="text-right">
-                          {m.attempts} {t.infoAttempts} · {m.average_score.toFixed(1)} {t.infoAvgScore} · {m.difficulty_percent.toFixed(0)}% {t.infoDifficulty}
-                        </span>
-                      </div>
-                    ))}
                   </div>
                 </>
               )}

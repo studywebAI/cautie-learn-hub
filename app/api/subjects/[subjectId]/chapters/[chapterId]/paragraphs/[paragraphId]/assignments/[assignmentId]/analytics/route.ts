@@ -34,6 +34,22 @@ export async function GET(
 
     if (!member) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+    // Roster size -- needed to turn "X students answered" into "X% of the
+    // class completed this", not just a raw count.
+    let className: string | null = null
+    let classStudentCount = 0
+    if ((assignment as any).class_id) {
+      const [{ data: classRow }, { data: classMembers }] = await Promise.all([
+        supabase.from('classes').select('name').eq('id', (assignment as any).class_id).maybeSingle(),
+        supabase.from('class_members').select('user_id, role').eq('class_id', (assignment as any).class_id),
+      ])
+      className = (classRow as any)?.name || null
+      classStudentCount = (classMembers || []).filter((m: any) => {
+        const role = String(m?.role || '').toLowerCase()
+        return role === 'student' || role === ''
+      }).length
+    }
+
     const { data: blocks } = await supabase
       .from('blocks')
       .select('id, type, data, settings, position')
@@ -154,9 +170,21 @@ export async function GET(
       }
     }).sort((a, b) => a.name.localeCompare(b.name))
 
+    const totalQuestions = (blocks || []).length
+    const completedStudentCount = studentScores.filter(
+      (s) => totalQuestions > 0 && s.total_answered >= totalQuestions
+    ).length
+    const completedPercent = classStudentCount > 0
+      ? Number(((completedStudentCount / classStudentCount) * 100).toFixed(1))
+      : null
+
     return NextResponse.json({
       assignment_id: resolvedParams.assignmentId,
       title: (assignment as any).title,
+      class_name: className,
+      class_student_count: classStudentCount,
+      completed_student_count: completedStudentCount,
+      completed_percent: completedPercent,
       total_questions: (blocks || []).length,
       total_answers: (answers || []).length,
       question_metrics: questionMetrics,
