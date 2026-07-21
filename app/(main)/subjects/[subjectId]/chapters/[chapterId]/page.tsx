@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Lock, Settings2 } from 'lucide-react';
 import { CautieLoader } from '@/components/ui/cautie-loader';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -380,21 +381,21 @@ function ParagraphPrerequisitePopover({
         <Label htmlFor={`prereq-${paragraph.id}`} className="text-xs">
           {t.requiresFirst}
         </Label>
-        <select
-          id={`prereq-${paragraph.id}`}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-        >
-          <option value="">{t.none}</option>
-          {allParagraphs
-            .filter((p) => p.id !== paragraph.id)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}.{p.paragraph_number} {p.title}
-              </option>
-            ))}
-        </select>
+        <Select value={value || 'none'} onValueChange={(v) => setValue(v === 'none' ? '' : v)}>
+          <SelectTrigger id={`prereq-${paragraph.id}`} className="h-9 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">{t.none}</SelectItem>
+            {allParagraphs
+              .filter((p) => p.id !== paragraph.id)
+              .map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}.{p.paragraph_number} {p.title}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
         <p className="text-[11px] text-muted-foreground">{t.lockedHint}</p>
         <Button size="sm" className="w-full" onClick={handleSave} disabled={isSaving}>
           {isSaving ? t.saving : t.save}

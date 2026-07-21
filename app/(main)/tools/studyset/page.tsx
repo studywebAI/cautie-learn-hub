@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -1560,15 +1561,16 @@ export default function StudysetPage() {
                     {/* Output language */}
                     <div>
                       <label className="block text-sm font-medium text-foreground mb-2">Output language</label>
-                      <select
-                        value={outputLanguage}
-                        onChange={(e) => setOutputLanguage(e.target.value)}
-                        className="h-9 rounded-lg border border-border bg-white px-3 text-sm text-foreground focus:border-[var(--accent-brand)]/60 focus:outline-none focus:ring-1 focus:ring-[var(--accent-brand)]/30"
-                      >
-                        {LANGUAGE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                      <Select value={outputLanguage} onValueChange={setOutputLanguage}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LANGUAGE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     {/* Grounding + examples toggles */}

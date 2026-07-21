@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Popover,
   PopoverContent,
@@ -135,14 +136,14 @@ export function GradingTemplatePicker({
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        value={selectedPresetId || ''}
-        onChange={(e) => onSelect(e.target.value)}
-        className="text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-      >
-        <option value="">{isDutch ? 'Kies een cijfer-template...' : 'Choose a grading template...'}</option>
-        {presets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
+      <Select value={selectedPresetId || undefined} onValueChange={onSelect}>
+        <SelectTrigger className="h-8 text-xs">
+          <SelectValue placeholder={isDutch ? 'Kies een cijfer-template...' : 'Choose a grading template...'} />
+        </SelectTrigger>
+        <SelectContent>
+          {presets.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+        </SelectContent>
+      </Select>
 
       <Button size="sm" variant="outline" onClick={onApply} disabled={!selectedPresetId || applying}>
         {applying ? (isDutch ? 'Bezig...' : 'Working...') : (isDutch ? 'Toepassen' : 'Apply')}

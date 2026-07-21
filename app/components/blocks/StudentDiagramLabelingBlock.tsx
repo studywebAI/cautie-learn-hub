@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { BaseBlock, DiagramLabelingBlockContent } from './types';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface StudentDiagramLabelingBlockProps {
   block: BaseBlock & { data: DiagramLabelingBlockContent };
@@ -60,17 +61,20 @@ export const StudentDiagramLabelingBlock: React.FC<StudentDiagramLabelingBlockPr
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground">
               {idx + 1}
             </span>
-            <select
-              value={labels[p.id] || ''}
-              onChange={(e) => setLabels((prev) => ({ ...prev, [p.id]: e.target.value }))}
+            <Select
+              value={labels[p.id] || undefined}
+              onValueChange={(v) => setLabels((prev) => ({ ...prev, [p.id]: v }))}
               disabled={isSubmitted || isSubmitting}
-              className="h-8 flex-1 rounded-md border border-input bg-background px-2 text-sm"
             >
-              <option value="">...</option>
-              {labelBank.map((label) => (
-                <option key={label} value={label}>{label}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-8 flex-1 text-sm">
+                <SelectValue placeholder="..." />
+              </SelectTrigger>
+              <SelectContent>
+                {labelBank.map((label) => (
+                  <SelectItem key={label} value={label}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         ))}
       </div>

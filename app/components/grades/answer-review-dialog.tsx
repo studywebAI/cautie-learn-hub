@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 
 type QuestionAnswer = {
@@ -81,17 +82,18 @@ export function AnswerReviewDialog({
         ) : (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
-              <select
-                className="h-8 flex-1 min-w-0 truncate text-sm border border-border rounded-md bg-background px-2"
-                value={activeBlockId || ''}
-                onChange={(e) => setActiveBlockId(e.target.value)}
-              >
-                {questions.map((q, i) => (
-                  <option key={q.block_id} value={q.block_id}>
-                    {i + 1}. {q.question.slice(0, 60) || (isDutch ? 'Naamloze vraag' : 'Untitled question')}
-                  </option>
-                ))}
-              </select>
+              <Select value={activeBlockId || undefined} onValueChange={setActiveBlockId}>
+                <SelectTrigger className="h-8 flex-1 min-w-0 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {questions.map((q, i) => (
+                    <SelectItem key={q.block_id} value={q.block_id}>
+                      {i + 1}. {q.question.slice(0, 60) || (isDutch ? 'Naamloze vraag' : 'Untitled question')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className="flex gap-1 rounded-lg bg-muted p-0.5 shrink-0">
                 <button
                   type="button"

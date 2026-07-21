@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { BrainCircuit, Copy, Link as LinkIcon, Paperclip, X } from 'lucide-react';
@@ -672,37 +673,29 @@ export function EditAssignmentDialog({ isOpen, setIsOpen, classId, assignment }:
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="grid gap-2">
                     <Label htmlFor="chapter">{t.chapterOptional}</Label>
-                    <select
-                      id="chapter"
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                      value={selectedChapter}
-                      onChange={(e) => setSelectedChapter(e.target.value)}
-                      disabled={isLoadingChapters}
-                    >
-                      <option value="">{isLoadingChapters ? t.loadingChapters : t.chooseChapter}</option>
-                      {chapters.map((chapter) => (
-                        <option key={chapter.id} value={chapter.id}>{chapter.title}</option>
-                      ))}
-                      {!isLoadingChapters && chapters.length === 0 && <option value="" disabled>{t.noChapters}</option>}
-                    </select>
+                    <Select value={selectedChapter} onValueChange={setSelectedChapter} disabled={isLoadingChapters}>
+                      <SelectTrigger id="chapter" className="h-9 text-sm">
+                        <SelectValue placeholder={isLoadingChapters ? t.loadingChapters : (chapters.length === 0 ? t.noChapters : t.chooseChapter)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {chapters.map((chapter) => (
+                          <SelectItem key={chapter.id} value={chapter.id}>{chapter.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="block">{t.blockOptional}</Label>
-                    <select
-                      id="block"
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                      value={selectedBlock}
-                      onChange={(e) => setSelectedBlock(e.target.value)}
-                      disabled={!selectedChapter || isLoadingBlocks}
-                    >
-                      <option value="">
-                        {!selectedChapter ? t.chooseChapter : isLoadingBlocks ? t.loadingBlocks : t.chooseBlock}
-                      </option>
-                      {blocks.map((block) => (
-                        <option key={block.id} value={block.id}>{block.type}</option>
-                      ))}
-                      {!isLoadingBlocks && selectedChapter && blocks.length === 0 && <option value="" disabled>{t.noBlocks}</option>}
-                    </select>
+                    <Select value={selectedBlock} onValueChange={setSelectedBlock} disabled={!selectedChapter || isLoadingBlocks}>
+                      <SelectTrigger id="block" className="h-9 text-sm">
+                        <SelectValue placeholder={!selectedChapter ? t.chooseChapter : isLoadingBlocks ? t.loadingBlocks : (blocks.length === 0 ? t.noBlocks : t.chooseBlock)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {blocks.map((block) => (
+                          <SelectItem key={block.id} value={block.id}>{block.type}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

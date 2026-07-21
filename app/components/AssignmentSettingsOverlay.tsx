@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AssignmentSettings } from '@/lib/assignments/settings';
 import { ChevronDown } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AssignmentSettingsOverlayProps {
   settings: AssignmentSettings;
@@ -33,7 +34,6 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
     onSettingsChange({ ...settings, ...patch });
   };
 
-  const selectClass = 'h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full';
   const [openSection, setOpenSection] = useState<'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced'>('time');
 
   const Section = ({ id, title, children }: { id: 'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced'; title: string; children: React.ReactNode }) => {
@@ -75,10 +75,13 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           />
           <div className="grid grid-cols-2 gap-2">
             <NumberInput value={settings.time.durationMinutes} min={1} onChange={(v) => update({ time: { ...settings.time, durationMinutes: v } })} disabled={isLoading} />
-            <select className={selectClass} value={settings.time.timerMode} onChange={(e) => update({ time: { ...settings.time, timerMode: e.target.value as any } })} disabled={isLoading}>
-              <option value="deadline">Deadline</option>
-              <option value="per_student">Per student timer</option>
-            </select>
+            <Select value={settings.time.timerMode} onValueChange={(v) => update({ time: { ...settings.time, timerMode: v as any } })} disabled={isLoading}>
+              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="deadline">Deadline</SelectItem>
+                <SelectItem value="per_student">Per student timer</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center justify-between"><Label className="text-xs">Auto submit on timeout</Label><Switch checked={settings.time.autoSubmitOnTimeout} onCheckedChange={(v) => update({ time: { ...settings.time, autoSubmitOnTimeout: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Show timer</Label><Switch checked={settings.time.showTimer} onCheckedChange={(v) => update({ time: { ...settings.time, showTimer: v } })} disabled={isLoading} /></div>
@@ -88,10 +91,13 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           <Label className="text-xs text-muted-foreground">Attempts</Label>
           <NumberInput value={settings.attempts.maxAttempts} min={1} onChange={(v) => update({ attempts: { ...settings.attempts, maxAttempts: v } })} disabled={isLoading} />
           <div className="grid grid-cols-2 gap-2">
-            <select className={selectClass} value={settings.attempts.scoreMode} onChange={(e) => update({ attempts: { ...settings.attempts, scoreMode: e.target.value as any } })} disabled={isLoading}>
-              <option value="best">Best score</option>
-              <option value="latest">Latest score</option>
-            </select>
+            <Select value={settings.attempts.scoreMode} onValueChange={(v) => update({ attempts: { ...settings.attempts, scoreMode: v as any } })} disabled={isLoading}>
+              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="best">Best score</SelectItem>
+                <SelectItem value="latest">Latest score</SelectItem>
+              </SelectContent>
+            </Select>
             <NumberInput value={settings.attempts.cooldownMinutes} min={0} onChange={(v) => update({ attempts: { ...settings.attempts, cooldownMinutes: v ?? 0 } })} disabled={isLoading} />
           </div>
         </Section>
@@ -107,11 +113,14 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
         <Section id="grading" title="Feedback & Grading">
           <div className="flex items-center justify-between"><Label className="text-xs">Auto grade</Label><Switch checked={settings.grading.autoGrade} onCheckedChange={(v) => update({ grading: { ...settings.grading, autoGrade: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Manual review open questions</Label><Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} /></div>
-          <select className={selectClass} value={settings.grading.feedbackReleaseMode} onChange={(e) => update({ grading: { ...settings.grading, feedbackReleaseMode: e.target.value as any } })} disabled={isLoading}>
-            <option value="per_question">Feedback per question</option>
-            <option value="after_submit">Feedback after submit</option>
-            <option value="after_deadline">Feedback after deadline</option>
-          </select>
+          <Select value={settings.grading.feedbackReleaseMode} onValueChange={(v) => update({ grading: { ...settings.grading, feedbackReleaseMode: v as any } })} disabled={isLoading}>
+            <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="per_question">Feedback per question</SelectItem>
+              <SelectItem value="after_submit">Feedback after submit</SelectItem>
+              <SelectItem value="after_deadline">Feedback after deadline</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex items-center justify-between"><Label className="text-xs">Show correct answers</Label><Switch checked={settings.grading.showCorrectAnswers} onCheckedChange={(v) => update({ grading: { ...settings.grading, showCorrectAnswers: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Show points</Label><Switch checked={settings.grading.showPoints} onCheckedChange={(v) => update({ grading: { ...settings.grading, showPoints: v } })} disabled={isLoading} /></div>
           <div className="grid grid-cols-2 gap-2">

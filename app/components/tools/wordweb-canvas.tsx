@@ -4,6 +4,7 @@ import { useMemo, useState, type PointerEvent as ReactPointerEvent } from 'react
 import type { CanonicalDocument, CanonicalLayoutState, CanonicalNode, CanonicalRelationType } from '@/lib/tools/canonical-model';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -425,18 +426,17 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
             </button>
           </div>
           {attachMode === 'existing' ? (
-            <select
-              value={attachToId}
-              onChange={(event) => setAttachToId(event.target.value)}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-            >
-              <option value="root-notes">Root</option>
-              {relationCandidates.map((node) => (
-                <option key={`attach-${node.id}`} value={node.id}>
-                  {node.title}
-                </option>
-              ))}
-            </select>
+            <Select value={attachToId} onValueChange={setAttachToId}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="root-notes">Root</SelectItem>
+                {relationCandidates.map((node) => (
+                  <SelectItem key={`attach-${node.id}`} value={node.id}>
+                    {node.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : null}
           <Button size="sm" onClick={() => addMindmapNode(newNodeTitle, newNodeBody, attachMode)} disabled={!newNodeTitle.trim()}>
             Add block
@@ -488,42 +488,37 @@ export function WordwebCanvas({ document, onChange, settings }: Props) {
         <div className="space-y-2">
           <h3 className="text-sm">Relations</h3>
           <div className="grid gap-2">
-            <select
-              value={relationFrom}
-              onChange={(event) => setRelationFrom(event.target.value)}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-            >
-              <option value="">From node</option>
-              {relationCandidates.map((node) => (
-                <option key={`from-${node.id}`} value={node.id}>
-                  {node.title}
-                </option>
-              ))}
-            </select>
-            <select
-              value={relationTo}
-              onChange={(event) => setRelationTo(event.target.value)}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-            >
-              <option value="">To node</option>
-              {relationCandidates.map((node) => (
-                <option key={`to-${node.id}`} value={node.id}>
-                  {node.title}
-                </option>
-              ))}
-            </select>
-            <select
-              value={relationType}
-              onChange={(event) => setRelationType(event.target.value as CanonicalRelationType)}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-            >
-              <option value="references">references</option>
-              <option value="causes">causes</option>
-              <option value="depends_on">depends_on</option>
-              <option value="part_of">part_of</option>
-              <option value="example_of">example_of</option>
-              <option value="next">next</option>
-            </select>
+            <Select value={relationFrom || undefined} onValueChange={setRelationFrom}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="From node" /></SelectTrigger>
+              <SelectContent>
+                {relationCandidates.map((node) => (
+                  <SelectItem key={`from-${node.id}`} value={node.id}>
+                    {node.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={relationTo || undefined} onValueChange={setRelationTo}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="To node" /></SelectTrigger>
+              <SelectContent>
+                {relationCandidates.map((node) => (
+                  <SelectItem key={`to-${node.id}`} value={node.id}>
+                    {node.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={relationType} onValueChange={(v) => setRelationType(v as CanonicalRelationType)}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="references">references</SelectItem>
+                <SelectItem value="causes">causes</SelectItem>
+                <SelectItem value="depends_on">depends_on</SelectItem>
+                <SelectItem value="part_of">part_of</SelectItem>
+                <SelectItem value="example_of">example_of</SelectItem>
+                <SelectItem value="next">next</SelectItem>
+              </SelectContent>
+            </Select>
             <Input
               value={relationLabel}
               onChange={(event) => setRelationLabel(event.target.value)}

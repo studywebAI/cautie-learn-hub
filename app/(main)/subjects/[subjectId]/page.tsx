@@ -4,6 +4,7 @@ import { useState, useEffect, useContext, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -531,19 +532,18 @@ export default function SubjectDetailPage() {
           <div className="py-4 space-y-3">
             <div>
               <Label htmlFor="paragraph-chapter">{t.chapter}</Label>
-              <select
-                id="paragraph-chapter"
-                value={selectedChapterId || ''}
-                onChange={(e) => setSelectedChapterId(e.target.value || null)}
-                className="mt-2 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="">{t.selectChapter}</option>
-                {chapters.map((chapter) => (
-                  <option key={chapter.id} value={chapter.id}>
-                    {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}. {chapter.is_tests_chapter ? t.testsBadge : chapter.title}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedChapterId || 'none'} onValueChange={(v) => setSelectedChapterId(v === 'none' ? null : v)}>
+                <SelectTrigger id="paragraph-chapter" className="mt-2 h-9 text-sm">
+                  <SelectValue placeholder={t.selectChapter} />
+                </SelectTrigger>
+                <SelectContent>
+                  {chapters.map((chapter) => (
+                    <SelectItem key={chapter.id} value={chapter.id}>
+                      {chapter.is_tests_chapter ? 'T' : chapter.chapter_number}. {chapter.is_tests_chapter ? t.testsBadge : chapter.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Label htmlFor="paragraph-title">{t.title}</Label>
             <Input

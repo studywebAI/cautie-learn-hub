@@ -5,6 +5,7 @@ import { Plus, Trash2, Calendar, Link2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 
 type CalendarEvent = {
@@ -181,15 +182,16 @@ export function ClassCalendarEvents({ classId, className }: Props) {
 
               <div>
                 <Label className="text-xs">Type</Label>
-                <select
-                  value={eventType}
-                  onChange={(e) => setEventType(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm focus:outline-none focus:border-[#6b7c4e]"
-                >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
-                  ))}
-                </select>
+                <Select value={eventType} onValueChange={setEventType}>
+                  <SelectTrigger className="mt-1 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EVENT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.emoji} {t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ContactForm, ContactFormData } from '@/components/support/contact-form';
 import { PageHeader } from '@/components/page-header';
 import { getErrorMessage, ALL_ERROR_CODES } from '@/lib/error-codes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SupportPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,14 +49,15 @@ export default function SupportPage() {
         title={t.title}
         subtitle={t.subtitle}
         actions={
-          <select
-            value={locale}
-            onChange={(e) => setLocale(e.target.value as 'en' | 'nl')}
-            className="px-3 py-2 border border-border rounded-lg bg-background text-sm"
-          >
-            <option value="en">English</option>
-            <option value="nl">Nederlands</option>
-          </select>
+          <Select value={locale} onValueChange={(v) => setLocale(v as 'en' | 'nl')}>
+            <SelectTrigger className="w-auto text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="en">English</SelectItem>
+              <SelectItem value="nl">Nederlands</SelectItem>
+            </SelectContent>
+          </Select>
         }
       />
 

@@ -9,6 +9,7 @@ import { Bold, Calendar, FileSignature, Italic, Loader2, Network, Paintbrush, Pa
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ToolInputBox } from '@/components/tools/tool-input-box';
 import { WorkbenchShell } from '@/components/tools/workbench-shell';
 import type { GenerateNotesOutput } from '@/ai/flows/generate-notes';
@@ -1393,13 +1394,15 @@ function NotesPageContent() {
                   </div>
                   <div className="space-y-1.5">
                     <p className="text-[11px] text-muted-foreground">Font</p>
-                    <select
+                    <Select
                       value={noteFontFamily}
-                      onChange={(e) => { setNoteFontFamily(e.target.value); persistNotesState(); }}
-                      className="w-full h-8 rounded-md border border-border bg-background px-2 text-xs"
+                      onValueChange={(v) => { setNoteFontFamily(v); persistNotesState(); }}
                     >
-                      {NOTE_FONTS.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
-                    </select>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {NOTE_FONTS.map((font) => <SelectItem key={font.value} value={font.value}>{font.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">

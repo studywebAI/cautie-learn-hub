@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/page-header';
 
 type Grade = {
@@ -73,13 +74,14 @@ function WhatGradeCalculator({ grades }: { grades: Grade[] }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Class</label>
-          <select
-            value={selectedClass}
-            onChange={e => setSelectedClass(e.target.value)}
-            className="w-full text-sm rounded-lg border border-border bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--accent-brand)]"
-          >
-            {classNames.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <Select value={selectedClass} onValueChange={setSelectedClass}>
+            <SelectTrigger className="w-full text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {classNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Target average</label>

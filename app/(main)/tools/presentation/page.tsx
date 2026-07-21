@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { PresentationPlanResult, PresentationUiConfig, PreviewManifest, SourceAnalysis } from '@/lib/presentation/types';
 import { PresentationPreview } from '@/components/presentation/presentation-preview';
@@ -1364,25 +1365,23 @@ function PresentationPageContent() {
                         className="h-9"
                       />
                       <div className="grid grid-cols-2 gap-2">
-                        <select
-                          value={importSourceFilter}
-                          onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
-                          className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
-                        >
-                          <option value="all">All recents</option>
-                          <option value="tool_runs">Tool runs</option>
-                          <option value="materials">Materials</option>
-                        </select>
-                        <select
-                          value={importSort}
-                          onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                          className="h-9 rounded-lg border border-border bg-background px-2 text-xs"
-                        >
-                          <option value="newest">Newest</option>
-                          <option value="oldest">Oldest</option>
-                          <option value="most_used">Most used</option>
-                          <option value="name">Name</option>
-                        </select>
+                        <Select value={importSourceFilter} onValueChange={(v) => setImportSourceFilter(v as 'all' | 'tool_runs' | 'materials')}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All recents</SelectItem>
+                            <SelectItem value="tool_runs">Tool runs</SelectItem>
+                            <SelectItem value="materials">Materials</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={importSort} onValueChange={(v) => setImportSort(v as 'newest' | 'oldest' | 'most_used' | 'name')}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="newest">Newest</SelectItem>
+                            <SelectItem value="oldest">Oldest</SelectItem>
+                            <SelectItem value="most_used">Most used</SelectItem>
+                            <SelectItem value="name">Name</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <div className="max-h-40 overflow-auto rounded-lg border border-border/60 p-2">
@@ -1494,25 +1493,23 @@ function PresentationPageContent() {
                 <CardContent className="pt-4">
                   <div className="mb-2 grid grid-cols-1 gap-2 md:grid-cols-3">
                     <Input value={importSearch} onChange={(e) => setImportSearch(e.target.value)} placeholder="Search recents..." className="h-8" />
-                    <select
-                      value={importSourceFilter}
-                      onChange={(e) => setImportSourceFilter(e.target.value as 'all' | 'tool_runs' | 'materials')}
-                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                    >
-                      <option value="all">All recents</option>
-                      <option value="tool_runs">Tool runs</option>
-                      <option value="materials">Materials</option>
-                    </select>
-                    <select
-                      value={importSort}
-                      onChange={(e) => setImportSort(e.target.value as 'newest' | 'oldest' | 'most_used' | 'name')}
-                      className="h-8 rounded-md border border-border bg-background px-2 text-xs"
-                    >
-                      <option value="newest">Time: Newest</option>
-                      <option value="oldest">Time: Oldest</option>
-                      <option value="most_used">Most used</option>
-                      <option value="name">Name</option>
-                    </select>
+                    <Select value={importSourceFilter} onValueChange={(v) => setImportSourceFilter(v as 'all' | 'tool_runs' | 'materials')}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All recents</SelectItem>
+                        <SelectItem value="tool_runs">Tool runs</SelectItem>
+                        <SelectItem value="materials">Materials</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={importSort} onValueChange={(v) => setImportSort(v as 'newest' | 'oldest' | 'most_used' | 'name')}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Time: Newest</SelectItem>
+                        <SelectItem value="oldest">Time: Oldest</SelectItem>
+                        <SelectItem value="most_used">Most used</SelectItem>
+                        <SelectItem value="name">Name</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="max-h-44 overflow-auto rounded-md border border-border/60 p-2">
                     {importCatalogLoading ? (

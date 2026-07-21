@@ -3412,20 +3412,24 @@ export function AssignmentEditor({
                               </div>
                               <div className="flex items-center gap-1">
                                 {(row.blocks[0].type === 'image' || row.blocks[0].type === 'video') && questionNumberByBlockId.size > 0 && (
-                                  <select
-                                    className="h-6 text-[11px] border border-border rounded-md bg-background px-1 surface-chip"
-                                    value={row.blocks[0].attachedToBlockId || ''}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onChange={(e) => updateBlockAttachment(row.blocks[0].id, e.target.value || null)}
-                                    title={isDutch ? 'Koppel aan vraag' : 'Attach to question'}
-                                  >
-                                    <option value="">{isDutch ? 'Niet gekoppeld' : 'Not attached'}</option>
-                                    {presentableBlocks.filter((b) => questionNumberByBlockId.has(b.id)).map((b) => (
-                                      <option key={b.id} value={b.id}>
-                                        {isDutch ? 'Vraag' : 'Q'} {questionNumberByBlockId.get(b.id)}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <Select
+                                      value={row.blocks[0].attachedToBlockId || 'none'}
+                                      onValueChange={(v) => updateBlockAttachment(row.blocks[0].id, v === 'none' ? null : v)}
+                                    >
+                                      <SelectTrigger className="h-6 w-auto text-[11px] surface-chip" title={isDutch ? 'Koppel aan vraag' : 'Attach to question'}>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">{isDutch ? 'Niet gekoppeld' : 'Not attached'}</SelectItem>
+                                        {presentableBlocks.filter((b) => questionNumberByBlockId.has(b.id)).map((b) => (
+                                          <SelectItem key={b.id} value={b.id}>
+                                            {isDutch ? 'Vraag' : 'Q'} {questionNumberByBlockId.get(b.id)}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                 )}
                                 <Popover>
                                   <PopoverTrigger asChild>
@@ -3865,14 +3869,18 @@ export function AssignmentEditor({
                         <div className="flex items-center justify-between"><Label className="text-xs">{isDutch ? 'Negatieve score' : 'Negative scoring'}</Label><Checkbox checked={s.multipleChoice.negativeScoring} onCheckedChange={(checked) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, negativeScoring: !!checked } }))} /></div>
                         <div>
                           <Label className="text-[10px] text-muted-foreground">{isDutch ? 'Scoremodus bij meerdere juiste antwoorden' : 'Scoring mode with multiple correct answers'}</Label>
-                          <select
-                            className="h-8 rounded-md border border-input bg-background text-foreground px-2 text-sm w-full mt-0.5"
+                          <Select
                             value={s.multipleChoice.scoringMode}
-                            onChange={(e) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: e.target.value } }))}
+                            onValueChange={(v) => updateBlockSettings(block.id, (prev) => ({ ...prev, multipleChoice: { ...prev.multipleChoice, scoringMode: v } }))}
                           >
-                            <option value="partial">{isDutch ? 'Gedeeltelijk (elk goed antwoord telt apart)' : 'Partial (each correct answer counts independently)'}</option>
-                            <option value="all_or_nothing">{isDutch ? 'Alles of niets (moet alle juiste kiezen)' : 'All or nothing (must select every correct one)'}</option>
-                          </select>
+                            <SelectTrigger className="h-8 w-full mt-0.5 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="partial">{isDutch ? 'Gedeeltelijk (elk goed antwoord telt apart)' : 'Partial (each correct answer counts independently)'}</SelectItem>
+                              <SelectItem value="all_or_nothing">{isDutch ? 'Alles of niets (moet alle juiste kiezen)' : 'All or nothing (must select every correct one)'}</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </SettingsSection>
                     )}
@@ -4069,33 +4077,30 @@ export function AssignmentEditor({
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-72 space-y-2.5">
                   <p className="text-[11px] font-medium text-muted-foreground">{t.moveTitle}</p>
-                  <select
-                    value={moveSubjectId}
-                    onChange={(e) => setMoveSubjectId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={isLoadingMoveOptions}
-                  >
-                    <option value="">{t.moveChooseSubject}</option>
-                    {moveSubjects.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
-                  </select>
-                  <select
-                    value={moveChapterId}
-                    onChange={(e) => setMoveChapterId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!moveSubjectId}
-                  >
-                    <option value="">{t.moveChooseChapter}</option>
-                    {moveChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                  <select
-                    value={moveParagraphId}
-                    onChange={(e) => setMoveParagraphId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!moveChapterId}
-                  >
-                    <option value="">{t.moveChooseParagraph}</option>
-                    {moveParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
+                  <Select value={moveSubjectId} onValueChange={setMoveSubjectId} disabled={isLoadingMoveOptions}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={t.moveChooseSubject} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moveSubjects.map((s) => <SelectItem key={s.id} value={s.id}>{s.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={moveChapterId} onValueChange={setMoveChapterId} disabled={!moveSubjectId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={t.moveChooseChapter} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moveChapters.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={moveParagraphId} onValueChange={setMoveParagraphId} disabled={!moveChapterId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={t.moveChooseParagraph} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {moveParagraphs.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <Button size="sm" className="h-7 w-full text-xs" disabled={!moveParagraphId || isMoving} onClick={handleMoveAssignment}>
                     {isMoving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t.moveConfirm}
                   </Button>
