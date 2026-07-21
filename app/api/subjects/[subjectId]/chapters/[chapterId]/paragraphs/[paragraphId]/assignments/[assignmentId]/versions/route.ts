@@ -7,12 +7,22 @@ export const dynamic = 'force-dynamic'
 async function requireTeacherOfAssignment(supabase: any, userId: string, assignmentId: string) {
   const { data: assignment } = await supabase
     .from('assignments')
-    .select('id, class_id')
+    .select('id, class_id, paragraphs!inner(chapters!inner(subjects!inner(user_id)))')
     .eq('id', assignmentId)
     .maybeSingle()
   if (!assignment) return { error: NextResponse.json({ error: 'Assignment not found' }, { status: 404 }) }
 
-  if (assignment.class_id) {
+  // Subject ownership always applies -- personal, non-class assignments
+  // (class_id null) have no class_members row to check at all, so without
+  // this an owner check is skipped entirely and anyone authenticated could
+  // read/restore their version history. Class membership (teacher role) is
+  // an additional way in when the assignment is class-scoped, not the only
+  // gate.
+  const isOwner = assignment.paragraphs?.chapters?.subjects?.user_id === userId
+  if (!isOwner) {
+    if (!assignment.class_id) {
+      return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+    }
     const { data: membership } = await supabase
       .from('class_members')
       .select('role')

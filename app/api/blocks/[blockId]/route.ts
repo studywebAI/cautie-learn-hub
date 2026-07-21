@@ -47,9 +47,11 @@ export async function PUT(
       return NextResponse.json({ error: 'Material not found' }, { status: 404 });
     }
 
-    // Authorization
-    let hasAccess = false;
-    if (material.class_id) {
+    // Authorization -- ownership always applies, not just when the material
+    // has no class_id; class membership (teacher role) is an additional way
+    // in, not the only one once class-scoped.
+    let hasAccess = material.user_id === user.id;
+    if (!hasAccess && material.class_id) {
       const { data: classData } = await supabase
         .from('classes')
         .select('owner_id')
@@ -59,18 +61,16 @@ export async function PUT(
       if (classData?.owner_id === user.id) {
         hasAccess = true;
       } else {
-        const { count } = await supabase
+        const { data: membership } = await supabase
           .from('class_members')
-          .select('*', { count: 'exact', head: true })
+          .select('role')
           .eq('class_id', material.class_id)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (count && count > 0) {
-          hasAccess = true;
-        }
+        const role = String(membership?.role || '').toLowerCase();
+        hasAccess = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
       }
-    } else if (material.user_id === user.id) {
-      hasAccess = true;
     }
 
     if (!hasAccess) {
@@ -147,9 +147,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Material not found' }, { status: 404 });
     }
 
-    // Authorization
-    let hasAccess = false;
-    if (material.class_id) {
+    // Authorization -- ownership always applies, not just when the material
+    // has no class_id; class membership (teacher role) is an additional way
+    // in, not the only one once class-scoped.
+    let hasAccess = material.user_id === user.id;
+    if (!hasAccess && material.class_id) {
       const { data: classData } = await supabase
         .from('classes')
         .select('owner_id')
@@ -159,18 +161,16 @@ export async function DELETE(
       if (classData?.owner_id === user.id) {
         hasAccess = true;
       } else {
-        const { count } = await supabase
+        const { data: membership } = await supabase
           .from('class_members')
-          .select('*', { count: 'exact', head: true })
+          .select('role')
           .eq('class_id', material.class_id)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-        if (count && count > 0) {
-          hasAccess = true;
-        }
+        const role = String(membership?.role || '').toLowerCase();
+        hasAccess = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
       }
-    } else if (material.user_id === user.id) {
-      hasAccess = true;
     }
 
     if (!hasAccess) {

@@ -44,8 +44,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Material not found' }, { status: 404 });
       }
 
-      // Authorization for material
-      if (material.class_id) {
+      // Authorization for material -- ownership always applies, class
+      // membership (teacher role) is an additional way in, not the only one.
+      hasAccess = material.user_id === user.id;
+      if (!hasAccess && material.class_id) {
         const { data: classData } = await supabase
           .from('classes')
           .select('owner_id')
@@ -55,24 +57,22 @@ export async function POST(request: NextRequest) {
         if (classData?.owner_id === user.id) {
           hasAccess = true;
         } else {
-          const { count } = await supabase
+          const { data: membership } = await supabase
             .from('class_members')
-            .select('*', { count: 'exact', head: true })
+            .select('role')
             .eq('class_id', material.class_id)
-            .eq('user_id', user.id);
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-          if (count && count > 0) {
-            hasAccess = true;
-          }
+          const role = String(membership?.role || '').toLowerCase();
+          hasAccess = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
         }
-      } else if (material.user_id === user.id) {
-        hasAccess = true;
       }
     } else if (firstBlock.chapter_id) {
       // Chapter blocks - use chapters table with subjects join
       const { data: chapter, error: chapterError } = await (supabase as any)
         .from('chapters')
-        .select('id, subject_id, subjects(class_id)')
+        .select('id, subject_id, subjects(class_id, user_id)')
         .eq('id', firstBlock.chapter_id)
         .single();
 
@@ -80,25 +80,31 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
       }
 
-      // Authorization for chapter
+      // Authorization for chapter -- subject ownership always applies (a
+      // personal, non-class subject has no class_id/classes row to check
+      // against, so without this the owner could never reorder their own
+      // blocks); class membership is an additional way in.
       const chapterClassId = chapter.subjects?.class_id;
-      const { data: classData } = await supabase
-        .from('classes')
-        .select('owner_id')
-        .eq('id', chapterClassId)
-        .single();
+      hasAccess = chapter.subjects?.user_id === user.id;
+      if (!hasAccess && chapterClassId) {
+        const { data: classData } = await supabase
+          .from('classes')
+          .select('owner_id')
+          .eq('id', chapterClassId)
+          .single();
 
-      if (classData?.owner_id === user.id) {
-        hasAccess = true;
-      } else {
-        const { count } = await supabase
-          .from('class_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('class_id', chapterClassId)
-          .eq('user_id', user.id);
-
-        if (count && count > 0) {
+        if (classData?.owner_id === user.id) {
           hasAccess = true;
+        } else {
+          const { data: membership } = await supabase
+            .from('class_members')
+            .select('role')
+            .eq('class_id', chapterClassId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          const role = String(membership?.role || '').toLowerCase();
+          hasAccess = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
         }
       }
     } else {

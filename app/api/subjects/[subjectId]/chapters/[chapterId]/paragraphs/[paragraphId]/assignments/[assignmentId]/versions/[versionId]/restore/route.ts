@@ -23,12 +23,21 @@ export async function POST(
 
     const { data: assignment } = await (supabase as any)
       .from('assignments')
-      .select('id, class_id, title, description')
+      .select('id, class_id, title, description, paragraphs!inner(chapters!inner(subjects!inner(user_id)))')
       .eq('id', resolvedParams.assignmentId)
       .maybeSingle()
     if (!assignment) return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
 
-    if (assignment.class_id) {
+    // Subject ownership always applies -- a personal, non-class assignment
+    // has no class_members row to check at all, so without this the owner
+    // check was skipped entirely and any authenticated user could restore
+    // someone else's assignment. Class membership (teacher role) is an
+    // additional way in when the assignment is class-scoped.
+    const isOwner = assignment.paragraphs?.chapters?.subjects?.user_id === user.id
+    if (!isOwner) {
+      if (!assignment.class_id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
       const { data: membership } = await supabase
         .from('class_members')
         .select('role')
