@@ -30,6 +30,26 @@ function isMissingColumnError(error: any): boolean {
   return MISSING_COLUMN_PATTERN.test(text);
 }
 
+// blocks_assignment_id_position_key -- a reorder can momentarily try to move
+// this block onto a position another block in the same assignment still
+// holds (sequential PUTs during a drag/reorder save). Reslot to the next
+// free position instead of hard-failing; the next full save reconciles
+// ordering across all blocks anyway.
+function isDuplicatePositionError(error: any): boolean {
+  const text = `${error?.message || ''} ${error?.details || ''}`;
+  return error?.code === '23505' && /position/i.test(text);
+}
+
+async function getNextFreePosition(client: any, assignmentId: string): Promise<number> {
+  const { data } = await client
+    .from('blocks')
+    .select('position')
+    .eq('assignment_id', assignmentId)
+    .order('position', { ascending: false })
+    .limit(1);
+  return (data?.[0]?.position ?? -1) + 1;
+}
+
 // POST - Submit student answer for a block
 export async function POST(
   request: Request,
@@ -551,6 +571,13 @@ export async function PUT(
       ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, fullPayload));
       if (updateError && isMissingColumnError(updateError)) {
         ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, fallbackPayload));
+      }
+      if (updateError && isDuplicatePositionError(updateError) && typeof fullPayload.position === 'number') {
+        const freePosition = await getNextFreePosition(admin as any, resolvedParams.assignmentId);
+        ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, { ...fullPayload, position: freePosition }));
+        if (updateError && isMissingColumnError(updateError)) {
+          ({ data: updatedBlock, error: updateError } = await updateWith(admin as any, { ...fallbackPayload, position: freePosition }));
+        }
       }
     }
 

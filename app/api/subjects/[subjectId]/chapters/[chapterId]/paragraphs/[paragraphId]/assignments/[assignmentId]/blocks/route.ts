@@ -13,6 +13,27 @@ function isMissingColumnError(error: any): boolean {
   return MISSING_COLUMN_PATTERN.test(text);
 }
 
+// blocks_assignment_id_position_key -- the client computes `position` from
+// its own local block list, which can go stale (an autosave retry after a
+// block it already created wasn't reflected locally yet, another tab/editor
+// session, etc.) and collide with a row that already exists at that
+// position. Rather than hard-failing forever, reslot to the next free
+// position and let the client's next save reconcile ordering.
+function isDuplicatePositionError(error: any): boolean {
+  const text = `${error?.message || ''} ${error?.details || ''}`;
+  return error?.code === '23505' && /position/i.test(text);
+}
+
+async function getNextFreePosition(client: any, assignmentId: string): Promise<number> {
+  const { data } = await client
+    .from('blocks')
+    .select('position')
+    .eq('assignment_id', assignmentId)
+    .order('position', { ascending: false })
+    .limit(1);
+  return (data?.[0]?.position ?? -1) + 1;
+}
+
 async function userHasSubjectAccess(supabase: any, userId: string, subjectId: string): Promise<boolean> {
   const { data: subject } = await (supabase as any)
     .from('subjects')
@@ -218,6 +239,13 @@ export async function POST(
       ({ data: newBlock, error: insertError } = await insertWith(admin as any, extendedInsert));
       if (insertError && isMissingColumnError(insertError)) {
         ({ data: newBlock, error: insertError } = await insertWith(admin as any, baseInsert));
+      }
+      if (insertError && isDuplicatePositionError(insertError)) {
+        const freePosition = await getNextFreePosition(admin as any, resolvedParams.assignmentId);
+        ({ data: newBlock, error: insertError } = await insertWith(admin as any, { ...extendedInsert, position: freePosition }));
+        if (insertError && isMissingColumnError(insertError)) {
+          ({ data: newBlock, error: insertError } = await insertWith(admin as any, { ...baseInsert, position: freePosition }));
+        }
       }
     }
 

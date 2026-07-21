@@ -2898,7 +2898,7 @@ export function AssignmentEditor({
                 <img
                   src={block.data.url}
                   alt={block.data.alt || ''}
-                  className="block h-96 w-full rounded-md object-cover"
+                  className="block aspect-video w-full rounded-md object-cover"
                   onClick={(e) => e.stopPropagation()}
                 />
                 {canEditBlock && (
@@ -2918,7 +2918,7 @@ export function AssignmentEditor({
                 variant="outline"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'image'); }}
-                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                className="aspect-video w-full border-dashed text-xs text-muted-foreground"
                 disabled={isUploading}
               >
                 {isUploading ? (
@@ -2928,7 +2928,7 @@ export function AssignmentEditor({
                 )}
               </Button>
             ) : (
-              <div className="flex h-16 w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
+              <div className="flex aspect-video w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
                 <ImageIcon className="h-4 w-4" /> No image uploaded yet
               </div>
             )}
@@ -2961,7 +2961,7 @@ export function AssignmentEditor({
                 <video
                   src={block.data.url}
                   controls
-                  className="block h-96 w-full rounded-md bg-black"
+                  className="block aspect-video w-full rounded-md bg-black"
                   onClick={(e) => e.stopPropagation()}
                 />
                 {canEditBlock && (
@@ -2981,7 +2981,7 @@ export function AssignmentEditor({
                 variant="outline"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'video'); }}
-                className="h-16 w-full border-dashed text-xs text-muted-foreground"
+                className="aspect-video w-full border-dashed text-xs text-muted-foreground"
                 disabled={isUploading}
               >
                 {isUploading ? (
@@ -2991,7 +2991,7 @@ export function AssignmentEditor({
                 )}
               </Button>
             ) : (
-              <div className="flex h-16 w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
+              <div className="flex aspect-video w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
                 <Video className="h-4 w-4" /> No video uploaded yet
               </div>
             )}

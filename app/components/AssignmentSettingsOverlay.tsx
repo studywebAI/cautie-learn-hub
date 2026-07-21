@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { AssignmentSettings } from '@/lib/assignments/settings';
-import { ChevronDown } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface AssignmentSettingsOverlayProps {
   settings: AssignmentSettings;
@@ -34,30 +34,49 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
     onSettingsChange({ ...settings, ...patch });
   };
 
-  const [openSection, setOpenSection] = useState<'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced'>('time');
+  type SectionId = 'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced';
+  const [openSection, setOpenSection] = useState<SectionId>('time');
 
-  const Section = ({ id, title, children }: { id: 'time' | 'attempts' | 'access' | 'grading' | 'antiCheat' | 'delivery' | 'advanced'; title: string; children: React.ReactNode }) => {
-    const isOpen = openSection === id;
-    return (
-      <section className="rounded-lg border border-border/60 surface-panel">
-        <button
-          type="button"
-          onClick={() => setOpenSection(id)}
-          className="flex w-full items-center justify-between px-3 py-2 text-left"
-        >
-          <span className="text-xs font-medium text-muted-foreground">{title}</span>
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {isOpen && <div className="space-y-2 px-3 pb-3">{children}</div>}
-      </section>
-    );
+  const SECTION_LABELS: Record<SectionId, string> = {
+    time: 'Time',
+    attempts: 'Attempts',
+    access: 'Access',
+    grading: 'Grading',
+    antiCheat: 'Anti-cheat',
+    delivery: 'Delivery',
+    advanced: 'Advanced',
+  };
+
+  // Tab pills instead of a stacked accordion -- one header row up top, one
+  // content pane below, so picking a category doesn't push you past six
+  // other collapsed headers to reach it.
+  const Section = ({ id, children }: { id: SectionId; children: React.ReactNode }) => {
+    if (openSection !== id) return null;
+    return <div className="space-y-2 pt-3">{children}</div>;
   };
 
   return (
     <div className="rounded-lg bg-background p-2 text-foreground">
       <h3 className="px-1 pb-2 text-sm font-medium">Assignment Settings</h3>
-      <div className="space-y-2 max-h-[82vh] overflow-y-auto">
-        <Section id="time" title="Time">
+      <div className="flex flex-wrap gap-1 border-b border-border/60 px-1 pb-2">
+        {(Object.keys(SECTION_LABELS) as SectionId[]).map((id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setOpenSection(id)}
+            className={cn(
+              'rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+              openSection === id
+                ? 'bg-foreground text-background'
+                : 'text-muted-foreground hover:surface-interactive'
+            )}
+          >
+            {SECTION_LABELS[id]}
+          </button>
+        ))}
+      </div>
+      <div className="max-h-[70vh] overflow-y-auto px-1">
+        <Section id="time">
           <Label className="text-xs text-muted-foreground">Start / End</Label>
           <Input
             type="datetime-local"
@@ -87,7 +106,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           <div className="flex items-center justify-between"><Label className="text-xs">Show timer</Label><Switch checked={settings.time.showTimer} onCheckedChange={(v) => update({ time: { ...settings.time, showTimer: v } })} disabled={isLoading} /></div>
         </Section>
 
-        <Section id="attempts" title="Attempts">
+        <Section id="attempts">
           <Label className="text-xs text-muted-foreground">Attempts</Label>
           <NumberInput value={settings.attempts.maxAttempts} min={1} onChange={(v) => update({ attempts: { ...settings.attempts, maxAttempts: v } })} disabled={isLoading} />
           <div className="grid grid-cols-2 gap-2">
@@ -102,7 +121,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           </div>
         </Section>
 
-        <Section id="access" title="Access & Randomization">
+        <Section id="access">
           <Input value={settings.access.accessCode || ''} onChange={(e) => update({ access: { ...settings.access, accessCode: e.target.value || null } })} placeholder="Access code" disabled={isLoading} className="h-8" />
           <Input value={settings.access.allowedClassIds.join(',')} onChange={(e) => update({ access: { ...settings.access, allowedClassIds: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) } })} placeholder="Allowed class IDs (comma separated)" disabled={isLoading} className="h-8" />
           <div className="flex items-center justify-between"><Label className="text-xs">Shuffle questions</Label><Switch checked={settings.access.shuffleQuestions} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestions: v } })} disabled={isLoading} /></div>
@@ -110,7 +129,7 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           <div className="flex items-center justify-between"><Label className="text-xs">Per-student shuffle</Label><Switch checked={settings.access.shuffleQuestionsPerStudent} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestionsPerStudent: v } })} disabled={isLoading} /></div>
         </Section>
 
-        <Section id="grading" title="Feedback & Grading">
+        <Section id="grading">
           <div className="flex items-center justify-between"><Label className="text-xs">Auto grade</Label><Switch checked={settings.grading.autoGrade} onCheckedChange={(v) => update({ grading: { ...settings.grading, autoGrade: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Manual review open questions</Label><Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} /></div>
           <Select value={settings.grading.feedbackReleaseMode} onValueChange={(v) => update({ grading: { ...settings.grading, feedbackReleaseMode: v as any } })} disabled={isLoading}>
@@ -129,20 +148,20 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           </div>
         </Section>
 
-        <Section id="antiCheat" title="Anti-cheat">
+        <Section id="antiCheat">
           <div className="flex items-center justify-between"><Label className="text-xs">Require fullscreen</Label><Switch checked={settings.antiCheat.requireFullscreen} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, requireFullscreen: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Detect tab switches</Label><Switch checked={settings.antiCheat.detectTabSwitch} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, detectTabSwitch: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Restrict IP/device</Label><Switch checked={settings.antiCheat.restrictIpOrDevice} onCheckedChange={(v) => update({ antiCheat: { ...settings.antiCheat, restrictIpOrDevice: v } })} disabled={isLoading} /></div>
           <NumberInput value={settings.antiCheat.perQuestionTimeLimitSeconds} min={1} onChange={(v) => update({ antiCheat: { ...settings.antiCheat, perQuestionTimeLimitSeconds: v } })} disabled={isLoading} />
         </Section>
 
-        <Section id="delivery" title="Delivery">
+        <Section id="delivery">
           <div className="flex items-center justify-between"><Label className="text-xs">Autosave</Label><Switch checked={settings.delivery.autosave} onCheckedChange={(v) => update({ delivery: { ...settings.delivery, autosave: v } })} disabled={isLoading} /></div>
           <div className="flex items-center justify-between"><Label className="text-xs">Allow resume</Label><Switch checked={settings.delivery.allowResume} onCheckedChange={(v) => update({ delivery: { ...settings.delivery, allowResume: v } })} disabled={isLoading} /></div>
           <Textarea value={settings.delivery.instructionText} onChange={(e) => update({ delivery: { ...settings.delivery, instructionText: e.target.value } })} rows={3} disabled={isLoading} className="text-sm" />
         </Section>
 
-        <Section id="advanced" title="Advanced">
+        <Section id="advanced">
           <NumberInput value={settings.advanced.questionPoolSize} min={1} onChange={(v) => update({ advanced: { ...settings.advanced, questionPoolSize: v } })} disabled={isLoading} />
           <div className="flex items-center justify-between"><Label className="text-xs">Adaptive logic</Label><Switch checked={settings.advanced.adaptiveEnabled} onCheckedChange={(v) => update({ advanced: { ...settings.advanced, adaptiveEnabled: v } })} disabled={isLoading} /></div>
           <Textarea
