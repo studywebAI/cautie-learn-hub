@@ -68,7 +68,7 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle();
 
-    const isTeacher = profile?.subscription_type === 'teacher';
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase());
     subjectsLog('chapter-paragraphs', requestId, 'profile.loaded', {
       isTeacher,
       subscriptionType: profile?.subscription_type || null,

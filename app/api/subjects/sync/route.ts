@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .maybeSingle();
 
-    const isTeacher = profile?.subscription_type === 'teacher';
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase());
     subjectsLog('subjects-sync', requestId, 'profile.loaded', {
       subscriptionType: profile?.subscription_type || null,
       isTeacher,

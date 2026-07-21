@@ -222,11 +222,23 @@ export async function POST(
     }
 
     if (insertError) {
-      return NextResponse.json({ error: 'Failed to create block' }, { status: 500 })
+      console.error('[blocks POST] insert failed after fallbacks', {
+        assignmentId: resolvedParams.assignmentId,
+        type,
+        message: insertError.message,
+        details: (insertError as any)?.details,
+        hint: (insertError as any)?.hint,
+        code: (insertError as any)?.code,
+      })
+      return NextResponse.json(
+        { error: `Failed to create block: ${insertError.message || 'unknown error'}` },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(newBlock)
-  } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[blocks POST] unhandled exception', error)
+    return NextResponse.json({ error: `Internal server error: ${error?.message || 'unknown'}` }, { status: 500 })
   }
 }

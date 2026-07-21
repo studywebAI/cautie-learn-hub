@@ -43,7 +43,7 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle()
 
-    const isTeacher = profile?.subscription_type === 'teacher'
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase())
     logSubjectDetail('GET - Subscription type', profile?.subscription_type)
 
     if (isTeacher) {

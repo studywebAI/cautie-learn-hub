@@ -561,7 +561,10 @@ export async function PUT(
         hint: (updateError as any)?.hint,
         code: (updateError as any)?.code,
       })
-      return NextResponse.json({ error: 'Failed to update block' }, { status: 500 })
+      return NextResponse.json(
+        { error: `Failed to update block: ${(updateError as any)?.message || 'unknown error'}` },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(updatedBlock)

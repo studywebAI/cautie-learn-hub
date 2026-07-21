@@ -52,7 +52,7 @@ export async function GET(
         .select('subscription_type')
         .eq('id', user.id)
         .maybeSingle();
-      isTeacher = profile?.subscription_type === 'teacher';
+      isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase());
     }
 
     const visibleAssignments = isTeacher

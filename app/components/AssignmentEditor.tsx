@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -2151,7 +2152,6 @@ export function AssignmentEditor({
               className="h-8 border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <Textarea
@@ -2161,7 +2161,6 @@ export function AssignmentEditor({
               className="min-h-[60px] border-0 shadow-none resize-none focus-visible:ring-0 bg-transparent"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
           </div>
         );
@@ -2177,7 +2176,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <div className="space-y-1 pl-2">
@@ -2206,7 +2204,6 @@ export function AssignmentEditor({
                     className="flex-1 border-0 shadow-none h-7 text-sm focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                   <Button
                     variant="ghost"
@@ -2252,7 +2249,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <Label className="text-[11px] text-muted-foreground">Correct / Model Answer</Label>
@@ -2263,7 +2259,6 @@ export function AssignmentEditor({
               className="min-h-[40px] border-0 border-b border-dashed border-border rounded-none shadow-none resize-none focus-visible:ring-0 bg-transparent text-sm text-muted-foreground"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">({block.data.max_score} pts)</span>
@@ -2298,7 +2293,6 @@ export function AssignmentEditor({
                           className="h-6 px-1 text-sm border-0 border-b-2 border-foreground/40 rounded-none shadow-none focus-visible:ring-0 bg-transparent text-center"
                           onClick={(e) => e.stopPropagation()}
                           readOnly={!canEditBlock}
-                          disabled={!canEditBlock}
                         />
                         <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground">
                           ({idx + 1})
@@ -2326,7 +2320,6 @@ export function AssignmentEditor({
                 className="min-h-[32px] mt-1 border-0 shadow-none resize-none focus-visible:ring-0 surface-interactive text-xs rounded px-2 py-1"
                 onClick={(e) => e.stopPropagation()}
                 readOnly={!canEditBlock}
-                disabled={!canEditBlock}
               />
             </div>
             {renderReadOnlyActions()}
@@ -2344,7 +2337,6 @@ export function AssignmentEditor({
               placeholder="Match the items..."
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <div className="grid grid-cols-2 gap-2 text-xs">
@@ -2378,7 +2370,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <p className="text-[10px] text-muted-foreground">Items are in correct order (A=first, B=second...)</p>
@@ -2397,7 +2388,6 @@ export function AssignmentEditor({
                     className="flex-1 h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                   <Button
                     variant="ghost"
@@ -2469,7 +2459,6 @@ export function AssignmentEditor({
                     className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                   <Input
                     value={card.back}
@@ -2482,7 +2471,6 @@ export function AssignmentEditor({
                     className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                   <Button
                     variant="ghost"
@@ -2580,7 +2568,6 @@ export function AssignmentEditor({
                           className="h-6 text-xs border-0 shadow-none focus-visible:ring-0 bg-transparent font-medium"
                           onClick={(e) => e.stopPropagation()}
                           readOnly={!canEditBlock}
-                          disabled={!canEditBlock}
                         />
                         {canEditBlock && columns.length > 1 && (
                           <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={(e) => { e.stopPropagation(); removeColumn(ci); }}>
@@ -2615,7 +2602,6 @@ export function AssignmentEditor({
                             className="h-6 text-xs border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
                             onClick={(e) => e.stopPropagation()}
                             readOnly={!canEditBlock}
-                            disabled={!canEditBlock}
                           />
                         </div>
                       </td>
@@ -2666,7 +2652,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent font-medium text-sm"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
               autoFocus={canEditBlock && selectedBlock === block.id}
             />
             <div className="grid grid-cols-5 gap-2">
@@ -2686,7 +2671,6 @@ export function AssignmentEditor({
                     className="h-7 text-xs mt-0.5"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                 </div>
               ))}
@@ -2780,7 +2764,6 @@ export function AssignmentEditor({
                       className="flex-1 h-7 text-xs"
                       onClick={(e) => e.stopPropagation()}
                       readOnly={!canEditBlock}
-                      disabled={!canEditBlock}
                     />
                     <Button
                       variant="ghost"
@@ -2802,7 +2785,6 @@ export function AssignmentEditor({
               className="min-h-[50px] text-xs"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
             {renderReadOnlyActions()}
           </div>
@@ -2840,11 +2822,11 @@ export function AssignmentEditor({
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-[10px] text-muted-foreground">{isDutch ? 'X-as label' : 'X axis label'}</Label>
-                <Input value={gpData.xLabel} onChange={(e) => updateGp({ xLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} />
+                <Input value={gpData.xLabel} onChange={(e) => updateGp({ xLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} />
               </div>
               <div>
                 <Label className="text-[10px] text-muted-foreground">{isDutch ? 'Y-as label' : 'Y axis label'}</Label>
-                <Input value={gpData.yLabel} onChange={(e) => updateGp({ yLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} />
+                <Input value={gpData.yLabel} onChange={(e) => updateGp({ yLabel: e.target.value } as any)} className="h-7 text-xs mt-0.5" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} />
               </div>
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -2860,7 +2842,6 @@ export function AssignmentEditor({
                     className="h-7 text-xs mt-0.5"
                     onClick={(e) => e.stopPropagation()}
                     readOnly={!canEditBlock}
-                    disabled={!canEditBlock}
                   />
                 </div>
               ))}
@@ -2880,8 +2861,8 @@ export function AssignmentEditor({
               {gpPoints.map((p, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <span className="text-xs font-medium text-muted-foreground w-4">{idx + 1}.</span>
-                  <Input type="number" value={p.x} onChange={(e) => updateGpPoint(idx, { x: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} placeholder="x" />
-                  <Input type="number" value={p.y} onChange={(e) => updateGpPoint(idx, { y: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} disabled={!canEditBlock} placeholder="y" />
+                  <Input type="number" value={p.x} onChange={(e) => updateGpPoint(idx, { x: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} placeholder="x" />
+                  <Input type="number" value={p.y} onChange={(e) => updateGpPoint(idx, { y: Number(e.target.value) })} className="h-7 text-xs w-20" onClick={(e) => e.stopPropagation()} readOnly={!canEditBlock} placeholder="y" />
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); removeGpPoint(idx); }} disabled={!canEditBlock}>
                     <X className="h-3 w-3" />
                   </Button>
@@ -2904,7 +2885,6 @@ export function AssignmentEditor({
             placeholder="Enter media URL..."
             className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-sm"
             readOnly={!canEditBlock}
-            disabled={!canEditBlock}
             autoFocus={canEditBlock && selectedBlock === block.id}
           />
         );
@@ -2915,14 +2895,12 @@ export function AssignmentEditor({
           <div className="space-y-2">
             {block.data.url ? (
               <div className="space-y-2">
-                <div className="flex justify-center rounded-md bg-muted/40 p-3">
-                  <img
-                    src={block.data.url}
-                    alt={block.data.alt || ''}
-                    className="max-w-full max-h-96 rounded-md border border-border object-contain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
+                <img
+                  src={block.data.url}
+                  alt={block.data.alt || ''}
+                  className="block h-96 w-full rounded-md object-cover"
+                  onClick={(e) => e.stopPropagation()}
+                />
                 {canEditBlock && (
                   <Button
                     variant="ghost"
@@ -2935,13 +2913,13 @@ export function AssignmentEditor({
                   </Button>
                 )}
               </div>
-            ) : (
+            ) : canEditBlock ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'image'); }}
                 className="h-16 w-full border-dashed text-xs text-muted-foreground"
-                disabled={!canEditBlock || isUploading}
+                disabled={isUploading}
               >
                 {isUploading ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
@@ -2949,6 +2927,10 @@ export function AssignmentEditor({
                   <><ImageIcon className="h-4 w-4 mr-2" /> Click to upload image</>
                 )}
               </Button>
+            ) : (
+              <div className="flex h-16 w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
+                <ImageIcon className="h-4 w-4" /> No image uploaded yet
+              </div>
             )}
             <Input
               value={block.data.caption || ''}
@@ -2957,7 +2939,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
             <Input
               value={block.data.alt || ''}
@@ -2966,7 +2947,6 @@ export function AssignmentEditor({
               className="border-0 shadow-none focus-visible:ring-0 bg-transparent text-xs text-muted-foreground"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
           </div>
         );
@@ -2981,7 +2961,7 @@ export function AssignmentEditor({
                 <video
                   src={block.data.url}
                   controls
-                  className="max-w-full max-h-64 rounded-md border border-border"
+                  className="block h-96 w-full rounded-md bg-black"
                   onClick={(e) => e.stopPropagation()}
                 />
                 {canEditBlock && (
@@ -2996,13 +2976,13 @@ export function AssignmentEditor({
                   </Button>
                 )}
               </div>
-            ) : (
+            ) : canEditBlock ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'video'); }}
                 className="h-16 w-full border-dashed text-xs text-muted-foreground"
-                disabled={!canEditBlock || isUploading}
+                disabled={isUploading}
               >
                 {isUploading ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
@@ -3010,6 +2990,10 @@ export function AssignmentEditor({
                   <><Video className="h-4 w-4 mr-2" /> Click to upload video</>
                 )}
               </Button>
+            ) : (
+              <div className="flex h-16 w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
+                <Video className="h-4 w-4" /> No video uploaded yet
+              </div>
             )}
             <Input
               value={block.data.caption || ''}
@@ -3018,7 +3002,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
           </div>
         );
@@ -3046,13 +3029,13 @@ export function AssignmentEditor({
                   </Button>
                 )}
               </div>
-            ) : (
+            ) : canEditBlock ? (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleMediaUpload(block, 'file'); }}
                 className="h-16 w-full border-dashed text-xs text-muted-foreground"
-                disabled={!canEditBlock || isUploading}
+                disabled={isUploading}
               >
                 {isUploading ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...</>
@@ -3060,6 +3043,10 @@ export function AssignmentEditor({
                   <><FileText className="h-4 w-4 mr-2" /> Click to upload file</>
                 )}
               </Button>
+            ) : (
+              <div className="flex h-16 w-full items-center justify-center gap-2 rounded-md border border-dashed text-xs text-muted-foreground">
+                <FileText className="h-4 w-4" /> No file uploaded yet
+              </div>
             )}
             <Input
               value={block.data.caption || ''}
@@ -3068,7 +3055,6 @@ export function AssignmentEditor({
               className="border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
-              disabled={!canEditBlock}
             />
           </div>
         );
@@ -3347,7 +3333,7 @@ export function AssignmentEditor({
           <div
             ref={paperRef}
             data-testid="assignment-paper"
-            className="surface-panel border border-border rounded-xl shadow-sm min-h-[calc(100vh-130px)] p-3 relative w-full"
+            className="min-h-[calc(100vh-130px)] p-3 relative w-full"
           >
               {rows.length === 0 ? (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -3975,33 +3961,36 @@ export function AssignmentEditor({
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-72 space-y-2.5">
                   <p className="text-[11px] font-medium text-muted-foreground">{isDutch ? 'Importeer van een andere opdracht' : 'Import from another assignment'}</p>
-                  <select
-                    value={copyChapterId}
-                    onChange={(e) => setCopyChapterId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={isLoadingCopyOptions}
-                  >
-                    <option value="">{isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...'}</option>
-                    {copyChapters.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                  <select
-                    value={copyParagraphId}
-                    onChange={(e) => setCopyParagraphId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!copyChapterId}
-                  >
-                    <option value="">{isDutch ? 'Kies paragraaf...' : 'Choose paragraph...'}</option>
-                    {copyParagraphs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
-                  <select
-                    value={copyAssignmentId}
-                    onChange={(e) => setCopyAssignmentId(e.target.value)}
-                    className="w-full text-xs border border-border rounded-md px-2 py-1.5 bg-background h-8"
-                    disabled={!copyParagraphId}
-                  >
-                    <option value="">{isDutch ? 'Kies opdracht...' : 'Choose assignment...'}</option>
-                    {copyAssignments.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
-                  </select>
+                  <Select value={copyChapterId} onValueChange={setCopyChapterId} disabled={isLoadingCopyOptions}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={isDutch ? 'Kies hoofdstuk...' : 'Choose chapter...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {copyChapters.map((c) => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={copyParagraphId} onValueChange={setCopyParagraphId} disabled={!copyChapterId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={isDutch ? 'Kies paragraaf...' : 'Choose paragraph...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {copyParagraphs.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={copyAssignmentId} onValueChange={setCopyAssignmentId} disabled={!copyParagraphId}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder={isDutch ? 'Kies opdracht...' : 'Choose assignment...'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {copyAssignments.length === 0 ? (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                          {isDutch ? 'Geen opdrachten gevonden' : 'No assignments found'}
+                        </div>
+                      ) : (
+                        copyAssignments.map((a) => <SelectItem key={a.id} value={a.id}>{a.title}</SelectItem>)
+                      )}
+                    </SelectContent>
+                  </Select>
                   <Button size="sm" className="h-7 w-full text-xs" disabled={!copyAssignmentId || isCopyingBlocks} onClick={handleCopyBlocks}>
                     {isCopyingBlocks ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (isDutch ? 'Kopiëren' : 'Copy')}
                   </Button>

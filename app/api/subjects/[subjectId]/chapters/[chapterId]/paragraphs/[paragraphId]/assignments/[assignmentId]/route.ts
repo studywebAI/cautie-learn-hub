@@ -75,7 +75,7 @@ export async function GET(
         .select('subscription_type')
         .eq('id', user.id)
         .maybeSingle();
-      const isTeacher = profile?.subscription_type === 'teacher';
+      const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase());
       if (!isTeacher && (fallbackAssignment as any).is_visible === false) {
         return NextResponse.json({ error: 'Assignment not found' }, { status: 404 });
       }
@@ -149,7 +149,7 @@ export async function GET(
       .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle();
-    const isTeacher = profile?.subscription_type === 'teacher';
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase());
 
     // Hidden/unpublished assignments (esp. tests before they're scheduled)
     // must not be fetchable by non-teachers even via a direct/guessed URL.

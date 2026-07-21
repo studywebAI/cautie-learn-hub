@@ -83,7 +83,7 @@ export async function GET(
         .order('paragraph_number', { ascending: true }),
     ]);
 
-    const isTeacher = profileResponse.data?.subscription_type === 'teacher';
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profileResponse.data?.subscription_type || '').toLowerCase());
     subjectsLog('chapter-overview', requestId, 'profile.loaded', {
       isTeacher,
       subscriptionType: profileResponse.data?.subscription_type || null,

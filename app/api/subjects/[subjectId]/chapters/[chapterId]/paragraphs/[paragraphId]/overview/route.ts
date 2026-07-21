@@ -67,7 +67,7 @@ export async function GET(
       .select('subscription_type')
       .eq('id', user.id)
       .maybeSingle();
-    const isTeacher = profileResult.data?.subscription_type === 'teacher';
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profileResult.data?.subscription_type || '').toLowerCase());
     const hasAccess = await canAccessSubject(supabase, user.id, subjectId);
     subjectsLog('paragraph-overview', requestId, 'profile.loaded', {
       isTeacher,

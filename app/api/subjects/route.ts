@@ -170,7 +170,7 @@ export async function GET(req: Request) {
       .eq('id', user.id)
       .maybeSingle()
 
-    const isTeacher = profile?.subscription_type === 'teacher'
+    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase())
     logSubjects('GET - User subscription profile', {
       subscription_type: profile?.subscription_type,
       subscription_tier: profile?.subscription_tier,

@@ -467,39 +467,42 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
         {subjects.length > 1 && (
           <div className="flex items-center gap-2 justify-end flex-wrap">
             {isTeacher && folders.length > 0 && (
-              <select
-                value={filterFolderId}
-                onChange={(e) => setFilterFolderId(e.target.value)}
-                className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
-              >
-                <option value="all">All folders</option>
-                <option value="none">No folder</option>
-                {folders.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </select>
+              <Select value={filterFolderId} onValueChange={setFilterFolderId}>
+                <SelectTrigger className="h-8 w-auto text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All folders</SelectItem>
+                  <SelectItem value="none">No folder</SelectItem>
+                  {folders.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             {classFilterOptions.length > 1 && (
-              <select
-                value={filterClassId}
-                onChange={(e) => setFilterClassId(e.target.value)}
-                className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
-              >
-                <option value="all">All classes</option>
-                {classFilterOptions.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Select value={filterClassId} onValueChange={setFilterClassId}>
+                <SelectTrigger className="h-8 w-auto text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All classes</SelectItem>
+                  {classFilterOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-background h-8"
-            >
-              <option value="default">Default order</option>
-              <option value="name">Name (A-Z)</option>
-              <option value="recent">Recently active</option>
-            </select>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+              <SelectTrigger className="h-8 w-auto text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default order</SelectItem>
+                <SelectItem value="name">Name (A-Z)</SelectItem>
+                <SelectItem value="recent">Recently active</SelectItem>
+              </SelectContent>
+            </Select>
             {isTeacher && (
               <label className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
                 <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-3.5 w-3.5" />
