@@ -1856,8 +1856,9 @@ export function AssignmentEditor({
         });
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       console.error('[handleSilentSave] save_failed', { assignmentId, error });
-      toast({ title: 'Save failed', description: 'Changes could not be saved to server.', variant: 'destructive' });
+      toast({ title: 'Save failed', description: message || 'Changes could not be saved to server.', variant: 'destructive' });
     } finally {
       isSavingRef.current = false;
       setIsSaving(false);
