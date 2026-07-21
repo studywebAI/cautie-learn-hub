@@ -1,8 +1,8 @@
 -- ==============================================
 -- Pending production migrations bundle
--- Generated 2026-07-17 -- run manually in the Supabase SQL editor
+-- Generated 2026-07-17, updated 2026-07-21 -- run manually in the Supabase SQL editor
 -- ==============================================
--- These 16 migrations exist locally but supabase migration list --linked
+-- These migrations exist locally but `supabase migration list --linked`
 -- shows them missing from the remote's migration history. Applying them
 -- fixes: GET /api/scheduled-items/check (500, missing table), the paragraph
 -- prerequisite feature (missing column), and a few other schema gaps.
@@ -11,6 +11,24 @@
 -- A storage-bucket section for /api/upload is appended at the end --
 -- that one is NOT tracked as a migration anywhere and is the most
 -- likely cause of the upload 500s.
+--
+-- 2026-07-21 re-check via `supabase migration list --linked`:
+-- - Good news: `content-uploads` storage bucket DOES exist on remote now
+--   (confirmed via `supabase storage ls --linked --experimental
+--   ss:///content-uploads`) -- that half of the original upload bug looks
+--   fixed. Most of the original 16 migrations also now show as applied.
+-- - Still open: at least one 20260420 migration and one 20260429 migration
+--   (the CLI's date-only output can't say for certain which of the two
+--   same-day files each is -- `20260420_studyset_adaptive_engine_steps_4_5`
+--   / `20260420_studyset_daily_pulses_step_12`, and
+--   `20260429_ideas_board_v1` / `20260429_ideas_board_v2_polls`) still show
+--   as missing on remote. PLUS 5 new ones that have accumulated since:
+--   20260719_assignment_versions, 20260719_blocks_attached_media,
+--   20260720_add_advanced_block_types, 20260721_support_messages,
+--   20260721_ideas_board_admin_ops -- appended below, right before the
+--   storage-bucket section. Since every statement in this bundle is
+--   idempotent, running the whole thing again is safe regardless of which
+--   exact subset is missing -- no need to hand-pick sections.
 
 -- ===== 20260429_ideas_board_v1.sql =====
 -- Ideas Board v1
@@ -1237,6 +1255,179 @@ ALTER TABLE public.paragraphs
   ADD COLUMN IF NOT EXISTS prerequisite_paragraph_id uuid REFERENCES public.paragraphs(id) ON DELETE SET NULL;
 
 COMMIT;
+
+-- ===== 20260719_assignment_versions.sql =====
+-- =============================================
+-- Assignment version history ("Doc history")
+-- Date: 2026-07-19
+-- Context: docs/mockups/editor-redesign.html -- confirmed to build, not
+-- deferred. No version/snapshot infrastructure existed for assignments
+-- before this (confirmed via repo-wide search).
+-- =============================================
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.assignment_versions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  assignment_id uuid NOT NULL REFERENCES public.assignments(id) ON DELETE CASCADE,
+  blocks_snapshot jsonb NOT NULL,
+  settings_snapshot jsonb,
+  title_snapshot text,
+  description_snapshot text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL
+);
+
+-- Backfill columns in case this table already existed with a different/partial schema
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS id uuid;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS assignment_id uuid;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS blocks_snapshot jsonb;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS settings_snapshot jsonb;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS title_snapshot text;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS description_snapshot text;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS created_at timestamptz;
+ALTER TABLE public.assignment_versions ADD COLUMN IF NOT EXISTS created_by uuid;
+
+CREATE INDEX IF NOT EXISTS idx_assignment_versions_assignment_id_created_at
+  ON public.assignment_versions(assignment_id, created_at DESC);
+
+ALTER TABLE public.assignment_versions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "assignment_versions_authenticated_all" ON public.assignment_versions;
+CREATE POLICY "assignment_versions_authenticated_all"
+  ON public.assignment_versions
+  FOR ALL
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
+
+COMMIT;
+
+-- ===== 20260719_blocks_attached_media.sql =====
+-- =============================================
+-- Blocks: attach a media block (image/video) to a question block
+-- Date: 2026-07-19
+-- Context: docs/mockups/editor-redesign.html -- linked media renders as a
+-- banner inside its parent question's card instead of an independent
+-- flat-list block. No parent/link relationship existed on blocks before this.
+-- =============================================
+
+BEGIN;
+
+ALTER TABLE public.blocks
+  ADD COLUMN IF NOT EXISTS attached_to_block_id uuid REFERENCES public.blocks(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_blocks_attached_to_block_id
+  ON public.blocks(attached_to_block_id)
+  WHERE attached_to_block_id IS NOT NULL;
+
+COMMENT ON COLUMN public.blocks.attached_to_block_id IS
+  'When set, this block (typically image/video) renders as a banner inside the question block it is attached to, instead of as an independent list item.';
+
+COMMIT;
+
+-- ===== 20260720_add_advanced_block_types.sql =====
+-- =============================================
+-- Allow the 5 new advanced block types as blocks.type values
+-- Date: 2026-07-20
+-- Context: assignment editor block-type expansion -- flashcard, table,
+-- number_line, diagram_labeling, graph_plot. Built across Phases 1-5,
+-- this single migration unlocks all five so it only needs to run once.
+-- =============================================
+
+BEGIN;
+
+ALTER TABLE public.blocks
+DROP CONSTRAINT IF EXISTS blocks_type_check;
+
+ALTER TABLE public.blocks
+ADD CONSTRAINT blocks_type_check
+CHECK (type IN (
+  'text', 'image', 'video', 'file', 'multiple_choice', 'open_question',
+  'fill_in_blank', 'drag_drop', 'matching', 'ordering', 'media_embed',
+  'divider', 'rich_text', 'executable_code', 'code', 'list',
+  'quote', 'layout', 'complex',
+  'flashcard', 'table', 'number_line', 'diagram_labeling', 'graph_plot'
+));
+
+COMMIT;
+
+-- ===== 20260721_support_messages.sql =====
+-- Support messages: lightweight "Reach us" submissions from the Help & FAQ page.
+-- No email/phone/chatbot routing yet (later work) -- just stores the message so
+-- it can be triaged manually.
+
+CREATE TABLE IF NOT EXISTS public.support_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  subject text NOT NULL,
+  body text NOT NULL,
+  status text NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'resolved')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_messages_user_id ON public.support_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_support_messages_status ON public.support_messages(status);
+
+ALTER TABLE public.support_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "support_messages_owner_select" ON public.support_messages;
+CREATE POLICY "support_messages_owner_select"
+ON public.support_messages
+FOR SELECT
+USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "support_messages_owner_insert" ON public.support_messages;
+CREATE POLICY "support_messages_owner_insert"
+ON public.support_messages
+FOR INSERT
+WITH CHECK (user_id = auth.uid());
+
+-- ===== 20260721_ideas_board_admin_ops.sql =====
+-- Ideas Board admin ops: moderation audit trail + auto-close scheduling support.
+-- Editing idea content or resetting votes stays a manual/code-level operation
+-- (not exposed as an admin UI feature) -- this migration only covers the two
+-- pieces that need to run reliably without a human clicking a button:
+-- closing expired polls on schedule, and recording what admin actions happened.
+
+ALTER TABLE public.ideas_board_polls
+  ALTER COLUMN ends_at SET DEFAULT NULL;
+
+CREATE TABLE IF NOT EXISTS public.ideas_board_audit_log (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_id uuid, -- null for system/cron-initiated actions
+  action text NOT NULL, -- 'idea_stage_changed', 'poll_created', 'poll_status_changed', 'poll_auto_closed'
+  entity_type text NOT NULL CHECK (entity_type IN ('idea', 'poll')),
+  entity_id uuid NOT NULL,
+  before jsonb,
+  after jsonb,
+  metadata jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ideas_board_audit_log_created_idx
+  ON public.ideas_board_audit_log(created_at DESC);
+CREATE INDEX IF NOT EXISTS ideas_board_audit_log_entity_idx
+  ON public.ideas_board_audit_log(entity_type, entity_id);
+
+ALTER TABLE public.ideas_board_audit_log ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS ideas_board_audit_log_admin_select ON public.ideas_board_audit_log;
+CREATE POLICY ideas_board_audit_log_admin_select
+  ON public.ideas_board_audit_log
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid()
+        AND p.subscription_type IN ('admin', 'owner', 'creator')
+    )
+  );
+
+DROP POLICY IF EXISTS ideas_board_audit_log_service_insert ON public.ideas_board_audit_log;
+CREATE POLICY ideas_board_audit_log_service_insert
+  ON public.ideas_board_audit_log
+  FOR INSERT TO service_role
+  WITH CHECK (true);
 
 -- =============================================
 -- Storage: content-uploads bucket for /api/upload

@@ -5,8 +5,28 @@ critical bug (below) is resolved, unless told otherwise.
 
 ## Critical — blocking, needs evidence first
 - [ ] File/media upload broken ("kan geen files uploaden of andere media")
-- [ ] "Changes could not be saved to server" appearing constantly
-- [ ] Sidebar collapse animation / general animations "fucking laggy"
+      **Re-checked (2026-07-21):** the `content-uploads` storage bucket now
+      exists on remote (confirmed via `supabase storage ls --linked`) — that
+      root cause looks fixed. BUT `supabase migration list --linked` still
+      shows real schema drift: at least one 20260420 and one 20260429
+      migration, plus 5 new ones from this week (assignment_versions,
+      blocks_attached_media, add_advanced_block_types, support_messages,
+      ideas_board_admin_ops) are missing on remote. Any feature touching
+      those tables (doc history, block-media linking, the 5 new block
+      types, Help&FAQ "Reach us", Ideas Board audit trail) will likely
+      error in production until `supabase/RUN_ME_pending_migrations.sql`
+      (updated 2026-07-21 with the 5 new sections) is run. Still open —
+      needs someone with production DB access to run it.
+- [x] "Changes could not be saved to server" appearing constantly — fixed
+      2026-07-20 in `AssignmentEditor.tsx`'s `handleSilentSave`: a single
+      block's save failure (e.g. a stale-id 403 right after block creation)
+      was aborting the whole save cycle, including unrelated blocks and the
+      assignment-settings PATCH. Now isolated per-block with a self-healing
+      PUT→POST fallback; only surfaces a toast if a block genuinely fails.
+- [ ] Sidebar collapse animation / general animations "fucking laggy" —
+      **Unverified (2026-07-21):** could not check from this environment
+      (no browser preview access, app is login-gated). Still open until
+      someone confirms in a real browser whether it's still an issue.
 
 ## Navigation / topbar
 - [x] Chapter and paragraph detail pages had their own ad-hoc "Subjects /

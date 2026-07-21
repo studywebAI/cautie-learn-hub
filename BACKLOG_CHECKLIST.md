@@ -109,6 +109,7 @@ Layout herbouwd naar quiz's settings-rail structuur: breadcrumb boven, Card Type
 ### 1. Studyset Materials-panel — "Add" doet niets
 **Bestand:** `app/components/studyset/materials-panel.tsx`
 **Status:** BUITEN SCOPE — "Coming soon" stub. Vereist volledige upload-flow (picker, storage, DB). Aanbevolen voor latere sprint.
+**Herbevestigd (2026-07-21):** nog steeds een echte, onopgeloste stub — de "Add"-knop toont alleen een toast, doet niets. Niet vanzelf verholpen, staat nog open. Terug op de lijst; nog niet gepland.
 
 ### 2. Quiz Duel (1v1) — gebouwd maar nergens gekoppeld
 **Bestanden:** `app/components/tools/quiz-duel.tsx`, `app/ai/flows/generate-quiz-duel-data.ts`
