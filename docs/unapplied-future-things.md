@@ -102,7 +102,9 @@ This file tracks features that are in codebase planning/partial state but are no
 - Group tab:
   - student rename flow should stay list-first, quick-select, and keyboard save.
 - Schedule:
-  - remain hidden in class UI until parity pass is signed off.
+  - **Superseded 2026-07-21** — no longer hidden, see section 1 above. Now
+    live via Agenda's "Configure" dialog; a visual/parity pass on it happens
+    together with the future Agenda revamp.
 
 ## 6) Advanced Tool Settings Backlog (requested spec)
 - **Status (2026-07-21): blocked on clarification.** This list is too
