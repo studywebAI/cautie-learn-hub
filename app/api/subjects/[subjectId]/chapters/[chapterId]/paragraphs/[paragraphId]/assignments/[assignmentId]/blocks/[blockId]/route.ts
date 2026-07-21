@@ -518,9 +518,13 @@ export async function PUT(
     const subjectData = assignment.paragraphs.chapters.subjects as any
     const classId = subjectData.class_id
 
-    // Check if user is teacher/owner
-    let isTeacher = false;
-    if (classId) {
+    // Check if user is teacher/owner. Owner check always applies (not just
+    // when class_id is absent) -- a subject creator should never be locked
+    // out because their class_members row is missing/mismatched; class
+    // membership is an additional way in, not the only way once class_id
+    // is set.
+    let isTeacher = subjectData.user_id === user.id;
+    if (!isTeacher && classId) {
       const { data: classMembership } = await supabase
         .from('class_members')
         .select('role')
@@ -529,8 +533,6 @@ export async function PUT(
         .maybeSingle();
       const role = String(classMembership?.role || '').toLowerCase();
       isTeacher = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
-    } else {
-      isTeacher = subjectData.user_id === user.id;
     }
 
     if (!isTeacher) {
@@ -654,9 +656,13 @@ export async function DELETE(
     const subjectData = assignment.paragraphs.chapters.subjects as any
     const classId = subjectData.class_id
 
-    // Check if user is teacher/owner
-    let isTeacher = false;
-    if (classId) {
+    // Check if user is teacher/owner. Owner check always applies (not just
+    // when class_id is absent) -- a subject creator should never be locked
+    // out because their class_members row is missing/mismatched; class
+    // membership is an additional way in, not the only way once class_id
+    // is set.
+    let isTeacher = subjectData.user_id === user.id;
+    if (!isTeacher && classId) {
       const { data: classMembership } = await supabase
         .from('class_members')
         .select('role')
@@ -665,8 +671,6 @@ export async function DELETE(
         .maybeSingle();
       const role = String(classMembership?.role || '').toLowerCase();
       isTeacher = role === 'teacher' || role === 'owner' || role === 'admin' || role === 'creator';
-    } else {
-      isTeacher = subjectData.user_id === user.id;
     }
 
     if (!isTeacher) {
