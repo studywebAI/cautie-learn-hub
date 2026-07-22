@@ -34,9 +34,13 @@ export async function GET(req: NextRequest) {
           weight,
           status,
           created_at,
-          class:classes!inner(
+          class:classes(
             id,
             name
+          ),
+          subject:subjects(
+            id,
+            title
           )
         )
       `)
@@ -121,7 +125,7 @@ export async function GET(req: NextRequest) {
     const grades = (data || []).map((g: any) => ({
       id: g.id,
       grade_set_title: g.grade_set?.title || 'Unknown',
-      class_name: g.grade_set?.class?.name || 'Unknown',
+      class_name: g.grade_set?.class?.name || g.grade_set?.subject?.title || 'Unknown',
       class_id: g.grade_set?.class?.id || null,
       grade_numeric: typeof g.grade_numeric === 'number' ? g.grade_numeric : null,
       grade_value: g.grade_value || null,
