@@ -75,9 +75,14 @@ export default function SubjectDetailPage() {
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
   const [isCreatingParagraph, setIsCreatingParagraph] = useState(false);
   const { toast } = useToast();
-  const { role } = useContext(AppContext) as AppContextType;
+  const { role, subjects: contextSubjects } = useContext(AppContext) as AppContextType;
   const { dictionary } = useDictionary();
   const isTeacher = role === 'teacher';
+  // Class-linked subjects already have attendance via the class's Manage
+  // tab -- this entry point only makes sense for standalone (class-less)
+  // subjects, which have no other way to reach it.
+  const contextSubject = (contextSubjects || []).find((s: any) => s.id === subjectId);
+  const isStandaloneSubject = !Array.isArray(contextSubject?.classes) || contextSubject.classes.length === 0;
   const s = dictionary.subjects;
   const c = dictionary.common;
   const t = {
@@ -360,6 +365,11 @@ export default function SubjectDetailPage() {
         actions={
           isTeacher && (
             <>
+              {isStandaloneSubject && (
+                <Link href={`/subjects/${subjectId}/attendance`}>
+                  <Button size="sm" variant="outline">Attendance</Button>
+                </Link>
+              )}
               {chapters.length > 0 && (
                 <Button
                   onClick={() => {
