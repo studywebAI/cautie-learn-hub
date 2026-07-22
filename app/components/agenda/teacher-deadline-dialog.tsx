@@ -24,7 +24,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { ClassInfo } from '@/contexts/app-context';
+import { useContext } from 'react';
+import { AppContext, AppContextType, type ClassInfo } from '@/contexts/app-context';
 import { HierarchicalLinkPickerV2 } from './hierarchical-link-picker-v2';
 
 type DeadlineType = 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
@@ -62,7 +63,7 @@ type TeacherDeadlineDialogProps = {
   onDeadlineCreated: (deadline: {
     title: string;
     description: string;
-    class_id: string;
+    class_id: string | null;
     subject_id?: string | null;
     item_type: DeadlineType;
     starts_at?: string | null;
@@ -82,6 +83,15 @@ export function TeacherDeadlineDialog({
   onDeadlineCreated,
   initialDate,
 }: TeacherDeadlineDialogProps) {
+  const context = useContext(AppContext) as AppContextType | null;
+  // Subjects with no class at all -- picking one of these skips class
+  // selection entirely and posts to /api/subjects/[id]/agenda instead.
+  const standaloneSubjects = useMemo(
+    () => (context?.subjects || []).filter((s: any) => !Array.isArray(s.classes) || s.classes.length === 0),
+    [context?.subjects]
+  );
+  const [standaloneMode, setStandaloneMode] = useState(false);
+  const [standaloneSubjectIds, setStandaloneSubjectIds] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState<Date | undefined>(initialDate);
@@ -273,10 +283,12 @@ export function TeacherDeadlineDialog({
   };
 
   const handleCreate = async () => {
-    if (!date || selectedClassIds.length === 0) {
+    if (!date || (standaloneMode ? standaloneSubjectIds.length === 0 : selectedClassIds.length === 0)) {
       toast({
         title: 'Missing information',
-        description: 'Please provide date and at least one class.',
+        description: standaloneMode
+          ? 'Please provide date and at least one subject.'
+          : 'Please provide date and at least one class.',
         variant: 'destructive',
       });
       return;
@@ -291,6 +303,27 @@ export function TeacherDeadlineDialog({
         : null;
 
       const safeTitle = title.trim() || 'Agenda item';
+
+      if (standaloneMode) {
+        for (const subjectId of standaloneSubjectIds) {
+          await onDeadlineCreated({
+            title: safeTitle,
+            description: description.trim(),
+            class_id: null,
+            subject_id: subjectId,
+            item_type: itemType,
+            starts_at: dueAt.toISOString(),
+            due_at: dueAt.toISOString(),
+            visible: isVisibleToStudents,
+            publish_at: isVisibleToStudents ? null : publishAtIso,
+            links,
+          });
+        }
+        toast({ title: 'Agenda item created', description: `"${safeTitle}" was added.` });
+        resetAndClose();
+        return;
+      }
+
       for (const classId of selectedClassIds) {
         const classSubjectIds = selectedSubjectIds.filter((subjectId) =>
           (subjectsByClass[classId] || []).some((subject) => subject.id === subjectId)
@@ -350,6 +383,8 @@ export function TeacherDeadlineDialog({
     setDate(initialDate);
     setSelectedClassIds(defaultClassId ? [defaultClassId] : []);
     setSelectedSubjectIds([]);
+    setStandaloneMode(false);
+    setStandaloneSubjectIds([]);
     setItemType('assignment');
     setIsVisibleToStudents(true);
     setPublishDate('');
@@ -387,42 +422,97 @@ export function TeacherDeadlineDialog({
             />
           </div>
 
+          {standaloneSubjects.length > 0 && (
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={standaloneMode ? 'secondary' : 'default'}
+                size="sm"
+                onClick={() => setStandaloneMode(false)}
+              >
+                Class
+              </Button>
+              <Button
+                type="button"
+                variant={standaloneMode ? 'default' : 'secondary'}
+                size="sm"
+                onClick={() => setStandaloneMode(true)}
+              >
+                Standalone subject (no class)
+              </Button>
+            </div>
+          )}
+
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="class">Class</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button id="class" variant="secondary" className="justify-between">
-                    {selectedClasses.length > 0
-                      ? `${selectedClasses.length} class${selectedClasses.length === 1 ? '' : 'es'} selected`
-                      : 'Select classes'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[320px] p-2">
-                  <div className="space-y-1">
-                    {(classes || [])
-                      .filter((classItem) => classItem.status !== 'archived')
-                      .map((classItem) => {
-                        const checked = selectedClassIds.includes(classItem.id);
+              <Label htmlFor="class">{standaloneMode ? 'Subject' : 'Class'}</Label>
+              {standaloneMode ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="class" variant="secondary" className="justify-between">
+                      {standaloneSubjectIds.length > 0
+                        ? `${standaloneSubjectIds.length} subject${standaloneSubjectIds.length === 1 ? '' : 's'} selected`
+                        : 'Select subjects'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2">
+                    <div className="space-y-1">
+                      {standaloneSubjects.map((subject: any) => {
+                        const checked = standaloneSubjectIds.includes(subject.id);
                         return (
                           <button
-                            key={classItem.id}
+                            key={subject.id}
                             type="button"
-                            onClick={() => toggleClassSelection(classItem.id)}
+                            onClick={() => setStandaloneSubjectIds((prev) => prev.includes(subject.id) ? prev.filter((id) => id !== subject.id) : [...prev, subject.id])}
                             className="flex w-full items-center justify-between rounded-md surface-interactive px-2.5 py-2 text-left"
                           >
-                            <span className="text-sm">{classItem.name}</span>
+                            <span className="text-sm">{subject.title}</span>
                             <Checkbox
                               checked={checked}
-                              onCheckedChange={() => toggleClassSelection(classItem.id)}
+                              onCheckedChange={() => setStandaloneSubjectIds((prev) => prev.includes(subject.id) ? prev.filter((id) => id !== subject.id) : [...prev, subject.id])}
                               onClick={(event) => event.stopPropagation()}
                             />
                           </button>
                         );
                       })}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button id="class" variant="secondary" className="justify-between">
+                      {selectedClasses.length > 0
+                        ? `${selectedClasses.length} class${selectedClasses.length === 1 ? '' : 'es'} selected`
+                        : 'Select classes'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[320px] p-2">
+                    <div className="space-y-1">
+                      {(classes || [])
+                        .filter((classItem) => classItem.status !== 'archived')
+                        .map((classItem) => {
+                          const checked = selectedClassIds.includes(classItem.id);
+                          return (
+                            <button
+                              key={classItem.id}
+                              type="button"
+                              onClick={() => toggleClassSelection(classItem.id)}
+                              className="flex w-full items-center justify-between rounded-md surface-interactive px-2.5 py-2 text-left"
+                            >
+                              <span className="text-sm">{classItem.name}</span>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => toggleClassSelection(classItem.id)}
+                                onClick={(event) => event.stopPropagation()}
+                              />
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -442,6 +532,7 @@ export function TeacherDeadlineDialog({
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
+            {!standaloneMode && (
             <div className="grid gap-2">
               <Label htmlFor="subject">Subject (optional)</Label>
               <Popover>
@@ -488,6 +579,7 @@ export function TeacherDeadlineDialog({
                 </PopoverContent>
               </Popover>
             </div>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="date">Date</Label>

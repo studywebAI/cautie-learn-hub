@@ -43,6 +43,14 @@ function getAccentColor(event: CalendarEvent) {
   return getAgendaVisualStyle(event as any).accentColor;
 }
 
+// Standalone (class-less) agenda items are keyed by subject_id instead --
+// resolve which route tree to hit based on which id the event actually has.
+function agendaItemBase(event: CalendarEvent) {
+  if (event.class_id) return `/api/classes/${event.class_id}/agenda/${event.id}`;
+  if ((event as any).subject_id) return `/api/subjects/${(event as any).subject_id}/agenda/${event.id}`;
+  return null;
+}
+
 export function AssignmentDetailsPanel({
   event,
   isTeacher,
@@ -75,11 +83,10 @@ export function AssignmentDetailsPanel({
 
     // Load completion status from API for agenda items
     const loadCompletionStatus = async () => {
-      if (!event.class_id || event.type !== 'agenda_item' || !isStudent) return;
+      const base = agendaItemBase(event);
+      if (!base || event.type !== 'agenda_item' || !isStudent) return;
       try {
-        const response = await fetch(
-          `/api/classes/${event.class_id}/agenda/${event.id}/completion`
-        );
+        const response = await fetch(`${base}/completion`);
         if (response.ok) {
           const data = await response.json();
           setIsCompleted(data.completed || false);
@@ -134,14 +141,15 @@ export function AssignmentDetailsPanel({
   const subjectLine = `${event.subject || 'General'}${event.class_name ? ` | ${event.class_name}` : ''}`;
 
   const toggleCompletion = async () => {
-    if (!event?.class_id || event.type !== 'agenda_item') return;
+    const base = event ? agendaItemBase(event) : null;
+    if (!base || event.type !== 'agenda_item') return;
 
     const newCompleted = !isCompleted;
     setIsCompleted(newCompleted);
     setIsUpdatingCompletion(true);
 
     try {
-      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}/completion`, {
+      const response = await fetch(`${base}/completion`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: newCompleted }),
@@ -170,14 +178,15 @@ export function AssignmentDetailsPanel({
   };
 
   const saveChanges = async () => {
-    if (!event.class_id || event.type !== 'agenda_item') {
+    const base = agendaItemBase(event);
+    if (!base || event.type !== 'agenda_item') {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+      const response = await fetch(base, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -209,11 +218,12 @@ export function AssignmentDetailsPanel({
   };
 
   const deleteItem = async () => {
-    if (!event.class_id || event.type !== 'agenda_item') return;
+    const base = agendaItemBase(event);
+    if (!base || event.type !== 'agenda_item') return;
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, { method: 'DELETE' });
+      const response = await fetch(base, { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete item');
       onItemDeleted?.(event.id);
       toast({ title: 'Deleted', description: 'Agenda item deleted.' });
@@ -227,12 +237,13 @@ export function AssignmentDetailsPanel({
   };
 
   const toggleVisible = async () => {
-    if (!event.class_id || event.type !== 'agenda_item') return;
+    const base = agendaItemBase(event);
+    if (!base || event.type !== 'agenda_item') return;
 
     const nextVisible = !visible;
     setVisible(nextVisible);
     try {
-      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+      const response = await fetch(base, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visible: nextVisible }),

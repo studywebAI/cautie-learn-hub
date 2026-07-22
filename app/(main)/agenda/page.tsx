@@ -691,7 +691,7 @@ function AgendaPageContent() {
   const handleTeacherDeadlineCreated = async (item: {
     title: string;
     description: string;
-    class_id: string;
+    class_id: string | null;
     subject_id?: string | null;
     item_type: 'assignment' | 'quiz' | 'studyset' | 'event' | 'other';
     starts_at?: string | null;
@@ -706,7 +706,11 @@ function AgendaPageContent() {
       position?: number;
     }>;
   }) => {
-    const response = await fetch(`/api/classes/${item.class_id}/agenda`, {
+    // Standalone (class-less) items go through the subject-scoped route.
+    const endpoint = item.class_id
+      ? `/api/classes/${item.class_id}/agenda`
+      : `/api/subjects/${item.subject_id}/agenda`;
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item),
@@ -735,10 +739,13 @@ function AgendaPageContent() {
       await updatePersonalTask(eventId, { due_date: format(newDate, 'yyyy-MM-dd') });
       return;
     }
-    if (event?.type === 'agenda_item' && event.class_id) {
+    if (event?.type === 'agenda_item' && (event.class_id || event.subject_id)) {
       const dueAt = new Date(newDate);
       dueAt.setHours(12, 0, 0, 0);
-      const response = await fetch(`/api/classes/${event.class_id}/agenda/${event.id}`, {
+      const base = event.class_id
+        ? `/api/classes/${event.class_id}/agenda/${event.id}`
+        : `/api/subjects/${event.subject_id}/agenda/${event.id}`;
+      const response = await fetch(base, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ due_at: dueAt.toISOString(), starts_at: dueAt.toISOString() }),
