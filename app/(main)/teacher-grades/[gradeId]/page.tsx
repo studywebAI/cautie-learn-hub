@@ -13,8 +13,9 @@ import { PageHeader } from '@/components/page-header';
 type GradeSet = {
   id: string;
   title: string;
-  class_id: string;
-  class_name?: string;
+  class_id?: string | null;
+  class_name?: string | null;
+  subject_id?: string | null;
   subject?: { title?: string } | null;
   weight?: number;
   frequency?: string;
@@ -66,6 +67,21 @@ export default function GradeDetailPage() {
           }
         }
 
+        // Not found via any class -- check standalone (class-less) subjects.
+        if (!found) {
+          const subjects = context?.subjects || [];
+          for (const subj of subjects) {
+            const res = await fetch(`/api/subjects/${subj.id}/grades`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const gs = (data.grade_sets || []).find((g: any) => g.id === gradeId);
+            if (gs) {
+              found = { ...gs, class_id: null, class_name: null, subject: gs.subject || { title: (subj as any).title } };
+              break;
+            }
+          }
+        }
+
         if (!found) {
           setError(isDutch ? 'Cijferlijst niet gevonden' : 'Grade set not found');
           setGradeSet(null);
@@ -82,7 +98,7 @@ export default function GradeDetailPage() {
     };
 
     loadGrade();
-  }, [gradeId, context?.classes, isDutch]);
+  }, [gradeId, context?.classes, context?.subjects, isDutch]);
 
   const stats = useMemo(() => {
     if (!gradeSet?.student_grades) return null;

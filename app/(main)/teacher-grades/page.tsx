@@ -14,8 +14,9 @@ import { PageHeader } from '@/components/page-header';
 type GradeSet = {
   id: string;
   title: string;
-  class_id: string;
-  class_name: string;
+  class_id?: string | null;
+  class_name?: string | null;
+  subject_id?: string | null;
   subject?: { title?: string } | null;
   status: 'draft' | 'in_progress' | 'completed';
   weight?: number;
@@ -53,8 +54,8 @@ function GradeCard({ grade }: { grade: GradeSet }) {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              {grade.class_name}
-              {grade.subject?.title && <> • {grade.subject.title}</>}
+              {grade.class_name || grade.subject?.title || 'Subject'}
+              {grade.class_name && grade.subject?.title && <> • {grade.subject.title}</>}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {fmtDate(grade.created_at)} • {grade.weight} pts
@@ -82,22 +83,28 @@ export default function TeacherGradesLanding() {
   const context = useContext(AppContext) as AppContextType;
   const isDutch = context?.language === 'nl';
   const classes = context?.classes || [];
+  const subjects = context?.subjects || [];
+  // Standalone subjects (no class at all) aren't reachable through the
+  // classes loop below -- their grade sets live at /api/subjects/[id]/grades
+  // instead. Class-linked subjects are skipped here since their grade sets
+  // already come back from the per-class fetch (avoids double-counting).
+  const standaloneSubjects = subjects.filter((s: any) => !Array.isArray(s.classes) || s.classes.length === 0);
 
   const [allGrades, setAllGrades] = useState<GradeSet[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void loadAllGradeSets();
-  }, [classes]);
+  }, [classes, subjects]);
 
   async function loadAllGradeSets() {
-    if (!classes?.length) {
+    if (!classes?.length && !standaloneSubjects.length) {
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const results = await Promise.allSettled(
+      const classResults = await Promise.allSettled(
         classes.map(async (cls: any) => {
           const res = await fetch(`/api/classes/${cls.id}/grades`);
           if (!res.ok) return [];
@@ -118,7 +125,30 @@ export default function TeacherGradesLanding() {
           } as GradeSet));
         })
       );
-      const all: GradeSet[] = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+      const subjectResults = await Promise.allSettled(
+        standaloneSubjects.map(async (subj: any) => {
+          const res = await fetch(`/api/subjects/${subj.id}/grades`);
+          if (!res.ok) return [];
+          const data = await res.json();
+          return (data.grade_sets || []).map((gs: any) => ({
+            id: String(gs.id),
+            title: String(gs.title || ''),
+            class_id: null,
+            class_name: null,
+            subject_id: String(subj.id),
+            subject: gs.subject || { title: subj.title },
+            status: gs.status || 'draft',
+            weight: gs.weight || 5,
+            graded_count: Number(gs.graded_count || 0),
+            total_students: Number(gs.total_students || 0),
+            average: gs.average || null,
+            created_at: String(gs.created_at || ''),
+            updated_at: String(gs.updated_at || ''),
+          } as GradeSet));
+        })
+      );
+
+      const all: GradeSet[] = [...classResults, ...subjectResults].flatMap(r => r.status === 'fulfilled' ? r.value : []);
       all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setAllGrades(all);
     } catch { /* ignore */ }
