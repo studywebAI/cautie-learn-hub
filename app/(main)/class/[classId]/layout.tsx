@@ -36,35 +36,43 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
   const defaultTab = isTeacherRole ? 'group' : 'invite';
   const currentTab = tabIds.has(requestedTab) ? requestedTab : defaultTab;
 
+  // A single-tab bar is just chrome with nothing to switch between --
+  // teachers only have 'group' (Attendance) left here now that Schedule/
+  // Calendar/Logs/Settings all moved elsewhere this session, so skip the
+  // nav entirely for them. Students still have invite+group (2 tabs).
+  const showTabNav = visibleTabs.length > 1;
+
   return (
     <div className="flex h-full flex-col gap-1.5">
-      <div className="px-4 pt-3">
-        <div className="rounded-md surface-panel p-1.5">
-          <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
-            {visibleTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = currentTab === tab.id;
-              return (
-                <Link
-                  key={tab.id}
-                  href={`/class/${classId}${tab.href}`}
-                  replace
-                  prefetch={false}
-                  className={cn(
-                    "inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-[13px] transition-colors",
-                    isActive
-                      ? "surface-chip text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))]"
-                      : "text-foreground/85 hover:surface-interactive hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </Link>
-              );
-            })}
-          </nav>
+      {showTabNav && (
+        <div className="px-4 pt-3">
+          <div className="rounded-md surface-panel p-1.5">
+            <nav className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+              {visibleTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = currentTab === tab.id;
+                return (
+                  <Link
+                    key={tab.id}
+                    href={`/class/${classId}${tab.href}`}
+                    replace
+                    prefetch={false}
+                    className={cn(
+                      "inline-flex h-9 shrink-0 items-center gap-2 rounded-md px-3 text-[13px] transition-colors",
+                      isActive
+                        ? "surface-chip text-foreground shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+                        : "text-foreground/85 hover:surface-interactive hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         </div>
-      </div>
+      )}
 
       <main className="flex-1 overflow-auto px-4 pb-4">
         {children}
