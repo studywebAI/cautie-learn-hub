@@ -13,8 +13,9 @@ import { PageHeader } from '@/components/page-header';
 type QueueItem = {
   id: string;
   title: string;
-  class_id: string;
-  class_name: string;
+  class_id?: string | null;
+  class_name?: string | null;
+  subject_id?: string | null;
   assignment_id: string | null;
   total_students: number;
   graded_count: number;
@@ -25,6 +26,11 @@ function ReviewQueueContent() {
   const context = useContext(AppContext) as AppContextType;
   const isDutch = context?.language === 'nl';
   const classes = context?.classes || [];
+  const subjects = context?.subjects || [];
+  // Standalone (class-less) subjects aren't reachable through the classes
+  // loop below -- class-linked subjects are skipped here since their grade
+  // sets already come back from the per-class fetch.
+  const standaloneSubjects = subjects.filter((s: any) => !Array.isArray(s.classes) || s.classes.length === 0);
   const searchParams = useSearchParams();
   const router = useRouter();
   const mode = searchParams.get('mode') === 'becijferen' ? 'becijferen' : 'nakijken';
@@ -34,10 +40,10 @@ function ReviewQueueContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!classes.length) { setLoading(false); return; }
+    if (!classes.length && !standaloneSubjects.length) { setLoading(false); return; }
     (async () => {
       setLoading(true);
-      const results = await Promise.allSettled(
+      const classResults = await Promise.allSettled(
         classes.map(async (cls: any) => {
           const res = await fetch(`/api/classes/${cls.id}/grades/review-queue`);
           if (!res.ok) return { nakijken: [], becijferen: [] };
@@ -46,13 +52,23 @@ function ReviewQueueContent() {
           return { nakijken: tag(data.nakijken), becijferen: tag(data.becijferen) };
         })
       );
-      const allNakijken = results.flatMap(r => r.status === 'fulfilled' ? r.value.nakijken : []);
-      const allBecijferen = results.flatMap(r => r.status === 'fulfilled' ? r.value.becijferen : []);
+      const subjectResults = await Promise.allSettled(
+        standaloneSubjects.map(async (subj: any) => {
+          const res = await fetch(`/api/subjects/${subj.id}/grades/review-queue`);
+          if (!res.ok) return { nakijken: [], becijferen: [] };
+          const data = await res.json();
+          const tag = (rows: any[]) => (rows || []).map((r: any) => ({ ...r, subject_id: subj.id, class_name: subj.title }));
+          return { nakijken: tag(data.nakijken), becijferen: tag(data.becijferen) };
+        })
+      );
+      const allResults = [...classResults, ...subjectResults];
+      const allNakijken = allResults.flatMap(r => r.status === 'fulfilled' ? r.value.nakijken : []);
+      const allBecijferen = allResults.flatMap(r => r.status === 'fulfilled' ? r.value.becijferen : []);
       setNakijken(allNakijken);
       setBecijferen(allBecijferen);
       setLoading(false);
     })();
-  }, [classes]);
+  }, [classes, subjects]);
 
   const items = mode === 'nakijken' ? nakijken : becijferen;
 

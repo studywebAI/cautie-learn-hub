@@ -34,12 +34,14 @@ export function AnswerReviewDialog({
   open,
   onOpenChange,
   classId,
+  subjectId,
   gradeSetId,
   isDutch,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  classId: string;
+  classId?: string | null;
+  subjectId?: string | null;
   gradeSetId: string;
   isDutch?: boolean;
 }) {
@@ -50,8 +52,11 @@ export function AnswerReviewDialog({
 
   useEffect(() => {
     if (!open) return;
+    const base = classId
+      ? `/api/classes/${classId}/grades/${gradeSetId}`
+      : `/api/subjects/${subjectId}/grades/${gradeSetId}`;
     setLoading(true);
-    fetch(`/api/classes/${classId}/grades/${gradeSetId}/answer-review`, { cache: 'no-store' })
+    fetch(`${base}/answer-review`, { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : { questions: [] }))
       .then((data) => {
         const list: Question[] = Array.isArray(data?.questions) ? data.questions : [];
@@ -60,7 +65,7 @@ export function AnswerReviewDialog({
       })
       .catch(() => setQuestions([]))
       .finally(() => setLoading(false));
-  }, [open, classId, gradeSetId]);
+  }, [open, classId, subjectId, gradeSetId]);
 
   const activeQuestion = questions.find((q) => q.block_id === activeBlockId) || null;
 

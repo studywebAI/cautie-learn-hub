@@ -36,15 +36,21 @@ export default function MetricsPage() {
   const context = useContext(AppContext) as AppContextType;
   const isDutch = context?.language === 'nl';
   const classes = (context?.classes || []) as Class[];
+  const standaloneSubjects = (context?.subjects || []).filter((s: any) => !Array.isArray(s.classes) || s.classes.length === 0);
 
-  const [selectedClassId, setSelectedClassId] = useState<string>(classes[0]?.id || '');
+  // "class:<id>" or "subject:<id>" -- one Select covers both scope types.
+  const [selectedScope, setSelectedScope] = useState<string>(classes[0]?.id ? `class:${classes[0].id}` : '');
   const [allGradeSets, setAllGradeSets] = useState<GradeSet[]>([]);
   const [selectedGradeSetIds, setSelectedGradeSetIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load grade sets for selected class
+  const [scopeType, scopeId] = selectedScope.split(':') as ['class' | 'subject' | '', string];
+  const selectedClassId = scopeType === 'class' ? scopeId : '';
+  const selectedSubjectId = scopeType === 'subject' ? scopeId : '';
+
+  // Load grade sets for the selected class or standalone subject
   useEffect(() => {
-    if (!selectedClassId) {
+    if (!scopeId) {
       setAllGradeSets([]);
       setSelectedGradeSetIds([]);
       return;
@@ -53,7 +59,7 @@ export default function MetricsPage() {
     const loadGradeSets = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/classes/${selectedClassId}/grades`);
+        const res = await fetch(scopeType === 'class' ? `/api/classes/${scopeId}/grades` : `/api/subjects/${scopeId}/grades`);
         if (!res.ok) {
           setAllGradeSets([]);
           setSelectedGradeSetIds([]);
@@ -74,7 +80,7 @@ export default function MetricsPage() {
     };
 
     loadGradeSets();
-  }, [selectedClassId]);
+  }, [scopeType, scopeId]);
 
   const toggleGradeSet = (gradeSetId: string) => {
     setSelectedGradeSetIds(prev =>
@@ -85,8 +91,9 @@ export default function MetricsPage() {
   };
 
   const filteredGradeSets = useMemo(() => {
-    return allGradeSets.filter(gs => gs.class_id === selectedClassId);
-  }, [allGradeSets, selectedClassId]);
+    if (scopeType === 'class') return allGradeSets.filter(gs => gs.class_id === selectedClassId);
+    return allGradeSets;
+  }, [allGradeSets, scopeType, selectedClassId]);
 
   return (
     <div className="page-content max-w-6xl mx-auto space-y-6 py-6">
@@ -104,29 +111,36 @@ export default function MetricsPage() {
         />
       </div>
 
-      {/* Class selection */}
+      {/* Class / standalone subject selection */}
       <div className="space-y-2">
         <label className="text-sm">
-          {isDutch ? 'Selecteer Klas' : 'Select Class'}
+          {isDutch ? 'Selecteer Klas of Vak' : 'Select Class or Subject'}
         </label>
-        <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+        <Select value={selectedScope} onValueChange={setSelectedScope}>
           <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {classes.map(cls => (
-              <SelectItem key={cls.id} value={cls.id}>
+              <SelectItem key={cls.id} value={`class:${cls.id}`}>
                 {cls.name}
+              </SelectItem>
+            ))}
+            {standaloneSubjects.map((subj: any) => (
+              <SelectItem key={subj.id} value={`subject:${subj.id}`}>
+                {subj.title}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
+      {/* Category weights (grading_categories) are class-only -- no
+          subject equivalent, so this panel only shows for a class scope. */}
       {selectedClassId && <CategoryWeightsPanel classId={selectedClassId} isDutch={isDutch} />}
 
       {/* Grade set selection */}
-      {selectedClassId && (
+      {scopeId && (
         <div className="space-y-3">
           <div>
             <p className="text-sm mb-2">
@@ -146,8 +160,8 @@ export default function MetricsPage() {
           ) : filteredGradeSets.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground rounded-lg border border-dashed border-border">
               {isDutch
-                ? 'Geen cijferlijsten voor deze klas'
-                : 'No grade sets for this class'}
+                ? 'Geen cijferlijsten gevonden'
+                : 'No grade sets found'}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -190,7 +204,7 @@ export default function MetricsPage() {
       )}
 
       {/* Metrics display */}
-      {selectedClassId && selectedGradeSetIds.length > 0 && (
+      {scopeId && selectedGradeSetIds.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2 pt-4 border-t border-border">
             <h2 className="text-base">
@@ -200,12 +214,12 @@ export default function MetricsPage() {
               {isDutch ? 'Exporteren' : 'Export'}
             </Button>
           </div>
-          <GradeMetrics classId={selectedClassId} selectedGradeSets={selectedGradeSetIds} />
+          <GradeMetrics classId={selectedClassId || null} subjectId={selectedSubjectId || null} selectedGradeSets={selectedGradeSetIds} />
         </div>
       )}
 
       {/* Empty state */}
-      {selectedClassId && selectedGradeSetIds.length === 0 && filteredGradeSets.length > 0 && (
+      {scopeId && selectedGradeSetIds.length === 0 && filteredGradeSets.length > 0 && (
         <div className="p-8 text-center rounded-lg border border-dashed border-border space-y-3">
           <p className="text-sm text-muted-foreground">
             {isDutch

@@ -29,14 +29,15 @@ type GradeSetMetrics = {
 };
 
 type GradeMetricsProps = {
-  classId: string;
+  classId?: string | null;
+  subjectId?: string | null;
   selectedGradeSets: string[];
   onExport?: () => void;
 };
 
 const COLORS = ['#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#6b7280', '#ec4899', '#14b8a6', '#f97316'];
 
-export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetricsProps) {
+export default function GradeMetrics({ classId, subjectId, selectedGradeSets }: GradeMetricsProps) {
   const context = useContext(AppContext) as AppContextType;
   const isDutch = context?.language === 'nl';
 
@@ -45,7 +46,7 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
 
   // Load metrics for selected grade sets
   useEffect(() => {
-    if (!classId || selectedGradeSets.length === 0) {
+    if ((!classId && !subjectId) || selectedGradeSets.length === 0) {
       setMetricsData([]);
       return;
     }
@@ -53,7 +54,7 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
     const loadMetrics = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/classes/${classId}/grades`);
+        const res = await fetch(classId ? `/api/classes/${classId}/grades` : `/api/subjects/${subjectId}/grades`);
         if (!res.ok) {
           setMetricsData([]);
           return;
@@ -94,7 +95,7 @@ export default function GradeMetrics({ classId, selectedGradeSets }: GradeMetric
     };
 
     loadMetrics();
-  }, [classId, selectedGradeSets]);
+  }, [classId, subjectId, selectedGradeSets]);
 
   // Prepare data for comparison curve
   const curveData = useMemo(() => {

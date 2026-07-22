@@ -37,8 +37,10 @@ export default function ReviewFlashcardPage() {
   const isDutch = context?.language === 'nl';
   const router = useRouter();
   const classes = context?.classes || [];
+  const standaloneSubjects = (context?.subjects || []).filter((s: any) => !Array.isArray(s.classes) || s.classes.length === 0);
 
   const [classId, setClassId] = useState<string | null>(null);
+  const [subjectId, setSubjectId] = useState<string | null>(null);
   const [title, setTitle] = useState<string>('');
   const [current, setCurrent] = useState<NextAnswer | null>(null);
   const [remaining, setRemaining] = useState<number>(0);
@@ -46,6 +48,9 @@ export default function ReviewFlashcardPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [autoGrading, setAutoGrading] = useState(false);
+
+  const scopeBase = (cid: string | null, sid: string | null) =>
+    cid ? `/api/classes/${cid}` : `/api/subjects/${sid}`;
 
   const findClassAndLoad = useCallback(async () => {
     setLoading(true);
@@ -57,22 +62,35 @@ export default function ReviewFlashcardPage() {
       if (match) {
         setClassId(cls.id);
         setTitle(match.title);
-        await loadNext(cls.id);
+        await loadNext(cls.id, null);
+        return;
+      }
+    }
+    for (const subj of standaloneSubjects) {
+      const res = await fetch(`/api/subjects/${subj.id}/grades/review-queue`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      const match = [...(data.nakijken || []), ...(data.becijferen || [])].find((g: any) => g.id === gradeSetId);
+      if (match) {
+        setSubjectId(subj.id);
+        setTitle(match.title);
+        await loadNext(null, subj.id);
         return;
       }
     }
     setLoading(false);
-  }, [classes, gradeSetId]);
+  }, [classes, standaloneSubjects, gradeSetId]);
 
-  useEffect(() => { if (classes.length) void findClassAndLoad(); }, [classes.length]);
+  useEffect(() => { if (classes.length || standaloneSubjects.length) void findClassAndLoad(); }, [classes.length, standaloneSubjects.length]);
 
-  const loadNext = async (cid?: string) => {
-    const effectiveClassId = cid || classId;
-    if (!effectiveClassId) return;
+  const loadNext = async (cid?: string | null, sid?: string | null) => {
+    const effectiveClassId = cid !== undefined ? cid : classId;
+    const effectiveSubjectId = sid !== undefined ? sid : subjectId;
+    if (!effectiveClassId && !effectiveSubjectId) return;
     setLoading(true);
     setNote('');
     try {
-      const res = await fetch(`/api/classes/${effectiveClassId}/grades/${gradeSetId}/review/next`);
+      const res = await fetch(`${scopeBase(effectiveClassId, effectiveSubjectId)}/grades/${gradeSetId}/review/next`);
       const data = await res.json();
       setCurrent(data.next || null);
       setRemaining(data.remaining || 0);
@@ -82,10 +100,10 @@ export default function ReviewFlashcardPage() {
   };
 
   const submitVerdict = async (isCorrect: boolean) => {
-    if (!classId || !current || busy) return;
+    if ((!classId && !subjectId) || !current || busy) return;
     setBusy(true);
     try {
-      await fetch(`/api/classes/${classId}/grades/${gradeSetId}/review/grade`, {
+      await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSetId}/review/grade`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer_id: current.answer_id, is_correct: isCorrect, note: note.trim() || null }),
@@ -97,10 +115,10 @@ export default function ReviewFlashcardPage() {
   };
 
   const runAutoGrade = async () => {
-    if (!classId || autoGrading) return;
+    if ((!classId && !subjectId) || autoGrading) return;
     setAutoGrading(true);
     try {
-      await fetch(`/api/classes/${classId}/grades/${gradeSetId}/review/auto-grade`, { method: 'POST' });
+      await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSetId}/review/auto-grade`, { method: 'POST' });
       await loadNext();
     } finally {
       setAutoGrading(false);
@@ -138,7 +156,7 @@ export default function ReviewFlashcardPage() {
           <p className="text-sm text-muted-foreground">
             {isDutch ? 'Alles is nagekeken. Ga verder naar becijferen.' : 'Everything has been reviewed. Continue to grading.'}
           </p>
-          {classId && (
+          {(classId || subjectId) && (
             <Link href={`/teacher-grades/${gradeSetId}/grading`}>
               <Button size="sm">{isDutch ? 'Naar becijferen' : 'Go to grading'}</Button>
             </Link>

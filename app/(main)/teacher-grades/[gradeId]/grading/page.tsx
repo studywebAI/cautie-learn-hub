@@ -48,6 +48,7 @@ export default function GradingInterfacePage() {
 
   const [gradeSet, setGradeSet] = useState<any>(null);
   const [classId, setClassId] = useState<string>('');
+  const [subjectId, setSubjectId] = useState<string>('');
   const [students, setStudents] = useState<Student[]>([]);
   const gradeHistory = useGradeHistory({});
   const { state: grades, setState: setGradeState, undo, redo, canUndo, canRedo } = gradeHistory;
@@ -68,15 +69,22 @@ export default function GradingInterfacePage() {
   const [resolvingDispute, setResolvingDispute] = useState<string | null>(null);
   const [answerReviewOpen, setAnswerReviewOpen] = useState(false);
 
+  // Resolves which route tree to hit: class-scoped if this grade set is
+  // class-linked, subject-scoped (standalone) otherwise.
+  const scopeBase = (cid: string, sid: string) =>
+    cid ? `/api/classes/${cid}` : `/api/subjects/${sid}`;
+
   // Load grade set and students
   useEffect(() => {
     const loadData = async () => {
       try {
         const classes = context?.classes || [];
+        const subjects = context?.subjects || [];
         let foundGrade = null;
-        let foundClassId = null;
+        let foundClassId = '';
+        let foundSubjectId = '';
 
-        // Find the grade set
+        // Find the grade set among the teacher's classes first...
         for (const cls of classes) {
           const res = await fetch(`/api/classes/${cls.id}/grades`);
           if (!res.ok) continue;
@@ -90,16 +98,33 @@ export default function GradingInterfacePage() {
           }
         }
 
-        if (!foundGrade || !foundClassId) {
+        // ...then standalone (class-less) subjects.
+        if (!foundGrade) {
+          for (const subj of subjects) {
+            const res = await fetch(`/api/subjects/${subj.id}/grades`);
+            if (!res.ok) continue;
+            const data = await res.json();
+            const gs = (data.grade_sets || []).find((g: any) => g.id === gradeId);
+            if (gs) {
+              foundGrade = gs;
+              foundSubjectId = subj.id;
+              break;
+            }
+          }
+        }
+
+        if (!foundGrade || (!foundClassId && !foundSubjectId)) {
           setLoading(false);
           return;
         }
 
         setGradeSet(foundGrade);
         setClassId(foundClassId);
+        setSubjectId(foundSubjectId);
+        const base = scopeBase(foundClassId, foundSubjectId);
 
         // Load students
-        const studRes = await fetch(`/api/classes/${foundClassId}/students`);
+        const studRes = await fetch(`${base}/students`);
         if (studRes.ok) {
           const studData = await studRes.json();
           const loadedStudents = studData.students || [];
@@ -121,7 +146,7 @@ export default function GradingInterfacePage() {
         }
 
         if (foundGrade.assignment_id) {
-          const scoresRes = await fetch(`/api/classes/${foundClassId}/grades/${foundGrade.id}/scores`);
+          const scoresRes = await fetch(`${base}/grades/${foundGrade.id}/scores`);
           if (scoresRes.ok) {
             const scoresData = await scoresRes.json();
             const map: Record<string, { score: number; maxScore: number }> = {};
@@ -130,7 +155,7 @@ export default function GradingInterfacePage() {
             }
             setRawScores(map);
           }
-          await loadDisputes(foundClassId, foundGrade.id);
+          await loadDisputes(foundClassId, foundSubjectId, foundGrade.id);
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -140,10 +165,10 @@ export default function GradingInterfacePage() {
     };
 
     loadData();
-  }, [gradeId, context?.classes]);
+  }, [gradeId, context?.classes, context?.subjects]);
 
-  const loadDisputes = async (cid: string, gsId: string) => {
-    const res = await fetch(`/api/classes/${cid}/grades/${gsId}/disputes`);
+  const loadDisputes = async (cid: string, sid: string, gsId: string) => {
+    const res = await fetch(`${scopeBase(cid, sid)}/grades/${gsId}/disputes`);
     if (res.ok) {
       const data = await res.json();
       setDisputes(data.disputes || []);
@@ -151,23 +176,23 @@ export default function GradingInterfacePage() {
   };
 
   const resolveDispute = async (eventId: string, action: 'reopen' | 'dismiss') => {
-    if (!classId || !gradeSet?.id || resolvingDispute) return;
+    if ((!classId && !subjectId) || !gradeSet?.id || resolvingDispute) return;
     setResolvingDispute(eventId);
     try {
-      await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/disputes`, {
+      await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSet.id}/disputes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event_id: eventId, action }),
       });
-      await loadDisputes(classId, gradeSet.id);
+      await loadDisputes(classId, subjectId, gradeSet.id);
     } finally {
       setResolvingDispute(null);
     }
   };
 
   const reloadStudentGrades = async () => {
-    if (!classId || !gradeSet?.id) return;
-    const res = await fetch(`/api/classes/${classId}/grades/${gradeSet.id}`);
+    if ((!classId && !subjectId) || !gradeSet?.id) return;
+    const res = await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSet.id}`);
     if (!res.ok) return;
     const data = await res.json();
     const gs = data.grade_set;
@@ -198,10 +223,10 @@ export default function GradingInterfacePage() {
   };
 
   const releaseResults = async (type: 'answers' | 'grade') => {
-    if (!classId || !gradeSet?.id || releasing) return;
+    if ((!classId && !subjectId) || !gradeSet?.id || releasing) return;
     setReleasing(type);
     try {
-      const res = await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/release`, {
+      const res = await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSet.id}/release`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type }),
@@ -226,9 +251,11 @@ export default function GradingInterfacePage() {
 
     try {
       const res = await fetch(
-        `/api/classes/${classId}/students/${studentId}/grades${
-          gradeSet.subject_id ? `?subjectId=${gradeSet.subject_id}` : ''
-        }`
+        classId
+          ? `/api/classes/${classId}/students/${studentId}/grades${
+              gradeSet.subject_id ? `?subjectId=${gradeSet.subject_id}` : ''
+            }`
+          : `/api/subjects/${subjectId}/students/${studentId}/grades`
       );
       if (!res.ok) {
         setPreviousGrades(prev => ({ ...prev, [studentId]: [] }));
@@ -298,12 +325,12 @@ export default function GradingInterfacePage() {
   const progressPct = students.length > 0 ? Math.round((gradedCount / students.length) * 100) : 0;
 
   const handleSave = async () => {
-    if (!gradeSet?.id || !classId) return;
+    if (!gradeSet?.id || (!classId && !subjectId)) return;
 
     setSaving(true);
     try {
       const promises = Object.entries(grades).map(async ([studentId, grade]) => {
-        return fetch(`/api/classes/${classId}/grades/${gradeSet.id}/students/${studentId}`, {
+        return fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSet.id}/students/${studentId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -420,10 +447,14 @@ export default function GradingInterfacePage() {
       <PageHeader
         title={gradeSet.title}
         subtitle={
-          <>
-            {isDutch ? 'Klas' : 'Class'}: {gradeSet.class_name}
-            {gradeSet.subject?.title && ` • ${gradeSet.subject.title}`}
-          </>
+          gradeSet.class_name ? (
+            <>
+              {isDutch ? 'Klas' : 'Class'}: {gradeSet.class_name}
+              {gradeSet.subject?.title && ` • ${gradeSet.subject.title}`}
+            </>
+          ) : (
+            gradeSet.subject?.title || ''
+          )
         }
         actions={
           <>
@@ -495,19 +526,23 @@ export default function GradingInterfacePage() {
       )}
 
       {/* Cijfer-template + vrijgeven (alleen voor toets-gekoppelde cijferlijsten) */}
-      {gradeSet.assignment_id && classId && (
+      {gradeSet.assignment_id && (classId || subjectId) && (
         <Card className="p-3 surface-panel border border-border space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground shrink-0">{isDutch ? 'Cijfer-template:' : 'Grading template:'}</span>
-            <GradingTemplatePicker
-              classId={classId}
-              isDutch={isDutch}
-              selectedPresetId={selectedPresetId}
-              onSelect={setSelectedPresetId}
-              onApply={applyTemplate}
-              applying={applyingTemplate}
-            />
-          </div>
+          {/* Grading templates (class_grading_presets) have no subject
+              equivalent yet -- only offered for class-linked grade sets. */}
+          {classId && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">{isDutch ? 'Cijfer-template:' : 'Grading template:'}</span>
+              <GradingTemplatePicker
+                classId={classId}
+                isDutch={isDutch}
+                selectedPresetId={selectedPresetId}
+                onSelect={setSelectedPresetId}
+                onApply={applyTemplate}
+                applying={applyingTemplate}
+              />
+            </div>
+          )}
           <div className="flex flex-wrap gap-2 border-t border-border pt-2">
             <Button
               size="sm"
@@ -775,11 +810,12 @@ export default function GradingInterfacePage() {
         studentNames={students.map(s => s.full_name)}
       />
 
-      {gradeSet?.assignment_id && classId && (
+      {gradeSet?.assignment_id && (classId || subjectId) && (
         <AnswerReviewDialog
           open={answerReviewOpen}
           onOpenChange={setAnswerReviewOpen}
-          classId={classId}
+          classId={classId || null}
+          subjectId={subjectId || null}
           gradeSetId={gradeId}
           isDutch={isDutch}
         />
