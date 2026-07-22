@@ -252,10 +252,10 @@ function TeacherSummaryDashboard() {
                   <School className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-sm">You have not created any classes yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">Create one to start adding subjects, tests and students.</p>
+                  <p className="text-sm">You have not created any subjects yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Create one to start adding chapters, tests and students.</p>
                 </div>
-                <Button asChild size="sm" className="mt-1"><Link href="/classes">Create your first class</Link></Button>
+                <Button asChild size="sm" className="mt-1"><Link href="/subjects">Create your first subject</Link></Button>
               </div>
             ) : (
               <div className={`grid grid-cols-1 md:grid-cols-2 ${teacherDashboardPrefs.density === 'compact' ? 'gap-2.5 md:gap-3' : 'gap-4 md:gap-5'}`}>

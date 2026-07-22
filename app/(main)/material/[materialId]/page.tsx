@@ -229,9 +229,9 @@ function MaterialPageContent() {
   return (
     <div className="page-content">
       <Button variant="ghost" asChild className="-ml-4">
-        <Link href={material ? `/class/${material.class_id}` : '/other/materials'}>
+        <Link href={material ? '/subjects' : '/other/materials'}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {material ? 'Back to Class' : 'Back to Materials'}
+          {material ? 'Back to Subjects' : 'Back to Materials'}
         </Link>
       </Button>
 
