@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import { Suspense, useContext } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppContext, AppContextType } from '@/contexts/app-context';
 import { SubjectsGrid } from '@/components/subjects-grid';
@@ -19,48 +19,16 @@ function SubjectsPageContent() {
   const context = useContext(AppContext) as AppContextType | null;
   const searchParams = useSearchParams();
   const isTeacher = context?.role === 'teacher';
-  const [teacherClassId, setTeacherClassId] = useState<string | undefined>(() => {
-    if (typeof window === 'undefined') return undefined;
-    return window.localStorage.getItem('studyweb-last-class-id') || undefined;
-  });
-
-  const teacherActiveClasses = useMemo(
-    () => (context?.classes || []).filter((classItem) => classItem.status !== 'archived'),
-    [context?.classes]
-  );
-
-  useEffect(() => {
-    if (!isTeacher) return;
-    const classIdFromQuery = searchParams?.get('classId') || '';
-    const savedClassId = typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
-    const preferredClass =
-      teacherActiveClasses.find((classItem) => classItem.id === classIdFromQuery) ||
-      teacherActiveClasses.find((classItem) => classItem.id === savedClassId) ||
-      teacherActiveClasses[0];
-    if (!preferredClass?.id) return;
-    setTeacherClassId(preferredClass.id);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('studyweb-last-class-id', preferredClass.id);
-    }
-  }, [isTeacher, teacherActiveClasses, searchParams]);
+  // Subjects defaults to showing everything the teacher has access to --
+  // class or no class -- unlike the class-switcher elsewhere in the app.
+  // A class filter only applies when explicitly requested via ?classId=,
+  // e.g. from the sidebar's per-class navigation. Teachers with zero
+  // classes (fully standalone subjects) are a valid state now, not an
+  // error state.
+  const teacherClassId = searchParams?.get('classId') || undefined;
 
   if (isTeacher && context?.isLoading) {
     return null;
-  }
-
-  if (isTeacher && !teacherClassId && teacherActiveClasses.length > 0) {
-    return null;
-  }
-
-  if (isTeacher && !teacherClassId) {
-    return (
-      <div className="page-content flex flex-col gap-5">
-        <PageHeader title="Subjects" />
-        <div className="rounded-xl border border-border surface-panel p-8 text-[13px] text-muted-foreground">
-          No Active Class Selected. Select or create a class first.
-        </div>
-      </div>
-    );
   }
 
   if (isTeacher) {

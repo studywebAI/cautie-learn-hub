@@ -190,7 +190,10 @@ export function AppSidebar() {
     storedTeacherClassId ||
     classItems[0]?.id ||
     (context?.classes?.find((classItem) => classItem.status !== 'archived')?.id || '');
-  const teacherSubjectsHref = isTeacher && effectiveTeacherClassId ? `/subjects?classId=${effectiveTeacherClassId}` : '/subjects';
+  // Subjects is genuinely subject-scoped now -- a teacher's full subject
+  // list (class-linked or standalone) loads regardless of which class is
+  // "active", so this link no longer needs a classId param at all.
+  const teacherSubjectsHref = '/subjects';
   const teacherManageHref = isTeacher && effectiveTeacherClassId ? `/class/${effectiveTeacherClassId}?tab=group` : '/classes';
   const teacherAgendaHref = isTeacher && effectiveTeacherClassId ? `/agenda?classId=${effectiveTeacherClassId}` : '/agenda';
 
@@ -419,8 +422,9 @@ export function AppSidebar() {
       return `/class/${nextClassId}${suffix}${currentQuery}`;
     }
 
-    if (pathname === '/subjects') return `/class/${nextClassId}?tab=group`;
-    if (pathname.startsWith('/subjects/')) return `/class/${nextClassId}?tab=group`;
+    // Subjects no longer depends on which class is "active" -- stay put
+    // instead of redirecting away when the teacher switches class.
+    if (pathname === '/subjects' || pathname.startsWith('/subjects/')) return pathname;
     if (pathname === '/agenda') return `/agenda?classId=${nextClassId}`;
     if (pathname === '/' || pathname === '/classes') return defaultRoute;
 

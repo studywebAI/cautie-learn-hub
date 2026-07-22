@@ -113,6 +113,9 @@ export type AppContextType = {
   createClass: (newClass: { name: string; description: string | null }) => Promise<ClassInfo | null>;
   isCreatingClass: boolean;
   refetchClasses: () => Promise<void>;
+  createSubject: (newSubject: { title: string; description?: string | null; classIds?: string[] }) => Promise<DashboardSubject | null>;
+  isCreatingSubject: boolean;
+  refetchSubjects: () => Promise<void>;
   assignments: ClassAssignment[];
   createAssignment: (newAssignment: Omit<ClassAssignment, 'id' | 'created_at'>) => Promise<ClassAssignment | null>;
   deleteAssignment: (assignmentId: string) => Promise<void>;
@@ -200,6 +203,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [personalTasks, setPersonalTasks] = useState<PersonalTask[]>([]);
   const [materials, setMaterials] = useState<MaterialReference[]>([]);
   const [isCreatingClass, setIsCreatingClass] = useState(false);
+  const [isCreatingSubject, setIsCreatingSubject] = useState(false);
   const [preloadSnapshot, setPreloadSnapshot] = useState<PreloadSnapshot>({
     'classes:list': { status: 'idle', updatedAt: null, error: null },
     'subjects:list': { status: 'idle', updatedAt: null, error: null },
@@ -747,6 +751,36 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [session, role, isCreatingClass]);
 
+  const createSubject = useCallback(async (newSubjectData: { title: string; description?: string | null; classIds?: string[] }): Promise<DashboardSubject | null> => {
+    if (isCreatingSubject) return null;
+    setIsCreatingSubject(true);
+    try {
+      if (session) {
+        const response = await fetch('/api/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: newSubjectData.title,
+            description: newSubjectData.description ?? undefined,
+            class_ids: newSubjectData.classIds && newSubjectData.classIds.length > 0 ? newSubjectData.classIds : undefined,
+          }),
+        });
+        if (!response.ok) throw new Error('Failed');
+        const data = await response.json();
+        const savedSubject = data?.subject || data;
+        setSubjects(prev => [...prev, savedSubject]);
+        return savedSubject;
+      }
+      return null;
+    } finally {
+      setIsCreatingSubject(false);
+    }
+  }, [session, isCreatingSubject]);
+
+  const refetchSubjects = useCallback(async () => {
+    await fetchSubjectsResource();
+  }, [fetchSubjectsResource]);
+
   const refetchMaterials = useCallback(async (classId: string) => {
     if (session) {
       const res = await fetch(`/api/materials?classId=${classId}`);
@@ -758,10 +792,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     session, isLoading, appReady, isTier0Ready, language, setLanguage, region, setRegion, schoolingLevel, setSchoolingLevel, dictionary, role, setRole,
     theme, setTheme, font, setFont, sessionRecap, setSessionRecap,
     classes, subjects, createClass, isCreatingClass, refetchClasses,
+    createSubject, isCreatingSubject, refetchSubjects,
     assignments, createAssignment, deleteAssignment, refetchAssignments,
     students, personalTasks, createPersonalTask, updatePersonalTask,
     materials, refetchMaterials, preloadSnapshot, warmResources,
-  }), [session, isLoading, appReady, isTier0Ready, language, region, schoolingLevel, dictionary, role, theme, font, sessionRecap, classes, subjects, isCreatingClass, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
+  }), [session, isLoading, appReady, isTier0Ready, language, region, schoolingLevel, dictionary, role, theme, font, sessionRecap, classes, subjects, isCreatingClass, isCreatingSubject, refetchSubjects, assignments, students, personalTasks, materials, preloadSnapshot, warmResources]);
 
   return (
     <AppContext.Provider value={contextValue}>
