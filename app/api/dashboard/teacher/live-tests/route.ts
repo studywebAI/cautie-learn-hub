@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getTeacherSubjectIds } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,33 +22,57 @@ export async function GET(req: NextRequest) {
     const classIdsParam = req.nextUrl.searchParams.get('classIds') || ''
     const requestedClassIds = classIdsParam.split(',').map(s => s.trim()).filter(Boolean)
 
-    if (requestedClassIds.length === 0) {
+    let ownedClassIds: string[] = []
+    if (requestedClassIds.length > 0) {
+      // Only include classes this user actually teaches.
+      const { data: memberships } = await (supabase as any)
+        .from('class_members')
+        .select('class_id, role')
+        .eq('user_id', user.id)
+        .in('class_id', requestedClassIds)
+
+      const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+      ownedClassIds = (memberships || [])
+        .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
+        .map((m: any) => m.class_id)
+    }
+
+    const teacherSubjectIds = await getTeacherSubjectIds(supabase, user.id)
+
+    if (ownedClassIds.length === 0 && teacherSubjectIds.length === 0) {
       return NextResponse.json({ liveTests: [] })
     }
 
-    // Only include classes this user actually teaches.
-    const { data: memberships } = await (supabase as any)
-      .from('class_members')
-      .select('class_id, role')
-      .eq('user_id', user.id)
-      .in('class_id', requestedClassIds)
+    const assignmentSelect = 'id, title, class_id, type, paragraph_id, class:classes(id, name), paragraphs(id, chapter_id, chapters(id, subject_id))'
 
-    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
-    const ownedClassIds = (memberships || [])
-      .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
-      .map((m: any) => m.class_id)
+    const [byClassResult, bySubjectResult] = await Promise.all([
+      ownedClassIds.length > 0
+        ? (supabase as any).from('assignments').select(assignmentSelect).in('class_id', ownedClassIds).in('type', ['small_test', 'big_test'])
+        : Promise.resolve({ data: [] }),
+      // Standalone (class-less) assignments have class_id = null, so they're
+      // only reachable through their paragraph's chapter -> subject_id chain.
+      teacherSubjectIds.length > 0
+        ? (supabase as any)
+            .from('assignments')
+            .select(assignmentSelect)
+            .is('class_id', null)
+            .in('type', ['small_test', 'big_test'])
+            .in('paragraphs.chapters.subject_id', teacherSubjectIds)
+        : Promise.resolve({ data: [] }),
+    ])
 
-    if (ownedClassIds.length === 0) {
-      return NextResponse.json({ liveTests: [] })
-    }
+    const seen = new Set<string>()
+    const assignmentList = [...(byClassResult.data || []), ...(bySubjectResult.data || [])]
+      // The nested .in() filter above only prunes rows whose relation
+      // actually matches -- rows where the relation join comes back null
+      // still pass through, so filter defensively on the resolved subject_id.
+      .filter((a: any) => a.class_id ? true : teacherSubjectIds.includes(a.paragraphs?.chapters?.subject_id))
+      .filter((a: any) => {
+        if (seen.has(a.id)) return false
+        seen.add(a.id)
+        return true
+      })
 
-    const { data: assignments } = await (supabase as any)
-      .from('assignments')
-      .select('id, title, class_id, type, paragraph_id, class:classes(id, name), paragraphs(id, chapter_id, chapters(id, subject_id))')
-      .in('class_id', ownedClassIds)
-      .in('type', ['small_test', 'big_test'])
-
-    const assignmentList = assignments || []
     if (assignmentList.length === 0) {
       return NextResponse.json({ liveTests: [] })
     }

@@ -115,3 +115,25 @@ export async function canAccessSubject(
   if (perm.error) return { allowed: false, subject: null, error: perm.error }
   return { allowed: perm.hasAccess, subject: perm.hasAccess ? perm.subject : null }
 }
+
+/**
+ * All subject IDs a teacher owns or co-teaches (ownership OR subject_teachers
+ * row) -- used by dashboard aggregation routes to query by subject alongside
+ * the original class_id-based path, so class-linked AND standalone subjects
+ * both contribute. Does not include subjects reached only via class
+ * membership, since those are already covered by the existing class_id path.
+ */
+export async function getTeacherSubjectIds(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<string[]> {
+  const [ownedResult, taughtResult] = await Promise.all([
+    (supabase as any).from('subjects').select('id').eq('user_id', userId),
+    (supabase as any).from('subject_teachers').select('subject_id').eq('teacher_id', userId),
+  ])
+
+  const ownedIds = (ownedResult.data || []).map((row: any) => row.id).filter(Boolean)
+  const taughtIds = (taughtResult.data || []).map((row: any) => row.subject_id).filter(Boolean)
+
+  return Array.from(new Set([...ownedIds, ...taughtIds]))
+}

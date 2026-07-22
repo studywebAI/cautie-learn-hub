@@ -23,10 +23,9 @@ export function TeacherStatRow({ classIds, classesCount }: { classIds: string[];
       setLoading(false);
       return;
     }
-    if (classIds.length === 0) {
-      setLoading(false);
-      return;
-    }
+    // classIds can be empty for a teacher with only standalone (class-less)
+    // subjects -- the API routes resolve owned/taught subjects server-side
+    // regardless, so this still needs to fetch.
     const ids = classIds.join(',');
     const controller = new AbortController();
     Promise.all([

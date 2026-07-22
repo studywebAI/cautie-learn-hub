@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getTeacherSubjectIds } from '@/lib/auth/subject-permissions'
 
 // GET /api/dashboard/teacher/grade-averages?classIds=a,b,c
 // Returns, per class the teacher owns, the average of published grade
@@ -17,29 +18,35 @@ export async function GET(req: NextRequest) {
 
     const classIdsParam = req.nextUrl.searchParams.get('classIds') || ''
     const requestedClassIds = classIdsParam.split(',').map(s => s.trim()).filter(Boolean)
-    if (requestedClassIds.length === 0) {
+
+    let ownedClassIds: string[] = []
+    if (requestedClassIds.length > 0) {
+      const { data: memberships } = await (supabase as any)
+        .from('class_members')
+        .select('class_id, role')
+        .eq('user_id', user.id)
+        .in('class_id', requestedClassIds)
+
+      const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+      ownedClassIds = (memberships || [])
+        .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
+        .map((m: any) => m.class_id)
+    }
+
+    const teacherSubjectIds = await getTeacherSubjectIds(supabase, user.id)
+
+    if (ownedClassIds.length === 0 && teacherSubjectIds.length === 0) {
       return NextResponse.json({ classes: [], overallAverage: null })
     }
 
-    const { data: memberships } = await (supabase as any)
-      .from('class_members')
-      .select('class_id, role')
-      .eq('user_id', user.id)
-      .in('class_id', requestedClassIds)
-
-    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
-    const ownedClassIds = (memberships || [])
-      .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
-      .map((m: any) => m.class_id)
-
-    if (ownedClassIds.length === 0) {
-      return NextResponse.json({ classes: [], overallAverage: null })
-    }
+    const orFilters: string[] = []
+    if (ownedClassIds.length > 0) orFilters.push(`class_id.in.(${ownedClassIds.join(',')})`)
+    if (teacherSubjectIds.length > 0) orFilters.push(`subject_id.in.(${teacherSubjectIds.join(',')})`)
 
     const { data: gradeSets, error } = await (supabase as any)
       .from('grade_sets')
-      .select('id, title, class_id, created_at, class:classes(id, name), student_grades(grade_numeric)')
-      .in('class_id', ownedClassIds)
+      .select('id, title, class_id, subject_id, created_at, class:classes(id, name), subject:subjects(id, title), student_grades(grade_numeric)')
+      .or(orFilters.join(','))
       .eq('status', 'published')
       .order('created_at', { ascending: true })
       .limit(200)
@@ -59,9 +66,10 @@ export async function GET(req: NextRequest) {
       const avg = nums.reduce((s: number, n: number) => s + n, 0) / nums.length
       allAverages.push(avg)
 
-      const key = gs.class_id
+      // Standalone (class-less) grade sets group by subject_id instead.
+      const key = gs.class_id || `subject-${gs.subject_id}`
       if (!byClass.has(key)) {
-        byClass.set(key, { className: gs.class?.name || 'Class', points: [] })
+        byClass.set(key, { className: gs.class?.name || gs.subject?.title || 'Subject', points: [] })
       }
       byClass.get(key)!.points.push({ title: gs.title, avg: Math.round(avg * 10) / 10 })
     }

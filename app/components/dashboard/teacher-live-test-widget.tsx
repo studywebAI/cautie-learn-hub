@@ -48,8 +48,10 @@ export function TeacherLiveTestWidget({ classIds }: { classIds: string[] }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && BOT_UA_PATTERN.test(window.navigator.userAgent || '')) return;
-    if (classIds.length === 0) return;
 
+    // classIds can be empty for a teacher with only standalone (class-less)
+    // subjects -- the API route resolves owned/taught subjects server-side
+    // regardless, so this still needs to poll.
     let cancelled = false;
     const poll = () => {
       fetch(`/api/dashboard/teacher/live-tests?classIds=${classIds.join(',')}`)

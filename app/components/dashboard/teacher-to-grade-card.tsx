@@ -22,10 +22,9 @@ export function TeacherToGradeCard({ classIds }: { classIds: string[] }) {
       setLoading(false);
       return;
     }
-    if (classIds.length === 0) {
-      setLoading(false);
-      return;
-    }
+    // classIds can be empty for a teacher with only standalone (class-less)
+    // subjects -- the API route resolves owned/taught subjects server-side
+    // regardless, so this still needs to fetch.
     const controller = new AbortController();
     fetch(`/api/dashboard/teacher/to-grade?classIds=${classIds.join(',')}&limit=4`, { signal: controller.signal })
       .then(r => r.ok ? r.json() : { items: [], totalCount: 0 })

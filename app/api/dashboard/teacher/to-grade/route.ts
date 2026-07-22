@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
+import { getTeacherSubjectIds } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,29 +24,36 @@ export async function GET(req: NextRequest) {
     const requestedClassIds = classIdsParam.split(',').map(s => s.trim()).filter(Boolean)
     const limit = Math.min(parseInt(req.nextUrl.searchParams.get('limit') || '4', 10), 50)
 
-    if (requestedClassIds.length === 0) {
+    let ownedClassIds: string[] = []
+    if (requestedClassIds.length > 0) {
+      const { data: memberships } = await (supabase as any)
+        .from('class_members')
+        .select('class_id, role')
+        .eq('user_id', user.id)
+        .in('class_id', requestedClassIds)
+
+      const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
+      ownedClassIds = (memberships || [])
+        .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
+        .map((m: any) => m.class_id)
+    }
+
+    // Standalone (class-less) subjects have grade_sets keyed only by
+    // subject_id, so the class-based filter alone would miss them.
+    const teacherSubjectIds = await getTeacherSubjectIds(supabase, user.id)
+
+    if (ownedClassIds.length === 0 && teacherSubjectIds.length === 0) {
       return NextResponse.json({ items: [], totalCount: 0 })
     }
 
-    const { data: memberships } = await (supabase as any)
-      .from('class_members')
-      .select('class_id, role')
-      .eq('user_id', user.id)
-      .in('class_id', requestedClassIds)
-
-    const teacherRoles = new Set(['teacher', 'owner', 'admin', 'creator', 'ta'])
-    const ownedClassIds = (memberships || [])
-      .filter((m: any) => teacherRoles.has(String(m.role || '').toLowerCase()))
-      .map((m: any) => m.class_id)
-
-    if (ownedClassIds.length === 0) {
-      return NextResponse.json({ items: [], totalCount: 0 })
-    }
+    const orFilters: string[] = []
+    if (ownedClassIds.length > 0) orFilters.push(`class_id.in.(${ownedClassIds.join(',')})`)
+    if (teacherSubjectIds.length > 0) orFilters.push(`subject_id.in.(${teacherSubjectIds.join(',')})`)
 
     const { data: gradeSets } = await (supabase as any)
       .from('grade_sets')
-      .select('id, title, class_id, assignment_id, grade_released_at, class:classes(id, name), student_grades(id)')
-      .in('class_id', ownedClassIds)
+      .select('id, title, class_id, subject_id, assignment_id, grade_released_at, class:classes(id, name), subject:subjects(id, title), student_grades(id)')
+      .or(orFilters.join(','))
       .is('grade_released_at', null)
 
     const rows = gradeSets || []
@@ -83,7 +91,7 @@ export async function GET(req: NextRequest) {
         id: g.id,
         title: g.title,
         class_id: g.class_id,
-        class_name: g.class?.name || 'Class',
+        class_name: g.class?.name || g.subject?.title || 'Class',
       }))
       .sort((a: any, b: any) => a.title.localeCompare(b.title))
 
