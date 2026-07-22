@@ -1,21 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSubjectPermission } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
-
-function logSubjectDetail(...args: any[]) {
-}
-
-async function getMemberClassIds(supabase: any, userId: string): Promise<string[]> {
-  const { data: memberships, error } = await supabase
-    .from('class_members')
-    .select('class_id')
-    .eq('user_id', userId);
-
-  if (error) return [];
-  return (memberships || []).map((m: any) => m.class_id).filter(Boolean);
-}
 
 export async function GET(
   request: Request,
@@ -24,7 +12,43 @@ export async function GET(
   const resolvedParams = await params
   const subjectId = resolvedParams.subjectId
 
-  logSubjectDetail('GET - Subject detail requested', { subjectId, url: request.url })
+  try {
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const perm = await getSubjectPermission(supabase as any, subjectId, user.id)
+    if (perm.error) return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 })
+    if (!perm.hasAccess || !perm.subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+
+    const { data: subject, error: fetchError } = await (supabase as any)
+      .from('subjects')
+      .select('*')
+      .eq('id', subjectId)
+      .maybeSingle()
+
+    if (fetchError || !subject) {
+      return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 })
+    }
+
+    return NextResponse.json(subject)
+  } catch (err) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// Mirrors app/api/classes/[classId]/route.ts's PATCH action shape
+// (update_profile / regenerate_codes), scoped to subjects instead.
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ subjectId: string }> }
+) {
+  const resolvedParams = await params
+  const subjectId = resolvedParams.subjectId
 
   try {
     const cookieStore = await cookies()
@@ -32,126 +56,65 @@ export async function GET(
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
-      logSubjectDetail('GET - Auth failed', authError?.message)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    logSubjectDetail('GET - Authenticated user', user.id)
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase())
-    logSubjectDetail('GET - Subscription type', profile?.subscription_type)
-
-    if (isTeacher) {
-      logSubjectDetail('GET - Teacher access path', { subjectId })
-      const { data: subject, error: fetchError } = await (supabase as any)
-        .from('subjects')
-        .select('*')
-        .eq('id', subjectId)
+    const perm = await getSubjectPermission(supabase as any, subjectId, user.id)
+    if (!perm.hasAccess || !perm.subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+    if (!perm.isOwner) {
+      const { data: teacherRow } = await (supabase as any)
+        .from('subject_teachers')
+        .select('teacher_id')
+        .eq('subject_id', subjectId)
+        .eq('teacher_id', user.id)
         .maybeSingle()
+      if (!teacherRow) return NextResponse.json({ error: 'Only teachers can update subject settings' }, { status: 403 })
+    }
 
-      if (fetchError) {
-        logSubjectDetail('GET - Teacher subject fetch failed', fetchError.message)
-        return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 })
+    const body = await request.json().catch(() => ({}))
+    const action = String(body?.action || '')
+
+    if (action === 'update_profile') {
+      const nextTitle = String(body?.title || '').trim()
+      const rawDescription = body?.description
+      const nextDescription = typeof rawDescription === 'string' ? rawDescription.trim() : ''
+
+      if (!nextTitle || nextTitle.length < 2 || nextTitle.length > 120) {
+        return NextResponse.json({ error: 'title must be between 2 and 120 characters' }, { status: 400 })
       }
 
-      if (!subject) {
-        logSubjectDetail('GET - Teacher has no access to subject', subjectId)
-        return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+      const { error: updateError } = await (supabase as any)
+        .from('subjects')
+        .update({ title: nextTitle, description: nextDescription || null })
+        .eq('id', subjectId)
+
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message || 'Failed to update subject' }, { status: 500 })
       }
 
-      const memberClassIds = await getMemberClassIds(supabase, user.id);
-      const directClassMatch = subject.class_id && memberClassIds.includes(subject.class_id);
+      return NextResponse.json({ success: true })
+    }
 
-      let linkedClassMatch = false;
-      if (!directClassMatch && memberClassIds.length > 0) {
-        const { data: links } = await (supabase as any)
-          .from('class_subjects')
-          .select('class_id')
-          .eq('subject_id', subjectId)
-          .in('class_id', memberClassIds)
-          .limit(1);
-        linkedClassMatch = !!(links && links.length > 0);
+    if (action === 'regenerate_join_code') {
+      const { data: newCode } = await (supabase as any).rpc('generate_subject_join_code')
+      if (!newCode) {
+        return NextResponse.json({ error: 'Failed to generate new join code' }, { status: 500 })
       }
 
-      if (subject.user_id !== user.id && !directClassMatch && !linkedClassMatch) {
-        return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+      const { error: updateError } = await (supabase as any)
+        .from('subjects')
+        .update({ join_code: newCode })
+        .eq('id', subjectId)
+
+      if (updateError) {
+        return NextResponse.json({ error: updateError.message || 'Failed to update join code' }, { status: 500 })
       }
 
-      logSubjectDetail('GET - Returning teacher subject', subject.id)
-      return NextResponse.json(subject)
+      return NextResponse.json({ join_code: newCode })
     }
 
-    logSubjectDetail('GET - Student access path', { userId: user.id, subjectId })
-
-    const { data: memberships, error: memberError } = await supabase
-      .from('class_members')
-      .select('class_id')
-      .eq('user_id', user.id)
-
-    if (memberError) {
-      logSubjectDetail('GET - Failed to load memberships', memberError.message)
-      return NextResponse.json({ error: 'Failed to verify access' }, { status: 500 })
-    }
-
-    const classIds = (memberships || []).map((m: any) => m.class_id)
-    logSubjectDetail('GET - Student class IDs', classIds)
-
-    if (classIds.length === 0) {
-      logSubjectDetail('GET - Student has zero memberships', user.id)
-      return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
-    }
-
-    const { data: classSubjectLinks, error: csError } = await (supabase as any)
-      .from('class_subjects')
-      .select('subject_id')
-      .in('class_id', classIds)
-
-    if (csError) {
-      logSubjectDetail('GET - Failed to load class subjects links', csError.message)
-      return NextResponse.json({ error: 'Failed to verify access' }, { status: 500 })
-    }
-
-    const allowedSubjectIds = [...new Set((classSubjectLinks || []).map((cs: any) => cs.subject_id))]
-
-    const { data: directSubjectRows } = await (supabase as any)
-      .from('subjects')
-      .select('id')
-      .eq('id', subjectId)
-      .in('class_id', classIds);
-    if (directSubjectRows?.[0]?.id) {
-      allowedSubjectIds.push(directSubjectRows[0].id);
-    }
-    logSubjectDetail('GET - Allowed subject IDs', allowedSubjectIds)
-
-    if (!allowedSubjectIds.includes(subjectId)) {
-      logSubjectDetail('GET - Subject access denied', { subjectId, allowedSubjectIds })
-      return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
-    }
-
-    const { data: subjectsData, error: subjectError } = await (supabase as any)
-      .from('subjects')
-      .select('*')
-      .in('id', [subjectId])
-
-    if (subjectError) {
-      logSubjectDetail('GET - Student subject fetch error', subjectError.message)
-      return NextResponse.json({ error: 'Failed to fetch subject' }, { status: 500 })
-    }
-
-    if (!subjectsData || subjectsData.length === 0) {
-      logSubjectDetail('GET - Subject missing from DB', subjectId)
-      return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
-    }
-
-    logSubjectDetail('GET - Returning student subject', subjectId)
-    return NextResponse.json(subjectsData[0])
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   } catch (err) {
-    logSubjectDetail('GET - Unexpected error', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
