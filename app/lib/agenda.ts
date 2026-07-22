@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getClassPermission } from '@/lib/auth/class-permissions'
+import { userHasSubjectAccess, getSubjectPermission } from '@/lib/auth/subject-permissions'
 
 export type AgendaVisibilityState = 'visible' | 'hidden' | 'scheduled'
 export type AgendaItemType = 'assignment' | 'quiz' | 'studyset' | 'event' | 'other'
@@ -111,6 +112,19 @@ export async function ensureSubjectAssignable(
   }
 
   return { ok: false as const, status: 403, error: 'You are not allowed to assign this subject' }
+}
+
+/** Mirrors ensureTeacherClassAccess, for a standalone (class-less) subject's agenda. */
+export async function ensureTeacherSubjectAccess(
+  supabase: SupabaseClient,
+  subjectId: string,
+  userId: string
+) {
+  const perm = await getSubjectPermission(supabase, subjectId, userId)
+  if (!perm.hasAccess) {
+    return { ok: false as const, status: 403, error: 'Only subject teachers can modify agenda items' }
+  }
+  return { ok: true as const }
 }
 
 export function normalizeAgendaLinks(raw: any): NonNullable<AgendaItemPayload['links']> {

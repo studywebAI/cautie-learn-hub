@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { getTeacherSubjectIds } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +35,6 @@ export async function GET(req: NextRequest) {
     }
 
     const requestedClassIds = parseClassIds(req.nextUrl.searchParams.get('classIds'))
-    if (requestedClassIds.length === 0) return NextResponse.json({ items: [] })
 
     const { data: memberships } = await supabase
       .from('class_members')
@@ -43,12 +43,24 @@ export async function GET(req: NextRequest) {
 
     const teacherClassIds = new Set((memberships || []).map((row: any) => row.class_id))
     const allowedClassIds = requestedClassIds.filter((classId) => teacherClassIds.has(classId))
-    if (allowedClassIds.length === 0) return NextResponse.json({ items: [] })
+
+    // Standalone (class-less) subjects have agenda items keyed only by
+    // subject_id -- always include the teacher's own subjects alongside
+    // whatever class overlay they've selected.
+    const teacherSubjectIds = await getTeacherSubjectIds(supabase as any, user.id)
+
+    if (allowedClassIds.length === 0 && teacherSubjectIds.length === 0) {
+      return NextResponse.json({ items: [] })
+    }
 
     const from = req.nextUrl.searchParams.get('from')
     const to = req.nextUrl.searchParams.get('to')
 
-    let query = (supabase as any)
+    const orFilters: string[] = []
+    if (allowedClassIds.length > 0) orFilters.push(`class_id.in.(${allowedClassIds.join(',')})`)
+    if (teacherSubjectIds.length > 0) orFilters.push(`subject_id.in.(${teacherSubjectIds.join(',')})`)
+
+    const { data: items, error } = await (supabase as any)
       .from('class_agenda_items')
       .select(`
         *,
@@ -56,12 +68,11 @@ export async function GET(req: NextRequest) {
         classes:class_id(id, name),
         subjects:subject_id(id, title)
       `)
-      .in('class_id', allowedClassIds)
+      .or(orFilters.join(','))
       .order('due_at', { ascending: true, nullsFirst: false })
       .order('starts_at', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: true })
 
-    const { data: items, error } = await query
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     const fromDate = from ? new Date(`${from}T00:00:00.000Z`) : null
     const toDate = to ? new Date(`${to}T23:59:59.999Z`) : null

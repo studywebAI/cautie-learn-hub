@@ -33,15 +33,23 @@ export async function GET(req: NextRequest) {
       new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().slice(0, 10)
     )
 
-    const { data: memberships } = await supabase
-      .from('class_members')
-      .select('class_id')
-      .eq('user_id', user.id)
+    const [membershipsResult, subjectStudentsResult] = await Promise.all([
+      supabase.from('class_members').select('class_id').eq('user_id', user.id),
+      (supabase as any).from('subject_students').select('subject_id').eq('student_id', user.id),
+    ])
 
-    const classIds = (memberships || []).map((row: any) => row.class_id).filter(Boolean)
-    if (classIds.length === 0) return NextResponse.json({ items: [] })
+    const classIds = (membershipsResult.data || []).map((row: any) => row.class_id).filter(Boolean)
+    // Standalone (class-less) subjects a student joined directly -- their
+    // agenda items are keyed only by subject_id.
+    const directSubjectIds = (subjectStudentsResult.data || []).map((row: any) => row.subject_id).filter(Boolean)
+
+    if (classIds.length === 0 && directSubjectIds.length === 0) return NextResponse.json({ items: [] })
 
     const nowIso = new Date().toISOString()
+    const orFilters: string[] = []
+    if (classIds.length > 0) orFilters.push(`class_id.in.(${classIds.join(',')})`)
+    if (directSubjectIds.length > 0) orFilters.push(`subject_id.in.(${directSubjectIds.join(',')})`)
+
     const { data: items, error } = await (supabase as any)
       .from('class_agenda_items')
       .select(`
@@ -50,7 +58,7 @@ export async function GET(req: NextRequest) {
         classes:class_id(id, name),
         subjects:subject_id(id, title)
       `)
-      .in('class_id', classIds)
+      .or(orFilters.join(','))
       .or(`visibility_state.eq.visible,and(visibility_state.eq.scheduled,publish_at.lte.${nowIso})`)
       .order('due_at', { ascending: true, nullsFirst: false })
       .order('starts_at', { ascending: true, nullsFirst: false })

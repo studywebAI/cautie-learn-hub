@@ -441,10 +441,13 @@ function AgendaPageContent() {
   }, [agendaDebugId, isLoading, isStudent]);
 
   useEffect(() => {
-    if (!isTeacher || isLoading || overlayClassIds.length === 0) {
+    if (!isTeacher || isLoading) {
       setTeacherAgendaItems([]);
       return;
     }
+    // overlayClassIds can be empty for a teacher with only standalone
+    // (class-less) subjects -- the endpoint always includes the teacher's
+    // own subjects server-side, so this still needs to fetch.
     const controller = new AbortController();
     const from = new Date().toISOString().slice(0, 10);
     const to = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().slice(0, 10);
@@ -592,8 +595,11 @@ function AgendaPageContent() {
 
     if (isTeacher) {
       const overlaySet = new Set(overlayClassIds);
+      // teacher-overlay already scopes to (allowed classes) OR (teacher's own
+      // subjects) server-side -- standalone-subject items have class_id=null,
+      // so re-filtering on overlayClassIds here would silently drop them.
       const agendaEvents = teacherAgendaItems
-        .filter((item) => overlaySet.has(item.class_id))
+        .filter((item) => !item.class_id || overlaySet.has(item.class_id))
         .map(agendaApiItemToEvent);
       const merged = [...agendaEvents, ...scheduleEvents, ...studysetEvents, ...calendarFeedEvents];
       console.info('[AGENDA] events computed', {
