@@ -117,6 +117,8 @@ export function AppSidebar() {
   const [subjectItems, setSubjectItems] = useState<DropdownSubjectItem[]>([]);
   const [createClassOpen, setCreateClassOpen] = useState(false);
   const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
+  const [joinSubjectOpen, setJoinSubjectOpen] = useState(false);
+  const [subjectJoinCode, setSubjectJoinCode] = useState('');
   const [joinClassOpen, setJoinClassOpen] = useState(false);
   const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
   const [className, setClassName] = useState('');
@@ -513,6 +515,28 @@ export function AppSidebar() {
     }
   };
 
+  const submitJoinSubject = async () => {
+    if (!subjectJoinCode.trim()) return;
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/subjects/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject_code: subjectJoinCode.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || 'Failed to join subject');
+      toast({ title: data?.message || (isDutch ? 'Vak toegevoegd' : 'Joined subject') });
+      setSubjectJoinCode('');
+      setJoinSubjectOpen(false);
+      await loadDropdownData('subjects');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: t.createSubjectError, description: error?.message || t.tryAgain });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const submitJoinClass = async () => {
     if (!joinCode.trim()) return;
     if (isTeacher && !joinSubjectTitle.trim()) return;
@@ -715,7 +739,38 @@ export function AppSidebar() {
                 + {isDutch ? 'Vak maken' : 'Create subject'}
               </Button>
             )}
+            {dropdown.kind === 'subjects' && !isTeacher && (
+              <Button
+                size="sm"
+                variant="outline"
+                  className="h-8 text-[12px] rounded-lg border-transparent surface-interactive text-sidebar-foreground hover:surface-chip"
+                onClick={() => setJoinSubjectOpen((v) => !v)}
+              >
+                {isDutch ? 'Vak toevoegen' : 'Join subject'}
+              </Button>
+            )}
           </div>
+
+          {joinSubjectOpen && (
+            <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
+              <Input
+                placeholder={isDutch ? 'Deelnamecode' : 'Join code'}
+                value={subjectJoinCode}
+                onChange={(e) => setSubjectJoinCode(e.target.value)}
+                className="h-8 text-sm"
+              />
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={submitJoinSubject}
+                  disabled={submitting || !subjectJoinCode.trim()}
+                >
+                  {isDutch ? 'Toevoegen' : 'Join'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {createSubjectOpen && (
             <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
