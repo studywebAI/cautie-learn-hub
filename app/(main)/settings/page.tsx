@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, ArrowUpRight, Eye, EyeOff, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OPENROUTER_LOCKED_MODEL } from '@/lib/ai/openrouter-policy';
+import { ClassSettingsRedesigned } from '@/components/dashboard/teacher/class-settings-redesigned';
 
 const SUBSCRIPTION_CACHE_KEY = 'studyweb-subscription-cache-v1';
 const SUBSCRIPTION_CACHE_TTL_MS = 300_000;
@@ -34,12 +35,14 @@ export default function SettingsPage() {
     theme,
     setTheme,
     session,
+    classes,
   } = useContext(AppContext) as AppContextType;
 
   const { dictionary } = useDictionary();
   const supabase = createClient();
 
   const [activeTab, setActiveTab] = useState('personalization');
+  const [selectedClassSettingsId, setSelectedClassSettingsId] = useState<string>('');
   const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
   const [subscriptionType, setSubscriptionType] = useState<string>(role === 'teacher' ? 'teacher' : 'student');
   const [displayName, setDisplayName] = useState('');
@@ -145,7 +148,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const tabParam = (searchParams?.get('tab') || '').toLowerCase();
-    const validTabs = new Set(['personalization', 'account', 'studysets', 'subscription', 'log-codes', '2fa']);
+    const validTabs = new Set(['personalization', 'account', 'studysets', 'subscription', 'log-codes', '2fa', 'class']);
     if (validTabs.has(tabParam)) {
       setActiveTab(tabParam);
       return;
@@ -287,10 +290,14 @@ export default function SettingsPage() {
   const isDutch = language === 'nl';
   const locale = (language || 'en').toLowerCase();
   const tr = (values: Partial<Record<string, string>>) => values[locale] || values.en || '';
+  const teacherClasses = (classes || []).filter((c: any) => c.status !== 'archived');
   const tabItems = [
     { id: 'personalization', label: tr({ en: 'Personalization', nl: 'Personalisatie' }) },
     { id: 'account', label: tr({ en: 'Account', nl: 'Account' }) },
     { id: '2fa', label: tr({ en: 'Two-Factor Auth', nl: 'Twee-factor auth' }) },
+    ...(role === 'teacher' && teacherClasses.length > 0
+      ? [{ id: 'class', label: tr({ en: 'Class', nl: 'Klas' }) }]
+      : []),
     { id: 'studysets', label: tr({ en: 'Studysets', nl: 'Studiesets' }) },
     { id: 'subscription', label: tr({ en: 'Subscription', nl: 'Abonnement' }) },
     { id: 'log-codes', label: tr({ en: 'Log codes', nl: 'Logcodes' }) },
@@ -815,6 +822,45 @@ export default function SettingsPage() {
                               nl: 'Beschikbare codes: EVT-ATT-001, EVT-ATT-002, EVT-ATT-003, EVT-CUS-001, ROS-MEM-001, ACD-EDT-001.',
                             })}
                       </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === 'class' && role === 'teacher' && (
+                <Card className="border-0 surface-panel shadow-none">
+                  <CardHeader className="space-y-3">
+                    <div>
+                      <CardTitle>{tr({ en: 'Class', nl: 'Klas' })}</CardTitle>
+                      <CardDescription>
+                        {tr({ en: 'Class info, access, features, and invites.', nl: 'Klasinfo, toegang, functies en uitnodigingen.' })}
+                      </CardDescription>
+                    </div>
+                    {teacherClasses.length > 1 && (
+                      <Select
+                        value={selectedClassSettingsId || teacherClasses[0]?.id}
+                        onValueChange={setSelectedClassSettingsId}
+                      >
+                        <SelectTrigger className="max-w-xs">
+                          <SelectValue placeholder={tr({ en: 'Select a class', nl: 'Kies een klas' })} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teacherClasses.map((c: any) => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {(selectedClassSettingsId || teacherClasses[0]?.id) && (
+                      <ClassSettingsRedesigned
+                        classId={selectedClassSettingsId || teacherClasses[0].id}
+                        className={
+                          teacherClasses.find((c: any) => c.id === (selectedClassSettingsId || teacherClasses[0].id))?.name || 'Class'
+                        }
+                        isArchived={false}
+                      />
                     )}
                   </CardContent>
                 </Card>

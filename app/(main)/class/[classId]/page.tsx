@@ -21,10 +21,6 @@ const InviteTab = dynamic(
 const GroupTab = dynamic(
   () => import('@/components/class/group-tab').then((m) => m.GroupTab)
 );
-const ClassSettings = dynamic(
-  () => import('@/components/dashboard/teacher/class-settings-redesigned').then((m) => m.ClassSettingsRedesigned),
-  { ssr: false }
-);
 
 // Cache for tab data - persists across tab switches
 const tabDataCache: Record<string, { data: any; timestamp: number }> = {};
@@ -291,14 +287,6 @@ export default function ClassDetailsPage() {
             parentLoading={!!loadingTabs['group']}
           />
         );
-      case 'settings':
-        return isTeacher ? (
-          <ClassSettings
-            classId={classId}
-            className={(classInfo as any)?.name || 'Class'}
-            isArchived={Boolean((classInfo as any)?.isArchived || (classInfo as any)?.is_archived)}
-          />
-        ) : <InviteTab classId={classId} joinCode={(classInfo as any).join_code || 'N/A'} teacherJoinCode={(classInfo as any).teacher_join_code} />;
       default:
         return (
           <InviteTab 

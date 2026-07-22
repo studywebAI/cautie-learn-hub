@@ -1,6 +1,5 @@
 export const TEACHER_CLASS_TAB_IDS = [
   'group',
-  'settings',
 ] as const;
 
 export const STUDENT_CLASS_TAB_IDS = ['invite', 'group'] as const;

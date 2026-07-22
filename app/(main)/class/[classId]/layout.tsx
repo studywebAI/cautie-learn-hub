@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { useContext } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  UsersRound, Settings2, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck
+  UsersRound, UserRoundPlus, ChartColumnIncreasing, ClipboardCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { AppContext } from '@/contexts/app-context';
@@ -22,7 +22,6 @@ export default function ClassLayout({ children }: { children: React.ReactNode })
     group: { label: isDutch ? 'Aanwezigheid' : 'Attendance', icon: UsersRound, href: '?tab=group' },
     grades: { label: isDutch ? 'Cijfers' : 'Grades', icon: ClipboardCheck, href: '?tab=grades' },
     analytics: { label: isDutch ? 'Analyse' : 'Analytics', icon: ChartColumnIncreasing, href: '?tab=analytics' },
-    settings: { label: isDutch ? 'Instellingen' : 'Settings', icon: Settings2, href: '?tab=settings' },
   } as const;
 
   const teacherTabs = TEACHER_CLASS_TAB_IDS.map((id) => ({ id, ...tabDefinitions[id] }));
