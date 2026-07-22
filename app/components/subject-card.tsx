@@ -6,7 +6,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, ArchiveRestore, FolderInput } from 'lucide-react';
+import { MoreVertical, ArchiveRestore, FolderInput, Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   // Science - Biology
   Microscope, FlaskConical, Atom, Beaker, TestTubes, Dna, Bug, Leaf, Feather, 
@@ -84,6 +85,7 @@ type SubjectCardProps = {
     paragraphContext?: ParagraphContext;
     archived_at?: string | null;
     folder_id?: string | null;
+    join_code?: string | null;
   };
   isTeacher?: boolean;
   folders?: { id: string; name: string }[];
@@ -310,6 +312,7 @@ function getSubjectIcon(title: string, description?: string | null) {
 
 export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onCreateFolder }: SubjectCardProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [isBusy, setIsBusy] = useState(false);
@@ -356,6 +359,17 @@ export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onC
     }
   };
 
+  const copyJoinCode = async () => {
+    if (!subject.join_code) return;
+    try {
+      await navigator.clipboard.writeText(subject.join_code);
+      toast({ title: `Join code copied: ${subject.join_code}` });
+    } catch {
+      toast({ title: subject.join_code, description: 'Copy this code manually' });
+    }
+    setMenuOpen(false);
+  };
+
   const handleCreateFolder = async () => {
     const name = newFolderName.trim();
     if (!name || !onCreateFolder || isBusy) return;
@@ -396,6 +410,18 @@ export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onC
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-56 p-1.5 space-y-1">
+              {subject.join_code && (
+                <button
+                  onClick={copyJoinCode}
+                  className="w-full flex items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm hover:surface-interactive text-left"
+                >
+                  <span className="flex items-center gap-2">
+                    <Copy className="h-4 w-4 text-muted-foreground" />
+                    Join code
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground">{subject.join_code}</span>
+                </button>
+              )}
               <button
                 onClick={toggleArchive}
                 disabled={isBusy}
