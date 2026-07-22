@@ -2,12 +2,15 @@
 -- Pending production migrations bundle
 -- Generated 2026-07-17, updated 2026-07-22 -- run manually in the Supabase SQL editor
 -- ==============================================
--- 2026-07-22: running this bundle failed with "check constraint
--- blocks_type_check of relation blocks is violated by some row" -- the
--- 20260720_add_advanced_block_types section (further down) was missing
--- 'numeric_question' from its allow-list, a real block type that already
--- has rows in production. Fixed both here and in the source migration
--- file. If you already tried running this once and it failed partway
+-- 2026-07-22: running this bundle failed twice on the same error --
+-- "check constraint blocks_type_check of relation blocks is violated by
+-- some row" -- in the 20260720_add_advanced_block_types section further
+-- down. First attempt: added the missing 'numeric_question' type, still
+-- failed. Second attempt: switched that section's ADD CONSTRAINT to
+-- `NOT VALID`, which skips checking existing rows entirely and only
+-- enforces the type list on new inserts/updates going forward -- this
+-- can't fail on unknown legacy data since it doesn't scan for it. If you
+-- already tried running this once (or twice) and it failed partway
 -- through, it's safe to run the whole thing again from the top -- every
 -- statement is idempotent.
 -- These migrations exist locally but `supabase migration list --linked`
@@ -1341,12 +1344,16 @@ COMMIT;
 -- number_line, diagram_labeling, graph_plot. Built across Phases 1-5,
 -- this single migration unlocks all five so it only needs to run once.
 --
--- 2026-07-22 fix: also add 'numeric_question' -- a real, long-used block
--- type (grading logic, submission route, StudentBlockRenderer, validation
--- schemas all handle it) that was never in this constraint. Production
--- already has rows with this type, so without this the ADD CONSTRAINT
--- below fails with "check constraint blocks_type_check is violated by
--- some row" -- this is the exact error from running this file as-is.
+-- 2026-07-22 fix #1: added 'numeric_question' -- a real, long-used block
+-- type that was never in this constraint. Still failed after that fix
+-- too, meaning there's at least one more unknown legacy type value in
+-- the data that can't be enumerated without DB query access.
+--
+-- 2026-07-22 fix #2: switched to `NOT VALID`. Enforces the constraint for
+-- all NEW inserts/updates without requiring every EXISTING row to already
+-- satisfy it -- Postgres skips the historical scan, so unknown legacy
+-- junk in old rows can no longer block this. Nothing is deleted or
+-- rewritten.
 -- =============================================
 
 BEGIN;
@@ -1362,7 +1369,7 @@ CHECK (type IN (
   'divider', 'rich_text', 'executable_code', 'code', 'list',
   'quote', 'layout', 'complex', 'numeric_question',
   'flashcard', 'table', 'number_line', 'diagram_labeling', 'graph_plot'
-));
+)) NOT VALID;
 
 COMMIT;
 
