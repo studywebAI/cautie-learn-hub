@@ -489,10 +489,6 @@ export function AppSidebar() {
 
   const submitCreateSubject = async () => {
     if (!subjectTitle.trim()) return;
-    if (!selectedSubjectClassId) {
-      toast({ variant: 'destructive', title: 'Select a class first' });
-      return;
-    }
     setSubmitting(true);
     try {
       const response = await fetch('/api/subjects', {
@@ -501,7 +497,7 @@ export function AppSidebar() {
         body: JSON.stringify({
           title: subjectTitle.trim(),
           description: undefined,
-          class_ids: [selectedSubjectClassId],
+          class_ids: selectedSubjectClassId ? [selectedSubjectClassId] : undefined,
         }),
       });
       const data = await response.json();
@@ -728,10 +724,10 @@ export function AppSidebar() {
                 onValueChange={(val) => setSelectedSubjectClassId(val === '__none__' ? '' : val)}
               >
                 <SelectTrigger className="h-8 w-full text-sm">
-                  <SelectValue placeholder={isDutch ? 'Selecteer klas' : 'Select class'} />
+                  <SelectValue placeholder={isDutch ? 'Klas (optioneel)' : 'Class (optional)'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__" disabled>{isDutch ? 'Selecteer klas' : 'Select class'}</SelectItem>
+                  <SelectItem value="__none__">{isDutch ? 'Geen klas' : 'No class'}</SelectItem>
                   {classDropdownItems.map((classItem) => (
                     <SelectItem key={classItem.id} value={classItem.id}>{classItem.label}</SelectItem>
                   ))}
@@ -748,7 +744,7 @@ export function AppSidebar() {
                   size="sm"
                   className="h-7 text-xs"
                   onClick={submitCreateSubject}
-                  disabled={submitting || !subjectTitle.trim() || !selectedSubjectClassId}
+                  disabled={submitting || !subjectTitle.trim()}
                 >
                   {isDutch ? 'Maken' : 'Create'}
                 </Button>

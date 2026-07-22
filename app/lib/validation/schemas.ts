@@ -59,7 +59,7 @@ export const updateClassSchema = z.object({
 export const createSubjectSchema = z.object({
   title: titleSchema,
   description: descriptionSchema,
-  class_ids: z.array(uuidSchema).min(1, "At least one class must be selected")
+  class_ids: z.array(uuidSchema).optional()
 });
 
 export const updateSubjectSchema = z.object({
@@ -233,6 +233,10 @@ export const addClassMemberSchema = z.object({
 export const joinClassSchema = z.object({
   class_code: nonEmptyStringSchema,
   subject_title: z.string().optional().nullable()
+});
+
+export const joinSubjectSchema = z.object({
+  subject_code: nonEmptyStringSchema
 });
 
 // ============================================
