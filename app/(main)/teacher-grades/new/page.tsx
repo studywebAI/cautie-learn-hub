@@ -13,7 +13,7 @@ import { PageHeader } from '@/components/page-header';
 type GradeSetData = {
   title: string;
   description: string;
-  classId: string;
+  classId: string | null;
   className: string;
   subjectId: string | null;
   weight: number;
@@ -55,12 +55,20 @@ export default function NewGradesWizard() {
   };
 
   const handleSaveGrades = async () => {
-    if (!gradeData.classId || !gradeData.title) return;
+    // A grade set needs either a class or a standalone subject to attach to.
+    if ((!gradeData.classId && !gradeData.subjectId) || !gradeData.title) return;
 
     setIsSaving(true);
     try {
-      // Create the grade set
-      const response = await fetch(`/api/classes/${gradeData.classId}/grades`, {
+      // Class-linked grade sets go through the class-scoped route (which
+      // also seeds one row per class member); a standalone (class-less)
+      // subject goes through the subject-scoped route instead, seeding
+      // from subject_students.
+      const endpoint = gradeData.classId
+        ? `/api/classes/${gradeData.classId}/grades`
+        : `/api/subjects/${gradeData.subjectId}/grades`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

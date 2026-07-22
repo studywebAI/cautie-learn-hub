@@ -28,9 +28,15 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
   const context = useContext(AppContext) as AppContextType;
   const isDutch = context?.language === 'nl';
   const classes = (context?.classes || []) as Class[];
+  // Subjects with no class at all -- these skip class selection entirely
+  // and go straight to /api/subjects/[id]/grades on submit.
+  const standaloneSubjects = (context?.subjects || []).filter(
+    (s: any) => !Array.isArray(s.classes) || s.classes.length === 0
+  ) as Subject[];
 
   const [selectedClassId, setSelectedClassId] = useState(data.classId || '');
   const [selectedSubjectId, setSelectedSubjectId] = useState(data.subjectId || '');
+  const [standaloneMode, setStandaloneMode] = useState(!data.classId && !!data.subjectId);
   const [weight, setWeight] = useState<number | null>(data.weight || null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
@@ -67,7 +73,11 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!selectedClassId) {
+    if (standaloneMode) {
+      if (!selectedSubjectId) {
+        newErrors.classId = isDutch ? 'Selecteer een vak' : 'Select a subject';
+      }
+    } else if (!selectedClassId) {
       newErrors.classId = isDutch ? 'Selecteer een klas' : 'Select a class';
     }
 
@@ -81,6 +91,17 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
 
   const handleNext = () => {
     if (validate()) {
+      if (standaloneMode) {
+        const selectedStandalone = standaloneSubjects.find(s => s.id === selectedSubjectId);
+        onNext({
+          classId: null,
+          className: '',
+          subjectId: selectedSubjectId,
+          subjectTitle: selectedStandalone?.title || '',
+          weight: weight !== null ? weight : undefined,
+        });
+        return;
+      }
       const selectedClass = classes.find(c => c.id === selectedClassId);
       onNext({
         classId: selectedClassId,
@@ -92,9 +113,81 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
   };
 
   const selectedClass = classes.find(c => c.id === selectedClassId);
+  const selectedStandalone = standaloneSubjects.find(s => s.id === selectedSubjectId);
 
   return (
     <div className="space-y-4">
+      {/* Standalone-subject mode toggle -- only shown when the teacher
+          actually has subjects with no class attached. */}
+      {standaloneSubjects.length > 0 && !selectedClassId && !selectedSubjectId && (
+        <div className="flex gap-2 pb-1">
+          <button
+            onClick={() => setStandaloneMode(false)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition-all ${
+              !standaloneMode ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5' : 'border-border hover:border-[var(--accent-brand)]/30'
+            }`}
+          >
+            {isDutch ? 'Klas' : 'Class'}
+          </button>
+          <button
+            onClick={() => setStandaloneMode(true)}
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm transition-all ${
+              standaloneMode ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5' : 'border-border hover:border-[var(--accent-brand)]/30'
+            }`}
+          >
+            {isDutch ? 'Los vak (geen klas)' : 'Standalone subject (no class)'}
+          </button>
+        </div>
+      )}
+
+      {standaloneMode && standaloneSubjects.length > 0 ? (
+        <div className="space-y-3">
+          {!selectedSubjectId ? (
+            <>
+              <p className="text-sm">{isDutch ? 'Selecteer Vak' : 'Select Subject'}</p>
+              <div className="space-y-2">
+                {standaloneSubjects.map((subj) => (
+                  <button
+                    key={subj.id}
+                    onClick={() => setSelectedSubjectId(subj.id)}
+                    className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                      selectedSubjectId === subj.id
+                        ? 'border-[var(--accent-brand)] bg-[var(--accent-brand)]/5'
+                        : 'border-border hover:border-[var(--accent-brand)]/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm">{subj.title}</p>
+                      {selectedSubjectId === subj.id && <ChevronRight className="h-4 w-4" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {errors.classId && <p className="text-xs text-destructive">{errors.classId}</p>}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="relative ps-9 pe-3"
+                  onClick={() => setSelectedSubjectId('')}
+                >
+                  {isDutch ? 'Terug' : 'Back'}
+                  <span className="pointer-events-none absolute inset-y-0 start-0 flex w-7 items-center justify-center rounded-l-lg bg-foreground/[0.06]">
+                    <ChevronLeft size={13} strokeWidth={2} className="opacity-50" aria-hidden="true" />
+                  </span>
+                </Button>
+              </div>
+              <div className="p-3 rounded-lg border border-[var(--accent-brand)] bg-[var(--accent-brand)]/5">
+                <p className="text-sm">{selectedStandalone?.title}</p>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+      <>
       {/* Class Selection */}
       <div className="space-y-3">
         {!selectedClassId ? (
@@ -185,9 +278,11 @@ export default function StepTwoClassAndSubject({ onBack, onNext, data }: StepTwo
           )}
         </div>
       )}
+      </>
+      )}
 
       {/* Weight */}
-      {selectedClassId && (
+      {(selectedClassId || selectedSubjectId) && (
         <div className="space-y-3 pt-3 border-t border-border">
           <label className="text-sm">
             {isDutch ? 'Gewicht/Punten' : 'Weight/Points'}
