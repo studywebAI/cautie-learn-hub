@@ -2,43 +2,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/subjects-log';
+import { canAccessSubject } from '@/lib/auth/subject-permissions';
 
 export const dynamic = 'force-dynamic';
-
-async function canAccessSubject(supabase: any, userId: string, subjectId: string) {
-  const { data: subject, error } = await (supabase as any)
-    .from('subjects')
-    .select('id, title, description, user_id, class_id')
-    .eq('id', subjectId)
-    .maybeSingle();
-
-  if (error) return { allowed: false, subject: null, error: error.message };
-  if (!subject) return { allowed: false, subject: null };
-
-  const { data: memberships } = await supabase
-    .from('class_members')
-    .select('class_id')
-    .eq('user_id', userId);
-  const classIds = (memberships || []).map((m: any) => m.class_id).filter(Boolean);
-
-  // Primary access model: any class member of a linked class can access.
-  if (subject.class_id && classIds.includes(subject.class_id)) return { allowed: true, subject };
-
-  if (classIds.length > 0) {
-    const { data: links } = await (supabase as any)
-      .from('class_subjects')
-      .select('class_id')
-      .eq('subject_id', subjectId)
-      .in('class_id', classIds)
-      .limit(1);
-    if (links && links.length > 0) return { allowed: true, subject };
-  }
-
-  // Fallback for legacy/unlinked records.
-  if (subject.user_id === userId) return { allowed: true, subject };
-
-  return { allowed: false, subject: null };
-}
 
 export async function GET(
   request: Request,

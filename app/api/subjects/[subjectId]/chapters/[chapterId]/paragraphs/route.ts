@@ -5,38 +5,10 @@ import { makeRequestId, subjectsError, subjectsLog, subjectsWarn } from '@/lib/s
 
 import { createParagraphSchema } from '@/lib/validation/schemas'
 import { validateBody } from '@/lib/validation/validate'
+import { userHasSubjectAccess as studentHasSubjectAccess } from '@/lib/auth/subject-permissions'
 
 
 export const dynamic = 'force-dynamic'
-
-// Helper: check if student has access to a subject through class memberships
-async function studentHasSubjectAccess(supabase: any, userId: string, subjectId: string): Promise<boolean> {
-  const { data: memberships } = await supabase
-    .from('class_members')
-    .select('class_id')
-    .eq('user_id', userId);
-
-  const classIds = (memberships || []).map((m: any) => m.class_id);
-  if (classIds.length === 0) return false;
-
-  const { data: links } = await (supabase as any)
-    .from('class_subjects')
-    .select('subject_id')
-    .eq('subject_id', subjectId)
-    .in('class_id', classIds)
-    .limit(1);
-
-  if (links && links.length > 0) return true;
-
-  const { data: directSubject } = await (supabase as any)
-    .from('subjects')
-    .select('id')
-    .eq('id', subjectId)
-    .in('class_id', classIds)
-    .maybeSingle();
-
-  return !!directSubject;
-}
 
 // GET paragraphs for a chapter
 export async function GET(
