@@ -40,7 +40,6 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Spinner } from '@/components/ui/spinner';
 
 type DropdownKind = 'classes' | 'subjects';
 type DropdownState = { kind: DropdownKind; left: number; top: number } | null;
@@ -112,22 +111,13 @@ export function AppSidebar() {
   const didWarmTeacherResourcesRef = useRef(false);
   const didPrefetchLikelyRoutesRef = useRef(false);
   const floatingRef = useRef<HTMLDivElement | null>(null);
-  const classDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const subjectDropdownTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [classItems, setClassItems] = useState<DropdownClassItem[]>([]);
   const [subjectItems, setSubjectItems] = useState<DropdownSubjectItem[]>([]);
-  const [createClassOpen, setCreateClassOpen] = useState(false);
   const [createSubjectOpen, setCreateSubjectOpen] = useState(false);
   const [joinSubjectOpen, setJoinSubjectOpen] = useState(false);
   const [subjectJoinCode, setSubjectJoinCode] = useState('');
-  const [joinClassOpen, setJoinClassOpen] = useState(false);
-  const [newClassMenuOpen, setNewClassMenuOpen] = useState(false);
-  const [className, setClassName] = useState('');
-  const [classDescription, setClassDescription] = useState('');
-  const [classSubjectTitle, setClassSubjectTitle] = useState('');
   const [subjectTitle, setSubjectTitle] = useState('');
-  const [selectedSubjectClassId, setSelectedSubjectClassId] = useState('');
-  const [joinCode, setJoinCode] = useState('');
-  const [joinSubjectTitle, setJoinSubjectTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [activeTeacherClassId, setActiveTeacherClassId] = useState(() => {
     if (typeof window === 'undefined') return '';
@@ -154,16 +144,10 @@ export function AppSidebar() {
   const routeClassId = routeClassIdMatch?.[1] || searchParams?.get('classId') || '';
   const t = {
     manage: isDutch ? 'Beheer' : 'Manage',
-    classes: isDutch ? 'Klassen' : 'Classes',
     studyset: isDutch ? 'Studieset' : 'Studyset',
-    untitledClass: isDutch ? 'Naamloze Klas' : 'Untitled Class',
     untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
-    classesLoadError: isDutch ? 'Kon klassen niet laden' : 'Could not load classes',
     subjectsLoadError: isDutch ? 'Kon vakken niet laden' : 'Could not load subjects',
-    classCreated: isDutch ? 'Klas aangemaakt' : 'Class created',
-    createClassError: isDutch ? 'Kon klas niet aanmaken' : 'Could not create class',
     createSubjectError: isDutch ? 'Kon vak niet aanmaken' : 'Could not create subject',
-    joinClassError: isDutch ? 'Kon niet deelnemen aan klas' : 'Could not join class',
     tryAgain: isDutch ? 'Probeer opnieuw.' : 'Try again.',
     sectionMain: isDutch ? 'Hoofd' : 'Main',
     sectionTools: isDutch ? 'Tools' : 'Tools',
@@ -171,29 +155,8 @@ export function AppSidebar() {
     recents: isDutch ? 'Recent' : 'Recents',
     sectionRecents: isDutch ? 'Recent' : 'Recents',
     upgrade: isDutch ? 'Upgraden' : 'Upgrade',
-    selectDifferentClass: isDutch ? 'Selecteer Andere Klas' : 'Select Different Class',
-    joinClass: isDutch ? 'Deelnemen Klas' : 'Join Class',
-    createNewClass: isDutch ? 'Nieuwe klas maken' : 'Create New Class',
-    joinClassAsTeacher: isDutch ? 'Deelnemen als docent' : 'Join Class as Teacher',
-    createClassSubtitle: isDutch
-      ? 'Stel je klas in met naam, optionele beschrijving en eerste vak.'
-      : 'Set up your class with name, optional description, and first subject.',
-    joinClassSubtitle: isDutch
-      ? 'Neem deel met een code en koppel je vak in deze klas.'
-      : 'Join an existing class using a code and define your subject in that class.',
-    close: isDutch ? 'Sluiten' : 'Close',
-    className: isDutch ? 'Klasnaam' : 'Class Name',
-    classDescriptionOptional: isDutch ? 'Beschrijving (optioneel)' : 'Description (optional)',
-    firstSubject: isDutch ? 'Eerste vak' : 'First subject',
-    cancel: isDutch ? 'Annuleren' : 'Cancel',
-    creatingClass: isDutch ? 'Klas maken...' : 'Creating class...',
-    createClass: isDutch ? 'Klas maken' : 'Create Class',
-    joinCode: isDutch ? 'Deelnamecode' : 'Join Code',
-    yourSubject: isDutch ? 'Jouw Vak' : 'Your Subject',
-    joining: isDutch ? 'Bezig met deelnemen...' : 'Joining...',
   };
   const isRailCollapsed = !isPhone && sidebarState === 'collapsed';
-  const activeClassTab = searchParams?.get('tab') || '';
   const effectiveTeacherClassId =
     routeClassId ||
     activeTeacherClassId ||
@@ -219,9 +182,7 @@ export function AppSidebar() {
   const effectiveTeacherSubject = subjectItems.find((subject) => subject.id === effectiveTeacherSubjectId) || null;
   const teacherManageHref = isTeacher && effectiveTeacherSubjectId
     ? `/subjects/${effectiveTeacherSubjectId}/attendance`
-    : isTeacher && effectiveTeacherClassId
-      ? `/class/${effectiveTeacherClassId}?tab=group`
-      : '/classes';
+    : '/subjects';
   // Agenda's own page is still keyed on ?classId= -- route through the
   // active subject's linked class if it has one, otherwise fall back to
   // the plain unscoped agenda (which already merges everything a teacher
@@ -284,17 +245,6 @@ export function AppSidebar() {
   }, [isTeacher, context?.warmResources]);
 
 
-  const classDropdownItems = useMemo(() => {
-    return [...classItems]
-      .filter((classItem) => classItem.status !== 'archived')
-      .sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
-        .map((classItem) => ({
-        id: classItem.id,
-        label: String(classItem?.name || t.untitledClass),
-        href: `/class/${classItem.id}`,
-      }));
-  }, [classItems, t.untitledClass]);
-
   const subjectDropdownItems = useMemo(
     () =>
       [...subjectItems]
@@ -351,17 +301,18 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (!isTeacher) return;
-    if (classDropdownItems.length === 0) return;
+    const activeClasses = classItems.filter((classItem) => classItem.status !== 'archived');
+    if (activeClasses.length === 0) return;
 
     const storageClassId =
       typeof window !== 'undefined' ? window.localStorage.getItem('studyweb-last-class-id') : null;
-    const preferredClassId = routeClassId || activeTeacherClassId || storedTeacherClassId || storageClassId || classDropdownItems[0].id;
+    const preferredClassId = routeClassId || activeTeacherClassId || storedTeacherClassId || storageClassId || activeClasses[0].id;
     const preferredClass =
-      classDropdownItems.find((classItem) => classItem.id === preferredClassId) || classDropdownItems[0];
+      activeClasses.find((classItem) => classItem.id === preferredClassId) || activeClasses[0];
     if (preferredClass.id !== activeTeacherClassId || preferredClass.id !== storedTeacherClassId) {
       persistTeacherClassId(preferredClass.id);
     }
-  }, [isTeacher, classDropdownItems, routeClassId, activeTeacherClassId, storedTeacherClassId]);
+  }, [isTeacher, classItems, routeClassId, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
     if (!isTeacher) return;
@@ -420,21 +371,6 @@ export function AppSidebar() {
   }, [dropdown]);
 
   useEffect(() => {
-    const openClassDropdown = () => {
-      if (!isTeacher) return;
-      setNewClassMenuOpen(false);
-      setCreateClassOpen(false);
-      setJoinClassOpen(false);
-      if (classDropdownTriggerRef.current) {
-        openDropdownFor('classes', classDropdownTriggerRef.current);
-      }
-    };
-
-    window.addEventListener('cautie:open-class-dropdown', openClassDropdown);
-    return () => window.removeEventListener('cautie:open-class-dropdown', openClassDropdown);
-  }, [isTeacher]);
-
-  useEffect(() => {
     setClassItems((context?.classes || []) as DropdownClassItem[]);
   }, [context?.classes]);
 
@@ -453,40 +389,10 @@ export function AppSidebar() {
   const getDropdownKind = (_href: string) => 'subjects' as const;
 
   const resetInlinePanels = () => {
-    setCreateClassOpen(false);
     setCreateSubjectOpen(false);
-    setJoinClassOpen(false);
-    setNewClassMenuOpen(false);
-    setClassName('');
-    setClassDescription('');
-    setClassSubjectTitle('');
+    setJoinSubjectOpen(false);
     setSubjectTitle('');
-    setSelectedSubjectClassId('');
-    setJoinCode('');
-    setJoinSubjectTitle('');
-  };
-
-  const resolveTeacherClassRoute = (nextClassId: string) => {
-    const defaultRoute = `/class/${nextClassId}?tab=group`;
-    if (!pathname) return defaultRoute;
-
-    const classRouteMatch = pathname.match(/^\/class\/[^/?#]+(?<suffix>.*)$/);
-    if (classRouteMatch) {
-      const suffix = classRouteMatch.groups?.suffix || '';
-      if (suffix === '/agenda' || suffix.startsWith('/agenda/')) {
-        return `/agenda?classId=${nextClassId}`;
-      }
-      const currentQuery = typeof window !== 'undefined' ? window.location.search : '';
-      return `/class/${nextClassId}${suffix}${currentQuery}`;
-    }
-
-    // Subjects no longer depends on which class is "active" -- stay put
-    // instead of redirecting away when the teacher switches class.
-    if (pathname === '/subjects' || pathname.startsWith('/subjects/')) return pathname;
-    if (pathname === '/agenda') return `/agenda?classId=${nextClassId}`;
-    if (pathname === '/' || pathname === '/classes') return defaultRoute;
-
-    return defaultRoute;
+    setSubjectJoinCode('');
   };
 
   // Subject is now the primary switcher identity. Preserve the current
@@ -508,65 +414,16 @@ export function AppSidebar() {
     return defaultRoute;
   };
 
-  const loadDropdownData = async (kind: DropdownKind) => {
+  const loadDropdownData = async () => {
     if (!context) return;
     try {
-      if (kind === 'classes') {
-        await context.warmResources(['classes:list']);
-      } else {
-        await context.warmResources(['subjects:list']);
-      }
+      await context.warmResources(['subjects:list']);
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: kind === 'classes' ? t.classesLoadError : t.subjectsLoadError,
+        title: t.subjectsLoadError,
         description: error?.message || t.tryAgain,
       });
-    }
-  };
-
-  const waitForClassAvailability = async (createdClassId: string) => {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      try {
-        const response = await fetch(`/api/classes/${createdClassId}`, { cache: 'no-store' });
-        if (response.ok) return true;
-      } catch {}
-      await new Promise((resolve) => setTimeout(resolve, 250));
-    }
-    return false;
-  };
-
-  const submitCreateClass = async () => {
-    if (!className.trim() || !classSubjectTitle.trim()) return;
-    setSubmitting(true);
-    try {
-      const response = await fetch('/api/classes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: className.trim(),
-          description: classDescription.trim() || null,
-          subject_title: classSubjectTitle.trim(),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'Failed to create class');
-      if (data?.id) {
-        persistTeacherClassId(data.id);
-        await waitForClassAvailability(data.id);
-        await loadDropdownData('classes');
-        router.replace(resolveTeacherClassRoute(data.id));
-      }
-      toast({ title: t.classCreated });
-      setClassName('');
-      setClassDescription('');
-      setClassSubjectTitle('');
-      setCreateClassOpen(false);
-      setNewClassMenuOpen(false);
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: t.createClassError, description: error?.message || t.tryAgain });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -577,18 +434,14 @@ export function AppSidebar() {
       const response = await fetch('/api/subjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: subjectTitle.trim(),
-          description: undefined,
-          class_ids: selectedSubjectClassId ? [selectedSubjectClassId] : undefined,
-        }),
+        body: JSON.stringify({ title: subjectTitle.trim(), description: undefined }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Failed to create subject');
       toast({ title: 'Subject created' });
       setSubjectTitle('');
       setCreateSubjectOpen(false);
-      await loadDropdownData('subjects');
+      await loadDropdownData();
     } catch (error: any) {
       toast({ variant: 'destructive', title: t.createSubjectError, description: error?.message || t.tryAgain });
     } finally {
@@ -610,49 +463,9 @@ export function AppSidebar() {
       toast({ title: data?.message || (isDutch ? 'Vak toegevoegd' : 'Joined subject') });
       setSubjectJoinCode('');
       setJoinSubjectOpen(false);
-      await loadDropdownData('subjects');
+      await loadDropdownData();
     } catch (error: any) {
       toast({ variant: 'destructive', title: t.createSubjectError, description: error?.message || t.tryAgain });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitJoinClass = async () => {
-    if (!joinCode.trim()) return;
-    if (isTeacher && !joinSubjectTitle.trim()) return;
-    setSubmitting(true);
-    try {
-      const response = await fetch('/api/classes/join', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          class_code: joinCode.trim(),
-          subject_title: isTeacher ? joinSubjectTitle.trim() : undefined,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data?.error || 'Failed to join class');
-      toast({ title: data?.message || 'Joined class' });
-      if (data?.pendingApproval) {
-        setJoinCode('');
-        setJoinSubjectTitle('');
-        setJoinClassOpen(false);
-        setNewClassMenuOpen(false);
-        return;
-      }
-      const joinedClassId = data?.class?.id;
-      if (joinedClassId) {
-        persistTeacherClassId(joinedClassId);
-        router.push(resolveTeacherClassRoute(joinedClassId));
-      }
-      setJoinCode('');
-      setJoinSubjectTitle('');
-      setJoinClassOpen(false);
-      setNewClassMenuOpen(false);
-      await loadDropdownData('classes');
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: t.joinClassError, description: error?.message || t.tryAgain });
     } finally {
       setSubmitting(false);
     }
@@ -683,14 +496,6 @@ export function AppSidebar() {
 
   const isMenuItemActive = (href: string) => {
     const [basePath] = href.split('?');
-    if (href.startsWith('/class/')) {
-      const [basePath, queryString] = href.split('?');
-      if (pathname !== basePath) return false;
-      if (!queryString) return true;
-      const expectedTab = new URLSearchParams(queryString).get('tab');
-      return expectedTab ? activeClassTab === expectedTab : true;
-    }
-    if (basePath === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
     if (basePath === '/agenda') return pathname === '/agenda';
     if (href.startsWith('/subjects/') && href.includes('/attendance')) {
       // "Manage" (subject-scoped attendance) -- don't also light up "Subjects".
@@ -754,24 +559,19 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (!isTeacher) return;
-    for (const classItem of classDropdownItems) {
-      const target = resolveTeacherClassRoute(classItem.id);
+    for (const subjectItem of subjectDropdownItems) {
+      const target = resolveTeacherSubjectRoute(subjectItem.id);
       try {
         void router.prefetch(target);
       } catch {}
     }
-  }, [isTeacher, classDropdownItems, router]);
+  }, [isTeacher, subjectDropdownItems, router]);
 
   const renderFloatingDropdown = () => {
     if (!dropdown) return null;
-    const items = dropdown.kind === 'classes' ? classDropdownItems : subjectDropdownItems;
-    const emptyText = dropdown.kind === 'classes'
-      ? (isDutch ? 'Geen klassen gevonden' : 'No classes found')
-      : (isDutch ? 'Geen vakken gevonden' : 'No subjects found');
-    const loading =
-      dropdown.kind === 'classes'
-        ? context?.preloadSnapshot['classes:list']?.status === 'loading'
-        : context?.preloadSnapshot['subjects:list']?.status === 'loading';
+    const items = subjectDropdownItems;
+    const emptyText = isDutch ? 'Geen vakken gevonden' : 'No subjects found';
+    const loading = context?.preloadSnapshot['subjects:list']?.status === 'loading';
 
     return (
       <div
@@ -782,41 +582,8 @@ export function AppSidebar() {
         onMouseLeave={scheduleClose}
       >
         <div className="w-max min-w-[11rem] max-w-[22rem] max-h-[65vh] overflow-auto p-1.5">
-          {dropdown.kind === 'classes' && (
-            <div className="px-2 py-1 text-[12px] tracking-[0.08em] text-muted-foreground">
-                {t.selectDifferentClass}
-            </div>
-          )}
           <div className="mb-1 flex gap-1 border-b border-border/80 pb-1">
-            {dropdown.kind === 'classes' && isTeacher && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 rounded-xl border-transparent surface-interactive px-3 text-[12px] text-sidebar-foreground hover:surface-chip"
-                onClick={() => {
-                  setNewClassMenuOpen(false);
-                  setCreateClassOpen(false);
-                  setJoinClassOpen(false);
-                  setCreateClassOpen(true);
-                }}
-              >
-                + {isDutch ? 'Nieuwe klas' : 'New class'}
-              </Button>
-            )}
-            {dropdown.kind === 'classes' && !isTeacher && (
-              <Button
-                size="sm"
-                variant="outline"
-                  className="h-8 text-[12px] rounded-lg border-transparent surface-interactive text-sidebar-foreground hover:surface-chip"
-                onClick={() => {
-                  setJoinClassOpen((v) => !v);
-                  setCreateClassOpen(false);
-                }}
-              >
-                {t.joinClass}
-              </Button>
-            )}
-            {dropdown.kind === 'subjects' && isTeacher && (
+            {isTeacher ? (
               <Button
                 size="sm"
                 variant="outline"
@@ -825,8 +592,7 @@ export function AppSidebar() {
               >
                 + {isDutch ? 'Vak maken' : 'Create subject'}
               </Button>
-            )}
-            {dropdown.kind === 'subjects' && !isTeacher && (
+            ) : (
               <Button
                 size="sm"
                 variant="outline"
@@ -861,20 +627,6 @@ export function AppSidebar() {
 
           {createSubjectOpen && (
             <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
-              <Select
-                value={selectedSubjectClassId || '__none__'}
-                onValueChange={(val) => setSelectedSubjectClassId(val === '__none__' ? '' : val)}
-              >
-                <SelectTrigger className="h-8 w-full text-sm">
-                  <SelectValue placeholder={isDutch ? 'Klas (optioneel)' : 'Class (optional)'} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">{isDutch ? 'Geen klas' : 'No class'}</SelectItem>
-                  {classDropdownItems.map((classItem) => (
-                    <SelectItem key={classItem.id} value={classItem.id}>{classItem.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Input
                 placeholder={isDutch ? 'Vaktitel' : 'Subject title'}
                 value={subjectTitle}
@@ -894,52 +646,18 @@ export function AppSidebar() {
             </div>
           )}
 
-          {dropdown.kind === 'classes' && isTeacher && newClassMenuOpen && !createClassOpen && !joinClassOpen && (
-            <div className="mb-1 space-y-1 rounded-xl surface-interactive p-2">
-              <Button
-                size="sm"
-                variant="outline"
-                 className="h-8 w-full justify-start rounded-xl text-[12px]"
-                onClick={() => {
-                  setCreateClassOpen(true);
-                  setNewClassMenuOpen(false);
-                }}
-              >
-                {isDutch ? 'Nieuwe klas maken' : 'Create new class'}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                 className="h-8 w-full justify-start rounded-xl text-[12px]"
-                onClick={() => {
-                  setJoinClassOpen(true);
-                  setNewClassMenuOpen(false);
-                }}
-              >
-                {isDutch ? 'Deelnemen als docent (samenwerken)' : 'Join as teacher (collaborate)'}
-              </Button>
-            </div>
-          )}
-
           {loading ? (
             <p className="px-2 py-1.5 text-xs text-sidebar-foreground/80">{isDutch ? 'Laden...' : 'Loading...'}</p>
           ) : items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-sidebar-foreground/80">{emptyText}</p>
           ) : (
             items.map((entry) => {
-              const isActiveEntry =
-                (dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId) ||
-                (dropdown.kind === 'subjects' && isTeacher && entry.id === effectiveTeacherSubjectId);
-              const teacherRoute =
-                dropdown.kind === 'classes'
-                  ? resolveTeacherClassRoute(entry.id)
-                  : dropdown.kind === 'subjects' && isTeacher
-                    ? resolveTeacherSubjectRoute(entry.id)
-                    : entry.href;
+              const isActiveEntry = isTeacher && entry.id === effectiveTeacherSubjectId;
+              const teacherRoute = isTeacher ? resolveTeacherSubjectRoute(entry.id) : entry.href;
               return (
                 <Link
                   key={entry.id}
-                  href={isTeacher && (dropdown.kind === 'classes' || dropdown.kind === 'subjects') ? teacherRoute : entry.href}
+                  href={isTeacher ? teacherRoute : entry.href}
                   className={cn(
                     'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
                     isActiveEntry
@@ -947,12 +665,7 @@ export function AppSidebar() {
                       : 'hover:surface-chip text-sidebar-foreground/85 hover:text-sidebar-foreground'
                   )}
                   onClick={(event) => {
-                    if (dropdown.kind === 'classes' && isTeacher) {
-                      event.preventDefault();
-                      persistTeacherClassId(entry.id);
-                      try { void router.prefetch(teacherRoute); } catch {}
-                      router.replace(teacherRoute);
-                    } else if (dropdown.kind === 'subjects' && isTeacher) {
+                    if (isTeacher) {
                       event.preventDefault();
                       persistTeacherSubjectId(entry.id);
                       try { void router.prefetch(teacherRoute); } catch {}
@@ -963,7 +676,7 @@ export function AppSidebar() {
                     setOpenMobile(false);
                   }}
                   onMouseEnter={() => {
-                    if (isTeacher && (dropdown.kind === 'classes' || dropdown.kind === 'subjects')) {
+                    if (isTeacher) {
                       try { void router.prefetch(teacherRoute); } catch {}
                     }
                   }}
@@ -979,7 +692,7 @@ export function AppSidebar() {
     );
   };
 
-  const renderTeacherClassSwitcher = () => {
+  const renderTeacherSubjectSwitcher = () => {
     if (!isTeacher) return null;
     if (isRailCollapsed) return null;
 
@@ -1019,14 +732,11 @@ export function AppSidebar() {
       <>
       <div className="mb-1.5 px-2">
         <button
-          ref={classDropdownTriggerRef}
+          ref={subjectDropdownTriggerRef}
           type="button"
           data-nav-dropdown-trigger="true"
           onClick={(event) => {
             event.preventDefault();
-            setNewClassMenuOpen(false);
-            setCreateClassOpen(false);
-            setJoinClassOpen(false);
             openDropdownFor('subjects', event.currentTarget);
           }}
           disabled={subjectDropdownItems.length === 0}
@@ -1038,125 +748,6 @@ export function AppSidebar() {
           <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
         </button>
       </div>
-      {(createClassOpen || joinClassOpen) && (
-        <div className="fixed inset-0 z-[170] flex items-center justify-center bg-black/45 p-4">
-          <div className="w-full max-w-3xl rounded-3xl border border-border surface-panel shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div>
-                <h3 className="text-xl leading-tight">
-                  {createClassOpen ? t.createNewClass : t.joinClassAsTeacher}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {createClassOpen
-                    ? t.createClassSubtitle
-                    : t.joinClassSubtitle}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                className="h-8 px-3"
-                onClick={() => {
-                  setCreateClassOpen(false);
-                  setJoinClassOpen(false);
-                }}
-              >
-                {t.close}
-              </Button>
-            </div>
-            <div className="space-y-5 px-6 py-5">
-              {createClassOpen && (
-                <>
-                  <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">{t.className}</p>
-                    <Input
-                      placeholder=""
-                      value={className}
-                      onChange={(e) => setClassName(e.target.value)}
-                      className="h-11 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">{t.classDescriptionOptional}</p>
-                    <Input
-                      placeholder=""
-                      value={classDescription}
-                      onChange={(e) => setClassDescription(e.target.value)}
-                      className="h-11 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">{t.firstSubject}</p>
-                    <Input
-                      placeholder=""
-                      value={classSubjectTitle}
-                      onChange={(e) => setClassSubjectTitle(e.target.value)}
-                      className="h-11 text-sm"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button
-                      variant="outline"
-                      className="h-10 px-4"
-                      onClick={() => setCreateClassOpen(false)}
-                      disabled={submitting}
-                    >
-                      {t.cancel}
-                    </Button>
-                    <Button
-                      className="h-10 px-4"
-                      onClick={submitCreateClass}
-                      disabled={submitting || !className.trim() || !classSubjectTitle.trim()}
-                    >
-                      {submitting ? <><Spinner size={16} color="white" className="mr-2" />{t.creatingClass}</> : t.createClass}
-                    </Button>
-                  </div>
-                </>
-              )}
-              {joinClassOpen && (
-                <>
-                  <div className="space-y-1.5">
-                    <p className="text-sm text-muted-foreground">{t.joinCode}</p>
-                    <Input
-                      placeholder=""
-                      value={joinCode}
-                      onChange={(e) => setJoinCode(e.target.value)}
-                      className="h-11 text-sm"
-                    />
-                  </div>
-                  {isTeacher && (
-                    <div className="space-y-1.5">
-                      <p className="text-sm text-muted-foreground">{t.yourSubject}</p>
-                      <Input
-                        placeholder=""
-                        value={joinSubjectTitle}
-                        onChange={(e) => setJoinSubjectTitle(e.target.value)}
-                        className="h-11 text-sm"
-                      />
-                    </div>
-                  )}
-                  <div className="flex justify-end gap-2 pt-1">
-                    <Button
-                      variant="outline"
-                      className="h-10 px-4"
-                      onClick={() => setJoinClassOpen(false)}
-                      disabled={submitting}
-                    >
-                      {t.cancel}
-                    </Button>
-                    <Button
-                      className="h-10 px-4"
-                      onClick={submitJoinClass}
-                      disabled={submitting || !joinCode.trim() || (isTeacher && !joinSubjectTitle.trim())}
-                    >
-                      {submitting ? t.joining : t.joinClass}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
       </>
     );
   };
@@ -1272,7 +863,7 @@ export function AppSidebar() {
         {/* Full drawer sidebar (when hamburger is clicked) */}
         <Sidebar className="overflow-hidden">
           <SidebarContent className="flex-1 overflow-y-auto px-2 py-2">
-            {renderTeacherClassSwitcher()}
+            {renderTeacherSubjectSwitcher()}
             {visibleMainItems.length > 0 && (
               <>
                   {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80">{t.sectionMain}</p>}
@@ -1381,7 +972,7 @@ export function AppSidebar() {
       collapsible="icon"
     >
       <SidebarContent className="px-2 py-2 flex-1 overflow-y-auto [-webkit-overflow-scrolling:touch]">
-        {renderTeacherClassSwitcher()}
+        {renderTeacherSubjectSwitcher()}
         {visibleMainItems.length > 0 && (
           <>
             {showSectionHeaders && <p className="px-2 pb-1 pt-1 text-[11px] font-medium text-sidebar-foreground/80 group-data-[collapsible=icon]:hidden">{t.sectionMain}</p>}
