@@ -1194,6 +1194,12 @@ COMMIT;
 -- Context: docs/subjects-feature-brainstorm.md section C10 — downloadable
 -- materials (worksheets, slides, docs) as a block type in the assignment
 -- editor, same treatment as the existing image/video blocks.
+--
+-- 2026-07-22 fix: this section ran BEFORE the 20260720 section further
+-- down and, without NOT VALID, was itself scanning every existing row --
+-- so IT was the one hitting "blocks_type_check is violated by some row"
+-- first, before ever reaching the 20260720 section's own NOT VALID fix.
+-- Added NOT VALID here too.
 -- =============================================
 
 BEGIN;
@@ -1208,7 +1214,7 @@ CHECK (type IN (
   'fill_in_blank', 'drag_drop', 'matching', 'ordering', 'media_embed',
   'divider', 'rich_text', 'executable_code', 'code', 'list',
   'quote', 'layout', 'complex'
-));
+)) NOT VALID;
 
 COMMIT;
 
