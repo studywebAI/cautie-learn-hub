@@ -143,7 +143,7 @@ export function AppSidebar() {
   const routeClassIdMatch = pathname?.match(/^\/class\/([^/?#]+)/);
   const routeClassId = routeClassIdMatch?.[1] || searchParams?.get('classId') || '';
   const t = {
-    manage: isDutch ? 'Beheer' : 'Manage',
+    attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
     studyset: isDutch ? 'Studieset' : 'Studyset',
     untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
     subjectsLoadError: isDutch ? 'Kon vakken niet laden' : 'Could not load subjects',
@@ -180,7 +180,7 @@ export function AppSidebar() {
     subjectItems[0]?.id ||
     '';
   const effectiveTeacherSubject = subjectItems.find((subject) => subject.id === effectiveTeacherSubjectId) || null;
-  const teacherManageHref = isTeacher && effectiveTeacherSubjectId
+  const teacherAttendanceHref = isTeacher && effectiveTeacherSubjectId
     ? `/subjects/${effectiveTeacherSubjectId}/attendance`
     : '/subjects';
   // Agenda's own page is still keyed on ?classId= -- route through the
@@ -194,7 +194,7 @@ export function AppSidebar() {
     ? [
         { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard, animated: true },
         { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: SquareArrowOutUpRight, animated: true },
-        { href: teacherManageHref, label: t.manage, icon: Users, animated: true },
+        { href: teacherAttendanceHref, label: t.attendance, icon: Users, animated: true },
         { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ChartColumn, animated: true },
         { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: ChartSpline, animated: true },
         { href: teacherAgendaHref, label: dictionary.sidebar.agenda, icon: ClipboardList, animated: true },
@@ -520,7 +520,7 @@ export function AppSidebar() {
       new Set([
         '/',
         teacherSubjectsHref,
-        teacherManageHref,
+        teacherAttendanceHref,
         teacherAgendaHref,
         '/subjects',
         '/agenda',
@@ -555,7 +555,7 @@ export function AppSidebar() {
 
     const timer = browserWindow.setTimeout(prefetchLikelyRoutes, 300);
     return () => browserWindow.clearTimeout(timer);
-  }, [router, teacherSubjectsHref, teacherManageHref, teacherAgendaHref]);
+  }, [router, teacherSubjectsHref, teacherAttendanceHref, teacherAgendaHref]);
 
   useEffect(() => {
     if (!isTeacher) return;
