@@ -305,10 +305,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const params = new URLSearchParams();
     if (role === 'teacher') {
       params.set('lite', '1');
-      if (typeof window !== 'undefined') {
-        const activeClassId = window.localStorage.getItem('studyweb-last-class-id');
-        if (activeClassId) params.set('classId', activeClassId);
-      }
     }
     const url = params.size > 0 ? `/api/subjects?${params.toString()}` : '/api/subjects';
     const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
@@ -325,12 +321,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchNavigationBundle = useCallback(async () => {
     const preloadRequestId = `nav-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const params = new URLSearchParams();
-    if (role === 'teacher' && typeof window !== 'undefined') {
-      const activeClassId = window.localStorage.getItem('studyweb-last-class-id');
-      if (activeClassId) params.set('classId', activeClassId);
-    }
-    const url = params.size > 0 ? `/api/preload/navigation?${params.toString()}` : '/api/preload/navigation';
+    const url = '/api/preload/navigation';
     console.info('[PRELOAD][NAV] request start', { preloadRequestId, role, url });
     const res = await fetch(url, { credentials: 'include', cache: 'no-store' });
     if (!res.ok) {
