@@ -137,6 +137,16 @@ export function AppSidebar() {
     if (typeof window === 'undefined') return '';
     return window.localStorage.getItem('studyweb-last-class-id') || '';
   });
+  // Subject is the primary switcher identity now -- class persistence above
+  // is kept only as a fallback for the legacy /class/[classId] routes.
+  const [activeTeacherSubjectId, setActiveTeacherSubjectId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('studyweb-last-subject-id') || '';
+  });
+  const [storedTeacherSubjectId, setStoredTeacherSubjectId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return window.localStorage.getItem('studyweb-last-subject-id') || '';
+  });
 
   const isTeacher = context?.role === 'teacher';
   const isDutch = context?.language === 'nl';
@@ -194,8 +204,30 @@ export function AppSidebar() {
   // list (class-linked or standalone) loads regardless of which class is
   // "active", so this link no longer needs a classId param at all.
   const teacherSubjectsHref = '/subjects';
-  const teacherManageHref = isTeacher && effectiveTeacherClassId ? `/class/${effectiveTeacherClassId}?tab=group` : '/classes';
-  const teacherAgendaHref = isTeacher && effectiveTeacherClassId ? `/agenda?classId=${effectiveTeacherClassId}` : '/agenda';
+  // "Manage" (attendance) is subject-first now that every class has a
+  // backfilled 1:1 subject (Phase 3.1 migration) -- class stays as the
+  // fallback only for the rare case a subject hasn't loaded yet client-side.
+  const routeSubjectIdMatch = pathname?.match(/^\/subjects\/([^/?#]+)/);
+  const routeSubjectId = routeSubjectIdMatch?.[1] || searchParams?.get('subjectId') || '';
+  const effectiveTeacherSubjectId =
+    routeSubjectId ||
+    activeTeacherSubjectId ||
+    storedTeacherSubjectId ||
+    subjectItems.find((subject) => subject.classIds.includes(effectiveTeacherClassId))?.id ||
+    subjectItems[0]?.id ||
+    '';
+  const effectiveTeacherSubject = subjectItems.find((subject) => subject.id === effectiveTeacherSubjectId) || null;
+  const teacherManageHref = isTeacher && effectiveTeacherSubjectId
+    ? `/subjects/${effectiveTeacherSubjectId}/attendance`
+    : isTeacher && effectiveTeacherClassId
+      ? `/class/${effectiveTeacherClassId}?tab=group`
+      : '/classes';
+  // Agenda's own page is still keyed on ?classId= -- route through the
+  // active subject's linked class if it has one, otherwise fall back to
+  // the plain unscoped agenda (which already merges everything a teacher
+  // can see). Standalone subjects (no class) simply don't filter Agenda.
+  const teacherAgendaClassId = effectiveTeacherSubject?.classIds[0] || effectiveTeacherClassId;
+  const teacherAgendaHref = isTeacher && teacherAgendaClassId ? `/agenda?classId=${teacherAgendaClassId}` : '/agenda';
 
   const menuItems = isTeacher
     ? [
@@ -211,7 +243,6 @@ export function AppSidebar() {
         { href: '/subjects', label: dictionary.sidebar.subjects, icon: SquareArrowOutUpRight, animated: true },
         { href: '/student-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ChartColumn, animated: true },
         { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: ChartSpline, animated: true },
-        { href: '/classes', label: t.classes, icon: Users, animated: true },
         { href: '/agenda', label: dictionary.sidebar.agenda, icon: ClipboardList, animated: true },
       ];
 
@@ -285,6 +316,15 @@ export function AppSidebar() {
     }
   };
 
+  const persistTeacherSubjectId = (nextSubjectId: string) => {
+    if (!nextSubjectId) return;
+    setActiveTeacherSubjectId(nextSubjectId);
+    setStoredTeacherSubjectId(nextSubjectId);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('studyweb-last-subject-id', nextSubjectId);
+    }
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (didPrefetchLikelyRoutesRef.current) return;
@@ -331,6 +371,13 @@ export function AppSidebar() {
   }, [isTeacher, effectiveTeacherClassId, activeTeacherClassId, storedTeacherClassId]);
 
   useEffect(() => {
+    if (!isTeacher) return;
+    if (!effectiveTeacherSubjectId) return;
+    if (effectiveTeacherSubjectId === activeTeacherSubjectId && effectiveTeacherSubjectId === storedTeacherSubjectId) return;
+    persistTeacherSubjectId(effectiveTeacherSubjectId);
+  }, [isTeacher, effectiveTeacherSubjectId, activeTeacherSubjectId, storedTeacherSubjectId]);
+
+  useEffect(() => {
     setDropdown(null);
   }, [pathname]);
 
@@ -344,6 +391,17 @@ export function AppSidebar() {
       persistTeacherClassId(nextClassId);
     }
   }, [pathname, searchParams, activeTeacherClassId, storedTeacherClassId]);
+
+  useEffect(() => {
+    const subjectMatch = pathname?.match(/^\/subjects\/([^/?#]+)/);
+    const subjectIdFromPath = subjectMatch?.[1];
+    const subjectIdFromQuery = searchParams?.get('subjectId');
+    const nextSubjectId = subjectIdFromPath || subjectIdFromQuery || '';
+    if (!nextSubjectId) return;
+    if (nextSubjectId !== activeTeacherSubjectId || nextSubjectId !== storedTeacherSubjectId) {
+      persistTeacherSubjectId(nextSubjectId);
+    }
+  }, [pathname, searchParams, activeTeacherSubjectId, storedTeacherSubjectId]);
 
   useEffect(() => {
     if (!dropdown) return;
@@ -427,6 +485,25 @@ export function AppSidebar() {
     if (pathname === '/subjects' || pathname.startsWith('/subjects/')) return pathname;
     if (pathname === '/agenda') return `/agenda?classId=${nextClassId}`;
     if (pathname === '/' || pathname === '/classes') return defaultRoute;
+
+    return defaultRoute;
+  };
+
+  // Subject is now the primary switcher identity. Preserve the current
+  // sub-route (e.g. /attendance) when switching subjects the same way
+  // resolveTeacherClassRoute preserves class sub-routes.
+  const resolveTeacherSubjectRoute = (nextSubjectId: string) => {
+    const defaultRoute = `/subjects/${nextSubjectId}`;
+    if (!pathname) return defaultRoute;
+
+    const subjectRouteMatch = pathname.match(/^\/subjects\/[^/?#]+(?<suffix>.*)$/);
+    if (subjectRouteMatch) {
+      const suffix = subjectRouteMatch.groups?.suffix || '';
+      const currentQuery = typeof window !== 'undefined' ? window.location.search : '';
+      return `/subjects/${nextSubjectId}${suffix}${currentQuery}`;
+    }
+
+    if (pathname === '/' || pathname === '/subjects') return defaultRoute;
 
     return defaultRoute;
   };
@@ -615,7 +692,13 @@ export function AppSidebar() {
     }
     if (basePath === '/classes') return pathname === '/classes' || pathname.startsWith('/class/');
     if (basePath === '/agenda') return pathname === '/agenda';
-    if (basePath === '/subjects') return pathname === '/subjects' || pathname.startsWith('/subjects/');
+    if (href.startsWith('/subjects/') && href.includes('/attendance')) {
+      // "Manage" (subject-scoped attendance) -- don't also light up "Subjects".
+      return pathname === basePath;
+    }
+    if (basePath === '/subjects') {
+      return (pathname === '/subjects' || pathname.startsWith('/subjects/')) && !pathname.endsWith('/attendance');
+    }
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === basePath;
   };
@@ -843,45 +926,53 @@ export function AppSidebar() {
           ) : items.length === 0 ? (
             <p className="px-2 py-1.5 text-xs text-sidebar-foreground/80">{emptyText}</p>
           ) : (
-            items.map((entry) => (
-              <Link
-                key={entry.id}
-                href={dropdown.kind === 'classes' && isTeacher ? resolveTeacherClassRoute(entry.id) : entry.href}
-                className={cn(
-                  'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
-                  dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId
-                    ? 'surface-chip text-sidebar-foreground'
-                    : 'hover:surface-chip text-sidebar-foreground/85 hover:text-sidebar-foreground'
-                )}
-                onClick={(event) => {
-                  if (dropdown.kind === 'classes' && isTeacher) {
-                    event.preventDefault();
-                    persistTeacherClassId(entry.id);
-                    const nextRoute = resolveTeacherClassRoute(entry.id);
-                    try {
-                      void router.prefetch(nextRoute);
-                    } catch {}
-                    router.replace(nextRoute);
-                  }
-                  resetInlinePanels();
-                  setDropdown(null);
-                  setOpenMobile(false);
-                }}
-                onMouseEnter={() => {
-                  if (dropdown.kind === 'classes' && isTeacher) {
-                    const nextRoute = resolveTeacherClassRoute(entry.id);
-                    try {
-                      void router.prefetch(nextRoute);
-                    } catch {}
-                  }
-                }}
-              >
-                <span className="truncate">{entry.label}</span>
-                {dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId && (
-                  <Check className="h-3.5 w-3.5 text-foreground/80" />
-                )}
-              </Link>
-            ))
+            items.map((entry) => {
+              const isActiveEntry =
+                (dropdown.kind === 'classes' && entry.id === effectiveTeacherClassId) ||
+                (dropdown.kind === 'subjects' && isTeacher && entry.id === effectiveTeacherSubjectId);
+              const teacherRoute =
+                dropdown.kind === 'classes'
+                  ? resolveTeacherClassRoute(entry.id)
+                  : dropdown.kind === 'subjects' && isTeacher
+                    ? resolveTeacherSubjectRoute(entry.id)
+                    : entry.href;
+              return (
+                <Link
+                  key={entry.id}
+                  href={isTeacher && (dropdown.kind === 'classes' || dropdown.kind === 'subjects') ? teacherRoute : entry.href}
+                  className={cn(
+                    'flex items-center justify-between gap-2 truncate rounded-xl px-2.5 py-2 text-[13px] transition-colors',
+                    isActiveEntry
+                      ? 'surface-chip text-sidebar-foreground'
+                      : 'hover:surface-chip text-sidebar-foreground/85 hover:text-sidebar-foreground'
+                  )}
+                  onClick={(event) => {
+                    if (dropdown.kind === 'classes' && isTeacher) {
+                      event.preventDefault();
+                      persistTeacherClassId(entry.id);
+                      try { void router.prefetch(teacherRoute); } catch {}
+                      router.replace(teacherRoute);
+                    } else if (dropdown.kind === 'subjects' && isTeacher) {
+                      event.preventDefault();
+                      persistTeacherSubjectId(entry.id);
+                      try { void router.prefetch(teacherRoute); } catch {}
+                      router.replace(teacherRoute);
+                    }
+                    resetInlinePanels();
+                    setDropdown(null);
+                    setOpenMobile(false);
+                  }}
+                  onMouseEnter={() => {
+                    if (isTeacher && (dropdown.kind === 'classes' || dropdown.kind === 'subjects')) {
+                      try { void router.prefetch(teacherRoute); } catch {}
+                    }
+                  }}
+                >
+                  <span className="truncate">{entry.label}</span>
+                  {isActiveEntry && <Check className="h-3.5 w-3.5 text-foreground/80" />}
+                </Link>
+              );
+            })
           )}
         </div>
       </div>
@@ -896,26 +987,26 @@ export function AppSidebar() {
       return (
         <div className="mb-2 px-2">
           <Select
-            value={effectiveTeacherClassId || '__none__'}
-            disabled={classDropdownItems.length === 0}
+            value={effectiveTeacherSubjectId || '__none__'}
+            disabled={subjectDropdownItems.length === 0}
             onValueChange={(val) => {
               if (!val || val === '__none__') return;
-              persistTeacherClassId(val);
-              const nextRoute = resolveTeacherClassRoute(val);
+              persistTeacherSubjectId(val);
+              const nextRoute = resolveTeacherSubjectRoute(val);
               try { void router.prefetch(nextRoute); } catch {}
               router.replace(nextRoute);
               setOpenMobile(false);
             }}
           >
             <SelectTrigger className="h-9 w-full text-[12px]">
-              <SelectValue placeholder={isDutch ? 'Geen klassen' : 'No classes'} />
+              <SelectValue placeholder={isDutch ? 'Geen vakken' : 'No subjects'} />
             </SelectTrigger>
             <SelectContent>
-              {classDropdownItems.length === 0 ? (
-                <SelectItem value="__none__" disabled>{isDutch ? 'Geen klassen' : 'No classes'}</SelectItem>
+              {subjectDropdownItems.length === 0 ? (
+                <SelectItem value="__none__" disabled>{isDutch ? 'Geen vakken' : 'No subjects'}</SelectItem>
               ) : (
-                classDropdownItems.map((classItem) => (
-                  <SelectItem key={classItem.id} value={classItem.id}>{classItem.label}</SelectItem>
+                subjectDropdownItems.map((subjectItem) => (
+                  <SelectItem key={subjectItem.id} value={subjectItem.id}>{subjectItem.label}</SelectItem>
                 ))
               )}
             </SelectContent>
@@ -936,13 +1027,13 @@ export function AppSidebar() {
             setNewClassMenuOpen(false);
             setCreateClassOpen(false);
             setJoinClassOpen(false);
-            openDropdownFor('classes', event.currentTarget);
+            openDropdownFor('subjects', event.currentTarget);
           }}
-          disabled={classDropdownItems.length === 0}
+          disabled={subjectDropdownItems.length === 0}
           className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border/70 surface-panel px-2.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
         >
           <span className="truncate">
-            {classDropdownItems.find((classItem) => classItem.id === effectiveTeacherClassId)?.label || (isDutch ? 'Geen klassen' : 'No classes')}
+            {subjectDropdownItems.find((subjectItem) => subjectItem.id === effectiveTeacherSubjectId)?.label || (isDutch ? 'Geen vakken' : 'No subjects')}
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
         </button>
