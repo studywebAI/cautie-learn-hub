@@ -135,9 +135,7 @@ export default function MetricsPage() {
         </Select>
       </div>
 
-      {/* Category weights (grading_categories) are class-only -- no
-          subject equivalent, so this panel only shows for a class scope. */}
-      {selectedClassId && <CategoryWeightsPanel classId={selectedClassId} isDutch={isDutch} />}
+      {scopeId && <CategoryWeightsPanel classId={selectedClassId || null} subjectId={selectedSubjectId || null} isDutch={isDutch} />}
 
       {/* Grade set selection */}
       {scopeId && (

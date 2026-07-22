@@ -50,13 +50,15 @@ const QUICK_PRESETS: Array<{ key: string; name: string; bins: Bin[] }> = [
 
 export function GradingTemplatePicker({
   classId,
+  subjectId,
   isDutch,
   selectedPresetId,
   onSelect,
   onApply,
   applying,
 }: {
-  classId: string;
+  classId?: string | null;
+  subjectId?: string | null;
   isDutch: boolean;
   selectedPresetId: string | null;
   onSelect: (presetId: string) => void;
@@ -73,10 +75,12 @@ export function GradingTemplatePicker({
   const [makeDefault, setMakeDefault] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { void loadPresets(); }, [classId]);
+  const base = classId ? `/api/classes/${classId}` : `/api/subjects/${subjectId}`;
+
+  useEffect(() => { void loadPresets(); }, [classId, subjectId]);
 
   const loadPresets = async () => {
-    const res = await fetch(`/api/classes/${classId}/grading-presets`);
+    const res = await fetch(`${base}/grading-presets`);
     if (!res.ok) return;
     const data = await res.json();
     const scaleTemplates: Preset[] = (data.presets || []).filter((p: any) => p.config?.templateType === 'scale_template');
@@ -90,7 +94,7 @@ export function GradingTemplatePicker({
   const saveTemplate = async (name: string, system: string, bins: Bin[], isDefault?: boolean) => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/classes/${classId}/grading-presets`, {
+      const res = await fetch(`${base}/grading-presets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, kind: 'freeform', config: { templateType: 'scale_template', system, bins }, is_default: !!isDefault }),
@@ -116,7 +120,7 @@ export function GradingTemplatePicker({
     if (!pasteText.trim()) return;
     setParsing(true);
     try {
-      const res = await fetch(`/api/classes/${classId}/grading-presets/parse`, {
+      const res = await fetch(`${base}/grading-presets/parse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: pasteText }),
@@ -158,7 +162,9 @@ export function GradingTemplatePicker({
         <PopoverContent align="end" className="w-96 space-y-4 max-h-[70vh] overflow-y-auto">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-3.5 w-3.5" />
-            {isDutch ? 'Maak dit de standaard-template voor deze klas' : 'Make this the default template for this class'}
+            {classId
+              ? (isDutch ? 'Maak dit de standaard-template voor deze klas' : 'Make this the default template for this class')
+              : (isDutch ? 'Maak dit de standaard-template voor dit vak' : 'Make this the default template for this subject')}
           </label>
 
           <div>

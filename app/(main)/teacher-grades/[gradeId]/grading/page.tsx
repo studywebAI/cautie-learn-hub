@@ -208,10 +208,10 @@ export default function GradingInterfacePage() {
   };
 
   const applyTemplate = async () => {
-    if (!classId || !gradeSet?.id || !selectedPresetId || applyingTemplate) return;
+    if ((!classId && !subjectId) || !gradeSet?.id || !selectedPresetId || applyingTemplate) return;
     setApplyingTemplate(true);
     try {
-      await fetch(`/api/classes/${classId}/grades/${gradeSet.id}/apply-template`, {
+      await fetch(`${scopeBase(classId, subjectId)}/grades/${gradeSet.id}/apply-template`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ preset_id: selectedPresetId }),
@@ -528,21 +528,18 @@ export default function GradingInterfacePage() {
       {/* Cijfer-template + vrijgeven (alleen voor toets-gekoppelde cijferlijsten) */}
       {gradeSet.assignment_id && (classId || subjectId) && (
         <Card className="p-3 surface-panel border border-border space-y-2">
-          {/* Grading templates (class_grading_presets) have no subject
-              equivalent yet -- only offered for class-linked grade sets. */}
-          {classId && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground shrink-0">{isDutch ? 'Cijfer-template:' : 'Grading template:'}</span>
-              <GradingTemplatePicker
-                classId={classId}
-                isDutch={isDutch}
-                selectedPresetId={selectedPresetId}
-                onSelect={setSelectedPresetId}
-                onApply={applyTemplate}
-                applying={applyingTemplate}
-              />
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">{isDutch ? 'Cijfer-template:' : 'Grading template:'}</span>
+            <GradingTemplatePicker
+              classId={classId || null}
+              subjectId={subjectId || null}
+              isDutch={isDutch}
+              selectedPresetId={selectedPresetId}
+              onSelect={setSelectedPresetId}
+              onApply={applyTemplate}
+              applying={applyingTemplate}
+            />
+          </div>
           <div className="flex flex-wrap gap-2 border-t border-border pt-2">
             <Button
               size="sm"

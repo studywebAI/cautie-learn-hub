@@ -20,18 +20,20 @@ const CATEGORY_LABELS: Record<string, { nl: string; en: string }> = {
 
 // Category weights for computing a weighted eindcijfer across a class's
 // grade sets. See docs/grades-feature-brainstorm.md section I point 13.
-export function CategoryWeightsPanel({ classId, isDutch }: { classId: string; isDutch: boolean }) {
+export function CategoryWeightsPanel({ classId, subjectId, isDutch }: { classId?: string | null; subjectId?: string | null; isDutch: boolean }) {
   const [weights, setWeights] = useState<Record<string, number>>({});
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { void load(); }, [classId]);
+  const base = classId ? `/api/classes/${classId}` : `/api/subjects/${subjectId}`;
+
+  useEffect(() => { void load(); }, [classId, subjectId]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/classes/${classId}/category-weights`);
+      const res = await fetch(`${base}/category-weights`);
       if (res.ok) {
         const data = await res.json();
         setWeights(data.weights || {});
@@ -45,7 +47,7 @@ export function CategoryWeightsPanel({ classId, isDutch }: { classId: string; is
     setSaving(true);
     try {
       const nonZero = Object.fromEntries(Object.entries(weights).filter(([, v]) => Number(v) > 0));
-      const res = await fetch(`/api/classes/${classId}/category-weights`, {
+      const res = await fetch(`${base}/category-weights`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ weights: nonZero }),
