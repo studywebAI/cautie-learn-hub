@@ -49,7 +49,6 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [subjects, setSubjects] = useState<any[]>(seededSubjects);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'default' | 'name' | 'recent'>('default');
-  const [filterClassId, setFilterClassId] = useState<string>('all');
   const [filterFolderId, setFilterFolderId] = useState<string>('all');
   const [showArchived, setShowArchived] = useState(false);
   const [folders, setFolders] = useState<Array<{ id: string; name: string }>>([]);
@@ -448,26 +447,13 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     }
   };
 
-  // These must stay above any early return (isLoading below) — hooks can't
-  // be called conditionally. They previously sat after the isLoading
+  // This must stay above any early return (isLoading below) — hooks can't
+  // be called conditionally. It previously sat after the isLoading
   // return, so the component called a different number of hooks on the
   // loading vs. loaded render, which is exactly React error #310
   // ("Rendered more hooks than during the previous render").
-  const classFilterOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const subject of subjects) {
-      for (const cls of (subject.classes || [])) {
-        if (cls?.id && cls?.name) map.set(cls.id, cls.name);
-      }
-    }
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
-  }, [subjects]);
-
   const visibleSubjects = useMemo(() => {
     let list = subjects.filter((subject: any) => showArchived || !subject.archived_at);
-    if (filterClassId !== 'all') {
-      list = list.filter((subject: any) => (subject.classes || []).some((c: any) => c.id === filterClassId));
-    }
     if (filterFolderId !== 'all') {
       list = filterFolderId === 'none'
         ? list.filter((subject: any) => !subject.folder_id)
@@ -483,7 +469,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
       });
     }
     return list;
-  }, [subjects, sortBy, filterClassId, filterFolderId, showArchived]);
+  }, [subjects, sortBy, filterFolderId, showArchived]);
 
   if (isLoading) {
     return (
@@ -518,19 +504,6 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
                   <SelectItem value="none">No folder</SelectItem>
                   {folders.map((f) => (
                     <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {classFilterOptions.length > 1 && (
-              <Select value={filterClassId} onValueChange={setFilterClassId}>
-                <SelectTrigger className="h-8 w-auto text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All classes</SelectItem>
-                  {classFilterOptions.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

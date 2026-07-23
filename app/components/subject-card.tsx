@@ -318,7 +318,6 @@ export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onC
   const [isBusy, setIsBusy] = useState(false);
   const paragraphs = subject.paragraphContext?.paragraphs || [];
   const lastParagraphId = subject.paragraphContext?.lastParagraphId;
-  const className = subject.classes?.[0]?.name;
   const Icon = getSubjectIcon(subject.title, subject.description);
 
   const toggleArchive = async () => {
@@ -493,9 +492,6 @@ export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onC
             </div>
           )}
           <h3 className="truncate text-[13px] font-medium text-foreground">{subject.title}</h3>
-          {className && (
-            <p className="mt-0.5 truncate text-[12px] text-sidebar-foreground">{className}</p>
-          )}
           {lastWorkedParagraph && (
             <Link
               prefetch={false}
