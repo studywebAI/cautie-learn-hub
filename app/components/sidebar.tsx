@@ -163,10 +163,6 @@ export function AppSidebar() {
     storedTeacherClassId ||
     classItems[0]?.id ||
     (context?.classes?.find((classItem) => classItem.status !== 'archived')?.id || '');
-  // Subjects is genuinely subject-scoped now -- a teacher's full subject
-  // list (class-linked or standalone) loads regardless of which class is
-  // "active", so this link no longer needs a classId param at all.
-  const teacherSubjectsHref = '/subjects';
   // "Manage" (attendance) is subject-first now that every class has a
   // backfilled 1:1 subject (Phase 3.1 migration) -- class stays as the
   // fallback only for the rare case a subject hasn't loaded yet client-side.
@@ -180,6 +176,15 @@ export function AppSidebar() {
     subjectItems[0]?.id ||
     '';
   const effectiveTeacherSubject = subjectItems.find((subject) => subject.id === effectiveTeacherSubjectId) || null;
+  // "Subjects" opens straight into whichever subject is active (per the
+  // sidebar's subject switcher), the same way the old class nav opened
+  // straight into the active class -- not a grid of every subject. The
+  // grid (browsing/creating/joining across all subjects) is a student-only
+  // surface now for teachers without an active subject yet; the switcher
+  // dropdown is how a teacher picks between subjects.
+  const teacherSubjectsHref = isTeacher && effectiveTeacherSubjectId
+    ? `/subjects/${effectiveTeacherSubjectId}`
+    : '/subjects';
   const teacherAttendanceHref = isTeacher && effectiveTeacherSubjectId
     ? `/subjects/${effectiveTeacherSubjectId}/attendance`
     : '/subjects';
@@ -497,12 +502,15 @@ export function AppSidebar() {
   const isMenuItemActive = (href: string) => {
     const [basePath] = href.split('?');
     if (basePath === '/agenda') return pathname === '/agenda';
-    if (href.startsWith('/subjects/') && href.includes('/attendance')) {
-      // "Manage" (subject-scoped attendance) -- don't also light up "Subjects".
+    if (href.includes('/attendance')) {
+      // "Attendance" -- don't also light up "Subjects".
       return pathname === basePath;
     }
-    if (basePath === '/subjects') {
-      return (pathname === '/subjects' || pathname.startsWith('/subjects/')) && !pathname.endsWith('/attendance');
+    if (basePath === '/subjects' || basePath.startsWith('/subjects/')) {
+      // Covers both the grid ('/subjects') and a teacher's active-subject
+      // link ('/subjects/[id]') -- either way, any /subjects/* route that
+      // isn't the attendance page counts as "Subjects" being active.
+      return (pathname === '/subjects' || pathname.startsWith('/subjects/')) && !pathname.includes('/attendance');
     }
     if (href.startsWith('/tools')) return pathname.startsWith(href);
     return pathname === basePath;
