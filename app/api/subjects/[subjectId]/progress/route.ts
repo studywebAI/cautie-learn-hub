@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSubjectPermission } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,43 +22,14 @@ export async function GET(
     const resolvedParams = await params
     const subjectId = resolvedParams.subjectId
 
-    // Verify subject exists and user has access
-    const { data: subject, error: subjectError } = await supabase
-      .from('subjects')
-      .select('id, class_id, title')
-      .eq('id', subjectId)
-      .single()
-
-    if (subjectError || !subject) {
+    // Verify subject exists and user has access (ownership, subject_teachers,
+    // subject_students, or the legacy class-membership path -- covers
+    // standalone subjects, which the old class_id-only check rejected outright).
+    const perm = await getSubjectPermission(supabase as any, subjectId, user.id)
+    if (!perm.hasAccess || !perm.subject) {
       return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
     }
-
-    // Check access - subject.class_id could be null, handle that
-    if (!subject.class_id) {
-      return NextResponse.json({ error: 'Subject has no class association' }, { status: 400 })
-    }
-    
-    const { data: classAccess, error: classError } = await supabase
-      .from('classes')
-      .select('id, owner_id, user_id')
-      .eq('id', subject.class_id)
-      .single()
-
-    if (classError || !classAccess) {
-      return NextResponse.json({ error: 'Class not found' }, { status: 404 })
-    }
-
-    const isTeacher = classAccess.owner_id === user.id || classAccess.user_id === user.id
-    const { data: isStudent } = await supabase
-      .from('class_members')
-      .select('user_id')
-      .eq('class_id', subject.class_id)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!isTeacher && !isStudent) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-    }
+    const subject = perm.subject
 
     // Get progress by querying chapters and progress snapshots
     const { data: chapters, error: chaptersError } = await supabase
@@ -167,29 +139,10 @@ export async function POST(
       return NextResponse.json({ error: 'Paragraph does not belong to this subject' }, { status: 400 })
     }
 
-    // Verify subject exists and get class_id
-    const { data: subjectCheck, error: subjectCheckError } = await supabase
-      .from('subjects')
-      .select('class_id')
-      .eq('id', subjectId)
-      .single()
-
-    if (subjectCheckError || !subjectCheck) {
-      return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
-    }
-
-    if (!subjectCheck.class_id) {
-      return NextResponse.json({ error: 'Subject has no class association' }, { status: 400 })
-    }
-
-    // Check if user has access to the class
-    const { data: classAccess, error: classError } = await supabase
-      .from('classes')
-      .select('id')
-      .eq('id', subjectCheck.class_id)
-      .single()
-
-    if (classError || !classAccess) {
+    // Verify subject exists and user has access (covers standalone
+    // subjects, which the old class_id-only check rejected outright).
+    const perm = await getSubjectPermission(supabase as any, subjectId, user.id)
+    if (!perm.hasAccess) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 

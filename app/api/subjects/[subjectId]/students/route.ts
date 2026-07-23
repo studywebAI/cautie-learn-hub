@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
+import { userHasSubjectAccess } from '@/lib/auth/subject-permissions';
 
 // Mirrors app/api/classes/[classId]/students/route.ts, keyed on
 // subject_students instead of class_members.
@@ -12,6 +13,16 @@ export async function GET(
     const { subjectId } = await params;
     const cookieStore = await cookies();
     const supabase = await createClient(cookieStore);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const hasAccess = await userHasSubjectAccess(supabase as any, user.id, subjectId);
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Subject not found' }, { status: 404 });
+    }
 
     const { data: members, error: membersError } = await supabase
       .from('subject_students' as any)

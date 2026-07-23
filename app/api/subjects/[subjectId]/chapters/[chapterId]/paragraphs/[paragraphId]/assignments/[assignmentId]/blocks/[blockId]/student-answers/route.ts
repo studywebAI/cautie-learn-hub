@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { userHasSubjectAccess } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +29,12 @@ export async function GET(
       .eq('id', user.id)
       .maybeSingle()
     if (profile?.subscription_type !== 'teacher') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    // Being *a* teacher isn't enough -- must be a teacher of *this* subject,
+    // since this returns real student answer data.
+    const hasSubjectAccess = await userHasSubjectAccess(supabase as any, user.id, resolvedParams.subjectId)
+    if (!hasSubjectAccess) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

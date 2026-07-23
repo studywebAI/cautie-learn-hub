@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSubjectPermission } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,13 +20,20 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_type')
-      .eq('id', user.id)
-      .maybeSingle()
-    if (profile?.subscription_type !== 'teacher') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    // Previously only checked the account was *a* teacher, not a teacher of
+    // *this* subject -- any teacher on the platform could reorder any other
+    // teacher's subject's chapters. Scope it to this subject's own owner/
+    // co-teachers instead.
+    const perm = await getSubjectPermission(supabase as any, resolvedParams.subjectId, user.id)
+    if (!perm.hasAccess || !perm.subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+    if (!perm.isOwner) {
+      const { data: teacherRow } = await (supabase as any)
+        .from('subject_teachers')
+        .select('teacher_id')
+        .eq('subject_id', resolvedParams.subjectId)
+        .eq('teacher_id', user.id)
+        .maybeSingle()
+      if (!teacherRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))

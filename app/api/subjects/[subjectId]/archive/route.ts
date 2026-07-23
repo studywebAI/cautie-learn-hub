@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import { getSubjectPermission } from '@/lib/auth/subject-permissions'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,14 +19,16 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: subject } = await supabase
-      .from('subjects')
-      .select('id, user_id')
-      .eq('id', resolvedParams.subjectId)
-      .maybeSingle()
-    if (!subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
-    if ((subject as any).user_id !== user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const perm = await getSubjectPermission(supabase as any, resolvedParams.subjectId, user.id)
+    if (!perm.hasAccess || !perm.subject) return NextResponse.json({ error: 'Subject not found' }, { status: 404 })
+    if (!perm.isOwner) {
+      const { data: teacherRow } = await (supabase as any)
+        .from('subject_teachers')
+        .select('teacher_id')
+        .eq('subject_id', resolvedParams.subjectId)
+        .eq('teacher_id', user.id)
+        .maybeSingle()
+      if (!teacherRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))
