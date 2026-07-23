@@ -19,6 +19,14 @@ type Teacher = {
   isOwner: boolean;
 };
 
+type PendingRequest = {
+  id: string;
+  requesterId: string;
+  email: string | null;
+  role: 'student' | 'teacher';
+  createdAt: string;
+};
+
 const SECTIONS = ['info', 'access', 'invite'] as const;
 type Section = (typeof SECTIONS)[number];
 
@@ -41,6 +49,8 @@ export function SubjectSettingsPanel({
   const [activeSection, setActiveSection] = useState<Section>('info');
   const [subjectData, setSubjectData] = useState<SubjectData | null>(null);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -56,9 +66,10 @@ export function SubjectSettingsPanel({
   async function loadSettings() {
     setLoading(true);
     try {
-      const [subjectRes, teachersRes] = await Promise.allSettled([
+      const [subjectRes, teachersRes, requestsRes] = await Promise.allSettled([
         fetch(`/api/subjects/${subjectId}`),
         fetch(`/api/subjects/${subjectId}/teachers`),
+        fetch(`/api/subjects/${subjectId}/join-requests`),
       ]);
 
       if (subjectRes.status === 'fulfilled' && subjectRes.value.ok) {
@@ -72,9 +83,28 @@ export function SubjectSettingsPanel({
         const data = await teachersRes.value.json();
         setTeachers(data.teachers || []);
       }
+
+      if (requestsRes.status === 'fulfilled' && requestsRes.value.ok) {
+        const data = await requestsRes.value.json();
+        setPendingRequests(data.requests || []);
+      }
     } catch (e) {
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function resolveRequest(requestId: string, action: 'approve' | 'reject') {
+    setResolvingId(requestId);
+    try {
+      const res = await fetch(`/api/subjects/${subjectId}/join-requests`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action }),
+      });
+      if (res.ok) await loadSettings();
+    } finally {
+      setResolvingId(null);
     }
   }
 
@@ -116,6 +146,17 @@ export function SubjectSettingsPanel({
       await navigator.clipboard.writeText(subjectData.join_code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+
+  const joinLink = subjectData?.join_code
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/subjects?join_code=${subjectData.join_code}`
+    : '';
+
+  async function copyJoinLink() {
+    if (!joinLink) return;
+    try {
+      await navigator.clipboard.writeText(joinLink);
     } catch {}
   }
 
@@ -210,23 +251,61 @@ export function SubjectSettingsPanel({
           )}
 
           {activeSection === 'access' && (
-            <div>
-              <h3 className="text-[13px] font-600 text-foreground mb-3">
-                {isDutch ? 'Docenten met toegang' : 'Teachers with access'}
-              </h3>
-              <div className="border border-border rounded-md divide-y divide-border">
-                {teachers.length === 0 ? (
-                  <div className="px-4 py-3 text-[12px] text-muted-foreground">
-                    {isDutch ? 'Geen docenten gevonden.' : 'No teachers found.'}
+            <div className="space-y-6">
+              {pendingRequests.length > 0 && (
+                <div>
+                  <h3 className="text-[13px] font-600 text-foreground mb-3">
+                    {isDutch ? 'Wachtende verzoeken' : 'Pending requests'}
+                  </h3>
+                  <div className="border border-border rounded-md divide-y divide-border">
+                    {pendingRequests.map((req) => (
+                      <div key={req.id} className="flex items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <p className="text-[13px] font-500 text-foreground">{req.email || req.requesterId}</p>
+                          <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded surface-interactive text-muted-foreground">
+                            {req.role === 'teacher' ? (isDutch ? 'docent' : 'teacher') : (isDutch ? 'student' : 'student')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => resolveRequest(req.id, 'approve')}
+                            disabled={resolvingId === req.id}
+                            className="px-2.5 py-1 text-[12px] font-500 bg-primary text-primary-foreground rounded-md hover:opacity-90 disabled:opacity-50"
+                          >
+                            {isDutch ? 'Goedkeuren' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => resolveRequest(req.id, 'reject')}
+                            disabled={resolvingId === req.id}
+                            className="px-2.5 py-1 text-[12px] font-500 border border-border rounded-md hover:bg-muted disabled:opacity-50"
+                          >
+                            {isDutch ? 'Afwijzen' : 'Reject'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ) : teachers.map((teacher) => (
-                  <div key={teacher.id} className="flex items-center justify-between px-4 py-3">
-                    <p className="text-[13px] font-500 text-foreground">{teacher.name}</p>
-                    {teacher.isOwner && (
-                      <span className="text-[11px] text-muted-foreground">{isDutch ? 'Eigenaar' : 'Owner'}</span>
-                    )}
-                  </div>
-                ))}
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-[13px] font-600 text-foreground mb-3">
+                  {isDutch ? 'Docenten met toegang' : 'Teachers with access'}
+                </h3>
+                <div className="border border-border rounded-md divide-y divide-border">
+                  {teachers.length === 0 ? (
+                    <div className="px-4 py-3 text-[12px] text-muted-foreground">
+                      {isDutch ? 'Geen docenten gevonden.' : 'No teachers found.'}
+                    </div>
+                  ) : teachers.map((teacher) => (
+                    <div key={teacher.id} className="flex items-center justify-between px-4 py-3">
+                      <p className="text-[13px] font-500 text-foreground">{teacher.name}</p>
+                      {teacher.isOwner && (
+                        <span className="text-[11px] text-muted-foreground">{isDutch ? 'Eigenaar' : 'Owner'}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -234,8 +313,12 @@ export function SubjectSettingsPanel({
           {activeSection === 'invite' && (
             <div className="space-y-4">
               <SettingField
-                label={isDutch ? 'Deelnamecode voor studenten' : 'Student join code'}
-                description={isDutch ? 'Deel deze code zodat studenten dit vak kunnen deelnemen' : 'Share this code so students can join this subject'}
+                label={isDutch ? 'Deelnamecode' : 'Join code'}
+                description={
+                  isDutch
+                    ? 'Zelfde code voor iedereen: studenten en docenten die de code invoeren vragen toegang aan, jij keurt ze goed of af (zie Toegang hierboven).'
+                    : 'Same code for everyone: students and teachers entering it request access, you approve or reject them (see Access above).'
+                }
               >
                 <div className="flex items-center gap-2">
                   <code className="flex-1 px-3 py-2 text-[15px] tracking-wide border border-border rounded-md bg-muted/40">
@@ -259,6 +342,35 @@ export function SubjectSettingsPanel({
                   </button>
                 </div>
               </SettingField>
+
+              {subjectData?.join_code && (
+                <SettingField
+                  label={isDutch ? 'Deel-link met QR-code' : 'Share link with QR code'}
+                  description={isDutch ? 'Scannen of de link openen vult de code automatisch in' : 'Scanning or opening the link fills in the code automatically'}
+                >
+                  <div className="flex items-center gap-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(joinLink)}`}
+                      alt="QR code"
+                      width={100}
+                      height={100}
+                      className="rounded-md border border-border"
+                    />
+                    <div className="flex-1 space-y-1.5">
+                      <code className="block truncate px-3 py-2 text-[12px] border border-border rounded-md bg-muted/40">
+                        {joinLink}
+                      </code>
+                      <button
+                        onClick={copyJoinLink}
+                        className="text-[12px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                      >
+                        {isDutch ? 'Link kopiëren' : 'Copy link'}
+                      </button>
+                    </div>
+                  </div>
+                </SettingField>
+              )}
             </div>
           )}
         </div>

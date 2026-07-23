@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic'
 
 // Lists everyone with teacher-level access to a subject: its owner
 // (subjects.user_id) plus any co-teacher rows in subject_teachers.
+// Pending join requests (both roles) live at
+// GET/PATCH /api/subjects/[subjectId]/join-requests instead.
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ subjectId: string }> }

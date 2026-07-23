@@ -453,11 +453,13 @@ export async function POST(request: NextRequest) {
 
     // Create the subject in Supabase
     logSubjects('POST - Inserting subject row', { opId, userId: user.id, title })
+    const { data: generatedJoinCode } = await (supabase as any).rpc('generate_subject_join_code')
     const { data: subjectData, error: subjectError } = await supabase.from('subjects')
       .insert([{
         title: title,
         user_id: user.id,
-        description: description
+        description: description,
+        join_code: generatedJoinCode || null,
       }])
       .select()
 

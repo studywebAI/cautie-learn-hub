@@ -33,7 +33,12 @@ export async function GET(request: Request) {
   return NextResponse.json({ id: subject.id, title: subject.title, description: subject.description })
 }
 
-// POST — join a subject directly by code (student self-enrollment, no class involved).
+// POST — request to join a subject by code. One code, both roles go
+// through the same approval step: a student or a teacher entering the
+// code files a pending subject_join_requests row (role recorded from
+// their account type), and an existing subject teacher must approve it
+// (PATCH /api/subjects/[subjectId]/join-requests) before they actually
+// get a subject_students / subject_teachers row.
 export async function POST(request: NextRequest) {
   const validation = await validateBody(request, joinSubjectSchema)
   if ('error' in validation) {
@@ -56,23 +61,100 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Subject not found. Please check the code and try again.' }, { status: 404 })
   }
 
-  const { error: insertError } = await (supabase as any)
-    .from('subject_students')
-    .insert([{ subject_id: subject.id, student_id: user.id, source: 'direct_join' }])
+  const { data: ownerCheck } = await (supabase as any)
+    .from('subjects')
+    .select('user_id')
+    .eq('id', subject.id)
+    .maybeSingle()
 
-  if (insertError) {
-    if (insertError.code === '23505') {
-      return NextResponse.json({
-        message: 'You already joined this subject.',
-        alreadyJoined: true,
-        subject: { id: subject.id, title: subject.title, description: subject.description },
-      }, { status: 200 })
-    }
-    return NextResponse.json({ error: insertError.message }, { status: 500 })
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_type')
+    .eq('id', user.id)
+    .maybeSingle()
+  const isTeacher = ['teacher', 'owner', 'admin', 'creator'].includes(String(profile?.subscription_type || '').toLowerCase())
+  const role = isTeacher ? 'teacher' : 'student'
+
+  if (ownerCheck?.user_id === user.id) {
+    return NextResponse.json({
+      message: 'You already own this subject.',
+      alreadyJoined: true,
+      subject: { id: subject.id, title: subject.title, description: subject.description },
+    }, { status: 200 })
+  }
+
+  const membershipTable = isTeacher ? 'subject_teachers' : 'subject_students'
+  const membershipColumn = isTeacher ? 'teacher_id' : 'student_id'
+  const { data: existingMembership } = await (supabase as any)
+    .from(membershipTable)
+    .select(membershipColumn)
+    .eq('subject_id', subject.id)
+    .eq(membershipColumn, user.id)
+    .maybeSingle()
+  if (existingMembership) {
+    return NextResponse.json({
+      message: 'You already joined this subject.',
+      alreadyJoined: true,
+      subject: { id: subject.id, title: subject.title, description: subject.description },
+    }, { status: 200 })
+  }
+
+  const { data: existingPending } = await (supabase as any)
+    .from('subject_join_requests')
+    .select('id')
+    .eq('subject_id', subject.id)
+    .eq('requester_user_id', user.id)
+    .eq('status', 'pending')
+    .maybeSingle()
+  if (existingPending) {
+    return NextResponse.json({
+      message: 'Your request to join this subject is already pending approval.',
+      pendingApproval: true,
+      subject: { id: subject.id, title: subject.title, description: subject.description },
+    }, { status: 202 })
+  }
+
+  const { data: createdRequest, error: requestError } = await (supabase as any)
+    .from('subject_join_requests')
+    .insert([{ subject_id: subject.id, requester_user_id: user.id, requester_email: user.email || null, role }])
+    .select('id')
+    .single()
+
+  if (requestError || !createdRequest) {
+    return NextResponse.json({ error: requestError?.message || 'Failed to create join request' }, { status: 500 })
+  }
+
+  const { data: teacherRows } = await (supabase as any)
+    .from('subject_teachers')
+    .select('teacher_id')
+    .eq('subject_id', subject.id)
+  const approverIds = Array.from(new Set([ownerCheck?.user_id, ...(teacherRows || []).map((r: any) => r.teacher_id)]))
+    .filter((id) => id && id !== user.id)
+
+  if (approverIds.length > 0) {
+    await (supabase as any).from('notifications').insert(
+      approverIds.map((teacherId) => ({
+        user_id: teacherId,
+        type: 'subject_join_request',
+        title: role === 'teacher' ? 'Co-teacher request' : 'New pending student',
+        message: role === 'teacher'
+          ? `${user.email || 'A teacher'} wants to co-teach "${subject.title}"`
+          : `${user.email || 'A student'} wants to join "${subject.title}"`,
+        data: {
+          request_id: createdRequest.id,
+          subject_id: subject.id,
+          subject_title: subject.title,
+          requester_user_id: user.id,
+          requester_email: user.email || null,
+          role,
+        },
+      }))
+    )
   }
 
   return NextResponse.json({
-    message: `Successfully joined "${subject.title}"`,
+    message: 'Request sent. Waiting for approval from an existing teacher of this subject.',
+    pendingApproval: true,
     subject: { id: subject.id, title: subject.title, description: subject.description },
-  })
+  }, { status: 202 })
 }

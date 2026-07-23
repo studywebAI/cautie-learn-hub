@@ -150,6 +150,8 @@ export default function SettingsPage() {
   useEffect(() => {
     const tabParam = (searchParams?.get('tab') || '').toLowerCase();
     const validTabs = new Set(['personalization', 'account', 'studysets', 'subscription', 'log-codes', '2fa', 'subject']);
+    const subjectIdParam = searchParams?.get('subjectId');
+    if (subjectIdParam) setSelectedSubjectSettingsId(subjectIdParam);
     if (validTabs.has(tabParam)) {
       setActiveTab(tabParam);
       return;

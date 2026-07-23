@@ -187,6 +187,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
     }
 
     // Create the subject with class_id directly set
+    const { data: generatedJoinCode } = await (supabase as any).rpc('generate_subject_join_code')
     const { data: subjectData, error: subjectError } = await supabase
       .from('subjects')
       .insert([{
@@ -198,6 +199,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cla
         cover_type: json.cover_type || 'ai_icons',
         cover_image_url: json.cover_image_url || null,
         ai_icon_seed: json.ai_icon_seed || null,
+        join_code: generatedJoinCode || null,
       }])
       .select();
 

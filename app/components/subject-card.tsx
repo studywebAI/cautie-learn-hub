@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MoreVertical, ArchiveRestore, FolderInput, Copy } from 'lucide-react';
+import { MoreVertical, ArchiveRestore, FolderInput, Copy, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   // Science - Biology
@@ -399,7 +399,14 @@ export function SubjectCard({ subject, isTeacher, folders, onSubjectUpdated, onC
       }}
     >
       {isTeacher && (
-        <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Link
+            href={`/settings?tab=subject&subjectId=${subject.id}`}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground backdrop-blur-sm"
+            title="Settings"
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </Link>
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <PopoverTrigger asChild>
               <button

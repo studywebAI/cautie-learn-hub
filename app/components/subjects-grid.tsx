@@ -21,7 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { SubjectCard } from './subject-card';
 
 type SubjectsGridProps = {
@@ -61,6 +61,14 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Join Subject (student self-enroll, or teacher co-teach request -- the
+  // backend branches on the joining account's role). Same one join_code
+  // works for both, mirroring how classes used to work.
+  const [isJoinOpen, setIsJoinOpen] = useState(false);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
 
   // Import-test-by-code state (G3, docs/subjects-feature-brainstorm.md)
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -345,6 +353,40 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
     void run();
   }, [syncAtKey, syncSubjects]);
 
+  // A join-code deep link (?join_code=XXXX, e.g. from a teacher's shared
+  // QR/link in Subject Settings > Invite) opens the dialog pre-filled
+  // instead of requiring the code to be typed in by hand.
+  useEffect(() => {
+    const codeFromUrl = searchParams?.get('join_code');
+    if (codeFromUrl) {
+      setJoinCodeInput(codeFromUrl);
+      setIsJoinOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleJoinSubject = async () => {
+    if (!joinCodeInput.trim()) return;
+    setIsJoining(true);
+    try {
+      const response = await fetch('/api/subjects/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject_code: joinCodeInput.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Failed to join subject');
+
+      toast({ title: data.message || (isTeacher ? 'Request sent' : 'Joined subject') });
+      setIsJoinOpen(false);
+      setJoinCodeInput('');
+      if (!data.pendingApproval) await syncSubjects(true);
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
   const handleCreateSubject = async () => {
     if (!newSubjectTitle.trim()) {
       toast({
@@ -511,7 +553,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             )}
           </div>
         )}
-        {isTeacher && (
+        {isTeacher ? (
           <div className="flex justify-end gap-2">
             <Button onClick={() => setIsQuickCreateOpen(true)} size="sm" className="h-9 rounded-xl">
               + New assignment/test
@@ -519,8 +561,17 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             <Button onClick={() => setIsImportOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
               Import Test
             </Button>
+            <Button onClick={() => setIsJoinOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
+              Join Subject
+            </Button>
             <Button onClick={() => setIsCreateOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
               + Create Subject
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <Button onClick={() => setIsJoinOpen(true)} size="sm" className="h-9 rounded-xl">
+              + Join Subject
             </Button>
           </div>
         )}
@@ -533,12 +584,16 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             <div>
               <p className="text-sm">No subjects yet</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {isTeacher ? 'Create one to start adding chapters, tests and materials.' : "Your teacher hasn't added any subjects yet."}
+                {isTeacher ? 'Create one to start adding chapters, tests and materials.' : 'Ask your teacher for a join code to add your first subject.'}
               </p>
             </div>
-            {isTeacher && (
+            {isTeacher ? (
               <Button onClick={() => setIsCreateOpen(true)} size="sm" className="h-9 rounded-xl mt-1">
                 Create First Subject
+              </Button>
+            ) : (
+              <Button onClick={() => setIsJoinOpen(true)} size="sm" className="h-9 rounded-xl mt-1">
+                Join Subject
               </Button>
             )}
           </div>
@@ -650,6 +705,43 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             </Button>
             <Button onClick={handleCreateSubject} disabled={isCreating || !newSubjectTitle.trim()} className="rounded-xl">
               {isCreating ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Join Subject Dialog -- same code for both roles. A teacher of the
+          subject approves every request (student or co-teacher) from
+          Settings > Subject > Access before it takes effect. */}
+      <Dialog open={isJoinOpen} onOpenChange={(open) => { setIsJoinOpen(open); if (!open) setJoinCodeInput(''); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Join a subject</DialogTitle>
+            <DialogDescription>
+              {isTeacher
+                ? 'Enter a join code to request co-teaching a subject. A teacher of that subject needs to approve you first.'
+                : 'Enter the join code your teacher shared. They need to approve your request before you get access.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-4">
+            <Label htmlFor="join-subject-code">Join code</Label>
+            <Input
+              id="join-subject-code"
+              placeholder="e.g. AB12CD"
+              value={joinCodeInput}
+              onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
+              className="font-mono tracking-wider"
+              onKeyDown={(e) => { if (e.key === 'Enter' && joinCodeInput.trim()) void handleJoinSubject(); }}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsJoinOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button onClick={handleJoinSubject} disabled={isJoining || !joinCodeInput.trim()} className="rounded-xl">
+              {isJoining ? 'Joining...' : 'Join'}
             </Button>
           </DialogFooter>
         </DialogContent>
