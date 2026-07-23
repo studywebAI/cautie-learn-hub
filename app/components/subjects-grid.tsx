@@ -384,16 +384,11 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             )}
           </div>
         )}
-        {isTeacher ? (
-          <div className="flex justify-end gap-2">
-            <Button onClick={() => setIsJoinOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
-              Join Subject
-            </Button>
-            <Button onClick={() => setIsCreateOpen(true)} size="sm" variant="outline" className="h-9 rounded-xl">
-              + Create Subject
-            </Button>
-          </div>
-        ) : (
+        {/* Teachers create/join a subject from the sidebar's subject
+            switcher now, not here -- this page is only their landing spot
+            while they have zero subjects, where the empty state below
+            covers it. Students have no switcher, so they keep this. */}
+        {!isTeacher && (
           <div className="flex justify-end">
             <Button onClick={() => setIsJoinOpen(true)} size="sm" className="h-9 rounded-xl">
               + Join Subject

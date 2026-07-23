@@ -747,11 +747,11 @@ export function AppSidebar() {
             event.preventDefault();
             openDropdownFor('subjects', event.currentTarget);
           }}
-          disabled={subjectDropdownItems.length === 0}
-          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border/70 surface-panel px-2.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:surface-interactive disabled:opacity-60"
+          className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-border/70 surface-panel px-2.5 text-left text-[13px] font-medium text-sidebar-foreground transition-colors hover:surface-interactive"
         >
           <span className="truncate">
-            {subjectDropdownItems.find((subjectItem) => subjectItem.id === effectiveTeacherSubjectId)?.label || (isDutch ? 'Geen vakken' : 'No subjects')}
+            {subjectDropdownItems.find((subjectItem) => subjectItem.id === effectiveTeacherSubjectId)?.label
+              || (isDutch ? 'Vak maken of deelnemen' : 'Create or join a subject')}
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-sidebar-foreground/70" />
         </button>
