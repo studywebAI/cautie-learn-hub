@@ -25,7 +25,9 @@ export type BlockType =
   | 'table'
   | 'number_line'
   | 'diagram_labeling'
-  | 'graph_plot';
+  | 'graph_plot'
+  | 'timeline'
+  | 'poll';
 
 export interface BaseBlock {
   id: string;

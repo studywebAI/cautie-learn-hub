@@ -14,6 +14,8 @@ import { StudentTableBlock } from './StudentTableBlock';
 import { StudentNumberLineBlock } from './StudentNumberLineBlock';
 import { StudentDiagramLabelingBlock } from './StudentDiagramLabelingBlock';
 import { StudentGraphPlotBlock } from './StudentGraphPlotBlock';
+import { TimelineAxis } from './TimelineAxis';
+import { PollBlock } from './PollBlock';
 import { normalizeBlockSettings } from '@/lib/assignments/settings';
 
 interface GradingResult {
@@ -29,6 +31,10 @@ interface StudentBlockRendererProps {
   gradingResult?: GradingResult;
   isSubmitted?: boolean;
   onSuspiciousPaste?: (info: { blockId: string; charCount: number }) => void;
+  // Only needed by blocks that poll their own results endpoint (Poll) --
+  // every other block type answers purely through onSubmit and never
+  // needs the surrounding route params.
+  pollResultsUrl?: string;
 }
 
 export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
@@ -37,6 +43,7 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
   gradingResult,
   isSubmitted,
   onSuspiciousPaste,
+  pollResultsUrl,
 }) => {
   const settings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {});
   const renderBlock = () => {
@@ -77,6 +84,10 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
         return <StudentMediaBlock {...commonProps} />;
       case 'divider':
         return <StudentDividerBlock {...commonProps} />;
+      case 'timeline':
+        return <TimelineAxis data={(block as any).data} />;
+      case 'poll':
+        return <PollBlock {...commonProps} resultsUrl={pollResultsUrl} />;
       default:
         // For blocks that don't have student interaction, just display data
         return (

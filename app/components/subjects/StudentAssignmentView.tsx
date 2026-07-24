@@ -586,6 +586,7 @@ export function StudentAssignmentView({
                       char_count: charCount,
                     });
                   }}
+                  pollResultsUrl={`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}/poll-results`}
                 />
               </CardContent>
             </Card>

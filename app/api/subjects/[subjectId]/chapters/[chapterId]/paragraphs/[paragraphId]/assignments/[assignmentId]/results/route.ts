@@ -57,7 +57,7 @@ export async function GET(
     const answerByBlock = new Map((answers || []).map((a: any) => [a.block_id, a]))
 
     const questions = (blocks || [])
-      .filter((b: any) => b.type !== 'text' && b.type !== 'image' && b.type !== 'video')
+      .filter((b: any) => b.type !== 'text' && b.type !== 'image' && b.type !== 'video' && b.type !== 'timeline' && b.type !== 'poll')
       .map((block: any) => {
         const answer = answerByBlock.get(block.id)
         const settings = normalizeBlockSettings(block.settings || block.data?.settings || {})

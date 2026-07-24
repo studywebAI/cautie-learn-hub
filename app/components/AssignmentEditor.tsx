@@ -50,6 +50,8 @@ import {
   Clipboard,
   CheckCircle2,
   Circle,
+  Milestone,
+  BarChart3,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -99,6 +101,8 @@ import { StudentTableBlock } from '@/components/blocks/StudentTableBlock';
 import { StudentNumberLineBlock } from '@/components/blocks/StudentNumberLineBlock';
 import { StudentDiagramLabelingBlock } from '@/components/blocks/StudentDiagramLabelingBlock';
 import { StudentGraphPlotBlock } from '@/components/blocks/StudentGraphPlotBlock';
+import { TimelineAxis } from '@/components/blocks/TimelineAxis';
+import { PollBlock } from '@/components/blocks/PollBlock';
 
 type BlockTemplateCategory = 'content' | 'question' | 'interactive' | 'data';
 
@@ -371,6 +375,31 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
     label: 'File',
     category: 'content',
     defaultData: { url: '', filename: '', caption: '' }
+  },
+  {
+    id: 'timeline',
+    type: 'timeline',
+    icon: <Milestone className="h-4 w-4" />,
+    label: 'Timeline',
+    category: 'content',
+    defaultData: {
+      startLabel: '',
+      startDate: '',
+      endLabel: '',
+      endDate: '',
+      events: [],
+    }
+  },
+  {
+    id: 'poll',
+    type: 'poll',
+    icon: <BarChart3 className="h-4 w-4" />,
+    label: 'Poll',
+    category: 'content',
+    defaultData: {
+      question: '',
+      options: ['', ''],
+    }
   }
 ];
 
@@ -3052,6 +3081,159 @@ export function AssignmentEditor({
               onClick={(e) => e.stopPropagation()}
               readOnly={!canEditBlock}
             />
+          </div>
+        );
+      }
+
+      case 'timeline': {
+        const tlData = block.data as { startLabel: string; startDate: string; endLabel: string; endDate: string; events: Array<{ id: string; title: string; date: string; description?: string }> };
+        const events = tlData.events || [];
+
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <TimelineAxis data={tlData} />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
+
+        const updateEvent = (idx: number, patch: Partial<{ title: string; date: string; description: string }>) => {
+          const newEvents = [...events];
+          newEvents[idx] = { ...newEvents[idx], ...patch };
+          updateBlock(block.id, { ...block.data, events: newEvents });
+        };
+        const removeEvent = (idx: number) => {
+          updateBlock(block.id, { ...block.data, events: events.filter((_, i) => i !== idx) });
+        };
+        const addEvent = () => {
+          updateBlock(block.id, { ...block.data, events: [...events, { id: generateId(), title: '', date: '', description: '' }] });
+        };
+
+        return (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Input
+                  value={tlData.startLabel}
+                  onChange={(e) => updateBlock(block.id, { ...block.data, startLabel: e.target.value })}
+                  placeholder="Start label"
+                  className="h-7 text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Input
+                  value={tlData.startDate}
+                  onChange={(e) => updateBlock(block.id, { ...block.data, startDate: e.target.value })}
+                  placeholder="Start date"
+                  className="h-7 text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div className="space-y-1">
+                <Input
+                  value={tlData.endLabel}
+                  onChange={(e) => updateBlock(block.id, { ...block.data, endLabel: e.target.value })}
+                  placeholder="End label"
+                  className="h-7 text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Input
+                  value={tlData.endDate}
+                  onChange={(e) => updateBlock(block.id, { ...block.data, endDate: e.target.value })}
+                  placeholder="End date"
+                  className="h-7 text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              {events.map((ev, idx) => (
+                <div key={ev.id} className="rounded-md border border-border p-1.5 space-y-1" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1.5">
+                    <Input value={ev.title} onChange={(e) => updateEvent(idx, { title: e.target.value })} placeholder="Event title" className="h-6 text-xs flex-1" />
+                    <Input value={ev.date} onChange={(e) => updateEvent(idx, { date: e.target.value })} placeholder="Date" className="h-6 text-xs w-24" />
+                    <Button variant="ghost" size="sm" onClick={() => removeEvent(idx)} className="h-6 w-6 p-0 text-muted-foreground shrink-0">
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={ev.description || ''}
+                    onChange={(e) => updateEvent(idx, { description: e.target.value })}
+                    placeholder="Description students can see when they click this event (optional)"
+                    className="text-xs min-h-[40px] resize-none"
+                  />
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" onClick={addEvent} className="h-6 text-xs text-muted-foreground">
+                <Plus className="h-3 w-3 mr-1" /> Add event
+              </Button>
+            </div>
+
+            <div className="rounded-md border border-dashed border-border/70 surface-chip">
+              <p className="px-2 pt-2 text-[10px] uppercase tracking-wide text-muted-foreground">Preview</p>
+              <TimelineAxis data={tlData} editable />
+            </div>
+            {renderReadOnlyActions()}
+          </div>
+        );
+      }
+
+      case 'poll': {
+        const pollData = block.data as { question: string; options: string[] };
+        const pollOptions = pollData.options || [];
+
+        if (!canEditBlock) {
+          return (
+            <div className="space-y-2">
+              <PollBlock
+                block={block as any}
+                onSubmit={(answerData) => handlePracticeSubmit(block, answerData)}
+                isTeacherView
+                resultsUrl={`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}/poll-results`}
+                voterListUrl={`/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/blocks/${block.id}/student-answers`}
+              />
+              {renderReadOnlyActions()}
+            </div>
+          );
+        }
+
+        const updateOption = (idx: number, value: string) => {
+          const newOptions = [...pollOptions];
+          newOptions[idx] = value;
+          updateBlock(block.id, { ...block.data, options: newOptions });
+        };
+        const removeOption = (idx: number) => {
+          if (pollOptions.length <= 2) return;
+          updateBlock(block.id, { ...block.data, options: pollOptions.filter((_, i) => i !== idx) });
+        };
+        const addOption = () => {
+          updateBlock(block.id, { ...block.data, options: [...pollOptions, ''] });
+        };
+
+        return (
+          <div className="space-y-2">
+            <Input
+              value={pollData.question}
+              onChange={(e) => updateBlock(block.id, { ...block.data, question: e.target.value })}
+              placeholder="Poll question"
+              className="h-8 text-sm"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="space-y-1">
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <Input value={opt} onChange={(e) => updateOption(idx, e.target.value)} placeholder={`Option ${idx + 1}`} className="h-7 text-sm flex-1" />
+                  <Button variant="ghost" size="sm" onClick={() => removeOption(idx)} disabled={pollOptions.length <= 2} className="h-6 w-6 p-0 text-muted-foreground shrink-0">
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="ghost" size="sm" onClick={addOption} className="h-6 text-xs text-muted-foreground">
+                <Plus className="h-3 w-3 mr-1" /> Add option
+              </Button>
+            </div>
+            {renderReadOnlyActions()}
           </div>
         );
       }
