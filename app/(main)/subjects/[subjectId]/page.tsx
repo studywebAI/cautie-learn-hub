@@ -360,9 +360,6 @@ export default function SubjectDetailPage() {
         actions={
           isTeacher && (
             <>
-              <Link href={`/subjects/${subjectId}/attendance`}>
-                <Button size="sm" variant="outline">Attendance</Button>
-              </Link>
               {chapters.length > 0 && (
                 <Button
                   onClick={() => {

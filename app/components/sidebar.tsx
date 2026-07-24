@@ -144,6 +144,7 @@ export function AppSidebar() {
   const routeClassId = routeClassIdMatch?.[1] || searchParams?.get('classId') || '';
   const t = {
     attendance: isDutch ? 'Aanwezigheid' : 'Attendance',
+    chapters: isDutch ? 'Hoofdstukken' : 'Chapters',
     studyset: isDutch ? 'Studieset' : 'Studyset',
     untitledSubject: isDutch ? 'Naamloos Vak' : 'Untitled Subject',
     subjectsLoadError: isDutch ? 'Kon vakken niet laden' : 'Could not load subjects',
@@ -198,7 +199,7 @@ export function AppSidebar() {
   const menuItems = isTeacher
     ? [
         { href: '/', label: dictionary.sidebar.dashboard, icon: LayoutDashboard, animated: true },
-        { href: teacherSubjectsHref, label: dictionary.sidebar.subjects, icon: SquareArrowOutUpRight, animated: true },
+        { href: teacherSubjectsHref, label: t.chapters, icon: SquareArrowOutUpRight, animated: true },
         { href: teacherAttendanceHref, label: t.attendance, icon: Users, animated: true },
         { href: '/teacher-grades', label: isDutch ? 'Cijfers' : 'Grades', icon: ChartColumn, animated: true },
         { href: '/analytics', label: isDutch ? 'Analyses' : 'Analytics', icon: ChartSpline, animated: true },

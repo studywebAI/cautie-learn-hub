@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import {
@@ -517,7 +518,7 @@ export function AssignmentEditor({
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [aiCommand, setAiCommand] = useState('');
   const [aiCommandLoading, setAiCommandLoading] = useState(false);
-  const [aiIncludeSiblingContext, setAiIncludeSiblingContext] = useState(false);
+  const [aiIncludeSiblingContext, setAiIncludeSiblingContext] = useState(true);
   const [copyFromOpen, setCopyFromOpen] = useState(false);
   const [copyChapters, setCopyChapters] = useState<Array<{ id: string; title: string }>>([]);
   const [copyParagraphs, setCopyParagraphs] = useState<Array<{ id: string; title: string }>>([]);
@@ -3984,14 +3985,13 @@ export function AssignmentEditor({
                   className="text-xs resize-none"
                   maxLength={500}
                 />
-                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={aiIncludeSiblingContext}
-                    onChange={(e) => setAiIncludeSiblingContext(e.target.checked)}
-                    className="h-3 w-3"
-                  />
+                <label className="flex items-center justify-between gap-1.5 text-[11px] text-muted-foreground">
                   {isDutch ? 'Geheugen ingeschakeld' : 'Memory enabled'}
+                  <Switch
+                    checked={aiIncludeSiblingContext}
+                    onCheckedChange={setAiIncludeSiblingContext}
+                    className="h-4 w-7 [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-3"
+                  />
                 </label>
                 <Button
                   size="sm"
@@ -4076,11 +4076,10 @@ export function AssignmentEditor({
               </div>
 
               <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
+                <Switch
                   checked={isTest}
-                  onChange={(e) => handleTestToggle(e.target.checked)}
+                  onCheckedChange={handleTestToggle}
+                  className="mt-0.5 shrink-0"
                 />
                 <span className="text-sm">
                   <span className="block font-medium">{t.isTestLabel}</span>
@@ -4089,11 +4088,10 @@ export function AssignmentEditor({
               </label>
 
               <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
+                <Switch
                   checked={localIsVisible}
-                  onChange={(e) => handleVisibleToggle(e.target.checked)}
+                  onCheckedChange={handleVisibleToggle}
+                  className="mt-0.5 shrink-0"
                 />
                 <span className="text-sm">
                   <span className="block font-medium">{t.visibleLabel}</span>
@@ -4102,11 +4100,10 @@ export function AssignmentEditor({
               </label>
 
               <label className="flex items-start gap-2 rounded-xl border border-border surface-panel p-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
+                <Switch
                   checked={localAnswersEnabled}
-                  onChange={(e) => handleAnswersEnabledToggle(e.target.checked)}
+                  onCheckedChange={handleAnswersEnabledToggle}
+                  className="mt-0.5 shrink-0"
                 />
                 <span className="text-sm">
                   <span className="block font-medium">{t.answersEnabledLabel}</span>
