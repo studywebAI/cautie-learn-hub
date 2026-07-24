@@ -3390,7 +3390,7 @@ export function AssignmentEditor({
                   </div>
                 </div>
               ) : (
-              <div className="mx-auto max-w-3xl">
+              <div className="mx-auto max-w-4xl">
                 {rows.map((row, rowIndex) => {
                   const isSourceRow = isDragging && !!dragSource && row.blocks.some((b) => b.id === dragSource.id);
                   return (
@@ -3658,7 +3658,7 @@ export function AssignmentEditor({
             )}
 
             {showTeacherControls && (
-              <div className="mx-auto max-w-3xl mt-3">
+              <div className="mx-auto max-w-4xl mt-3">
                 <Popover open={addBlockMenuOpen} onOpenChange={setAddBlockMenuOpen}>
                   <PopoverTrigger asChild>
                     <Button
