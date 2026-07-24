@@ -378,7 +378,7 @@ export function SubjectsGrid({ classId, isTeacher = false }: SubjectsGridProps) 
             </Select>
             {isTeacher && (
               <label className="flex items-center gap-1.5 text-xs text-muted-foreground px-1">
-                <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="h-3.5 w-3.5" />
+                <Switch checked={showArchived} onCheckedChange={setShowArchived} className="h-4 w-7 [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-3" />
                 Show archived
               </label>
             )}

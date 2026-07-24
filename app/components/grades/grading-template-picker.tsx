@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Wand2, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 type Bin = { min: number; max: number; label: string; numeric: number | null };
 type Preset = { id: string; name: string; is_default?: boolean; config: { templateType?: string; system?: string; bins?: Bin[] } };
@@ -161,7 +162,7 @@ export function GradingTemplatePicker({
         </PopoverTrigger>
         <PopoverContent align="end" className="w-96 space-y-4 max-h-[70vh] overflow-y-auto">
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <input type="checkbox" checked={makeDefault} onChange={(e) => setMakeDefault(e.target.checked)} className="h-3.5 w-3.5" />
+            <Switch checked={makeDefault} onCheckedChange={setMakeDefault} className="h-4 w-7 [&>span]:h-3 [&>span]:w-3 [&>span]:data-[state=checked]:translate-x-3" />
             {classId
               ? (isDutch ? 'Maak dit de standaard-template voor deze klas' : 'Make this the default template for this class')
               : (isDutch ? 'Maak dit de standaard-template voor dit vak' : 'Make this the default template for this subject')}
