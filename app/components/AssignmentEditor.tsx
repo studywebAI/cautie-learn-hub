@@ -3688,8 +3688,14 @@ export function AssignmentEditor({
                                   data-testid={`assignment-template-${template.id}`}
                                   className="flex w-full items-center gap-2 px-2.5 py-2 rounded-lg hover:surface-interactive border border-transparent hover:border-border text-left"
                                   onClick={() => {
-                                    addBlock(template, rows.length);
+                                    // Close the popover first, then insert on
+                                    // the next frame -- inserting immediately
+                                    // shifts page layout while the popover is
+                                    // still mid-close-animation, which made it
+                                    // briefly flash full-size/unpositioned
+                                    // before disappearing.
                                     setAddBlockMenuOpen(false);
+                                    requestAnimationFrame(() => addBlock(template, rows.length));
                                   }}
                                 >
                                   {template.icon}
