@@ -12,7 +12,6 @@ export type BlockType =
   | 'drag_drop'
   | 'matching'
   | 'ordering'
-  | 'numeric_question'
   | 'media_embed'
   | 'media'
   | 'divider'
@@ -23,7 +22,6 @@ export type BlockType =
   | 'rich_text'
   | 'executable_code'
   | 'paragraph'
-  | 'flashcard'
   | 'table'
   | 'number_line'
   | 'diagram_labeling'
@@ -117,11 +115,6 @@ export interface MediaEmbedContent {
   description: string;
 }
 
-export interface NumericQuestionContent {
-  question: string;
-  correct_answer: number;
-}
-
 // 10. DividerBlock
 export interface DividerContent {
   style: 'line' | 'space' | 'page_break';
@@ -200,11 +193,6 @@ export interface ExecutableCodeBlockContent {
   canExecute: boolean;
 }
 
-// 18. FlashcardBlock
-export interface FlashcardBlockContent {
-  cards: Array<{ id: string; front: string; back: string }>;
-}
-
 // 19. TableBlock
 export interface TableBlockContent {
   columns: Array<{ id: string; label: string }>;
@@ -251,7 +239,6 @@ export type BlockContent =
   | FillInBlankContent
   | DragDropContent
   | OrderingContent
-  | NumericQuestionContent
   | MediaEmbedContent
   | DividerContent
   | ListBlockContent
@@ -262,7 +249,6 @@ export type BlockContent =
   | ExecutableCodeBlockContent
   | ParagraphBlockContent
   | ImageSimpleBlockContent
-  | FlashcardBlockContent
   | TableBlockContent
   | NumberLineBlockContent
   | DiagramLabelingBlockContent

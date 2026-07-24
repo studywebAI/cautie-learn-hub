@@ -137,8 +137,8 @@ function AnswerCompare({ q, isDutch }: { q: ResultQuestion; isDutch: boolean }) 
     );
   }
 
-  if (q.type === 'numeric_question' || q.type === 'number_line') {
-    const correctValue = q.type === 'number_line' ? bd.correctValue : (bd.correct_answer ?? bd.answer ?? bd.value);
+  if (q.type === 'number_line') {
+    const correctValue = bd.correctValue;
     const given = sa.value;
     if (correctValue === undefined || correctValue === null) return null;
     const isMatch = q.is_correct === true;

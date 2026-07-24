@@ -8,10 +8,8 @@ import { StudentOpenQuestionBlock } from './StudentOpenQuestionBlock';
 import { StudentFillInBlankBlock } from './StudentFillInBlankBlock';
 import { StudentMediaBlock } from './StudentMediaBlock';
 import { StudentDividerBlock } from './StudentDividerBlock';
-import { StudentNumericQuestionBlock } from './StudentNumericQuestionBlock';
 import { StudentOrderingBlock } from './StudentOrderingBlock';
 import { StudentDragDropBlock } from './StudentDragDropBlock';
-import { StudentFlashcardBlock } from './StudentFlashcardBlock';
 import { StudentTableBlock } from './StudentTableBlock';
 import { StudentNumberLineBlock } from './StudentNumberLineBlock';
 import { StudentDiagramLabelingBlock } from './StudentDiagramLabelingBlock';
@@ -59,15 +57,11 @@ export const StudentBlockRenderer: React.FC<StudentBlockRendererProps> = ({
         return <StudentOpenQuestionBlock {...commonProps} />;
       case 'fill_in_blank':
         return <StudentFillInBlankBlock {...commonProps} />;
-      case 'numeric_question':
-        return <StudentNumericQuestionBlock {...commonProps} />;
       case 'ordering':
         return <StudentOrderingBlock {...commonProps} />;
       case 'drag_drop':
       case 'matching':
         return <StudentDragDropBlock {...commonProps} />;
-      case 'flashcard':
-        return <StudentFlashcardBlock {...commonProps} />;
       case 'table':
         return <StudentTableBlock {...commonProps} />;
       case 'number_line':

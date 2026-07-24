@@ -5,7 +5,7 @@ import { z } from 'genkit';
 
 const SUPPORTED_BLOCK_TYPES = [
   'text', 'multiple_choice', 'open_question', 'fill_in_blank', 'image', 'video',
-  'flashcard', 'table', 'number_line', 'diagram_labeling', 'graph_plot',
+  'table', 'number_line', 'diagram_labeling', 'graph_plot',
 ] as const;
 
 const InsertBlockCommandInputSchema = z.object({
@@ -25,7 +25,6 @@ const InsertBlockCommandOutputSchema = z.object({
   fill_text: z.string().optional().describe('For fill_in_blank: sentence with blanks marked as ___'),
   fill_answers: z.array(z.string()).optional().describe('For fill_in_blank: the correct word(s) for each ___ in order'),
   caption: z.string().optional().describe('For image/video: a short caption — the actual file/url is added by the teacher afterwards'),
-  cards: z.array(z.object({ front: z.string(), back: z.string() })).optional().describe('For flashcard: 5-8 front/back pairs on the topic'),
   table_columns: z.array(z.string()).optional().describe('For table: 2-4 column header labels'),
   table_rows: z.array(z.array(z.string())).optional().describe('For table: 3-5 rows, each an array of cell values with the same length as table_columns. Fill every cell with a real value — the teacher marks which cells students must fill in afterward, so generate the fully correct table.'),
   number_line_prompt: z.string().optional().describe('For number_line: the question/prompt shown above the slider'),
@@ -64,7 +63,6 @@ Supported block types:
 - text (plain content/leerstof)
 - multiple_choice, open_question, fill_in_blank (standard question types)
 - image, video (media — you cannot generate the file itself)
-- flashcard (a deck of front/back study cards)
 - table (a grid of data, some cells for students to fill in)
 - number_line (place a value on a labeled scale)
 - diagram_labeling (label numbered points on an image with words from a word bank)
@@ -76,7 +74,6 @@ Rules:
 - If the instruction is vague about subject matter, use the existing blocks (context below) to infer topic and stay consistent.
 - For multiple_choice: always produce exactly 4 options unless the instruction says otherwise, and mark exactly one as correct unless it explicitly asks for multiple correct answers.
 - For image/video: you cannot generate the actual file — only produce a caption; leave the rest for the teacher to fill in after inserting.
-- For flashcard: generate 5-8 genuinely useful front/back study pairs on the topic.
 - For table: generate a complete, fully-correct table (table_columns + table_rows) on the topic — the teacher decides afterward which cells become blanks for students.
 - For number_line: pick a sensible min/max/step range for the topic (e.g. a physics constant, a percentage, a date range) and the correct value within it.
 - For diagram_labeling: you cannot see any image, so only produce a word bank (diagram_label_bank) of terms relevant to the topic — the teacher uploads the diagram and places the numbered points afterward.

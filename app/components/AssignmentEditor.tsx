@@ -46,7 +46,6 @@ import {
   Ruler,
   MapPin,
   LineChart,
-  Layers,
   AlertTriangle,
   Clipboard,
   CheckCircle2,
@@ -91,13 +90,11 @@ import {
   DEFAULT_BLOCK_SETTINGS,
   normalizeAssignmentSettings,
   normalizeBlockSettings,
-  calculateFlashcardScore,
   calculateTableScore,
   calculateNumericScore,
   calculateLabelingScore,
   calculateGraphScore,
 } from '@/lib/assignments/settings';
-import { StudentFlashcardBlock } from '@/components/blocks/StudentFlashcardBlock';
 import { StudentTableBlock } from '@/components/blocks/StudentTableBlock';
 import { StudentNumberLineBlock } from '@/components/blocks/StudentNumberLineBlock';
 import { StudentDiagramLabelingBlock } from '@/components/blocks/StudentDiagramLabelingBlock';
@@ -265,19 +262,6 @@ const BLOCK_TEMPLATES: BlockTemplate[] = [
       prompt: '',
       items: ['', '', ''],
       correct_order: [0, 1, 2]
-    }
-  },
-  {
-    id: 'flashcard',
-    type: 'flashcard',
-    icon: <Layers className="h-4 w-4" />,
-    label: 'Flashcard',
-    category: 'interactive',
-    defaultData: {
-      cards: [
-        { id: 'card-1', front: '', back: '' },
-        { id: 'card-2', front: '', back: '' },
-      ],
     }
   },
   {
@@ -1353,10 +1337,7 @@ export function AssignmentEditor({
   const handlePracticeSubmit = async (block: AssignmentBlock, answerData: any): Promise<{ ok: boolean; error?: string }> => {
     const settings = normalizeBlockSettings(block.settings || {});
     let result: { score: number; isCorrect: boolean } | null = null;
-    if (block.type === 'flashcard') {
-      const allCardIds = (block.data.cards || []).map((c: any) => c.id);
-      result = calculateFlashcardScore(answerData?.knownCardIds || [], allCardIds, settings);
-    } else if (block.type === 'table') {
+    if (block.type === 'table') {
       result = calculateTableScore(answerData?.values || {}, block.data.rows || [], settings);
     } else if (block.type === 'number_line') {
       const nlSettings = { ...settings, numeric: { ...settings.numeric, exactMatch: false, tolerance: Number(block.data.tolerance || 0) } };
@@ -1414,11 +1395,6 @@ export function AssignmentEditor({
         data = { url: '', caption: block.caption || '', alt: '' };
       } else if (blockType === 'video') {
         data = { url: '', caption: block.caption || '' };
-      } else if (blockType === 'flashcard') {
-        const cards = Array.isArray(block.cards) && block.cards.length > 0
-          ? block.cards.map((c: any) => ({ id: generateId(), front: c.front || '', back: c.back || '' }))
-          : getTemplateDefaults('flashcard').cards;
-        data = { cards };
       } else if (blockType === 'table') {
         const columns = Array.isArray(block.table_columns) && block.table_columns.length > 0
           ? block.table_columns.map((label: string, i: number) => ({ id: `col-${i}-${generateId()}`, label }))
@@ -2107,10 +2083,6 @@ export function AssignmentEditor({
         }
         if (block.type === 'open_question') return String(block.data.correct_answer || 'No reference answer set.');
         if (block.type === 'fill_in_blank') return ((block.data.answers || []) as string[]).filter(Boolean).join(', ') || 'No reference answer set.';
-        if (block.type === 'flashcard') {
-          const cards = (block.data.cards || []) as Array<{ front: string; back: string }>;
-          return cards.map((c) => `${c.front || '...'} → ${c.back || '...'}`).join(' | ') || 'No cards yet.';
-        }
         if (block.type === 'table') {
           const columns = (block.data.columns || []) as Array<{ id: string; label: string }>;
           const rows = (block.data.rows || []) as Array<{ cells: Array<{ editable?: boolean; correctValue?: string }> }>;
@@ -2529,81 +2501,6 @@ export function AssignmentEditor({
             {renderReadOnlyActions()}
           </div>
         );
-
-      case 'flashcard': {
-        const cards = (block.data.cards || []) as Array<{ id: string; front: string; back: string }>;
-        if (!canEditBlock) {
-          return (
-            <div className="space-y-2">
-              <StudentFlashcardBlock block={block as any} onSubmit={(answerData) => handlePracticeSubmit(block, answerData)} />
-              {renderReadOnlyActions()}
-            </div>
-          );
-        }
-        return (
-          <div className="space-y-2">
-            <p className="text-[10px] text-muted-foreground">{isDutch ? 'Kaartjes (voor- en achterkant)' : 'Cards (front and back)'}</p>
-            <div className="space-y-1.5">
-              {cards.map((card, idx) => (
-                <div key={card.id} className="flex items-center gap-1.5 group">
-                  <span className="text-xs font-medium text-muted-foreground w-4">{idx + 1}.</span>
-                  <Input
-                    value={card.front}
-                    onChange={(e) => {
-                      const newCards = [...cards];
-                      newCards[idx] = { ...newCards[idx], front: e.target.value };
-                      updateBlock(block.id, { ...block.data, cards: newCards });
-                    }}
-                    placeholder={isDutch ? 'Voorkant' : 'Front'}
-                    className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
-                    onClick={(e) => e.stopPropagation()}
-                    readOnly={!canEditBlock}
-                  />
-                  <Input
-                    value={card.back}
-                    onChange={(e) => {
-                      const newCards = [...cards];
-                      newCards[idx] = { ...newCards[idx], back: e.target.value };
-                      updateBlock(block.id, { ...block.data, cards: newCards });
-                    }}
-                    placeholder={isDutch ? 'Achterkant' : 'Back'}
-                    className="flex-1 h-7 text-sm border-0 border-b border-border rounded-none shadow-none focus-visible:ring-0 bg-transparent"
-                    onClick={(e) => e.stopPropagation()}
-                    readOnly={!canEditBlock}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      if (!canEditBlock || cards.length <= 1) return;
-                      e.stopPropagation();
-                      updateBlock(block.id, { ...block.data, cards: cards.filter((_, i) => i !== idx) });
-                    }}
-                    disabled={!canEditBlock || cards.length <= 1}
-                    className="h-5 w-5 p-0 text-muted-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  if (!canEditBlock) return;
-                  e.stopPropagation();
-                  updateBlock(block.id, { ...block.data, cards: [...cards, { id: generateId(), front: '', back: '' }] });
-                }}
-                className="text-xs text-muted-foreground h-6"
-                disabled={!canEditBlock}
-              >
-                <Plus className="h-3 w-3 mr-1" /> {isDutch ? 'Kaartje toevoegen' : 'Add card'}
-              </Button>
-            </div>
-            {renderReadOnlyActions()}
-          </div>
-        );
-      }
 
       case 'table': {
         const columns = (block.data.columns || []) as Array<{ id: string; label: string }>;

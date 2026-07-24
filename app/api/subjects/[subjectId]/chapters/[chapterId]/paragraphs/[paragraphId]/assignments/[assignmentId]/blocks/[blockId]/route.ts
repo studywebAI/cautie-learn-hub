@@ -10,7 +10,6 @@ import {
   calculateOrderingScore,
   calculateDragDropScore,
   calculateNumericScore,
-  calculateFlashcardScore,
   calculateTableScore,
   calculateLabelingScore,
   calculateGraphScore,
@@ -250,34 +249,6 @@ export async function POST(
         (block as any).data?.pairs || [],
         blockSettings,
       );
-      score = result.score;
-      isCorrect = result.isCorrect;
-      feedback = blockSettings.feedbackText || null;
-    }
-    if (block.type === 'numeric_question') {
-      const expected = (block as any).data?.correct_answer ?? (block as any).data?.answer ?? (block as any).data?.value;
-      const expectedText = String(expected ?? '').trim().toLowerCase();
-      const answerText = String(answerData?.value ?? '').trim().toLowerCase();
-      const alternateMatch = blockSettings.numeric.alternateAnswers
-        .map((v) => String(v).trim().toLowerCase())
-        .includes(answerText);
-      const result = alternateMatch
-        ? { score: blockSettings.points, isCorrect: true }
-        : calculateNumericScore(answerData?.value, expected, blockSettings);
-      score = result.score;
-      isCorrect = result.isCorrect;
-      feedback = blockSettings.feedbackText || null;
-      if (blockSettings.numeric.requiredUnit) {
-        const requiredUnit = String(blockSettings.numeric.requiredUnit).trim().toLowerCase();
-        const unit = String(answerData?.unit || '').trim().toLowerCase();
-        if (!unit || unit !== requiredUnit) {
-          return NextResponse.json({ error: `Required unit: ${blockSettings.numeric.requiredUnit}` }, { status: 400 });
-        }
-      }
-    }
-    if (block.type === 'flashcard') {
-      const allCardIds = ((block as any).data?.cards || []).map((c: any) => c.id);
-      const result = calculateFlashcardScore(answerData?.knownCardIds || [], allCardIds, blockSettings);
       score = result.score;
       isCorrect = result.isCorrect;
       feedback = blockSettings.feedbackText || null;
