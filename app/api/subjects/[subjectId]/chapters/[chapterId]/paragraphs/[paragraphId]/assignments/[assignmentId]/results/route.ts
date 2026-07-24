@@ -64,8 +64,12 @@ export async function GET(
         return {
           block_id: block.id,
           type: block.type,
-          question: block.data?.question || '',
+          question: block.data?.question || block.data?.prompt || '',
           max_points: settings.points,
+          // Raw block content (options/answers/correct_order/pairs/etc.) so the
+          // client can render a per-type student-vs-correct comparison instead
+          // of guessing from a single flattened field.
+          block_data: block.data ?? null,
           correct_answer: block.data?.correct_answer ?? block.data?.answer ?? block.data?.options ?? block.data?.correct_order ?? block.data?.pairs ?? null,
           student_answer: answer?.answer_data ?? null,
           is_correct: answer?.is_correct ?? null,
