@@ -15,6 +15,9 @@ interface AssignmentSettingsOverlayProps {
   settings: AssignmentSettings;
   onSettingsChange: (settings: AssignmentSettings) => void;
   isLoading?: boolean;
+  // Question shuffling only makes sense for tests -- a homework assignment
+  // has no "neighbors could see the same question" concern to solve.
+  isTest?: boolean;
 }
 
 function NumberInput({ value, onChange, min, step = 1, disabled }: { value: number | null; onChange: (v: number | null) => void; min?: number; step?: number; disabled?: boolean }) {
@@ -62,7 +65,7 @@ function Field({ label, hint, children, stacked = false }: { label: string; hint
   );
 }
 
-export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoading = false }: AssignmentSettingsOverlayProps) {
+export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoading = false, isTest = false }: AssignmentSettingsOverlayProps) {
   const update = (patch: Partial<AssignmentSettings>) => {
     onSettingsChange({ ...settings, ...patch });
   };
@@ -180,15 +183,19 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
           <Field label="Allowed classes" stacked hint="Restrict this assignment to specific classes only, by ID, comma separated. Leave blank to allow every class it's linked to.">
             <Input value={settings.access.allowedClassIds.join(',')} onChange={(e) => update({ access: { ...settings.access, allowedClassIds: e.target.value.split(',').map((v) => v.trim()).filter(Boolean) } })} placeholder="Allowed class IDs (comma separated)" disabled={isLoading} className="h-8" />
           </Field>
-          <Field label="Shuffle questions" hint="Show questions in a random order per student, so neighbors don't see the same question at the same time.">
-            <Switch checked={settings.access.shuffleQuestions} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestions: v } })} disabled={isLoading} />
-          </Field>
+          {isTest && (
+            <Field label="Shuffle questions" hint="Show questions in a random order per student, so neighbors don't see the same question at the same time. Tests only.">
+              <Switch checked={settings.access.shuffleQuestions} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestions: v } })} disabled={isLoading} />
+            </Field>
+          )}
           <Field label="Shuffle answers" hint="Randomize the order of multiple-choice options per student.">
             <Switch checked={settings.access.shuffleAnswers} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleAnswers: v } })} disabled={isLoading} />
           </Field>
-          <Field label="Per-student shuffle" hint="Give every student their own random order, instead of one shuffled order shared by the whole class.">
+          {isTest && settings.access.shuffleQuestions && (
+          <Field label="Per-student shuffle" hint="Give every student their own random order, instead of one shuffled order shared by the whole class. Tests only.">
             <Switch checked={settings.access.shuffleQuestionsPerStudent} onCheckedChange={(v) => update({ access: { ...settings.access, shuffleQuestionsPerStudent: v } })} disabled={isLoading} />
           </Field>
+          )}
         </Section>
 
         <Section id="grading">

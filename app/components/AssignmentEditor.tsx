@@ -4316,6 +4316,7 @@ export function AssignmentEditor({
                 <AssignmentSettingsOverlay
                   settings={localSettings}
                   onSettingsChange={handleAdvancedSettingsChange}
+                  isTest={isTest}
                 />
               </div>
               </>

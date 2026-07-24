@@ -52,6 +52,51 @@ interface SubmitResult {
   error?: string;
 }
 
+// Content blocks provide context for the questions around them, so they stay
+// put -- only graded/question blocks get reordered by "Shuffle questions".
+const NON_SHUFFLE_BLOCK_TYPES = new Set(['text', 'image', 'video', 'media_embed', 'file', 'divider', 'timeline', 'poll']);
+
+// Deterministic string -> uint32 hash (djb2), used to seed the shuffle so
+// the same seed always produces the same order -- either shared class-wide
+// (seed = assignmentId) or per-student (seed = assignmentId + userId).
+function hashSeed(str: string): number {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  }
+  return h >>> 0;
+}
+
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffleQuestionBlocks(blocks: Block[], seedStr: string): Block[] {
+  const rng = mulberry32(hashSeed(seedStr));
+  const questionIndices = blocks
+    .map((b, i) => ({ b, i }))
+    .filter(({ b }) => !NON_SHUFFLE_BLOCK_TYPES.has(b.type))
+    .map(({ i }) => i);
+
+  const shuffled = [...questionIndices];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const result = [...blocks];
+  questionIndices.forEach((originalIndex, k) => {
+    result[originalIndex] = blocks[shuffled[k]];
+  });
+  return result;
+}
+
 interface StudentAssignmentViewProps {
   subjectId: string;
   chapterId: string;
@@ -163,7 +208,11 @@ export function StudentAssignmentView({
         } else {
         }
         const sortedBlocks = (Array.isArray(blocksData) ? blocksData : []).sort((a: Block, b: Block) => a.position - b.position);
-        setBlocks(sortedBlocks);
+        setBlocks(
+          normalizedSettings.access.shuffleQuestions
+            ? shuffleQuestionBlocks(sortedBlocks, normalizedSettings.access.shuffleQuestionsPerStudent ? `${assignmentId}:${user?.id || ''}` : assignmentId)
+            : sortedBlocks
+        );
 
         // Fetch existing student answers
         if (user) {
