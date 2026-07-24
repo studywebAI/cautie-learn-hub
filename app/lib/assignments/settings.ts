@@ -4,6 +4,11 @@ export type FeedbackReleaseMode = 'per_question' | 'after_submit' | 'after_deadl
 export type AttemptScoreMode = 'best' | 'latest';
 export type TimerMode = 'deadline' | 'per_student';
 export type GradeDisplayMode = 'score' | 'points';
+// 'auto' -- we grade it (multiple choice etc. by code, open answers by AI --
+// that split is an implementation detail, never shown to the teacher).
+// 'self' -- the student marks their own open answers right/wrong after
+// submitting, instead of anyone else grading them.
+export type GradingMode = 'auto' | 'self';
 
 export interface AssignmentSettings {
   time: {
@@ -27,6 +32,7 @@ export interface AssignmentSettings {
     shuffleQuestionsPerStudent: boolean;
   };
   grading: {
+    gradingMode: GradingMode;
     autoGrade: boolean;
     manualReviewOpenQuestions: boolean;
     feedbackReleaseMode: FeedbackReleaseMode;
@@ -144,6 +150,7 @@ export const DEFAULT_ASSIGNMENT_SETTINGS: AssignmentSettings = {
     shuffleQuestionsPerStudent: false,
   },
   grading: {
+    gradingMode: 'auto',
     autoGrade: true,
     manualReviewOpenQuestions: true,
     feedbackReleaseMode: 'after_submit',

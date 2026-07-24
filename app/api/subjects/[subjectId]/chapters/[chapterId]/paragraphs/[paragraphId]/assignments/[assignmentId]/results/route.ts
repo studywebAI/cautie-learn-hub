@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { normalizeBlockSettings } from '@/lib/assignments/settings'
+import { normalizeBlockSettings, normalizeAssignmentSettings } from '@/lib/assignments/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,10 +22,12 @@ export async function GET(
 
     const { data: assignment } = await supabase
       .from('assignments')
-      .select('id, class_id, title')
+      .select('id, class_id, title, settings')
       .eq('id', resolvedParams.assignmentId)
       .maybeSingle()
     if (!assignment) return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+    const assignmentSettings = normalizeAssignmentSettings((assignment as any).settings || {})
+    const selfGradeEnabled = assignmentSettings.grading.gradingMode === 'self'
 
     const { data: gradeSet } = await supabase
       .from('grade_sets')
@@ -69,6 +71,10 @@ export async function GET(
           is_correct: answer?.is_correct ?? null,
           score: answer?.score ?? null,
           feedback: answer?.feedback ?? null,
+          // Open questions only actually get auto-graded when gradingMode
+          // is 'auto' (see submit/route.ts) -- in 'self' mode they sit at
+          // null until the student marks themselves via POST self-grade.
+          can_self_grade: selfGradeEnabled && block.type === 'open_question' && answer?.is_correct == null,
         }
       })
 
@@ -78,8 +84,95 @@ export async function GET(
       assignment_title: assignment.title,
       grade_released: !!(gradeSet as any).grade_released_at,
       grade: (gradeSet as any).grade_released_at ? ownGrade : null,
+      self_grade_enabled: selfGradeEnabled,
       questions,
     })
+  } catch (err) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+// POST — self-grade: the student marks their own open-question answer
+// right or wrong (with a self-assigned score) once results are released,
+// but only when this assignment's grading mode is 'self'. graded_by is set
+// to the student's own id (distinct from a teacher's id or graded_by_ai),
+// which is how this is told apart from a real teacher/AI grade elsewhere.
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ subjectId: string; chapterId: string; paragraphId: string; assignmentId: string }> }
+) {
+  try {
+    const cookieStore = await cookies()
+    const supabase = await createClient(cookieStore)
+    const resolvedParams = await params
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json().catch(() => ({}))
+    const blockId = String(body?.block_id || '')
+    const score = Number(body?.score)
+    if (!blockId || !Number.isFinite(score) || score < 0) {
+      return NextResponse.json({ error: 'block_id and a non-negative score are required' }, { status: 400 })
+    }
+
+    const { data: assignment } = await supabase
+      .from('assignments')
+      .select('id, settings')
+      .eq('id', resolvedParams.assignmentId)
+      .maybeSingle()
+    if (!assignment) return NextResponse.json({ error: 'Assignment not found' }, { status: 404 })
+    const assignmentSettings = normalizeAssignmentSettings((assignment as any).settings || {})
+    if (assignmentSettings.grading.gradingMode !== 'self') {
+      return NextResponse.json({ error: 'Self-grading is not enabled for this assignment' }, { status: 403 })
+    }
+
+    const { data: gradeSet } = await supabase
+      .from('grade_sets')
+      .select('id, answers_released_at')
+      .eq('assignment_id', resolvedParams.assignmentId)
+      .maybeSingle()
+    if (!gradeSet || !(gradeSet as any).answers_released_at) {
+      return NextResponse.json({ error: 'Results not released yet' }, { status: 403 })
+    }
+
+    const { data: block } = await supabase
+      .from('blocks')
+      .select('id, type, settings, data')
+      .eq('id', blockId)
+      .eq('assignment_id', resolvedParams.assignmentId)
+      .maybeSingle()
+    if (!block || (block as any).type !== 'open_question') {
+      return NextResponse.json({ error: 'Block not found or not self-gradeable' }, { status: 404 })
+    }
+    const blockSettings = normalizeBlockSettings((block as any).settings || (block as any).data?.settings || {})
+    const cappedScore = Math.min(score, Number(blockSettings.points || 1))
+
+    const { data: existing } = await supabase
+      .from('student_answers')
+      .select('id, is_correct')
+      .eq('student_id', user.id)
+      .eq('block_id', blockId)
+      .maybeSingle()
+    if (!existing) return NextResponse.json({ error: 'No submitted answer to grade' }, { status: 404 })
+    if ((existing as any).is_correct !== null) {
+      return NextResponse.json({ error: 'This answer already has a score' }, { status: 409 })
+    }
+
+    const isCorrect = cappedScore >= Number(blockSettings.points || 1) * 0.7
+    const { error: updateError } = await supabase
+      .from('student_answers')
+      .update({
+        score: cappedScore,
+        is_correct: isCorrect,
+        graded_by: user.id,
+        graded_by_ai: false,
+        graded_at: new Date().toISOString(),
+      })
+      .eq('id', (existing as any).id)
+    if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+    return NextResponse.json({ success: true, score: cappedScore, is_correct: isCorrect })
   } catch (err) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

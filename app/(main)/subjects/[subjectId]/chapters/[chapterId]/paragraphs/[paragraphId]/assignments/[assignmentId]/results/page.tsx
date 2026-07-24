@@ -19,6 +19,7 @@ type ResultQuestion = {
   is_correct: boolean | null;
   score: number | null;
   feedback: string | null;
+  can_self_grade?: boolean;
 };
 
 export default function AssignmentResultsPage() {
@@ -29,11 +30,38 @@ export default function AssignmentResultsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{ assignment_title: string; grade_released: boolean; grade: any; questions: ResultQuestion[] } | null>(null);
+  const [data, setData] = useState<{ assignment_title: string; grade_released: boolean; grade: any; self_grade_enabled?: boolean; questions: ResultQuestion[] } | null>(null);
   const [flagOpenFor, setFlagOpenFor] = useState<string | null>(null);
   const [flagNote, setFlagNote] = useState('');
   const [flagSent, setFlagSent] = useState<Set<string>>(new Set());
   const [flagSending, setFlagSending] = useState(false);
+  const [selfGradingId, setSelfGradingId] = useState<string | null>(null);
+
+  const submitSelfGrade = async (question: ResultQuestion, gotItRight: boolean) => {
+    if (selfGradingId) return;
+    setSelfGradingId(question.block_id);
+    try {
+      const res = await fetch(
+        `/api/subjects/${params.subjectId}/chapters/${params.chapterId}/paragraphs/${params.paragraphId}/assignments/${params.assignmentId}/results`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ block_id: question.block_id, score: gotItRight ? question.max_points : 0 }),
+        }
+      );
+      if (res.ok) {
+        const result = await res.json();
+        setData((prev) => prev && {
+          ...prev,
+          questions: prev.questions.map((q) =>
+            q.block_id === question.block_id ? { ...q, is_correct: result.is_correct, score: result.score, can_self_grade: false } : q
+          ),
+        });
+      }
+    } finally {
+      setSelfGradingId(null);
+    }
+  };
 
   const submitFlag = async (blockId: string) => {
     if (!flagNote.trim() || flagSending) return;
@@ -130,6 +158,22 @@ export default function AssignmentResultsPage() {
                     <p className="text-xs text-muted-foreground">
                       {q.score ?? 0} / {q.max_points} {isDutch ? 'punten' : 'points'}
                     </p>
+
+                    {q.can_self_grade && (
+                      <div className="space-y-1 pt-1">
+                        <p className="text-xs text-muted-foreground">
+                          {isDutch ? 'Nakijken jezelf: had je dit goed?' : 'Self-grade: did you get this right?'}
+                        </p>
+                        <div className="flex gap-1.5">
+                          <Button size="sm" disabled={selfGradingId === q.block_id} onClick={() => submitSelfGrade(q, true)}>
+                            {isDutch ? 'Goed' : 'Correct'}
+                          </Button>
+                          <Button size="sm" variant="outline" disabled={selfGradingId === q.block_id} onClick={() => submitSelfGrade(q, false)}>
+                            {isDutch ? 'Fout' : 'Incorrect'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
                     {flagSent.has(q.block_id) ? (
                       <p className="text-xs text-muted-foreground italic">

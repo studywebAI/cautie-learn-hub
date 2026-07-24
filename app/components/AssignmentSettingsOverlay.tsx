@@ -192,12 +192,28 @@ export function AssignmentSettingsOverlay({ settings, onSettingsChange, isLoadin
         </Section>
 
         <Section id="grading">
-          <Field label="Auto grade" hint="Automatically score questions with a clear right answer (multiple choice, etc.) as soon as they're submitted, without you reviewing each one.">
-            <Switch checked={settings.grading.autoGrade} onCheckedChange={(v) => update({ grading: { ...settings.grading, autoGrade: v } })} disabled={isLoading} />
+          <Field
+            label="Grading"
+            stacked
+            hint="Auto-graded: we grade it -- clear-answer questions instantly, open answers automatically too (how, exactly, isn't something you need to think about). Student self-grades: after submitting, the student marks their own open answers right or wrong."
+          >
+            <Select
+              value={settings.grading.gradingMode}
+              onValueChange={(v) => update({ grading: { ...settings.grading, gradingMode: v as any, autoGrade: v === 'auto' } })}
+              disabled={isLoading}
+            >
+              <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto-graded</SelectItem>
+                <SelectItem value="self">Student self-grades</SelectItem>
+              </SelectContent>
+            </Select>
           </Field>
-          <Field label="Manual review open questions" hint="Even with auto grade on, hold open/written answers for you to review by hand instead of scoring them automatically.">
-            <Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} />
-          </Field>
+          {settings.grading.gradingMode === 'auto' && (
+            <Field label="Manual review open questions" hint="Even though it's auto-graded, hold open/written answers for you to review by hand instead of scoring them automatically.">
+              <Switch checked={settings.grading.manualReviewOpenQuestions} onCheckedChange={(v) => update({ grading: { ...settings.grading, manualReviewOpenQuestions: v } })} disabled={isLoading} />
+            </Field>
+          )}
           <Field label="Feedback release" stacked hint="When a student gets to see whether they were right: immediately per question, right after they submit the whole assignment, or only once the deadline has passed for everyone.">
             <Select value={settings.grading.feedbackReleaseMode} onValueChange={(v) => update({ grading: { ...settings.grading, feedbackReleaseMode: v as any } })} disabled={isLoading}>
               <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
