@@ -743,6 +743,58 @@ export function AssignmentEditor({
       toast({ title: t.isTestHiddenNotice });
     }
     setHasUnsavedChanges(true);
+    if (next) void moveToTestsChapterIfNeeded();
+  };
+
+  // Marking something as a test should put it where tests live -- every
+  // subject has (or gets, via the chapters API's own auto-create) exactly
+  // one Toetsen/tests chapter. Best-effort: if anything here fails, the
+  // test-toggle itself already succeeded, so just leave it where it is.
+  const moveToTestsChapterIfNeeded = async () => {
+    try {
+      const chaptersRes = await fetch(`/api/subjects/${subjectId}/chapters`);
+      if (!chaptersRes.ok) return;
+      const chapters = await chaptersRes.json();
+      const testsChapter = Array.isArray(chapters) ? chapters.find((c: any) => c.is_tests_chapter) : null;
+      if (!testsChapter || testsChapter.id === chapterId) return;
+
+      let targetParagraphId: string | null = null;
+      const paragraphsRes = await fetch(`/api/subjects/${subjectId}/chapters/${testsChapter.id}/paragraphs`);
+      if (paragraphsRes.ok) {
+        const paragraphs = await paragraphsRes.json();
+        if (Array.isArray(paragraphs) && paragraphs.length > 0) {
+          targetParagraphId = paragraphs[0].id;
+        }
+      }
+      if (!targetParagraphId) {
+        const createRes = await fetch(`/api/subjects/${subjectId}/chapters/${testsChapter.id}/paragraphs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: isDutch ? 'Toetsen' : 'Tests' }),
+        });
+        if (!createRes.ok) return;
+        const created = await createRes.json().catch(() => ({}));
+        targetParagraphId = created?.id || null;
+      }
+      if (!targetParagraphId) return;
+
+      const moveRes = await fetch(
+        `/api/subjects/${subjectId}/chapters/${chapterId}/paragraphs/${paragraphId}/assignments/${assignmentId}/move`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetSubjectId: subjectId, targetChapterId: testsChapter.id, targetParagraphId }),
+        }
+      );
+      if (!moveRes.ok) return;
+      const payload = await moveRes.json().catch(() => ({}));
+      toast({ title: isDutch ? 'Verplaatst naar Toetsen' : 'Moved to Tests chapter' });
+      if (payload?.redirectTo) {
+        window.location.href = payload.redirectTo;
+      }
+    } catch {
+      // Best-effort -- the test toggle already succeeded either way.
+    }
   };
 
   const handleTitleChange = (next: string) => {
